@@ -1,0 +1,753 @@
+{
+  "metadata": {
+    "title": "Next 启动模板",
+    "description": "一个生产就绪的 Next.js 启动模板，包含 TypeScript、Tailwind CSS、shadcn/ui、Prisma 和多平台部署支持。"
+  },
+  "nav": {
+    "features": "功能特性",
+    "techStack": "技术栈",
+    "deploy": "部署",
+    "docs": "文档",
+    "getStarted": "快速开始",
+    "login": "登录",
+    "register": "注册",
+    "dashboard": "控制台",
+    "logout": "退出登录"
+  },
+  "hero": {
+    "badge": "生产就绪模板",
+    "title": "使用以下技术构建现代应用",
+    "titleHighlight": "Next.js 启动模板",
+    "description": "一个功能完善的启动模板，包含 React、TypeScript、Tailwind CSS、shadcn/ui、Prisma 和 Docker。可部署到 Vercel、Cloudflare、Netlify、Railway 等平台。",
+    "cta": "快速开始",
+    "viewGithub": "在 GitHub 查看",
+    "terminal": "终端",
+    "readyOn": "已就绪: http://localhost:3000"
+  },
+  "features": {
+    "title": "你需要的一切",
+    "description": "一套完整的工具包，用于构建符合现代最佳实践的生产级应用。",
+    "items": {
+      "fast": {
+        "title": "极速响应",
+        "description": "通过 Next.js 16、React 服务器组件和边缘部署优化性能。"
+      },
+      "ui": {
+        "title": "精美界面",
+        "description": "预构建的 shadcn/ui 组件、Tailwind CSS 样式和流畅的 Framer Motion 动画。"
+      },
+      "database": {
+        "title": "数据库就绪",
+        "description": "Prisma ORM 搭配 PostgreSQL，开箱即用的类型安全数据库查询。"
+      },
+      "deploy": {
+        "title": "多平台部署",
+        "description": "支持部署到 Vercel、Cloudflare、Netlify、Railway、Fly.io、Deno Deploy 或 Heroku。"
+      },
+      "docker": {
+        "title": "Docker 支持",
+        "description": "生产就绪的 Dockerfile 和 docker-compose 配置，支持容器化部署。"
+      },
+      "typeSafe": {
+        "title": "类型安全",
+        "description": "完整的 TypeScript 支持，严格的类型检查和 Zod 验证。"
+      },
+      "modular": {
+        "title": "模块化架构",
+        "description": "清晰的项目结构，关注点分离，可复用组件。"
+      },
+      "cicd": {
+        "title": "CI/CD 就绪",
+        "description": "GitHub Actions 工作流，支持测试、代码检查和自动化部署。"
+      },
+      "dx": {
+        "title": "开发体验优先",
+        "description": "出色的开发体验，包含热重载、ESLint、Prettier 和 VS Code 配置。"
+      }
+    }
+  },
+  "techStack": {
+    "title": "现代技术栈",
+    "description": "使用生态系统中最新、最可靠的技术构建。",
+    "codeComment": "// 示例：使用 Prisma 进行类型安全的数据库查询",
+    "visitWebsite": "访问",
+    "liveDemos": "在线演示",
+    "liveDemosDescription": "在不同平台上查看此模板的实际效果"
+  },
+  "deploy": {
+    "title": "随处部署",
+    "description": "选择你喜欢的平台。此模板针对所有主流托管服务商进行了优化。",
+    "recommended": "推荐",
+    "deployBtn": "部署",
+    "dockerTitle": "使用 Docker 快速开始",
+    "platforms": {
+      "vercel": "零配置部署，支持边缘函数",
+      "netlify": "持续部署，支持无服务器",
+      "railway": "基础设施即时部署",
+      "flyio": "让应用运行在离用户最近的地方",
+      "deno": "边缘无服务器",
+      "render": "应用和网站的统一云平台"
+    }
+  },
+  "footer": {
+    "description": "一个生产就绪的 Next.js 启动模板，包含构建现代 Web 应用所需的一切。",
+    "product": "产品",
+    "resources": "资源",
+    "legal": "法律",
+    "documentation": "文档",
+    "apiReference": "API 参考",
+    "examples": "示例",
+    "privacy": "隐私政策",
+    "terms": "服务条款",
+    "license": "许可证",
+    "copyright": "保留所有权利。",
+    "deployTime": "部署时间"
+  },
+  "docs": {
+    "title": "文档",
+    "description": "开始使用 Next 启动模板所需的一切信息。",
+    "backHome": "返回首页",
+    "envTitle": "环境变量",
+    "envDescription": "应用程序所需的配置",
+    "sections": {
+      "gettingStarted": {
+        "title": "快速开始",
+        "description": "快速设置指南和先决条件",
+        "items": [
+          "克隆仓库",
+          "使用 npm install 安装依赖",
+          "设置环境变量",
+          "运行 npm run dev 启动开发服务器"
+        ]
+      },
+      "database": {
+        "title": "数据库设置",
+        "description": "配置 Prisma 和 PostgreSQL",
+        "items": [
+          "在 .env 中更新 DATABASE_URL",
+          "运行 npx prisma generate",
+          "运行 npx prisma db push",
+          "使用 npx prisma studio 进行可视化管理"
+        ]
+      },
+      "structure": {
+        "title": "项目结构",
+        "description": "理解代码库布局",
+        "items": [
+          "app/ - Next.js App Router 页面",
+          "components/ - 可复用 UI 组件",
+          "lib/ - 工具函数和数据库客户端",
+          "prisma/ - 数据库模型和迁移"
+        ]
+      },
+      "deployment": {
+        "title": "部署",
+        "description": "部署到你喜欢的平台",
+        "items": [
+          "Vercel: 连接仓库并部署",
+          "Docker: docker compose up -d",
+          "Fly.io: fly launch && fly deploy",
+          "Railway: 在控制台连接仓库"
+        ]
+      }
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "欢迎回来",
+      "description": "输入您的凭据以访问您的账户",
+      "email": "邮箱",
+      "emailPlaceholder": "输入您的邮箱",
+      "password": "密码",
+      "passwordPlaceholder": "输入您的密码",
+      "rememberMe": "记住我",
+      "forgotPassword": "忘记密码？",
+      "submit": "登录",
+      "submitting": "登录中...",
+      "noAccount": "还没有账户？",
+      "register": "注册",
+      "orContinueWith": "或通过以下方式继续",
+      "success": "登录成功",
+      "errors": {
+        "invalid": "邮箱或密码错误",
+        "required": "请输入邮箱和密码",
+        "invalidEmail": "邮箱格式不正确",
+        "passwordRequired": "请输入密码",
+        "serviceUnavailable": "认证服务未配置",
+        "failed": "登录失败"
+      }
+    },
+    "register": {
+      "title": "创建账户",
+      "description": "输入您的信息以开始使用",
+      "name": "姓名",
+      "namePlaceholder": "输入您的姓名",
+      "email": "邮箱",
+      "emailPlaceholder": "输入您的邮箱",
+      "password": "密码",
+      "passwordPlaceholder": "创建密码",
+      "confirmPassword": "确认密码",
+      "confirmPasswordPlaceholder": "确认您的密码",
+      "terms": "我同意服务条款和隐私政策",
+      "submit": "创建账户",
+      "submitting": "创建中...",
+      "hasAccount": "已有账户？",
+      "login": "登录",
+      "orContinueWith": "或通过以下方式继续",
+      "passwordHint": "至少8位，包含大小写字母和数字",
+      "passwordChecks": {
+        "length": "至少 8 位",
+        "uppercase": "包含大写字母",
+        "lowercase": "包含小写字母",
+        "number": "包含数字"
+      },
+      "errors": {
+        "emailExists": "邮箱已被注册",
+        "passwordMismatch": "两次输入的密码不一致",
+        "weakPassword": "密码强度不够",
+        "invalidEmail": "邮箱格式不正确",
+        "passwordTooShort": "密码至少需要 8 位",
+        "passwordUppercase": "密码需要包含至少一个大写字母",
+        "passwordLowercase": "密码需要包含至少一个小写字母",
+        "passwordNumber": "密码需要包含至少一个数字",
+        "nameTooShort": "姓名至少需要 2 个字符",
+        "registrationDisabled": "当前已关闭注册",
+        "serviceUnavailable": "注册服务未配置",
+        "failed": "注册失败"
+      }
+    },
+    "forgotPassword": {
+      "title": "忘记密码",
+      "description": "输入您的邮箱，我们将发送重置链接",
+      "email": "邮箱",
+      "emailPlaceholder": "输入您的邮箱",
+      "submit": "发送重置链接",
+      "submitting": "发送中...",
+      "success": "如果该邮箱存在账户，您将收到重置链接。",
+      "backToLogin": "返回登录",
+      "emailTemplate": {
+        "subject": "重置 {appName} 的密码",
+        "title": "重置密码",
+        "intro": "我们收到了重置 {appName} 账户密码的请求。",
+        "action": "重置密码",
+        "expires": "该链接将在 {hours} 小时后过期。",
+        "ignore": "如果不是你本人操作，请忽略此邮件。",
+        "footer": "如果按钮无法使用，请复制以下链接到浏览器打开："
+      }
+    },
+    "resetPassword": {
+      "title": "重置密码",
+      "description": "输入您的新密码",
+      "password": "新密码",
+      "passwordPlaceholder": "输入新密码",
+      "confirmPassword": "确认密码",
+      "confirmPasswordPlaceholder": "确认新密码",
+      "submit": "重置密码",
+      "submitting": "重置中...",
+      "success": "密码重置成功，您现在可以登录了。",
+      "invalidToken": "无效或已过期的重置链接",
+      "backToLogin": "返回登录"
+    }
+  },
+  "errors": {
+    "backHome": "返回首页",
+    "tryAgain": "重试",
+    "400": {
+      "title": "请求错误",
+      "description": "服务器无法理解该请求，请求语法可能存在错误。",
+      "hint": "请检查您的输入后重试。"
+    },
+    "401": {
+      "title": "未授权",
+      "description": "您需要登录才能访问此资源。",
+      "hint": "请登录后继续。"
+    },
+    "403": {
+      "title": "禁止访问",
+      "description": "您没有权限访问此资源。",
+      "hint": "如果您认为这是错误，请联系管理员。"
+    },
+    "404": {
+      "title": "页面未找到",
+      "description": "您访问的页面不存在或已被移动。",
+      "hint": "请检查网址或返回首页。"
+    },
+    "500": {
+      "title": "服务器错误",
+      "description": "我们这边出了点问题，正在努力修复中。",
+      "hint": "请稍后重试。"
+    }
+  },
+  "dashboard": {
+    "title": "控制台",
+    "welcome": "欢迎回来",
+    "overview": "概览",
+    "stats": {
+      "totalPosts": "文章总数",
+      "published": "已发布",
+      "drafts": "草稿",
+      "views": "总浏览量",
+      "fromLastMonth": "较上月"
+    },
+    "recentPosts": "最近文章",
+    "createPost": "创建文章",
+    "viewAll": "查看全部",
+    "noData": "暂无数据",
+    "myPosts": "我的文章",
+    "manageAllPosts": "管理你的所有文章",
+    "newPost": "新建文章",
+    "searchPosts": "搜索文章...",
+    "search": "搜索",
+    "postTitle": "标题",
+    "author": "作者",
+    "status": "状态",
+    "revoked": "已撤回",
+    "views": "浏览",
+    "date": "日期",
+    "actions": "操作",
+    "published": "已发布",
+    "draft": "草稿",
+    "pending": "待审核",
+    "rejected": "已驳回",
+    "view": "查看",
+    "edit": "编辑",
+    "delete": "删除",
+    "preview": "预览",
+    "openPost": "打开页面",
+    "previewTitle": "预览",
+    "previewEmpty": "暂无内容",
+    "writeMode": "写作模式",
+    "previewMode": "预览模式",
+    "splitMode": "实时渲染",
+    "messages": "站内信",
+    "inbox": "查看你的站内信",
+    "noMessages": "暂无站内信",
+    "read": "已读",
+    "unread": "未读",
+    "open": "打开",
+    "messageTitle": "标题",
+    "viewAllMessages": "查看更多",
+    "unreadCount": "未读 {count} 条",
+    "back": "返回",
+    "messageNotFound": "站内信不存在",
+    "selectMessageToView": "请选择一条站内信查看",
+    "fetchFailed": "获取数据失败",
+    "recent": "最近",
+    "userFallback": "用户",
+    "startWriting": "开始撰写你的下一篇博客文章",
+    "deleteConfirmTitle": "确认删除",
+    "deleteConfirmDesc": "此操作无法撤销。确定要删除这篇文章吗？",
+    "cancel": "取消",
+    "confirm": "确认",
+    "deleteFailed": "删除失败，请重试",
+    "deleting": "删除中...",
+    "previewStatus": "状态",
+    "previewViews": "浏览",
+    "previewCreated": "创建",
+    "editPost": "编辑文章",
+    "postDetails": "文章详情",
+    "fillPostInfo": "填写文章信息",
+    "titleLabel": "标题",
+    "titlePlaceholder": "输入文章标题",
+    "contentLabel": "内容",
+    "contentPlaceholder": "输入文章内容",
+    "statusLabel": "状态",
+    "creating": "创建中...",
+    "updating": "更新中...",
+    "savePost": "保存文章",
+    "createFailed": "创建失败，请重试",
+    "titleRequired": "请输入标题",
+    "contentRequired": "请输入内容",
+    "notAuthenticated": "请先登录再创建文章",
+    "serviceUnavailable": "数据库未配置",
+    "loading": "加载中...",
+    "perPage": "每页显示",
+    "pageSummary": "共 {total} 条，第 {page} / {totalPages} 页",
+    "searchPlaceholder": "搜索...",
+    "quickNav": "快速导航",
+    "noResults": "未找到结果",
+    "analytics": "数据分析",
+    "trackPerformance": "查看你的内容表现",
+    "totalViews": "总浏览量",
+    "uniqueVisitors": "独立访客",
+    "avgReadTime": "平均阅读时间",
+    "growthRate": "增长率",
+    "vsLastWeek": "较上周",
+    "weeklyViewsTrend": "本周浏览趋势",
+    "topPosts": "热门文章",
+    "noTopPosts": "暂无热门文章",
+    "viewsCount": "次浏览",
+    "monday": "周一",
+    "tuesday": "周二",
+    "wednesday": "周三",
+    "thursday": "周四",
+    "friday": "周五",
+    "saturday": "周六",
+    "sunday": "周日",
+    "settings": "设置",
+    "manageSettings": "管理你的账户设置和偏好",
+    "profile": "个人资料",
+    "updateProfile": "更新你的个人信息",
+    "changeAvatar": "更换头像",
+    "avatarUrl": "头像链接",
+    "avatarPlaceholder": "https://example.com/avatar.png",
+    "avatarHint": "输入头像图片链接（JPG/PNG/GIF）。",
+    "name": "姓名",
+    "namePlaceholder": "请输入姓名",
+    "email": "邮箱",
+    "saving": "保存中...",
+    "saveChanges": "保存更改",
+    "profileUpdated": "资料已更新",
+    "profileUpdateFailed": "更新资料失败",
+    "security": "安全",
+    "managePassword": "管理你的密码和安全设置",
+    "currentPassword": "当前密码",
+    "currentPasswordDisabled": "OAuth 账户无需填写",
+    "newPassword": "新密码",
+    "confirmPassword": "确认密码",
+    "updatePassword": "更新密码",
+    "passwordUpdated": "密码已更新",
+    "passwordUpdateFailed": "更新密码失败",
+    "noPasswordHint": "该账户尚未设置密码，可在下方设置。",
+    "dangerZone": "危险操作",
+    "irreversibleActions": "对你的账户的不可逆操作",
+    "deleteAccount": "删除账户",
+    "deleteAccountConfirmTitle": "确认删除账户？",
+    "deleteAccountConfirmDesc": "此操作将永久删除你的账户和内容。",
+    "confirmDelete": "确认删除",
+    "accountDeleted": "账户已删除",
+    "accountDeleteFailed": "删除账户失败"
+  },
+  "admin": {
+    "title": "管理面板",
+    "backToDashboard": "返回用户面板",
+    "logout": "退出登录",
+    "users": "用户",
+    "posts": "文章",
+    "settings": "设置",
+    "analytics": "分析",
+    "totalUsers": "总用户数",
+    "activeUsers": "活跃用户",
+    "newUsers": "新用户 (30天)",
+    "totalPosts": "总文章数",
+    "userManagement": "用户管理",
+    "userManagementDesc": "管理所有用户账号",
+    "user": "用户",
+    "makeAdmin": "设为管理员",
+    "banned": "已禁用",
+    "postManagement": "文章管理",
+    "postManagementDesc": "审核和管理所有文章",
+    "postTitle": "标题",
+    "date": "日期",
+    "view": "查看",
+    "approve": "批准",
+    "reject": "拒绝",
+    "pending": "待审核",
+    "rejected": "已拒绝",
+    "search": "搜索用户...",
+    "searchPosts": "搜索文章...",
+    "actions": "操作",
+    "edit": "编辑",
+    "delete": "删除",
+    "messages": "站内信",
+    "messagesDesc": "管理站内信并追踪阅读情况",
+    "sendMessage": "发送站内信",
+    "editMessage": "编辑站内信",
+    "messageTitle": "标题",
+    "messageTitlePlaceholder": "输入站内信标题",
+    "messageContent": "内容",
+    "messageContentPlaceholder": "输入站内信内容",
+    "messageTitleRequired": "请输入标题",
+    "messageContentRequired": "请输入内容",
+    "recipientMode": "收件人",
+    "recipientAll": "全部用户",
+    "recipientByRole": "按角色",
+    "recipientByStatus": "按状态",
+    "recipientByUsers": "指定用户",
+    "selectRole": "选择角色",
+    "selectStatus": "选择状态",
+    "roleUser": "普通用户",
+    "roleAdmin": "管理员",
+    "statusActive": "正常",
+    "statusInactive": "禁用",
+    "statusBanned": "封禁",
+    "recipients": "收件人",
+    "readCount": "已读",
+    "revoke": "撤回",
+    "revokeTitle": "确认撤回？",
+    "revokeDesc": "撤回后用户将无法再看到这条站内信。",
+    "messageSent": "站内信已发送",
+    "messageUpdated": "站内信已更新",
+    "messageRevoked": "站内信已撤回",
+    "searchMessages": "搜索站内信...",
+    "noMessages": "暂无站内信",
+    "preview": "预览",
+    "previewEmpty": "暂无内容",
+    "loadMore": "加载更多",
+    "selectedUsers": "已选择 {count} 人",
+    "editHint": "编辑不会影响已选择的收件人",
+    "saving": "保存中...",
+    "ban": "封禁",
+    "role": "角色",
+    "status": "状态",
+    "revoked": "已撤回",
+    "active": "正常",
+    "inactive": "禁用",
+    "published": "已发布",
+    "draft": "草稿",
+    "createdAt": "创建时间",
+    "name": "姓名",
+    "email": "邮箱",
+    "author": "作者",
+    "views": "浏览量",
+    "noUsers": "未找到用户",
+    "noPosts": "未找到文章",
+    "loading": "加载中...",
+    "perPage": "每页显示",
+    "pageSummary": "共 {total} 条，第 {page} / {totalPages} 页",
+    "searchAction": "搜索",
+    "searchUsers": "搜索用户...",
+    "actionFailed": "操作失败，请重试",
+    "fetchFailed": "获取数据失败",
+    "activate": "启用",
+    "cancel": "取消",
+    "confirm": "确认",
+    "confirmTitle": "确认操作",
+    "confirmMakeAdmin": "确定将该用户设为管理员？",
+    "confirmBanUser": "确定封禁该用户？",
+    "confirmActivateUser": "确定启用该用户？",
+    "confirmDeleteUser": "确定删除该用户？此操作无法撤销。",
+    "confirmDeletePost": "确定删除该文章？此操作无法撤销。",
+    "confirmApprovePost": "确认通过并发布该文章？",
+    "confirmRejectPost": "确认驳回该文章？",
+    "previewTitle": "文章预览",
+    "previewStatus": "状态",
+    "previewViews": "浏览",
+    "previewCreated": "创建",
+    "unknownAuthor": "未知",
+    "siteSettings": "网站设置",
+    "siteSettingsDesc": "配置基本网站信息",
+    "securitySettings": "安全设置",
+    "emailSettings": "邮件设置",
+    "configureSystemSettings": "配置系统设置",
+    "featureToggles": "功能开关",
+    "featureTogglesDesc": "启用或禁用系统功能",
+    "userRegistration": "用户注册",
+    "userRegistrationDesc": "允许新用户注册账号",
+    "oauthLogin": "OAuth 登录",
+    "oauthLoginDesc": "允许通过 GitHub/Google 登录",
+    "emailNotifications": "邮件通知",
+    "emailNotificationsDesc": "发送系统通知邮件",
+    "postModeration": "文章审核",
+    "postModerationDesc": "发布前需要管理员审核",
+    "contactEmail": "联系邮箱",
+    "dangerZone": "危险操作",
+    "dangerZoneDesc": "这些操作不可撤销，请谨慎操作",
+    "clearCache": "清空所有缓存",
+    "clearCacheDesc": "清除系统缓存数据",
+    "clearCacheBtn": "清空缓存",
+    "clearCacheConfirmTitle": "确认清空缓存？",
+    "clearCacheConfirmDesc": "此操作将重新验证页面并清除缓存。",
+    "clearCacheSuccess": "缓存已清空",
+    "clearCacheFailed": "清空缓存失败",
+    "resetDatabase": "重置数据库",
+    "resetDatabaseDesc": "删除所有数据并重置数据库",
+    "resetDatabaseBtn": "重置数据库",
+    "resetDatabaseConfirmTitle": "确认重置数据库？",
+    "resetDatabaseConfirmDesc": "此操作将删除所有文章和非管理员用户。",
+    "resetDatabaseSuccess": "数据库已重置",
+    "resetDatabaseFailed": "重置数据库失败",
+    "siteName": "网站名称",
+    "siteNamePlaceholder": "输入网站名称",
+    "siteDescription": "网站描述",
+    "siteDescriptionPlaceholder": "输入网站描述",
+    "siteUrl": "网站地址",
+    "siteUrlPlaceholder": "https://example.com",
+    "maintenanceMode": "维护模式",
+    "maintenanceModeDescription": "启用后将暂时禁用网站访问",
+    "smtpHost": "SMTP 主机",
+    "smtpHostPlaceholder": "smtp.example.com",
+    "smtpPort": "SMTP 端口",
+    "smtpPortPlaceholder": "587",
+    "smtpUser": "SMTP 用户名",
+    "smtpUserPlaceholder": "user@example.com",
+    "smtpPassword": "SMTP 密码",
+    "smtpPasswordPlaceholder": "输入 SMTP 密码",
+    "testEmail": "测试邮件配置",
+    "save": "保存更改",
+    "saving": "保存中...",
+    "saveChanges": "保存修改",
+    "settingsSaved": "设置已保存",
+    "settingsSaveFailed": "保存设置失败",
+    "settingsLoadFailed": "加载设置失败",
+    "overview": "概览",
+    "metrics": "关键指标",
+    "totalViews": "总浏览量",
+    "avgViewsPerPost": "平均浏览量/篇",
+    "vsLastMonth": "较上月",
+    "recentActivity": "最近活动",
+    "systemStatus": "系统状态",
+    "operational": "运行中",
+    "down": "异常",
+    "systemDataAnalytics": "系统数据分析和统计",
+    "userGrowth": "用户增长",
+    "postsPublished": "文章发布",
+    "userDistribution": "用户地区分布",
+    "growthOverview": "增长概览",
+    "monthlyActiveUsers": "月活用户",
+    "dailyActiveUsers": "日活用户",
+    "avgSessionDuration": "平均会话时长",
+    "bounceRate": "跳出率",
+    "months": {
+      "jan": "1月",
+      "feb": "2月",
+      "mar": "3月",
+      "apr": "4月",
+      "may": "5月",
+      "jun": "6月",
+      "jul": "7月",
+      "aug": "8月",
+      "sep": "9月",
+      "oct": "10月",
+      "nov": "11月",
+      "dec": "12月"
+    }
+  },
+  "theme": {
+    "toggle": "切换主题",
+    "mode": "模式",
+    "color": "颜色",
+    "light": "浅色",
+    "dark": "深色",
+    "system": "跟随系统"
+  },
+  "legal": {
+    "privacy": {
+      "title": "隐私政策",
+      "description": "我们如何收集、使用和保护您的数据",
+      "lastUpdated": "最后更新",
+      "sections": {
+        "intro": "我们尊重您的隐私，并致力于保护您的个人数据。",
+        "dataCollection": {
+          "title": "数据收集",
+          "content": "我们收集您直接提供给我们的信息，例如当您创建账户、使用我们的服务或与我们沟通时。"
+        },
+        "dataUse": {
+          "title": "我们如何使用您的数据",
+          "content": "我们使用收集的信息来提供、维护和改进我们的服务，开发新服务，以及保护我们的公司和用户。"
+        },
+        "dataSecurity": {
+          "title": "数据安全",
+          "content": "我们实施适当的技术和组织措施，以防止您的个人数据被未经授权或非法处理，以及防止意外丢失、破坏或损坏。"
+        },
+        "yourRights": {
+          "title": "您的权利",
+          "content": "您有权随时访问、更新或删除您的个人信息。您可以通过账户设置或联系我们来执行此操作。"
+        }
+      }
+    },
+    "terms": {
+      "title": "服务条款",
+      "description": "使用我们服务的条款和条件",
+      "lastUpdated": "最后更新",
+      "sections": {
+        "intro": "通过访问和使用本服务，您接受并同意受本协议条款和规定的约束。",
+        "useOfService": {
+          "title": "服务使用",
+          "content": "您必须遵守服务中提供的任何政策。请勿滥用我们的服务。您只能按照法律允许的方式使用我们的服务。"
+        },
+        "accounts": {
+          "title": "用户账户",
+          "content": "当您在我们这里创建账户时，您必须提供准确和完整的信息。您有责任保护密码，并对您账户下发生的所有活动负责。"
+        },
+        "termination": {
+          "title": "终止",
+          "content": "我们可能会立即终止或暂停您的账户和对服务的访问权限，无需事先通知或承担责任，原因包括但不限于您违反条款。"
+        },
+        "limitation": {
+          "title": "责任限制",
+          "content": "在任何情况下，公司均不对任何间接、附带、特殊、后果性或惩罚性损害承担责任，包括但不限于利润、数据、使用、商誉或其他无形损失的损失。"
+        }
+      }
+    },
+    "license": {
+      "title": "许可证",
+      "description": "MIT 许可证 - 开源且免费使用",
+      "lastUpdated": "最后更新",
+      "mitLicense": "MIT 许可证",
+      "sections": {
+        "intro": "本项目采用 MIT 许可证。这意味着您可以自由使用、复制、修改、合并、发布、分发、再许可和/或销售该软件的副本。",
+        "permissions": {
+          "title": "权限",
+          "items": ["商业使用", "修改", "分发", "私人使用"]
+        },
+        "conditions": {
+          "title": "条件",
+          "items": ["必须包含许可证和版权声明"]
+        },
+        "limitations": {
+          "title": "限制",
+          "items": ["无责任", "无保证"]
+        },
+        "fullText": {
+          "title": "完整许可证文本",
+          "content": "特此免费授予任何获得本软件及相关文档文件（\"软件\"）副本的人不受限制地处理软件的权利，包括但不限于使用、复制、修改、合并、发布、分发、再许可和/或销售软件副本的权利，以及允许获得软件的人这样做的权利，但须遵守以下条件：\n\n上述版权声明和本许可声明应包含在软件的所有副本或重要部分中。\n\n本软件按\"原样\"提供，不提供任何形式的明示或暗示保证，包括但不限于适销性、特定用途适用性和非侵权性的保证。在任何情况下，作者或版权持有人均不对任何索赔、损害或其他责任负责，无论是在合同诉讼、侵权行为还是其他方面，由软件或软件的使用或其他交易引起、产生或与之相关。"
+        }
+      }
+    }
+  },
+  "docsPages": {
+    "api": {
+      "title": "API 参考",
+      "description": "完整的 API 文档和端点",
+      "sections": {
+        "intro": "本节提供了与我们服务集成的完整 API 文档。",
+        "authentication": {
+          "title": "身份验证",
+          "content": "所有 API 请求都需要使用 Bearer 令牌进行身份验证。在 Authorization 标头中包含您的 API 密钥。"
+        },
+        "endpoints": {
+          "title": "可用端点",
+          "items": [
+            "GET /api/users - 获取用户列表",
+            "POST /api/users - 创建新用户",
+            "GET /api/users/:id - 获取用户详情",
+            "PUT /api/users/:id - 更新用户",
+            "DELETE /api/users/:id - 删除用户"
+          ]
+        },
+        "rateLimit": {
+          "title": "速率限制",
+          "content": "API 请求限制为每个 API 密钥每分钟 100 个请求。速率限制信息包含在响应标头中。"
+        },
+        "errors": {
+          "title": "错误处理",
+          "content": "API 使用常规 HTTP 响应代码来指示成功或失败。2xx 范围内的代码表示成功，4xx 表示客户端错误，5xx 表示服务器错误。"
+        }
+      }
+    },
+    "examples": {
+      "title": "示例",
+      "description": "实用示例和代码片段",
+      "sections": {
+        "intro": "通过这些实用的代码片段和用例进行学习。",
+        "basicSetup": {
+          "title": "基本设置",
+          "content": "使用此基本配置示例快速开始。"
+        },
+        "authentication": {
+          "title": "身份验证示例",
+          "content": "使用我们的服务实现用户身份验证的示例。"
+        },
+        "database": {
+          "title": "数据库操作",
+          "content": "使用 Prisma ORM 的常见数据库操作。"
+        },
+        "deployment": {
+          "title": "部署示例",
+          "content": "部署应用程序的分步指南。"
+        }
+      }
+    }
+  }
+}

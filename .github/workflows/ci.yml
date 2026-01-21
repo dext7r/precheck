@@ -1,0 +1,95 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.0.0
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma client
+        env:
+          DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/postgres?schema=public"
+        run: pnpm prisma:generate
+
+      - name: Run checks
+        run: pnpm check
+
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: lint
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.0.0
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Cache Next.js
+        uses: actions/cache@v4
+        with:
+          path: .next/cache
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('pnpm-lock.yaml', 'next.config.mjs', 'tsconfig.json', 'app/**', 'components/**', 'lib/**') }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-
+
+      - name: Generate Prisma client
+        env:
+          DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/postgres?schema=public"
+        run: pnpm prisma:generate
+
+      - name: Build
+        run: pnpm build
+
+      - name: Prepare artifact
+        if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+        run: |
+          mkdir -p dist/.next
+          cp -R .next/standalone dist/
+          cp -R .next/static dist/.next/
+          cp -R public dist/
+          cp package.json dist/
+
+      - name: Upload artifact
+        if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+        uses: actions/upload-artifact@v4
+        with:
+          name: next-starter-build
+          path: dist

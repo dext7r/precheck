@@ -1,0 +1,10 @@
+{
+  "defaultSeverity": "warning",
+  "extends": ["tslint-config-prettier"],
+  "rules": {
+    "no-var-keyword": true
+  },
+  "linterOptions": {
+    "exclude": ["node_modules/**", ".next/**", "dist/**", "build/**"]
+  }
+}

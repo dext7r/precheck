@@ -1,0 +1,45 @@
+import { type NextRequest, NextResponse } from "next/server"
+import { db } from "@/lib/db"
+import { getCurrentUser } from "@/lib/auth/session"
+
+export async function POST(_request: NextRequest, context: { params: Promise<{ id: string }> }) {
+  try {
+    const user = await getCurrentUser()
+
+    if (!user) {
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
+    }
+
+    if (user.role !== "ADMIN") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    }
+
+    if (!db) {
+      return NextResponse.json({ error: "Database not configured" }, { status: 503 })
+    }
+
+    const { id } = await context.params
+    const message = await db.message.findUnique({
+      where: { id },
+      select: { id: true, revokedAt: true },
+    })
+
+    if (!message) {
+      return NextResponse.json({ error: "Message not found" }, { status: 404 })
+    }
+
+    if (message.revokedAt) {
+      return NextResponse.json({ error: "Message already revoked" }, { status: 400 })
+    }
+
+    await db.message.update({
+      where: { id },
+      data: { revokedAt: new Date(), revokedById: user.id },
+    })
+
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error("Revoke message API error:", error)
+    return NextResponse.json({ error: "Failed to revoke message" }, { status: 500 })
+  }
+}

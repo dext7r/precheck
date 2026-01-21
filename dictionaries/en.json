@@ -1,0 +1,753 @@
+{
+  "metadata": {
+    "title": "Next Starter Template",
+    "description": "A production-ready Next.js starter template with TypeScript, Tailwind CSS, shadcn/ui, Prisma, and multi-platform deployment support."
+  },
+  "nav": {
+    "features": "Features",
+    "techStack": "Tech Stack",
+    "deploy": "Deploy",
+    "docs": "Docs",
+    "getStarted": "Get Started",
+    "login": "Login",
+    "register": "Register",
+    "dashboard": "Dashboard",
+    "logout": "Logout"
+  },
+  "hero": {
+    "badge": "Production Ready Template",
+    "title": "Build Modern Apps with",
+    "titleHighlight": "Next.js Starter",
+    "description": "A comprehensive starter template featuring React, TypeScript, Tailwind CSS, shadcn/ui, Prisma, and Docker. Deploy anywhere — Vercel, Cloudflare, Netlify, Railway, and more.",
+    "cta": "Get Started",
+    "viewGithub": "View on GitHub",
+    "terminal": "terminal",
+    "readyOn": "Ready on http://localhost:3000"
+  },
+  "features": {
+    "title": "Everything You Need",
+    "description": "A complete toolkit for building production-ready applications with modern best practices.",
+    "items": {
+      "fast": {
+        "title": "Lightning Fast",
+        "description": "Optimized for performance with Next.js 16, React Server Components, and edge-ready deployments."
+      },
+      "ui": {
+        "title": "Beautiful UI",
+        "description": "Pre-built components with shadcn/ui, Tailwind CSS, and smooth Framer Motion animations."
+      },
+      "database": {
+        "title": "Database Ready",
+        "description": "Prisma ORM with PostgreSQL support. Type-safe database queries out of the box."
+      },
+      "deploy": {
+        "title": "Multi-Platform Deploy",
+        "description": "Deploy to Vercel, Cloudflare, Netlify, Railway, Fly.io, Deno Deploy, or Heroku."
+      },
+      "docker": {
+        "title": "Docker Support",
+        "description": "Production-ready Dockerfile and docker-compose for containerized deployments."
+      },
+      "typeSafe": {
+        "title": "Type Safe",
+        "description": "Full TypeScript support with strict type checking and Zod validation."
+      },
+      "modular": {
+        "title": "Modular Architecture",
+        "description": "Clean project structure with separation of concerns and reusable components."
+      },
+      "cicd": {
+        "title": "CI/CD Ready",
+        "description": "GitHub Actions workflows for testing, linting, and automated deployments."
+      },
+      "dx": {
+        "title": "DX First",
+        "description": "Great developer experience with hot reload, ESLint, Prettier, and VS Code settings."
+      }
+    }
+  },
+  "techStack": {
+    "title": "Modern Tech Stack",
+    "description": "Built with the latest and most reliable technologies in the ecosystem.",
+    "codeComment": "// Example: Type-safe database query with Prisma",
+    "visitWebsite": "Visit",
+    "liveDemos": "Live Demos",
+    "liveDemosDescription": "See this template in action on different platforms"
+  },
+  "deploy": {
+    "title": "Deploy Anywhere",
+    "description": "Choose your preferred platform. This template is optimized for all major hosting providers.",
+    "recommended": "Recommended",
+    "deployBtn": "Deploy",
+    "dockerTitle": "Quick Start with Docker",
+    "platforms": {
+      "vercel": "Zero-config deployment with edge functions",
+      "netlify": "Continuous deployment with serverless",
+      "railway": "Infrastructure with instant deployments",
+      "flyio": "Run apps close to users globally",
+      "deno": "Serverless at the edge",
+      "render": "Unified cloud for apps and sites"
+    }
+  },
+  "footer": {
+    "description": "A production-ready Next.js starter template with everything you need to build modern web applications.",
+    "product": "Product",
+    "resources": "Resources",
+    "legal": "Legal",
+    "documentation": "Documentation",
+    "apiReference": "API Reference",
+    "examples": "Examples",
+    "privacy": "Privacy",
+    "terms": "Terms",
+    "license": "License",
+    "copyright": "All rights reserved.",
+    "deployTime": "Deployed"
+  },
+  "docs": {
+    "title": "Documentation",
+    "description": "Everything you need to know to get started with Next Starter Template.",
+    "backHome": "Back to Home",
+    "envTitle": "Environment Variables",
+    "envDescription": "Required configuration for your application",
+    "sections": {
+      "gettingStarted": {
+        "title": "Getting Started",
+        "description": "Quick setup guide and prerequisites",
+        "items": [
+          "Clone the repository",
+          "Install dependencies with npm install",
+          "Set up environment variables",
+          "Run npm run dev to start development"
+        ]
+      },
+      "database": {
+        "title": "Database Setup",
+        "description": "Configure Prisma and PostgreSQL",
+        "items": [
+          "Update DATABASE_URL in .env",
+          "Run npx prisma generate",
+          "Run npx prisma db push",
+          "Use npx prisma studio for GUI"
+        ]
+      },
+      "structure": {
+        "title": "Project Structure",
+        "description": "Understanding the codebase layout",
+        "items": [
+          "app/ - Next.js App Router pages",
+          "components/ - Reusable UI components",
+          "lib/ - Utilities and database client",
+          "prisma/ - Database schema and migrations"
+        ]
+      },
+      "deployment": {
+        "title": "Deployment",
+        "description": "Deploy to your preferred platform",
+        "items": [
+          "Vercel: Connect repo and deploy",
+          "Docker: docker compose up -d",
+          "Fly.io: fly launch && fly deploy",
+          "Railway: Connect repo in dashboard"
+        ]
+      }
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Welcome back",
+      "description": "Enter your credentials to access your account",
+      "email": "Email",
+      "emailPlaceholder": "Enter your email",
+      "password": "Password",
+      "passwordPlaceholder": "Enter your password",
+      "rememberMe": "Remember me",
+      "forgotPassword": "Forgot password?",
+      "submit": "Sign in",
+      "submitting": "Signing in...",
+      "noAccount": "Don't have an account?",
+      "register": "Sign up",
+      "orContinueWith": "Or continue with",
+      "success": "Login successful",
+      "errors": {
+        "invalid": "Invalid email or password",
+        "required": "Email and password are required",
+        "invalidEmail": "Invalid email address",
+        "passwordRequired": "Password is required",
+        "serviceUnavailable": "Authentication service not configured",
+        "failed": "Login failed"
+      }
+    },
+    "register": {
+      "title": "Create an account",
+      "description": "Enter your details to get started",
+      "name": "Name",
+      "namePlaceholder": "Enter your name",
+      "email": "Email",
+      "emailPlaceholder": "Enter your email",
+      "password": "Password",
+      "passwordPlaceholder": "Create a password",
+      "confirmPassword": "Confirm Password",
+      "confirmPasswordPlaceholder": "Confirm your password",
+      "terms": "I agree to the Terms of Service and Privacy Policy",
+      "submit": "Create account",
+      "submitting": "Creating account...",
+      "hasAccount": "Already have an account?",
+      "login": "Sign in",
+      "orContinueWith": "Or continue with",
+      "passwordHint": "At least 8 characters with uppercase, lowercase and number",
+      "passwordChecks": {
+        "length": "8+ characters",
+        "uppercase": "Uppercase letter",
+        "lowercase": "Lowercase letter",
+        "number": "Number"
+      },
+      "errors": {
+        "emailExists": "Email already registered",
+        "passwordMismatch": "Passwords do not match",
+        "weakPassword": "Password is too weak",
+        "invalidEmail": "Invalid email address",
+        "passwordTooShort": "Password must be at least 8 characters",
+        "passwordUppercase": "Password must contain at least one uppercase letter",
+        "passwordLowercase": "Password must contain at least one lowercase letter",
+        "passwordNumber": "Password must contain at least one number",
+        "nameTooShort": "Name must be at least 2 characters",
+        "registrationDisabled": "Registration is currently disabled",
+        "serviceUnavailable": "Registration service not configured",
+        "failed": "Registration failed"
+      }
+    },
+    "forgotPassword": {
+      "title": "Forgot password",
+      "description": "Enter your email and we'll send you a reset link",
+      "email": "Email",
+      "emailPlaceholder": "Enter your email",
+      "submit": "Send reset link",
+      "submitting": "Sending...",
+      "success": "If an account exists with this email, you will receive a reset link.",
+      "backToLogin": "Back to login",
+      "emailTemplate": {
+        "subject": "Reset your {appName} password",
+        "title": "Reset your password",
+        "intro": "We received a request to reset the password for your {appName} account.",
+        "action": "Reset password",
+        "expires": "This link expires in {hours} hour(s).",
+        "ignore": "If you did not request a password reset, you can safely ignore this email.",
+        "footer": "If the button does not work, copy and paste this link into your browser:"
+      }
+    },
+    "resetPassword": {
+      "title": "Reset password",
+      "description": "Enter your new password",
+      "password": "New Password",
+      "passwordPlaceholder": "Enter new password",
+      "confirmPassword": "Confirm Password",
+      "confirmPasswordPlaceholder": "Confirm new password",
+      "submit": "Reset password",
+      "submitting": "Resetting...",
+      "success": "Password reset successfully. You can now login.",
+      "invalidToken": "Invalid or expired reset token",
+      "backToLogin": "Back to login"
+    }
+  },
+  "errors": {
+    "backHome": "Back to Home",
+    "tryAgain": "Try Again",
+    "400": {
+      "title": "Bad Request",
+      "description": "The server could not understand the request due to invalid syntax.",
+      "hint": "Please check your input and try again."
+    },
+    "401": {
+      "title": "Unauthorized",
+      "description": "You need to be authenticated to access this resource.",
+      "hint": "Please sign in to continue."
+    },
+    "403": {
+      "title": "Forbidden",
+      "description": "You don't have permission to access this resource.",
+      "hint": "Contact the administrator if you believe this is an error."
+    },
+    "404": {
+      "title": "Page Not Found",
+      "description": "The page you're looking for doesn't exist or has been moved.",
+      "hint": "Check the URL or navigate back to the homepage."
+    },
+    "500": {
+      "title": "Server Error",
+      "description": "Something went wrong on our end. We're working to fix it.",
+      "hint": "Please try again later."
+    }
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Welcome back",
+    "overview": "Overview",
+    "stats": {
+      "totalPosts": "Total Posts",
+      "published": "Published",
+      "drafts": "Drafts",
+      "views": "Total Views",
+      "fromLastMonth": "from last month"
+    },
+    "recentPosts": "Recent Posts",
+    "createPost": "Create Post",
+    "viewAll": "View All",
+    "noData": "No data available",
+    "myPosts": "My Posts",
+    "manageAllPosts": "Manage all your posts",
+    "newPost": "New Post",
+    "searchPosts": "Search posts...",
+    "search": "Search",
+    "postTitle": "Title",
+    "author": "Author",
+    "status": "Status",
+    "revoked": "Revoked",
+    "views": "Views",
+    "date": "Date",
+    "actions": "Actions",
+    "published": "Published",
+    "draft": "Draft",
+    "pending": "Pending",
+    "rejected": "Rejected",
+    "view": "View",
+    "edit": "Edit",
+    "delete": "Delete",
+    "preview": "Preview",
+    "openPost": "Open Page",
+    "previewTitle": "Preview",
+    "previewEmpty": "No content yet",
+    "writeMode": "Write",
+    "previewMode": "Preview",
+    "splitMode": "Live",
+    "messages": "Messages",
+    "inbox": "View your messages",
+    "noMessages": "No messages",
+    "read": "Read",
+    "unread": "Unread",
+    "open": "Open",
+    "messageTitle": "Title",
+    "viewAllMessages": "View all",
+    "unreadCount": "{count} unread",
+    "back": "Back",
+    "messageNotFound": "Message not found",
+    "selectMessageToView": "Select a message to view",
+    "fetchFailed": "Failed to fetch data",
+    "recent": "Recent",
+    "userFallback": "User",
+    "startWriting": "Start writing your next blog post",
+    "deleteConfirmTitle": "Confirm Delete",
+    "deleteConfirmDesc": "This action cannot be undone. Are you sure you want to delete this post?",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "deleteFailed": "Delete failed, please try again",
+    "deleting": "Deleting...",
+    "previewStatus": "Status",
+    "previewViews": "Views",
+    "previewCreated": "Created",
+    "editPost": "Edit Post",
+    "postDetails": "Post Details",
+    "fillPostInfo": "Fill in post information",
+    "titleLabel": "Title",
+    "titlePlaceholder": "Enter post title",
+    "contentLabel": "Content",
+    "contentPlaceholder": "Enter post content",
+    "statusLabel": "Status",
+    "creating": "Creating...",
+    "updating": "Updating...",
+    "savePost": "Save Post",
+    "createFailed": "Failed to create post",
+    "titleRequired": "Title is required",
+    "contentRequired": "Content is required",
+    "notAuthenticated": "Please sign in to create a post",
+    "serviceUnavailable": "Database is not configured",
+    "loading": "Loading...",
+    "perPage": "Per page",
+    "pageSummary": "Total {total}, page {page} / {totalPages}",
+    "searchPlaceholder": "Search...",
+    "quickNav": "Quick Navigation",
+    "noResults": "No results found",
+    "analytics": "Analytics",
+    "trackPerformance": "Track your content performance",
+    "totalViews": "Total Views",
+    "uniqueVisitors": "Unique Visitors",
+    "avgReadTime": "Avg. Read Time",
+    "growthRate": "Growth Rate",
+    "vsLastWeek": "vs last week",
+    "weeklyViewsTrend": "Weekly Views Trend",
+    "topPosts": "Top Posts",
+    "noTopPosts": "No top posts yet",
+    "viewsCount": "views",
+    "monday": "Mon",
+    "tuesday": "Tue",
+    "wednesday": "Wed",
+    "thursday": "Thu",
+    "friday": "Fri",
+    "saturday": "Sat",
+    "sunday": "Sun",
+    "settings": "Settings",
+    "manageSettings": "Manage your account settings and preferences",
+    "profile": "Profile",
+    "updateProfile": "Update your personal information",
+    "changeAvatar": "Change Avatar",
+    "avatarUrl": "Avatar URL",
+    "avatarPlaceholder": "https://example.com/avatar.png",
+    "avatarHint": "Paste an image URL (JPG/PNG/GIF).",
+    "name": "Name",
+    "namePlaceholder": "Enter your name",
+    "email": "Email",
+    "saving": "Saving...",
+    "saveChanges": "Save Changes",
+    "profileUpdated": "Profile updated",
+    "profileUpdateFailed": "Failed to update profile",
+    "security": "Security",
+    "managePassword": "Manage your password and security settings",
+    "currentPassword": "Current Password",
+    "currentPasswordDisabled": "Not required for OAuth accounts",
+    "newPassword": "New Password",
+    "confirmPassword": "Confirm Password",
+    "updatePassword": "Update Password",
+    "passwordUpdated": "Password updated",
+    "passwordUpdateFailed": "Failed to update password",
+    "noPasswordHint": "This account has no password yet. You can set one below.",
+    "dangerZone": "Danger Zone",
+    "irreversibleActions": "Irreversible actions for your account",
+    "deleteAccount": "Delete Account",
+    "deleteAccountConfirmTitle": "Delete account?",
+    "deleteAccountConfirmDesc": "This will permanently delete your account and all content.",
+    "confirmDelete": "Delete Account",
+    "accountDeleted": "Account deleted",
+    "accountDeleteFailed": "Failed to delete account"
+  },
+  "admin": {
+    "title": "Admin Panel",
+    "backToDashboard": "Back to Dashboard",
+    "logout": "Logout",
+    "users": "Users",
+    "posts": "Posts",
+    "settings": "Settings",
+    "analytics": "Analytics",
+    "totalUsers": "Total Users",
+    "activeUsers": "Active Users",
+    "newUsers": "New Users (30d)",
+    "totalPosts": "Total Posts",
+    "userManagement": "User Management",
+    "userManagementDesc": "Manage all user accounts",
+    "user": "User",
+    "makeAdmin": "Make Admin",
+    "banned": "Banned",
+    "postManagement": "Post Management",
+    "postManagementDesc": "Review and manage all posts",
+    "postTitle": "Title",
+    "date": "Date",
+    "view": "View",
+    "approve": "Approve",
+    "reject": "Reject",
+    "pending": "Pending",
+    "rejected": "Rejected",
+    "search": "Search users...",
+    "searchPosts": "Search posts...",
+    "actions": "Actions",
+    "edit": "Edit",
+    "delete": "Delete",
+    "messages": "Messages",
+    "messagesDesc": "Manage messages and track reads",
+    "sendMessage": "Send Message",
+    "editMessage": "Edit Message",
+    "messageTitle": "Title",
+    "messageTitlePlaceholder": "Enter message title",
+    "messageContent": "Content",
+    "messageContentPlaceholder": "Enter message content",
+    "messageTitleRequired": "Title is required",
+    "messageContentRequired": "Content is required",
+    "recipientMode": "Recipients",
+    "recipientAll": "All users",
+    "recipientByRole": "By role",
+    "recipientByStatus": "By status",
+    "recipientByUsers": "Specific users",
+    "selectRole": "Select role",
+    "selectStatus": "Select status",
+    "roleUser": "User",
+    "roleAdmin": "Admin",
+    "statusActive": "Active",
+    "statusInactive": "Inactive",
+    "statusBanned": "Banned",
+    "recipients": "Recipients",
+    "readCount": "Read",
+    "revoke": "Revoke",
+    "revokeTitle": "Confirm revoke?",
+    "revokeDesc": "After revoking, users will no longer see this message.",
+    "messageSent": "Message sent",
+    "messageUpdated": "Message updated",
+    "messageRevoked": "Message revoked",
+    "searchMessages": "Search messages...",
+    "noMessages": "No messages",
+    "preview": "Preview",
+    "previewEmpty": "No content yet",
+    "loadMore": "Load more",
+    "selectedUsers": "{count} selected",
+    "editHint": "Editing does not change recipients",
+    "saving": "Saving...",
+    "ban": "Ban",
+    "role": "Role",
+    "status": "Status",
+    "revoked": "Revoked",
+    "active": "Active",
+    "inactive": "Inactive",
+    "published": "Published",
+    "draft": "Draft",
+    "createdAt": "Created At",
+    "name": "Name",
+    "email": "Email",
+    "author": "Author",
+    "views": "Views",
+    "noUsers": "No users found",
+    "noPosts": "No posts found",
+    "loading": "Loading...",
+    "perPage": "Per page",
+    "pageSummary": "Total {total}, page {page} / {totalPages}",
+    "searchAction": "Search",
+    "searchUsers": "Search users...",
+    "actionFailed": "Action failed, please try again",
+    "fetchFailed": "Failed to fetch data",
+    "activate": "Activate",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "confirmTitle": "Confirm action",
+    "confirmMakeAdmin": "Promote this user to admin?",
+    "confirmBanUser": "Ban this user?",
+    "confirmActivateUser": "Activate this user?",
+    "confirmDeleteUser": "Delete this user? This cannot be undone.",
+    "confirmDeletePost": "Delete this post? This cannot be undone.",
+    "confirmApprovePost": "Approve and publish this post?",
+    "confirmRejectPost": "Reject this post?",
+    "previewTitle": "Post Preview",
+    "previewStatus": "Status",
+    "previewViews": "Views",
+    "previewCreated": "Created",
+    "unknownAuthor": "Unknown",
+    "siteSettings": "Site Settings",
+    "siteSettingsDesc": "Configure basic site information",
+    "securitySettings": "Security Settings",
+    "emailSettings": "Email Settings",
+    "configureSystemSettings": "Configure system settings",
+    "featureToggles": "Feature Toggles",
+    "featureTogglesDesc": "Enable or disable system features",
+    "userRegistration": "User Registration",
+    "userRegistrationDesc": "Allow new users to register",
+    "oauthLogin": "OAuth Login",
+    "oauthLoginDesc": "Allow login via GitHub/Google",
+    "emailNotifications": "Email Notifications",
+    "emailNotificationsDesc": "Send system notification emails",
+    "postModeration": "Post Moderation",
+    "postModerationDesc": "Require admin approval before publishing",
+    "contactEmail": "Contact Email",
+    "dangerZone": "Danger Zone",
+    "dangerZoneDesc": "These actions are irreversible. Please proceed with caution.",
+    "clearCache": "Clear All Cache",
+    "clearCacheDesc": "Clear all system cache data",
+    "clearCacheBtn": "Clear Cache",
+    "clearCacheConfirmTitle": "Clear cache?",
+    "clearCacheConfirmDesc": "This will revalidate pages and clear cached data.",
+    "clearCacheSuccess": "Cache cleared",
+    "clearCacheFailed": "Failed to clear cache",
+    "resetDatabase": "Reset Database",
+    "resetDatabaseDesc": "Delete all data and reset the database",
+    "resetDatabaseBtn": "Reset Database",
+    "resetDatabaseConfirmTitle": "Reset database?",
+    "resetDatabaseConfirmDesc": "This will delete all posts and non-admin users.",
+    "resetDatabaseSuccess": "Database reset",
+    "resetDatabaseFailed": "Failed to reset database",
+    "siteName": "Site Name",
+    "siteNamePlaceholder": "Enter site name",
+    "siteDescription": "Site Description",
+    "siteDescriptionPlaceholder": "Enter site description",
+    "siteUrl": "Site URL",
+    "siteUrlPlaceholder": "https://example.com",
+    "maintenanceMode": "Maintenance Mode",
+    "maintenanceModeDescription": "Enable to temporarily disable the site",
+    "smtpHost": "SMTP Host",
+    "smtpHostPlaceholder": "smtp.example.com",
+    "smtpPort": "SMTP Port",
+    "smtpPortPlaceholder": "587",
+    "smtpUser": "SMTP Username",
+    "smtpUserPlaceholder": "user@example.com",
+    "smtpPassword": "SMTP Password",
+    "smtpPasswordPlaceholder": "Enter SMTP password",
+    "testEmail": "Test Email Configuration",
+    "save": "Save Changes",
+    "saving": "Saving...",
+    "saveChanges": "Save changes",
+    "settingsSaved": "Settings saved",
+    "settingsSaveFailed": "Failed to save settings",
+    "settingsLoadFailed": "Failed to load settings",
+    "overview": "Overview",
+    "metrics": "Key Metrics",
+    "totalViews": "Total Views",
+    "avgViewsPerPost": "Avg Views/Post",
+    "vsLastMonth": "vs last month",
+    "recentActivity": "Recent Activity",
+    "systemStatus": "System Status",
+    "operational": "Operational",
+    "down": "Down",
+    "systemDataAnalytics": "System data analytics and statistics",
+    "userGrowth": "User Growth",
+    "postsPublished": "Posts Published",
+    "userDistribution": "User Distribution by Region",
+    "growthOverview": "Growth Overview",
+    "monthlyActiveUsers": "Monthly Active Users",
+    "dailyActiveUsers": "Daily Active Users",
+    "avgSessionDuration": "Avg. Session Duration",
+    "bounceRate": "Bounce Rate",
+    "months": {
+      "jan": "Jan",
+      "feb": "Feb",
+      "mar": "Mar",
+      "apr": "Apr",
+      "may": "May",
+      "jun": "Jun",
+      "jul": "Jul",
+      "aug": "Aug",
+      "sep": "Sep",
+      "oct": "Oct",
+      "nov": "Nov",
+      "dec": "Dec"
+    }
+  },
+  "theme": {
+    "toggle": "Toggle theme",
+    "mode": "Mode",
+    "color": "Color",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  },
+  "legal": {
+    "privacy": {
+      "title": "Privacy Policy",
+      "description": "How we collect, use, and protect your data",
+      "lastUpdated": "Last updated",
+      "sections": {
+        "intro": "We respect your privacy and are committed to protecting your personal data.",
+        "dataCollection": {
+          "title": "Data Collection",
+          "content": "We collect information you provide directly to us, such as when you create an account, use our services, or communicate with us."
+        },
+        "dataUse": {
+          "title": "How We Use Your Data",
+          "content": "We use the information we collect to provide, maintain, and improve our services, to develop new services, and to protect our company and our users."
+        },
+        "dataSecurity": {
+          "title": "Data Security",
+          "content": "We implement appropriate technical and organizational measures to protect your personal data against unauthorized or unlawful processing and against accidental loss, destruction, or damage."
+        },
+        "yourRights": {
+          "title": "Your Rights",
+          "content": "You have the right to access, update, or delete your personal information at any time. You can do this through your account settings or by contacting us."
+        }
+      }
+    },
+    "terms": {
+      "title": "Terms of Service",
+      "description": "Terms and conditions for using our services",
+      "lastUpdated": "Last updated",
+      "sections": {
+        "intro": "By accessing and using this service, you accept and agree to be bound by the terms and provision of this agreement.",
+        "useOfService": {
+          "title": "Use of Service",
+          "content": "You must follow any policies made available to you within the service. Don't misuse our services. You may use our services only as permitted by law."
+        },
+        "accounts": {
+          "title": "User Accounts",
+          "content": "When you create an account with us, you must provide accurate and complete information. You are responsible for safeguarding the password and for all activities that occur under your account."
+        },
+        "termination": {
+          "title": "Termination",
+          "content": "We may terminate or suspend your account and access to the service immediately, without prior notice or liability, for any reason whatsoever, including without limitation if you breach the Terms."
+        },
+        "limitation": {
+          "title": "Limitation of Liability",
+          "content": "In no event shall the company be liable for any indirect, incidental, special, consequential or punitive damages, including without limitation, loss of profits, data, use, goodwill, or other intangible losses."
+        }
+      }
+    },
+    "license": {
+      "title": "License",
+      "description": "MIT License - Open source and free to use",
+      "lastUpdated": "Last updated",
+      "mitLicense": "MIT License",
+      "sections": {
+        "intro": "This project is licensed under the MIT License. This means you are free to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the software.",
+        "permissions": {
+          "title": "Permissions",
+          "items": ["Commercial use", "Modification", "Distribution", "Private use"]
+        },
+        "conditions": {
+          "title": "Conditions",
+          "items": ["License and copyright notice must be included"]
+        },
+        "limitations": {
+          "title": "Limitations",
+          "items": ["No liability", "No warranty"]
+        },
+        "fullText": {
+          "title": "Full License Text",
+          "content": "Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
+        }
+      }
+    }
+  },
+  "docsPages": {
+    "api": {
+      "title": "API Reference",
+      "description": "Complete API documentation and endpoints",
+      "sections": {
+        "intro": "This section provides comprehensive API documentation for integrating with our services.",
+        "authentication": {
+          "title": "Authentication",
+          "content": "All API requests require authentication using Bearer tokens. Include your API key in the Authorization header."
+        },
+        "endpoints": {
+          "title": "Available Endpoints",
+          "items": [
+            "GET /api/users - Retrieve user list",
+            "POST /api/users - Create new user",
+            "GET /api/users/:id - Get user details",
+            "PUT /api/users/:id - Update user",
+            "DELETE /api/users/:id - Delete user"
+          ]
+        },
+        "rateLimit": {
+          "title": "Rate Limiting",
+          "content": "API requests are limited to 100 requests per minute per API key. Rate limit information is included in response headers."
+        },
+        "errors": {
+          "title": "Error Handling",
+          "content": "The API uses conventional HTTP response codes to indicate success or failure. Codes in the 2xx range indicate success, 4xx indicate client errors, and 5xx indicate server errors."
+        }
+      }
+    },
+    "examples": {
+      "title": "Examples",
+      "description": "Practical examples and code snippets",
+      "sections": {
+        "intro": "Learn by example with these practical code snippets and use cases.",
+        "basicSetup": {
+          "title": "Basic Setup",
+          "content": "Get started quickly with this basic configuration example."
+        },
+        "authentication": {
+          "title": "Authentication Example",
+          "content": "Example of implementing user authentication with our services."
+        },
+        "database": {
+          "title": "Database Operations",
+          "content": "Common database operations using Prisma ORM."
+        },
+        "deployment": {
+          "title": "Deployment Example",
+          "content": "Step-by-step guide to deploying your application."
+        }
+      }
+    }
+  }
+}
