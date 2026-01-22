@@ -2,10 +2,7 @@ import { NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { getCurrentUser } from "@/lib/auth/session"
 
-export async function GET(
-  request: Request,
-  context: { params: Promise<{ id: string }> },
-) {
+export async function GET(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
     const user = await getCurrentUser()
 
@@ -22,28 +19,17 @@ export async function GET(
     }
 
     const { id } = await context.params
-    const current = await db.preApplication.findUnique({
-      where: { id },
-      select: { userId: true },
-    })
 
-    if (!current) {
-      return NextResponse.json({ error: "Not found" }, { status: 404 })
-    }
-
-    const records = await db.preApplication.findMany({
-      where: { userId: current.userId },
-      orderBy: { createdAt: "desc" },
+    // 获取预申请的版本历史
+    const versions = await db.preApplicationVersion.findMany({
+      where: { preApplicationId: id },
+      orderBy: { version: "desc" },
       include: {
-        user: { select: { id: true, name: true, email: true } },
         reviewedBy: { select: { id: true, name: true, email: true } },
-        inviteCode: {
-          select: { id: true, code: true, expiresAt: true, usedAt: true, assignedAt: true },
-        },
       },
     })
 
-    return NextResponse.json({ records })
+    return NextResponse.json({ records: versions })
   } catch (error) {
     console.error("Admin pre-application history error:", error)
     return NextResponse.json({ error: "Failed to fetch history" }, { status: 500 })

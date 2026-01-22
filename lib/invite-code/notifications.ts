@@ -18,11 +18,7 @@ export function buildInviteCodeIssueMessage({
   locale,
 }: InviteCodeIssueNotificationInput) {
   const t = dict.inviteCode.notifications
-  const lines = [
-    t.issueIntro,
-    `${t.issuedByLabel}${issuedBy}`,
-    `${t.inviteCodeLabel}${code}`,
-  ]
+  const lines = [t.issueIntro, `${t.issuedByLabel}${issuedBy}`, `${t.inviteCodeLabel}${code}`]
 
   if (expiresAt) {
     lines.push(`${t.inviteExpiresLabel}${expiresAt.toLocaleString(locale)}`)

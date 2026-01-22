@@ -50,10 +50,7 @@ export async function POST(request: NextRequest) {
     })
 
     if (inviteCodes.length === 0) {
-      return NextResponse.json(
-        { error: "No valid invite codes found" },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: "No valid invite codes found" }, { status: 400 })
     }
 
     const token = nanoid(8).toUpperCase()

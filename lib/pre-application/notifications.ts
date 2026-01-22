@@ -25,18 +25,12 @@ export function buildPreApplicationMessage({
   const title = isApproved ? t.approvedTitle : t.rejectedTitle
   const intro = isApproved ? t.approvedIntro : t.rejectedIntro
 
-  const lines = [
-    intro,
-    `${t.reviewerLabel}${reviewerName}`,
-    `${t.guidanceLabel}${guidance}`,
-  ]
+  const lines = [intro, `${t.reviewerLabel}${reviewerName}`, `${t.guidanceLabel}${guidance}`]
 
   if (isApproved && inviteCode) {
     lines.push(`${t.inviteCodeLabel}${inviteCode}`)
     if (inviteExpiresAt) {
-      lines.push(
-        `${t.inviteExpiresLabel}${inviteExpiresAt.toLocaleString(locale)}`,
-      )
+      lines.push(`${t.inviteExpiresLabel}${inviteExpiresAt.toLocaleString(locale)}`)
     }
   }
 

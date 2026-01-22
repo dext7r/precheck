@@ -8,10 +8,7 @@ const usageSchema = z.object({
   used: z.boolean(),
 })
 
-export async function PATCH(
-  request: NextRequest,
-  context: { params: Promise<{ id: string }> },
-) {
+export async function PATCH(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
     const user = await getCurrentUser()
 

@@ -26,7 +26,16 @@ import {
 } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { ConfirmDialog } from "@/components/admin/confirm-dialog"
-import { ChevronsUpDown, CheckIcon, MoreHorizontal, Send, ShieldOff, CheckCircle2, Copy, Check } from "lucide-react"
+import {
+  ChevronsUpDown,
+  CheckIcon,
+  MoreHorizontal,
+  Send,
+  ShieldOff,
+  CheckCircle2,
+  Copy,
+  Check,
+} from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -100,9 +109,15 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
   const [issueNote, setIssueNote] = useState("")
   const [issuing, setIssuing] = useState(false)
   const [userSearch, setUserSearch] = useState("")
-  const [userResults, setUserResults] = useState<Array<{ id: string; name: string | null; email: string }>>([])
+  const [userResults, setUserResults] = useState<
+    Array<{ id: string; name: string | null; email: string }>
+  >([])
   const [userLoading, setUserLoading] = useState(false)
-  const [selectedUser, setSelectedUser] = useState<{ id: string; name: string | null; email: string } | null>(null)
+  const [selectedUser, setSelectedUser] = useState<{
+    id: string
+    name: string | null
+    email: string
+  } | null>(null)
   const [userPickerOpen, setUserPickerOpen] = useState(false)
   const [invalidateOpen, setInvalidateOpen] = useState(false)
   const [invalidateRecord, setInvalidateRecord] = useState<InviteCodeRecord | null>(null)
@@ -192,7 +207,8 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
       .replace("{totalPages}", summary.totalPages.toString())
 
   const getStatus = (record: InviteCodeRecord) => {
-    if (record.usedAt) return { label: t.inviteCodeStatusUsed, className: "bg-slate-200 text-slate-700" }
+    if (record.usedAt)
+      return { label: t.inviteCodeStatusUsed, className: "bg-slate-200 text-slate-700" }
     if (record.expiresAt && new Date(record.expiresAt).getTime() <= now) {
       return { label: t.inviteCodeStatusExpired, className: "bg-rose-100 text-rose-700" }
     }
@@ -343,9 +359,7 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
       return
     }
     if (issueTargetType === "email" && !issueTargetValue.trim()) {
-      toast.error(
-        issueTargetType === "user" ? t.inviteCodeIssueUserRequired : t.inviteCodeIssueEmailRequired,
-      )
+      toast.error(t.inviteCodeIssueEmailRequired)
       return
     }
     setIssuing(true)
@@ -362,7 +376,7 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
         locale,
       }
 
-      if (issueTargetType === "user") {
+      if (issueTargetType === "user" && selectedUser) {
         payload.userId = selectedUser.id
       } else {
         payload.email = issueTargetValue.trim()
@@ -537,7 +551,9 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
         render: (record) =>
           record.preApplication ? (
             <div>
-              <p className="text-sm">{record.preApplication.user.name || record.preApplication.user.email}</p>
+              <p className="text-sm">
+                {record.preApplication.user.name || record.preApplication.user.email}
+              </p>
               <p className="text-xs text-muted-foreground">{record.preApplication.registerEmail}</p>
             </div>
           ) : record.issuedToUser ? (
@@ -594,14 +610,14 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem
-                disabled={record.usedAt || isExpired(record) || isIssued(record)}
+                disabled={!!record.usedAt || isExpired(record) || isIssued(record)}
                 onClick={() => openIssueDialog(record)}
               >
                 <Send className="mr-2 h-4 w-4" />
                 {t.inviteCodeIssue}
               </DropdownMenuItem>
               <DropdownMenuItem
-                disabled={record.usedAt || isExpired(record)}
+                disabled={!!record.usedAt || isExpired(record)}
                 onClick={() => openInvalidate(record)}
               >
                 <ShieldOff className="mr-2 h-4 w-4" />
@@ -654,16 +670,28 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
                 </div>
                 <div className="rounded-md border border-dashed p-3 text-xs text-muted-foreground">
                   <p>
-                    {t.inviteCodeImportMatched.replace("{count}", bulkSummary.codes.length.toString())}
+                    {t.inviteCodeImportMatched.replace(
+                      "{count}",
+                      bulkSummary.codes.length.toString(),
+                    )}
                   </p>
                   <p>
-                    {t.inviteCodeImportInvalid.replace("{count}", bulkSummary.invalidCount.toString())}
+                    {t.inviteCodeImportInvalid.replace(
+                      "{count}",
+                      bulkSummary.invalidCount.toString(),
+                    )}
                   </p>
                   <p>
-                    {t.inviteCodeImportDuplicates.replace("{count}", bulkSummary.duplicates.toString())}
+                    {t.inviteCodeImportDuplicates.replace(
+                      "{count}",
+                      bulkSummary.duplicates.toString(),
+                    )}
                   </p>
                 </div>
-                <Button onClick={handleImport} disabled={importing || bulkSummary.codes.length === 0}>
+                <Button
+                  onClick={handleImport}
+                  disabled={importing || bulkSummary.codes.length === 0}
+                >
                   {importing ? t.inviteCodeImporting : t.inviteCodeImportButton}
                 </Button>
               </div>
@@ -765,7 +793,7 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
               />
             </div>
             <Button onClick={handleGenerateQueryToken} disabled={generatingToken}>
-              {generatingToken ? t.saving : (t.queryTokenGenerate || "生成查询码")}
+              {generatingToken ? t.saving : t.queryTokenGenerate || "生成查询码"}
             </Button>
           </div>
         </Card>
@@ -802,7 +830,8 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
               </div>
               {record.preApplication && (
                 <div className="mt-2 text-xs text-muted-foreground">
-                  {t.inviteCodeAssignedTo}：{record.preApplication.user.name || record.preApplication.user.email}
+                  {t.inviteCodeAssignedTo}：
+                  {record.preApplication.user.name || record.preApplication.user.email}
                 </div>
               )}
               {!record.preApplication && record.issuedToUser && (
@@ -826,14 +855,14 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
                 <Button
                   variant="outline"
                   onClick={() => openIssueDialog(record)}
-                  disabled={record.usedAt || isExpired(record) || isIssued(record)}
+                  disabled={!!record.usedAt || isExpired(record) || isIssued(record)}
                 >
                   {t.inviteCodeIssue}
                 </Button>
                 <Button
                   variant="outline"
                   onClick={() => openInvalidate(record)}
-                  disabled={record.usedAt || isExpired(record)}
+                  disabled={!!record.usedAt || isExpired(record)}
                 >
                   {t.inviteCodeInvalidate}
                 </Button>
@@ -883,11 +912,7 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
                 <div className="space-y-2">
                   <Popover open={userPickerOpen} onOpenChange={setUserPickerOpen}>
                     <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        role="combobox"
-                        className="w-full justify-between"
-                      >
+                      <Button variant="outline" role="combobox" className="w-full justify-between">
                         {selectedUser ? (
                           <span>{selectedUser.name || selectedUser.email}</span>
                         ) : (
@@ -930,7 +955,9 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
                                 />
                                 <div className="flex flex-col">
                                   <span className="text-sm">{label}</span>
-                                  <span className="text-xs text-muted-foreground">{user.email}</span>
+                                  <span className="text-xs text-muted-foreground">
+                                    {user.email}
+                                  </span>
                                 </div>
                               </CommandItem>
                             )
@@ -1014,11 +1041,7 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
                 readOnly
                 className="flex-1 font-mono text-lg tracking-widest"
               />
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={handleCopyToken}
-              >
+              <Button variant="outline" size="icon" onClick={handleCopyToken}>
                 {tokenCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
               </Button>
             </div>
@@ -1027,9 +1050,7 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
             </p>
           </div>
           <DialogFooter>
-            <Button onClick={() => setQueryTokenDialogOpen(false)}>
-              {t.confirm || "确定"}
-            </Button>
+            <Button onClick={() => setQueryTokenDialogOpen(false)}>{t.confirm || "确定"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

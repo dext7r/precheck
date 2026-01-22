@@ -5,7 +5,10 @@ import { db } from "@/lib/db"
 import { getCurrentUser } from "@/lib/auth/session"
 
 const querySchema = z.object({
-  range: z.coerce.number().int().refine((value) => [7, 30, 90, 180, 365].includes(value)),
+  range: z.coerce
+    .number()
+    .int()
+    .refine((value) => [7, 30, 90, 180, 365].includes(value)),
   granularity: z.enum(["day", "week", "month"]),
 })
 
@@ -118,8 +121,7 @@ export async function GET(request: NextRequest) {
       expired: 0,
     }))
 
-    const dateTrunc = (column: string) =>
-      Prisma.raw(`date_trunc('${granularity}', "${column}")`)
+    const dateTrunc = (column: string) => Prisma.raw(`date_trunc('${granularity}', "${column}")`)
 
     const [
       pendingCount,

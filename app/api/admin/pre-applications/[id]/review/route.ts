@@ -20,10 +20,7 @@ const reviewSchema = z.object({
   locale: z.string().optional(),
 })
 
-export async function POST(
-  request: NextRequest,
-  context: { params: Promise<{ id: string }> },
-) {
+export async function POST(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
     const user = await getCurrentUser()
 
@@ -45,9 +42,23 @@ export async function POST(
 
     const record = await db.preApplication.findUnique({
       where: { id },
-      include: {
+      select: {
+        id: true,
+        userId: true,
+        essay: true,
+        source: true,
+        sourceDetail: true,
+        registerEmail: true,
+        group: true,
+        status: true,
+        guidance: true,
+        reviewedAt: true,
+        version: true,
+        inviteCodeId: true,
         user: { select: { id: true, name: true, email: true } },
-        inviteCode: { select: { id: true, code: true, expiresAt: true, usedAt: true, assignedAt: true } },
+        inviteCode: {
+          select: { id: true, code: true, expiresAt: true, usedAt: true, assignedAt: true },
+        },
       },
     })
 
@@ -66,13 +77,11 @@ export async function POST(
     const dict = await getDictionary(currentLocale)
     const reviewerName = user.name || user.email
 
-    let inviteCodeRecord = null as
-      | {
-          id: string
-          code: string
-          expiresAt: Date | null
-        }
-      | null
+    let inviteCodeRecord = null as {
+      id: string
+      code: string
+      expiresAt: Date | null
+    } | null
 
     const guidance = data.guidance.trim()
     const isApproved = data.action === "APPROVE"
@@ -128,15 +137,25 @@ export async function POST(
             status: PreApplicationStatus.APPROVED,
             guidance,
             reviewedAt: new Date(),
-            reviewedById: user.id,
-            inviteCodeId: inviteCode.id,
-            reviewCount: { increment: 1 },
+            reviewedBy: { connect: { id: user.id } },
+            inviteCode: { connect: { id: inviteCode.id } },
           },
           include: {
             reviewedBy: { select: { id: true, name: true, email: true } },
             inviteCode: {
               select: { id: true, code: true, expiresAt: true, usedAt: true, assignedAt: true },
             },
+          },
+        })
+
+        // 更新版本历史记录
+        await tx.preApplicationVersion.updateMany({
+          where: { preApplicationId: record.id, version: record.version },
+          data: {
+            status: PreApplicationStatus.APPROVED,
+            guidance,
+            reviewedAt: new Date(),
+            reviewedById: user.id,
           },
         })
 
@@ -229,15 +248,25 @@ export async function POST(
             status: PreApplicationStatus.REJECTED,
             guidance,
             reviewedAt: new Date(),
-            reviewedById: user.id,
-            inviteCodeId: null,
-            reviewCount: { increment: 1 },
+            reviewedBy: { connect: { id: user.id } },
+            inviteCode: { disconnect: true },
           },
           include: {
             reviewedBy: { select: { id: true, name: true, email: true } },
             inviteCode: {
               select: { id: true, code: true, expiresAt: true, usedAt: true, assignedAt: true },
             },
+          },
+        })
+
+        // 更新版本历史记录
+        await tx.preApplicationVersion.updateMany({
+          where: { preApplicationId: record.id, version: record.version },
+          data: {
+            status: PreApplicationStatus.REJECTED,
+            guidance,
+            reviewedAt: new Date(),
+            reviewedById: user.id,
           },
         })
 

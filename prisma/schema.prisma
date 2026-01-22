@@ -37,6 +37,7 @@ model User {
   messagesRevoked   Message[] @relation("RevokedMessages")
   preApplications          PreApplication[]
   preApplicationsReviewed PreApplication[] @relation("ReviewedPreApplications")
+  preApplicationVersionsReviewed PreApplicationVersion[] @relation("ReviewedVersions")
   inviteCodesCreated     InviteCode[] @relation("InviteCodesCreated")
   inviteCodesAssigned    InviteCode[] @relation("InviteCodesAssigned")
   inviteCodesUsed        InviteCode[] @relation("InviteCodesUsed")
@@ -145,18 +146,43 @@ model PreApplication {
   guidance      String?
   reviewedAt    DateTime?
   reviewedById  String?
-  reviewCount   Int                    @default(0)
+  resubmitCount Int                    @default(0)  // 重新提交次数（驳回后）
+  version       Int                    @default(1)  // 乐观锁版本号
   inviteCodeId  String?                @unique
   createdAt     DateTime               @default(now())
   updatedAt     DateTime               @updatedAt
 
-  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  reviewedBy User?      @relation("ReviewedPreApplications", fields: [reviewedById], references: [id])
-  inviteCode InviteCode? @relation("PreApplicationInviteCode", fields: [inviteCodeId], references: [id])
+  user       User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reviewedBy User?                     @relation("ReviewedPreApplications", fields: [reviewedById], references: [id])
+  inviteCode InviteCode?               @relation("PreApplicationInviteCode", fields: [inviteCodeId], references: [id])
+  versions   PreApplicationVersion[]   // 版本历史
 
   @@index([status, createdAt])
   @@index([userId, createdAt])
   @@index([registerEmail])
+}
+
+// 预申请版本历史表
+model PreApplicationVersion {
+  id                String                 @id @default(cuid())
+  preApplicationId  String
+  version           Int
+  essay             String
+  source            PreApplicationSource?
+  sourceDetail      String?
+  registerEmail     String
+  group             PreApplicationGroup
+  status            PreApplicationStatus   // 当前状态（会在审核时更新）
+  guidance          String?                // 审核意见
+  reviewedAt        DateTime?              // 审核时间
+  reviewedById      String?                // 审核人 ID
+  createdAt         DateTime               @default(now())
+
+  preApplication    PreApplication @relation(fields: [preApplicationId], references: [id], onDelete: Cascade)
+  reviewedBy        User?          @relation("ReviewedVersions", fields: [reviewedById], references: [id])
+
+  @@unique([preApplicationId, version])
+  @@index([preApplicationId])
 }
 
 model InviteCode {

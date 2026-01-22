@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
+import { X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -29,7 +30,12 @@ import type { Dictionary } from "@/lib/i18n/get-dictionary"
 import type { Locale } from "@/lib/i18n/config"
 import { preApplicationGroups, preApplicationSources } from "@/lib/pre-application/constants"
 import { PostContent } from "@/components/posts/post-content"
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion"
 import { cn } from "@/lib/utils"
 
 type AdminPreApplication = {
@@ -44,10 +50,26 @@ type AdminPreApplication = {
   guidance: string | null
   reviewedAt: string | null
   createdAt: string
+  updatedAt: string
   user: { id: string; name: string | null; email: string }
   reviewedBy: { id: string; name: string | null; email: string } | null
   inviteCode: { id: string; code: string; expiresAt: string | null; usedAt: string | null } | null
-  reviewStage?: "INITIAL" | "FOLLOW_UP"
+  reviewRound?: number
+}
+
+type PreApplicationVersion = {
+  id: string
+  version: number
+  essay: string
+  source: string | null
+  sourceDetail: string | null
+  registerEmail: string
+  group: string
+  status: "PENDING" | "APPROVED" | "REJECTED"
+  guidance: string | null
+  reviewedAt: string | null
+  createdAt: string
+  reviewedBy: { id: string; name: string | null; email: string } | null
 }
 
 interface AdminPreApplicationsTableProps {
@@ -73,6 +95,10 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
   const [search, setSearch] = useState("")
   const [searchInput, setSearchInput] = useState("")
   const [statusFilter, setStatusFilter] = useState("ALL")
+  const [registerEmailFilter, setRegisterEmailFilter] = useState("")
+  const [registerEmailInput, setRegisterEmailInput] = useState("")
+  const [reviewRoundFilter, setReviewRoundFilter] = useState("ALL")
+  const [inviteStatusFilter, setInviteStatusFilter] = useState("ALL")
   const [sortBy, setSortBy] = useState("createdAt")
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc")
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -82,7 +108,7 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
   const [inviteCode, setInviteCode] = useState("")
   const [inviteExpiresAt, setInviteExpiresAt] = useState("")
   const [submitting, setSubmitting] = useState(false)
-  const [historyRecords, setHistoryRecords] = useState<AdminPreApplication[]>([])
+  const [historyRecords, setHistoryRecords] = useState<PreApplicationVersion[]>([])
   const [historyLoading, setHistoryLoading] = useState(false)
   const [inviteOptions, setInviteOptions] = useState<
     Array<{ id: string; code: string; expiresAt: string | null; usedAt: string | null }>
@@ -120,13 +146,21 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
   const fetchRecords = async () => {
     setLoading(true)
     try {
+      // 映射前端排序字段到API字段
+      const sortByMap: Record<string, string> = {
+        reviewRound: "resubmitCount",
+        inviteStatus: "inviteCodeId",
+      }
       const params = new URLSearchParams({
         page: page.toString(),
         limit: pageSize.toString(),
-        sortBy,
+        sortBy: sortByMap[sortBy] || sortBy,
         sortOrder,
         ...(search && { search }),
         ...(statusFilter !== "ALL" && { status: statusFilter }),
+        ...(registerEmailFilter && { registerEmail: registerEmailFilter }),
+        ...(reviewRoundFilter !== "ALL" && { reviewRound: reviewRoundFilter }),
+        ...(inviteStatusFilter !== "ALL" && { inviteStatus: inviteStatusFilter }),
       })
       const res = await fetch(`/api/admin/pre-applications?${params}`)
       if (!res.ok) {
@@ -145,7 +179,17 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
 
   useEffect(() => {
     fetchRecords()
-  }, [page, pageSize, search, statusFilter, sortBy, sortOrder])
+  }, [
+    page,
+    pageSize,
+    search,
+    statusFilter,
+    registerEmailFilter,
+    reviewRoundFilter,
+    inviteStatusFilter,
+    sortBy,
+    sortOrder,
+  ])
 
   const handleSearch = () => {
     setSearch(searchInput)
@@ -300,7 +344,7 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
       {
         key: "user",
         label: t.preApplicationUser,
-        width: "18%",
+        width: "14%",
         render: (record) => (
           <div>
             <p className="font-medium">{record.user.name || record.user.email}</p>
@@ -311,46 +355,53 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
       {
         key: "registerEmail",
         label: t.preApplicationRegisterEmail,
-        width: "18%",
+        width: "14%",
         render: (record) => <span className="text-sm">{record.registerEmail}</span>,
       },
       {
         key: "group",
         label: t.preApplicationGroup,
-        width: "10%",
+        width: "8%",
         render: (record) => <span className="text-sm">{getGroupLabel(record.group)}</span>,
       },
       {
         key: "status",
         label: t.preApplicationStatus,
-        width: "12%",
+        width: "8%",
         sortable: true,
         render: (record) => statusBadge(record.status),
       },
       {
-        key: "reviewStage",
-        label: t.reviewStage,
-        width: "10%",
+        key: "reviewRound",
+        label: t.reviewRound,
+        width: "8%",
+        sortable: true,
         render: (record) => (
           <span className="text-sm text-muted-foreground">
-            {record.reviewStage === "FOLLOW_UP" ? t.reviewStageFollowUp : t.reviewStageInitial}
+            {t.reviewRoundLabel?.replace("{n}", String(record.reviewRound ?? 1)) ??
+              `${record.reviewRound ?? 1}审`}
           </span>
         ),
       },
       {
-        key: "reviewer",
-        label: t.preApplicationReviewer,
-        width: "16%",
+        key: "inviteStatus",
+        label: t.inviteStatus,
+        width: "8%",
+        sortable: true,
         render: (record) => (
-          <span className="text-sm text-muted-foreground">
-            {record.reviewedBy?.name || record.reviewedBy?.email || "-"}
-          </span>
+          <Badge
+            className={
+              record.inviteCode ? "bg-emerald-100 text-emerald-700" : "bg-gray-100 text-gray-600"
+            }
+          >
+            {record.inviteCode ? t.inviteStatusIssued : t.inviteStatusNone}
+          </Badge>
         ),
       },
       {
         key: "createdAt",
         label: t.preApplicationCreatedAt,
-        width: "14%",
+        width: "12%",
         sortable: true,
         render: (record) => (
           <span className="text-sm text-muted-foreground">
@@ -359,9 +410,20 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
         ),
       },
       {
+        key: "updatedAt",
+        label: t.preApplicationUpdatedAt,
+        width: "12%",
+        sortable: true,
+        render: (record) => (
+          <span className="text-sm text-muted-foreground">
+            {new Date(record.updatedAt).toLocaleString(locale)}
+          </span>
+        ),
+      },
+      {
         key: "actions",
         label: t.actions,
-        width: "12%",
+        width: "10%",
         render: (record) => (
           <Button variant="ghost" size="sm" onClick={() => openDialog(record)}>
             {record.status === "PENDING" ? t.preApplicationReviewAction : t.preApplicationView}
@@ -374,20 +436,74 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div className="flex flex-1 flex-col gap-2 md:flex-row md:items-center">
-          <Input
-            value={searchInput}
-            onChange={(event) => setSearchInput(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") handleSearch()
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-wrap gap-2">
+          {/* 用户搜索 */}
+          <div className="relative">
+            <Input
+              value={searchInput}
+              onChange={(event) => setSearchInput(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") handleSearch()
+              }}
+              placeholder={t.searchUsers}
+              className="w-48 pr-8"
+            />
+            {searchInput && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchInput("")
+                  setSearch("")
+                  setPage(1)
+                }}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+          {/* 注册邮箱 */}
+          <div className="relative">
+            <Input
+              value={registerEmailInput}
+              onChange={(event) => setRegisterEmailInput(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  setRegisterEmailFilter(registerEmailInput)
+                  setPage(1)
+                }
+              }}
+              placeholder={t.preApplicationRegisterEmail}
+              className="w-48 pr-8"
+            />
+            {registerEmailInput && (
+              <button
+                type="button"
+                onClick={() => {
+                  setRegisterEmailInput("")
+                  setRegisterEmailFilter("")
+                  setPage(1)
+                }}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+          <Button
+            variant="outline"
+            onClick={() => {
+              setSearch(searchInput)
+              setRegisterEmailFilter(registerEmailInput)
+              setPage(1)
             }}
-            placeholder={t.searchUsers}
-            className="md:w-72"
-          />
-          <Button variant="outline" onClick={handleSearch}>
+          >
             {t.searchAction}
           </Button>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {/* 状态筛选 */}
           <Select
             value={statusFilter}
             onValueChange={(value) => {
@@ -395,7 +511,7 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
               setPage(1)
             }}
           >
-            <SelectTrigger className="md:w-48">
+            <SelectTrigger className="w-36">
               <SelectValue placeholder={t.statusAll} />
             </SelectTrigger>
             <SelectContent>
@@ -405,6 +521,62 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
               <SelectItem value="REJECTED">{t.rejected}</SelectItem>
             </SelectContent>
           </Select>
+          {/* 审核轮次筛选 */}
+          <Select
+            value={reviewRoundFilter}
+            onValueChange={(value) => {
+              setReviewRoundFilter(value)
+              setPage(1)
+            }}
+          >
+            <SelectTrigger className="w-36">
+              <SelectValue placeholder={t.reviewRound} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">
+                {t.reviewRound}: {t.statusAll}
+              </SelectItem>
+              <SelectItem value="1">{t.reviewRoundLabel?.replace("{n}", "1") ?? "1审"}</SelectItem>
+              <SelectItem value="2">{t.reviewRoundLabel?.replace("{n}", "2") ?? "2审"}</SelectItem>
+              <SelectItem value="3">{t.reviewRoundLabel?.replace("{n}", "3") ?? "3审"}</SelectItem>
+            </SelectContent>
+          </Select>
+          {/* 发码状态筛选 */}
+          <Select
+            value={inviteStatusFilter}
+            onValueChange={(value) => {
+              setInviteStatusFilter(value)
+              setPage(1)
+            }}
+          >
+            <SelectTrigger className="w-36">
+              <SelectValue placeholder={t.inviteStatus} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">
+                {t.inviteStatus}: {t.statusAll}
+              </SelectItem>
+              <SelectItem value="issued">{t.inviteStatusIssued}</SelectItem>
+              <SelectItem value="none">{t.inviteStatusNone}</SelectItem>
+            </SelectContent>
+          </Select>
+          {/* 重置按钮 */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setSearchInput("")
+              setSearch("")
+              setRegisterEmailInput("")
+              setRegisterEmailFilter("")
+              setStatusFilter("ALL")
+              setReviewRoundFilter("ALL")
+              setInviteStatusFilter("ALL")
+              setPage(1)
+            }}
+          >
+            {t.reset}
+          </Button>
         </div>
       </div>
 
@@ -432,16 +604,33 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
                 <p className="font-medium">{record.user.name || record.user.email}</p>
                 <p className="text-xs text-muted-foreground">{record.registerEmail}</p>
               </div>
-              {statusBadge(record.status)}
+              <div className="flex flex-col items-end gap-1">
+                {statusBadge(record.status)}
+                <Badge
+                  className={
+                    record.inviteCode
+                      ? "bg-emerald-100 text-emerald-700"
+                      : "bg-gray-100 text-gray-600"
+                  }
+                >
+                  {record.inviteCode ? t.inviteStatusIssued : t.inviteStatusNone}
+                </Badge>
+              </div>
             </div>
             <div className="mt-2 text-xs text-muted-foreground">
-              {t.reviewStage}：
-              {record.reviewStage === "FOLLOW_UP" ? t.reviewStageFollowUp : t.reviewStageInitial}
+              {t.reviewRound}：
+              {t.reviewRoundLabel?.replace("{n}", String(record.reviewRound ?? 1)) ??
+                `${record.reviewRound ?? 1}审`}
             </div>
-            <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
-              <span>{getGroupLabel(record.group)}</span>
-              <span>{new Date(record.createdAt).toLocaleDateString(locale)}</span>
+            <div className="mt-2 grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+              <span>
+                {t.preApplicationCreatedAt}：{new Date(record.createdAt).toLocaleString(locale)}
+              </span>
+              <span>
+                {t.preApplicationUpdatedAt}：{new Date(record.updatedAt).toLocaleString(locale)}
+              </span>
             </div>
+            <div className="mt-2 text-xs text-muted-foreground">{getGroupLabel(record.group)}</div>
             <Button className="mt-3 w-full" variant="outline" onClick={() => openDialog(record)}>
               {record.status === "PENDING" ? t.preApplicationReviewAction : t.preApplicationView}
             </Button>
@@ -498,9 +687,7 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
 
               <div className="space-y-3">
                 <p className="text-sm font-medium">{dict.preApplication.historyTitle}</p>
-                {historyLoading && (
-                  <p className="text-xs text-muted-foreground">{t.loading}</p>
-                )}
+                {historyLoading && <p className="text-xs text-muted-foreground">{t.loading}</p>}
                 {!historyLoading && historyRecords.length === 0 && (
                   <p className="text-xs text-muted-foreground">
                     {dict.preApplication.historyEmpty}
@@ -508,38 +695,47 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
                 )}
                 {!historyLoading && historyRecords.length > 0 && (
                   <Accordion type="multiple" className="rounded-lg border border-border">
-                    {historyRecords.map((item, index) => (
+                    {historyRecords.map((item) => (
                       <AccordionItem key={item.id} value={item.id} className="px-3">
                         <AccordionTrigger className="py-3 text-sm">
                           <div className="flex flex-1 items-center justify-between gap-3 pr-3">
                             <span>
-                              {new Date(item.createdAt).toLocaleString(locale)}
-                              {index === 0 ? ` · ${dict.preApplication.submitted}` : ""}
+                              {t.reviewRoundLabel?.replace("{n}", String(item.version)) ??
+                                `${item.version}审`}{" "}
+                              · {new Date(item.createdAt).toLocaleString(locale)}
                             </span>
                             {statusBadge(item.status)}
                           </div>
                         </AccordionTrigger>
-                        <AccordionContent className="pb-3 text-xs text-muted-foreground">
-                          <div className="space-y-1">
-                            <p>
-                              {t.preApplicationReviewer}：
-                              {item.reviewedBy?.name || item.reviewedBy?.email || "-"}
+                        <AccordionContent className="space-y-3 pb-3">
+                          <div className="rounded-lg border bg-muted/30 p-3">
+                            <p className="mb-2 text-xs font-medium text-muted-foreground">
+                              {t.preApplicationEssay}
                             </p>
-                            <p>
-                              {dict.preApplication.review.reviewedAt}：
-                              {item.reviewedAt
-                                ? new Date(item.reviewedAt).toLocaleString(locale)
-                                : "-"}
-                            </p>
-                            <p className="whitespace-pre-wrap">
-                              {dict.preApplication.review.guidance}：{item.guidance || "-"}
-                            </p>
-                            {item.inviteCode && (
-                              <p>
-                                {dict.preApplication.invite.code}：{item.inviteCode.code}
-                              </p>
-                            )}
+                            <PostContent
+                              content={item.essay}
+                              emptyMessage={t.preApplicationEssay}
+                            />
                           </div>
+                          {item.reviewedAt ? (
+                            <div className="space-y-1 text-xs text-muted-foreground">
+                              <p>
+                                {t.preApplicationReviewer}：
+                                {item.reviewedBy?.name || item.reviewedBy?.email || "-"}
+                              </p>
+                              <p>
+                                {dict.preApplication.review.reviewedAt}：
+                                {new Date(item.reviewedAt).toLocaleString(locale)}
+                              </p>
+                              <p className="whitespace-pre-wrap">
+                                {dict.preApplication.review.guidance}：{item.guidance || "-"}
+                              </p>
+                            </div>
+                          ) : (
+                            <p className="text-xs text-muted-foreground italic">
+                              {dict.preApplication.status.pending}
+                            </p>
+                          )}
                         </AccordionContent>
                       </AccordionItem>
                     ))}
@@ -553,7 +749,8 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
                 {statusBadge(selected.status)}
                 {selected.reviewedBy && (
                   <span className="text-xs text-muted-foreground">
-                    {t.preApplicationReviewer}：{selected.reviewedBy.name || selected.reviewedBy.email}
+                    {t.preApplicationReviewer}：
+                    {selected.reviewedBy.name || selected.reviewedBy.email}
                   </span>
                 )}
               </div>
@@ -562,7 +759,10 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
                     <Label>{t.reviewAction}</Label>
-                    <Select value={reviewAction} onValueChange={(value) => setReviewAction(value as "APPROVE" | "REJECT")}>
+                    <Select
+                      value={reviewAction}
+                      onValueChange={(value) => setReviewAction(value as "APPROVE" | "REJECT")}
+                    >
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>

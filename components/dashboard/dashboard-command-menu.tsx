@@ -113,13 +113,6 @@ export function DashboardCommandMenu({ locale }: DashboardCommandMenuProps) {
       icon: ClipboardList,
       shortcut: "⌘3",
     },
-    {
-      id: "review-history",
-      label: dict.dashboard.reviewHistory,
-      path: `/${locale}/dashboard/pre-application/history`,
-      icon: Clock,
-      shortcut: "⌘4",
-    },
   ]
 
   return (

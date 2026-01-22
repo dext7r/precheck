@@ -32,6 +32,7 @@ export interface User {
   messagesRevoked: Message[]
   preApplications: PreApplication[]
   preApplicationsReviewed: PreApplication[]
+  preApplicationVersionsReviewed: PreApplicationVersion[]
   inviteCodesCreated: InviteCode[]
   inviteCodesAssigned: InviteCode[]
   inviteCodesUsed: InviteCode[]
@@ -121,13 +122,33 @@ export interface PreApplication {
   guidance: string | null
   reviewedAt: Date | null
   reviewedById: string | null
-  reviewCount: number
+  resubmitCount: number
+  version: number
   inviteCodeId: string | null
   createdAt: Date
   updatedAt: Date
   user: User
   reviewedBy: User | null
   inviteCode: InviteCode | null
+  versions: PreApplicationVersion[]
+}
+
+export interface PreApplicationVersion {
+  id: string
+  preApplicationId: string
+  version: number
+  essay: string
+  source: PreApplicationSource | null
+  sourceDetail: string | null
+  registerEmail: string
+  group: PreApplicationGroup
+  status: PreApplicationStatus
+  guidance: string | null
+  reviewedAt: Date | null
+  reviewedById: string | null
+  createdAt: Date
+  preApplication: PreApplication
+  reviewedBy: User | null
 }
 
 export interface InviteCode {

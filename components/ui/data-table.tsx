@@ -116,8 +116,11 @@ export function DataTable<T extends Record<string, any>>({
     ? data.filter((item) => (isRowSelectable ? isRowSelectable(item) : true))
     : []
   const allSelectableIds = new Set(selectableData.map((item) => String(item[rowKey])))
-  const allSelected = selectableData.length > 0 && selectableData.every((item) => selectedIds.has(String(item[rowKey])))
-  const someSelected = selectableData.some((item) => selectedIds.has(String(item[rowKey]))) && !allSelected
+  const allSelected =
+    selectableData.length > 0 &&
+    selectableData.every((item) => selectedIds.has(String(item[rowKey])))
+  const someSelected =
+    selectableData.some((item) => selectedIds.has(String(item[rowKey]))) && !allSelected
 
   const handleSelectAll = (checked: boolean) => {
     if (!onSelectionChange) return
@@ -188,7 +191,12 @@ export function DataTable<T extends Record<string, any>>({
                     <Checkbox
                       checked={allSelected}
                       ref={(el) => {
-                        if (el) (el as HTMLButtonElement).dataset.state = someSelected ? "indeterminate" : allSelected ? "checked" : "unchecked"
+                        if (el)
+                          (el as HTMLButtonElement).dataset.state = someSelected
+                            ? "indeterminate"
+                            : allSelected
+                              ? "checked"
+                              : "unchecked"
                       }}
                       onCheckedChange={(checked) => handleSelectAll(checked === true)}
                       aria-label="Select all"
@@ -225,7 +233,10 @@ export function DataTable<T extends Record<string, any>>({
             >
               {visibleData.length === 0 ? (
                 <tr>
-                  <td colSpan={columns.length + (selectable ? 1 : 0)} className="py-12 text-center text-muted-foreground">
+                  <td
+                    colSpan={columns.length + (selectable ? 1 : 0)}
+                    className="py-12 text-center text-muted-foreground"
+                  >
                     {emptyMessage}
                   </td>
                 </tr>

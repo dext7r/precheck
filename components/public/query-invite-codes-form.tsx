@@ -62,16 +62,18 @@ export function QueryInviteCodesForm({ locale, dict }: QueryInviteCodesFormProps
     setResult(null)
     setError("")
     try {
-      const res = await fetch(`/api/public/query-invite-codes?token=${encodeURIComponent(trimmedToken)}`)
+      const res = await fetch(
+        `/api/public/query-invite-codes?token=${encodeURIComponent(trimmedToken)}`,
+      )
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
-        throw new Error(data?.error || (t.notFound || "未找到或查询码已失效"))
+        throw new Error(data?.error || t.notFound || "未找到或查询码已失效")
       }
       const data = await res.json()
       setResult(data)
       setQueried(true)
     } catch (err) {
-      const message = err instanceof Error ? err.message : (t.notFound || "查询失败")
+      const message = err instanceof Error ? err.message : t.notFound || "查询失败"
       setError(message)
       toast.error(message)
     } finally {
@@ -105,9 +107,18 @@ export function QueryInviteCodesForm({ locale, dict }: QueryInviteCodesFormProps
 
   const getStatusBadge = (status: string) => {
     const config: Record<string, { label: string; className: string }> = {
-      PENDING: { label: t.statusPending || "审核中", className: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400" },
-      APPROVED: { label: t.statusApproved || "已通过", className: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" },
-      REJECTED: { label: t.statusRejected || "未通过", className: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400" },
+      PENDING: {
+        label: t.statusPending || "审核中",
+        className: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400",
+      },
+      APPROVED: {
+        label: t.statusApproved || "已通过",
+        className: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
+      },
+      REJECTED: {
+        label: t.statusRejected || "未通过",
+        className: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400",
+      },
     }
     const item = config[status] || config.PENDING
     return <Badge className={item.className}>{item.label}</Badge>
@@ -147,9 +158,7 @@ export function QueryInviteCodesForm({ locale, dict }: QueryInviteCodesFormProps
             }`}
           >
             <div className="min-w-0 flex-1 space-y-2">
-              <p className="truncate font-mono text-sm font-medium">
-                {getFullUrl(item.code)}
-              </p>
+              <p className="truncate font-mono text-sm font-medium">{getFullUrl(item.code)}</p>
               <Badge
                 variant={isExpired(item.expiresAt) ? "destructive" : "secondary"}
                 className="text-xs"
@@ -183,7 +192,9 @@ export function QueryInviteCodesForm({ locale, dict }: QueryInviteCodesFormProps
         animate={{ opacity: 1, y: 0 }}
         className="space-y-4"
       >
-        <h3 className="text-sm font-medium text-muted-foreground">{t.applicationStatus || "申请状态"}</h3>
+        <h3 className="text-sm font-medium text-muted-foreground">
+          {t.applicationStatus || "申请状态"}
+        </h3>
 
         <div className="rounded-xl border border-border/60 bg-muted/30 p-4 space-y-4">
           <div className="flex items-center justify-between">
@@ -206,7 +217,9 @@ export function QueryInviteCodesForm({ locale, dict }: QueryInviteCodesFormProps
           {data.guidance && (
             <div className="pt-3 border-t border-border/60">
               <p className="text-sm text-muted-foreground mb-2">{t.guidance || "审核意见"}</p>
-              <p className="text-sm whitespace-pre-wrap bg-background/50 rounded-lg p-3">{data.guidance}</p>
+              <p className="text-sm whitespace-pre-wrap bg-background/50 rounded-lg p-3">
+                {data.guidance}
+              </p>
             </div>
           )}
         </div>
@@ -218,7 +231,9 @@ export function QueryInviteCodesForm({ locale, dict }: QueryInviteCodesFormProps
             transition={{ delay: 0.2 }}
             className="space-y-3"
           >
-            <h3 className="text-sm font-medium text-muted-foreground">{t.inviteCodeTitle || "邀请码"}</h3>
+            <h3 className="text-sm font-medium text-muted-foreground">
+              {t.inviteCodeTitle || "邀请码"}
+            </h3>
             <div
               className={`flex items-center justify-between rounded-xl border border-border/60 bg-muted/30 p-4 ${
                 data.inviteCode.used || isExpired(data.inviteCode.expiresAt) ? "opacity-50" : ""

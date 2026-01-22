@@ -19,10 +19,7 @@ const assignSchema = z.object({
   locale: z.string().optional(),
 })
 
-export async function POST(
-  request: NextRequest,
-  context: { params: Promise<{ id: string }> },
-) {
+export async function POST(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
     const user = await getCurrentUser()
 

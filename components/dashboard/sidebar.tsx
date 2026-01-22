@@ -28,7 +28,6 @@ export function DashboardSidebar({ locale, dict, user }: DashboardSidebarProps) 
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
-  const [hasHistory, setHasHistory] = useState(false)
 
   useEffect(() => {
     const fetchUnreadCount = async () => {
@@ -50,47 +49,14 @@ export function DashboardSidebar({ locale, dict, user }: DashboardSidebarProps) 
     return () => clearInterval(interval)
   }, [])
 
-  useEffect(() => {
-    let active = true
-    const fetchHistory = async () => {
-      try {
-        const res = await fetch("/api/pre-application")
-        if (!res.ok) return
-        const data = await res.json()
-        if (active) {
-          setHasHistory((data.records || []).length > 0)
-        }
-      } catch (error) {
-        console.error("Failed to fetch pre-application:", error)
-      }
-    }
-    fetchHistory()
-    const handleUpdate = (event: Event) => {
-      const detail = (event as CustomEvent<{ count?: number }>).detail
-      if (detail?.count !== undefined) {
-        setHasHistory(detail.count > 0)
-      }
-    }
-    window.addEventListener("pre-application:updated", handleUpdate)
-    return () => {
-      active = false
-      window.removeEventListener("pre-application:updated", handleUpdate)
-    }
-  }, [])
-
   const navigation = [
     { name: dict.dashboard.overview, href: `/${locale}/dashboard`, icon: LayoutDashboard },
     { name: dict.dashboard.messages, href: `/${locale}/dashboard/messages`, icon: Mail },
-    { name: dict.dashboard.preApplication, href: `/${locale}/dashboard/pre-application`, icon: ClipboardList },
-    ...(hasHistory
-      ? [
-          {
-            name: dict.dashboard.reviewHistory,
-            href: `/${locale}/dashboard/pre-application/history`,
-            icon: LayoutDashboard,
-          },
-        ]
-      : []),
+    {
+      name: dict.dashboard.preApplication,
+      href: `/${locale}/dashboard/pre-application`,
+      icon: ClipboardList,
+    },
   ]
 
   const adminLink =

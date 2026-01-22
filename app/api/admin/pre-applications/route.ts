@@ -22,17 +22,30 @@ export async function GET(request: NextRequest) {
     const { searchParams } = request.nextUrl
     const search = (searchParams.get("search") || "").trim()
     const status = searchParams.get("status") || ""
+    const registerEmail = (searchParams.get("registerEmail") || "").trim()
+    const reviewRound = searchParams.get("reviewRound") || ""
+    const inviteStatus = searchParams.get("inviteStatus") || ""
     const sortByParam = searchParams.get("sortBy") || "createdAt"
     const sortOrderParam = searchParams.get("sortOrder")
     const page = Number.parseInt(searchParams.get("page") || "1")
     const limit = Number.parseInt(searchParams.get("limit") || "20")
     const skip = (page - 1) * limit
-    const allowedSortBy = new Set(["createdAt", "status", "registerEmail"])
+    const allowedSortBy = new Set([
+      "createdAt",
+      "updatedAt",
+      "status",
+      "registerEmail",
+      "resubmitCount",
+      "inviteCodeId",
+    ])
     const sortBy = allowedSortBy.has(sortByParam) ? sortByParam : "createdAt"
     const sortOrder = sortOrderParam === "asc" ? "asc" : "desc"
 
     const where: {
       status?: PreApplicationStatus
+      registerEmail?: { contains: string; mode: "insensitive" }
+      resubmitCount?: number
+      inviteCodeId?: { not: null } | null
       OR?: Array<Record<string, unknown>>
     } = {}
 
@@ -40,9 +53,25 @@ export async function GET(request: NextRequest) {
       where.status = status as PreApplicationStatus
     }
 
+    if (registerEmail) {
+      where.registerEmail = { contains: registerEmail, mode: "insensitive" }
+    }
+
+    if (reviewRound) {
+      const round = Number.parseInt(reviewRound)
+      if (!Number.isNaN(round) && round >= 1) {
+        where.resubmitCount = round - 1
+      }
+    }
+
+    if (inviteStatus === "issued") {
+      where.inviteCodeId = { not: null }
+    } else if (inviteStatus === "none") {
+      where.inviteCodeId = null
+    }
+
     if (search) {
       where.OR = [
-        { registerEmail: { contains: search, mode: "insensitive" as const } },
         { queryToken: { contains: search, mode: "insensitive" as const } },
         { user: { name: { contains: search, mode: "insensitive" as const } } },
         { user: { email: { contains: search, mode: "insensitive" as const } } },
@@ -55,7 +84,20 @@ export async function GET(request: NextRequest) {
         skip,
         take: limit,
         orderBy: { [sortBy]: sortOrder },
-        include: {
+        select: {
+          id: true,
+          essay: true,
+          source: true,
+          sourceDetail: true,
+          registerEmail: true,
+          queryToken: true,
+          group: true,
+          status: true,
+          guidance: true,
+          reviewedAt: true,
+          createdAt: true,
+          updatedAt: true,
+          resubmitCount: true,
           user: { select: { id: true, name: true, email: true } },
           reviewedBy: { select: { id: true, name: true, email: true } },
           inviteCode: {
@@ -66,33 +108,9 @@ export async function GET(request: NextRequest) {
       db.preApplication.count({ where }),
     ])
 
-    const userIds = Array.from(new Set(records.map((record) => record.userId)))
-    const reviewStats = userIds.length
-      ? await db.preApplication.groupBy({
-          by: ["userId"],
-          where: { userId: { in: userIds } },
-          _min: { createdAt: true },
-          _count: { _all: true },
-        })
-      : []
-
-    const statsByUser = new Map(
-      reviewStats.map((stat) => [
-        stat.userId,
-        { minCreatedAt: stat._min.createdAt, total: stat._count._all },
-      ]),
-    )
-
     const enrichedRecords = records.map((record) => {
-      const stats = statsByUser.get(record.userId)
-      let reviewStage = "INITIAL"
-      if (record.reviewCount > 0) {
-        reviewStage = "FOLLOW_UP"
-      } else if (stats && stats.total > 1 && stats.minCreatedAt) {
-        const isFirst = record.createdAt.getTime() === stats.minCreatedAt.getTime()
-        reviewStage = isFirst ? "INITIAL" : "FOLLOW_UP"
-      }
-      return { ...record, reviewStage }
+      const reviewRound = record.resubmitCount + 1
+      return { ...record, reviewRound }
     })
 
     return NextResponse.json({ records: enrichedRecords, total, page, limit })

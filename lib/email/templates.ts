@@ -111,9 +111,7 @@ export function buildPreApplicationReviewEmail({
       ? dictionary.preApplication.emailTemplate.approved
       : dictionary.preApplication.emailTemplate.rejected
 
-  const expiresAtText = inviteExpiresAt
-    ? inviteExpiresAt.toLocaleString(locale)
-    : ""
+  const expiresAtText = inviteExpiresAt ? inviteExpiresAt.toLocaleString(locale) : ""
 
   const tokens = {
     "{appName}": appName,

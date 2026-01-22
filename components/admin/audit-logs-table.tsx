@@ -5,7 +5,13 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { DataTable, type Column } from "@/components/ui/data-table"
 import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import {
   Drawer,
   DrawerContent,
@@ -282,9 +288,7 @@ export function AdminAuditLogsTable({ locale, dict }: AdminAuditLogsTableProps) 
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">{t.auditTime}</p>
-                <p>
-                  {selected ? new Date(selected.createdAt).toLocaleString(locale) : "-"}
-                </p>
+                <p>{selected ? new Date(selected.createdAt).toLocaleString(locale) : "-"}</p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">{t.auditIp}</p>

@@ -35,7 +35,11 @@ export function AdminSidebar({ locale, dict }: AdminSidebarProps) {
   const navigation = [
     { name: dict.dashboard.overview, href: `/${locale}/admin`, icon: LayoutDashboard },
     { name: dict.admin.users, href: `/${locale}/admin/users`, icon: Users },
-    { name: dict.admin.preApplications, href: `/${locale}/admin/pre-applications`, icon: ClipboardList },
+    {
+      name: dict.admin.preApplications,
+      href: `/${locale}/admin/pre-applications`,
+      icon: ClipboardList,
+    },
     { name: dict.admin.inviteCodes, href: `/${locale}/admin/invite-codes`, icon: Key },
     { name: dict.admin.messages, href: `/${locale}/admin/messages`, icon: Mail },
     { name: dict.admin.auditLogs, href: `/${locale}/admin/audit-logs`, icon: ScrollText },

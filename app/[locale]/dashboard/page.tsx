@@ -3,7 +3,6 @@ import { getCurrentUser } from "@/lib/auth/session"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { defaultLocale, locales, type Locale } from "@/lib/i18n/config"
-import { db } from "@/lib/db"
 import Link from "next/link"
 
 interface DashboardPageProps {
@@ -15,13 +14,6 @@ export default async function DashboardPage({ params }: DashboardPageProps) {
   const currentLocale = locales.includes(locale as Locale) ? (locale as Locale) : defaultLocale
   const dict = await getDictionary(currentLocale)
   const user = await getCurrentUser()
-
-  let hasHistory = false
-
-  if (db && user) {
-    const count = await db.preApplication.count({ where: { userId: user.id } })
-    hasHistory = count > 0
-  }
 
   return (
     <div className="space-y-8">
@@ -93,24 +85,10 @@ export default async function DashboardPage({ params }: DashboardPageProps) {
               <Button variant="outline" className="h-auto w-full justify-start">
                 <div className="space-y-1 text-left">
                   <p className="font-medium">{dict.dashboard.preApplication}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {dict.preApplication.description}
-                  </p>
+                  <p className="text-xs text-muted-foreground">{dict.preApplication.description}</p>
                 </div>
               </Button>
             </Link>
-            {hasHistory && (
-              <Link href={`/${currentLocale}/dashboard/pre-application/history`}>
-                <Button variant="outline" className="h-auto w-full justify-start">
-                  <div className="space-y-1 text-left">
-                    <p className="font-medium">{dict.dashboard.reviewHistory}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {dict.preApplication.historyTitle}
-                    </p>
-                  </div>
-                </Button>
-              </Link>
-            )}
           </div>
         </CardContent>
       </Card>

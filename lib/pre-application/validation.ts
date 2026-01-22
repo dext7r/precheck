@@ -6,7 +6,5 @@ export function normalizeEmail(value: string) {
 
 export function isAllowedEmailDomain(email: string) {
   const domain = email.split("@")[1]?.toLowerCase() || ""
-  return allowedEmailDomains.some(
-    (allowed) => domain === allowed || domain.endsWith(`.${allowed}`),
-  )
+  return allowedEmailDomains.some((allowed) => domain === allowed || domain.endsWith(`.${allowed}`))
 }

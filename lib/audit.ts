@@ -1,10 +1,9 @@
 import type { NextRequest } from "next/server"
+import type { Role, Prisma } from "@prisma/client"
 
 type AuditClient = {
   auditLog: {
-    create: (args: {
-      data: Record<string, unknown>
-    }) => Promise<unknown>
+    create: (args: { data: Prisma.AuditLogUncheckedCreateInput }) => Promise<unknown>
   }
 }
 
@@ -12,7 +11,7 @@ type AuditActor = {
   id?: string | null
   name?: string | null
   email?: string | null
-  role?: string | null
+  role?: Role | string | null
 }
 
 export type AuditInput = {
@@ -26,8 +25,7 @@ export type AuditInput = {
   request?: Request | NextRequest
 }
 
-const getHeader = (request: Request | NextRequest, key: string) =>
-  request.headers.get(key) || ""
+const getHeader = (request: Request | NextRequest, key: string) => request.headers.get(key) || ""
 
 export const extractRequestMeta = (request?: Request | NextRequest) => {
   if (!request) {
@@ -40,13 +38,13 @@ export const extractRequestMeta = (request?: Request | NextRequest) => {
   return { ip, userAgent }
 }
 
-const toSnapshot = (value: unknown) => {
-  if (value === undefined) return null
+const toSnapshot = (value: unknown): Prisma.InputJsonValue | undefined => {
+  if (value === undefined || value === null) return undefined
   try {
-    return JSON.parse(JSON.stringify(value))
+    return JSON.parse(JSON.stringify(value)) as Prisma.InputJsonValue
   } catch (error) {
     console.error("Audit snapshot serialization error:", error)
-    return null
+    return undefined
   }
 }
 
@@ -62,7 +60,7 @@ export async function writeAuditLog(client: AuditClient, input: AuditInput) {
       actorId: actor.id ?? null,
       actorName: actor.name ?? null,
       actorEmail: actor.email ?? null,
-      actorRole: (actor.role as string | undefined) ?? null,
+      actorRole: (actor.role as Role | undefined) ?? null,
       ip,
       userAgent,
       before: toSnapshot(input.before),

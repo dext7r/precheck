@@ -4,7 +4,13 @@ import { useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
 import { Bar, BarChart, CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import type { Dictionary } from "@/lib/i18n/get-dictionary"
 import type { Locale } from "@/lib/i18n/config"
@@ -27,7 +33,12 @@ type DashboardData = {
     inviteAssignedUnused: number
   }
   series: {
-    preApplications: Array<{ bucket: string; submitted: number; approved: number; rejected: number }>
+    preApplications: Array<{
+      bucket: string
+      submitted: number
+      approved: number
+      rejected: number
+    }>
     users: Array<{ bucket: string; users: number }>
     invites: Array<{ bucket: string; assigned: number; used: number; expired: number }>
   }
@@ -173,7 +184,7 @@ export function AdminDashboard({ locale, dict }: AdminDashboardProps) {
             <SelectContent>
               {rangeOptions.map((option) => (
                 <SelectItem key={option.value} value={option.value}>
-                  {(t as Record<string, string>)[option.key]}
+                  {(t as unknown as Record<string, string>)[option.key]}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -188,7 +199,7 @@ export function AdminDashboard({ locale, dict }: AdminDashboardProps) {
             <SelectContent>
               {granularityOptions.map((option) => (
                 <SelectItem key={option.value} value={option.value}>
-                  {(t as Record<string, string>)[option.key]}
+                  {(t as unknown as Record<string, string>)[option.key]}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -266,7 +277,8 @@ export function AdminDashboard({ locale, dict }: AdminDashboardProps) {
             <div className="space-y-4">
               {(data?.distributions.sources || []).map((item) => {
                 const label = sourceLabelMap.get(item.source) || item.source
-                const total = data?.distributions.sources.reduce((sum, row) => sum + row.count, 0) || 0
+                const total =
+                  data?.distributions.sources.reduce((sum, row) => sum + row.count, 0) || 0
                 const percentage = total > 0 ? Math.round((item.count / total) * 100) : 0
                 return (
                   <div key={item.source} className="space-y-2">
@@ -372,7 +384,7 @@ export function AdminDashboard({ locale, dict }: AdminDashboardProps) {
                 <div key={item.key} className="space-y-2">
                   <div className="flex items-center justify-between text-sm">
                     <span className="font-medium">
-                      {(t as Record<string, string>)[`inviteStatus_${item.key}`]}
+                      {(t as unknown as Record<string, string>)[`inviteStatus_${item.key}`]}
                     </span>
                     <span className="text-muted-foreground">
                       {item.count} ({item.percentage}%)
