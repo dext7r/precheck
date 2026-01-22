@@ -5,13 +5,24 @@ import { getCurrentUser } from "@/lib/auth/session"
 import { writeAuditLog } from "@/lib/audit"
 import { isAllowedEmailDomain, normalizeEmail } from "@/lib/pre-application/validation"
 import { PreApplicationGroup, PreApplicationSource } from "@prisma/client"
+import { randomBytes } from "crypto"
+
+async function generateUniqueQueryToken(): Promise<string> {
+  if (!db) throw new Error("Database not configured")
+  for (let i = 0; i < 5; i++) {
+    const token = randomBytes(4).toString("hex").toUpperCase()
+    const existing = await db.preApplication.findUnique({ where: { queryToken: token } })
+    if (!existing) return token
+  }
+  // 如果5次都碰撞，使用更长的token
+  return randomBytes(6).toString("hex").toUpperCase()
+}
 
 const preApplicationSchema = z.object({
   essay: z.string().min(50).max(1000),
   source: z.nativeEnum(PreApplicationSource).optional().nullable(),
   sourceDetail: z.string().max(100).optional().nullable(),
   registerEmail: z.string().email(),
-  queryToken: z.string().max(200).optional().nullable(),
   group: z.nativeEnum(PreApplicationGroup),
 })
 
@@ -90,7 +101,7 @@ export async function POST(request: NextRequest) {
         sourceDetail:
           data.source === "OTHER" ? (data.sourceDetail?.trim() || null) : null,
         registerEmail,
-        queryToken: data.queryToken?.trim() || null,
+        queryToken: await generateUniqueQueryToken(),
         group: data.group,
       },
       include: {
@@ -169,7 +180,6 @@ export async function PUT(request: NextRequest) {
       source: data.source ?? null,
       sourceDetail: data.source === "OTHER" ? (data.sourceDetail?.trim() || null) : null,
       registerEmail,
-      queryToken: data.queryToken?.trim() || null,
       group: data.group,
     }
 

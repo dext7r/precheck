@@ -4,8 +4,8 @@ import { siteConfig } from "@/lib/seo"
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: siteConfig.name,
-    short_name: "Next Starter",
-    description: "A production-ready Next.js starter template",
+    short_name: "linux.do",
+    description: "linux.do 社区预申请与邀请码管理系统",
     start_url: "/",
     display: "standalone",
     background_color: "#0a0a0a",

@@ -1,19 +1,39 @@
 "use client"
 
 import Link from "next/link"
-import { ArrowRight, Github, Sparkles } from "lucide-react"
+import { ArrowRight, Search, Sparkles, UserPlus, ClipboardCheck } from "lucide-react"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import type { Dictionary } from "@/lib/i18n/get-dictionary"
+import type { Locale } from "@/lib/i18n/config"
 
 interface HeroSectionProps {
   dict: Dictionary
+  locale: Locale
 }
 
-export function HeroSection({ dict }: HeroSectionProps) {
+export function HeroSection({ dict, locale }: HeroSectionProps) {
+  const actions = [
+    {
+      icon: UserPlus,
+      title: dict.hero.actions?.apply?.title || "提交预申请",
+      description: dict.hero.actions?.apply?.description || "填写表单申请加入 linux.do 社区",
+      href: `/${locale}/dashboard/pre-application`,
+      primary: true,
+    },
+    {
+      icon: Search,
+      title: dict.hero.actions?.query?.title || "查询进度",
+      description: dict.hero.actions?.query?.description || "使用查询码查看申请状态",
+      href: `/${locale}/query-invite-codes`,
+      primary: false,
+    },
+  ]
+
   return (
-    <section className="relative overflow-hidden">
+    <section className="relative min-h-[calc(100vh-4rem)] overflow-hidden flex items-center">
       <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/20 via-background to-background" />
       <motion.div
         className="absolute inset-0 -z-10"
@@ -33,7 +53,7 @@ export function HeroSection({ dict }: HeroSectionProps) {
         />
       </motion.div>
 
-      <div className="mx-auto max-w-7xl px-4 py-24 sm:px-6 sm:py-32 lg:px-8">
+      <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
         <motion.div
           initial="hidden"
           animate="visible"
@@ -74,53 +94,61 @@ export function HeroSection({ dict }: HeroSectionProps) {
 
           <motion.div
             variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
-            className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row"
+            className="mt-12 grid gap-6 sm:grid-cols-2"
           >
-            <Button size="lg" variant="glow" asChild>
-              <Link href="#deploy">
-                {dict.hero.cta}
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-            <Button size="lg" variant="outline" asChild>
-              <a
-                href="https://github.com/h7ml/next-starter"
-                target="_blank"
-                rel="noopener noreferrer"
+            {actions.map((action, index) => (
+              <motion.div
+                key={action.title}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.3 + index * 0.1 }}
+                whileHover={{ y: -4, scale: 1.02 }}
+                className="group"
               >
-                <Github className="mr-2 h-4 w-4" />
-                {dict.hero.viewGithub}
-              </a>
+                <Link href={action.href}>
+                  <Card
+                    className={`h-full cursor-pointer transition-all ${
+                      action.primary
+                        ? "border-primary/50 bg-primary/5 hover:border-primary hover:bg-primary/10"
+                        : "hover:border-primary/50 hover:bg-primary/5"
+                    }`}
+                  >
+                    <CardHeader className="pb-2">
+                      <div
+                        className={`mb-2 flex h-12 w-12 items-center justify-center rounded-lg transition-colors ${
+                          action.primary
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground"
+                        }`}
+                      >
+                        <action.icon className="h-6 w-6" />
+                      </div>
+                      <CardTitle className="flex items-center gap-2 text-xl">
+                        {action.title}
+                        <ArrowRight className="h-4 w-4 opacity-0 -translate-x-2 transition-all group-hover:opacity-100 group-hover:translate-x-0" />
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <CardDescription className="text-base">{action.description}</CardDescription>
+                    </CardContent>
+                  </Card>
+                </Link>
+              </motion.div>
+            ))}
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.6 }}
+            className="mt-12 flex items-center justify-center gap-2 text-sm text-muted-foreground"
+          >
+            <ClipboardCheck className="h-4 w-4" />
+            <span>{dict.hero.tip || "已有账号？请先登录后再提交申请"}</span>
+            <Button variant="link" asChild className="h-auto p-0">
+              <Link href={`/${locale}/login`}>{dict.nav.login}</Link>
             </Button>
           </motion.div>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.3 }}
-          className="relative mx-auto mt-16 max-w-5xl"
-        >
-          <div className="rounded-xl border border-border bg-card p-2 shadow-2xl">
-            <div className="flex items-center gap-2 border-b border-border px-4 py-3">
-              <div className="flex gap-1.5">
-                <div className="h-3 w-3 rounded-full bg-destructive/80" />
-                <div className="h-3 w-3 rounded-full bg-chart-4/80" />
-                <div className="h-3 w-3 rounded-full bg-chart-2/80" />
-              </div>
-              <span className="ml-2 text-sm text-muted-foreground">{dict.hero.terminal}</span>
-            </div>
-            <div className="p-4 font-mono text-sm">
-              <p className="text-muted-foreground">
-                <span className="text-primary">$</span> npx create-next-app -e
-                https://github.com/h7ml/next-starter
-              </p>
-              <p className="mt-2 text-muted-foreground">
-                <span className="text-primary">$</span> cd next-starter && npm run dev
-              </p>
-              <p className="mt-2 text-primary">{dict.hero.readyOn}</p>
-            </div>
-          </div>
         </motion.div>
       </div>
     </section>

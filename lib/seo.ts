@@ -1,11 +1,11 @@
 import { locales, type Locale } from "@/lib/i18n/config"
 
 export const siteConfig = {
-  name: "Next Starter Template",
-  url: process.env.NEXT_PUBLIC_SITE_URL || "https://next-starter.vercel.app",
+  name: "linux.do 预申请系统",
+  url: process.env.NEXT_PUBLIC_SITE_URL || "https://linux.do",
   ogImage: "/og-image.png",
   links: {
-    github: "https://github.com/h7ml/next-starter",
+    github: "https://linux.do",
     twitter: "",
   },
 }

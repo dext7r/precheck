@@ -36,6 +36,7 @@ export interface User {
   inviteCodesAssigned: InviteCode[]
   inviteCodesUsed: InviteCode[]
   inviteCodesIssued: InviteCode[]
+  queryTokensCreated: InviteCodeQueryToken[]
   auditLogs: AuditLog[]
   resetToken: string | null
   resetTokenExpiry: Date | null
@@ -141,6 +142,7 @@ export interface InviteCode {
   issuedToUserId: string | null
   issuedToEmail: string | null
   issuedAt: Date | null
+  queryTokenId: string | null
   createdAt: Date
   updatedAt: Date
   assignedBy: User | null
@@ -148,6 +150,18 @@ export interface InviteCode {
   createdBy: User | null
   issuedToUser: User | null
   preApplication: PreApplication | null
+  queryToken: InviteCodeQueryToken | null
+}
+
+export interface InviteCodeQueryToken {
+  id: string
+  token: string
+  expiresAt: Date | null
+  queriedAt: Date | null
+  createdById: string
+  createdAt: Date
+  createdBy: User
+  inviteCodes: InviteCode[]
 }
 
 export interface AuditLog {

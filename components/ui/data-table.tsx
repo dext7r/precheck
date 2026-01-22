@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   Select,
   SelectContent,
@@ -37,6 +38,11 @@ export interface DataTableProps<T> {
   loadingText?: string
   perPageText?: string
   summaryFormatter?: (summary: { total: number; page: number; totalPages: number }) => string
+  selectable?: boolean
+  selectedIds?: Set<string>
+  onSelectionChange?: (selectedIds: Set<string>) => void
+  rowKey?: keyof T
+  isRowSelectable?: (item: T) => boolean
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -57,6 +63,11 @@ export function DataTable<T extends Record<string, any>>({
   loadingText = "Loading...",
   perPageText = "Per page",
   summaryFormatter,
+  selectable = false,
+  selectedIds = new Set(),
+  onSelectionChange,
+  rowKey = "id" as keyof T,
+  isRowSelectable,
 }: DataTableProps<T>) {
   const [sortKey, setSortKey] = useState<string>("")
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc")
@@ -101,6 +112,35 @@ export function DataTable<T extends Record<string, any>>({
 
   const offsetY = enableVirtualScroll ? visibleRange.start * rowHeight : 0
 
+  const selectableData = selectable
+    ? data.filter((item) => (isRowSelectable ? isRowSelectable(item) : true))
+    : []
+  const allSelectableIds = new Set(selectableData.map((item) => String(item[rowKey])))
+  const allSelected = selectableData.length > 0 && selectableData.every((item) => selectedIds.has(String(item[rowKey])))
+  const someSelected = selectableData.some((item) => selectedIds.has(String(item[rowKey]))) && !allSelected
+
+  const handleSelectAll = (checked: boolean) => {
+    if (!onSelectionChange) return
+    const newSelection = new Set(selectedIds)
+    if (checked) {
+      allSelectableIds.forEach((id) => newSelection.add(id))
+    } else {
+      allSelectableIds.forEach((id) => newSelection.delete(id))
+    }
+    onSelectionChange(newSelection)
+  }
+
+  const handleSelectRow = (id: string, checked: boolean) => {
+    if (!onSelectionChange) return
+    const newSelection = new Set(selectedIds)
+    if (checked) {
+      newSelection.add(id)
+    } else {
+      newSelection.delete(id)
+    }
+    onSelectionChange(newSelection)
+  }
+
   return (
     <div className="space-y-4">
       {/* Mobile Card View */}
@@ -143,6 +183,18 @@ export function DataTable<T extends Record<string, any>>({
           >
             <thead className="sticky top-0 z-10 bg-muted">
               <tr className="border-b border-border">
+                {selectable && (
+                  <th className="w-12 px-4 py-3">
+                    <Checkbox
+                      checked={allSelected}
+                      ref={(el) => {
+                        if (el) (el as HTMLButtonElement).dataset.state = someSelected ? "indeterminate" : allSelected ? "checked" : "unchecked"
+                      }}
+                      onCheckedChange={(checked) => handleSelectAll(checked === true)}
+                      aria-label="Select all"
+                    />
+                  </th>
+                )}
                 {columns.map((column) => (
                   <th
                     key={column.key}
@@ -173,41 +225,57 @@ export function DataTable<T extends Record<string, any>>({
             >
               {visibleData.length === 0 ? (
                 <tr>
-                  <td colSpan={columns.length} className="py-12 text-center text-muted-foreground">
+                  <td colSpan={columns.length + (selectable ? 1 : 0)} className="py-12 text-center text-muted-foreground">
                     {emptyMessage}
                   </td>
                 </tr>
               ) : (
-                visibleData.map((item, index) => (
-                  <motion.tr
-                    key={item.id || index}
-                    initial={{ x: -20, opacity: 0 }}
-                    animate={{ x: 0, opacity: 1 }}
-                    transition={{ duration: 0.3, delay: index * 0.05 }}
-                    className="group border-b border-border last:border-0 transition-colors hover:bg-muted/50"
-                    style={
-                      enableVirtualScroll
-                        ? {
-                            position: "absolute",
-                            top: `${(visibleRange.start + index) * rowHeight}px`,
-                            left: 0,
-                            right: 0,
-                            height: `${rowHeight}px`,
-                          }
-                        : undefined
-                    }
-                  >
-                    {columns.map((column) => (
-                      <td
-                        key={column.key}
-                        className="px-4 py-4"
-                        style={column.width ? { width: column.width } : undefined}
-                      >
-                        {column.render ? column.render(item) : item[column.key]}
-                      </td>
-                    ))}
-                  </motion.tr>
-                ))
+                visibleData.map((item, index) => {
+                  const itemId = String(item[rowKey])
+                  const rowSelectable = isRowSelectable ? isRowSelectable(item) : true
+                  const isSelected = selectedIds.has(itemId)
+
+                  return (
+                    <motion.tr
+                      key={item.id || index}
+                      initial={{ x: -20, opacity: 0 }}
+                      animate={{ x: 0, opacity: 1 }}
+                      transition={{ duration: 0.3, delay: index * 0.05 }}
+                      className={`group border-b border-border last:border-0 transition-colors hover:bg-muted/50 ${isSelected ? "bg-muted/30" : ""}`}
+                      style={
+                        enableVirtualScroll
+                          ? {
+                              position: "absolute",
+                              top: `${(visibleRange.start + index) * rowHeight}px`,
+                              left: 0,
+                              right: 0,
+                              height: `${rowHeight}px`,
+                            }
+                          : undefined
+                      }
+                    >
+                      {selectable && (
+                        <td className="w-12 px-4 py-4">
+                          <Checkbox
+                            checked={isSelected}
+                            disabled={!rowSelectable}
+                            onCheckedChange={(checked) => handleSelectRow(itemId, checked === true)}
+                            aria-label={`Select row ${index + 1}`}
+                          />
+                        </td>
+                      )}
+                      {columns.map((column) => (
+                        <td
+                          key={column.key}
+                          className="px-4 py-4"
+                          style={column.width ? { width: column.width } : undefined}
+                        >
+                          {column.render ? column.render(item) : item[column.key]}
+                        </td>
+                      ))}
+                    </motion.tr>
+                  )
+                })
               )}
             </tbody>
           </table>

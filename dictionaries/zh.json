@@ -1,7 +1,7 @@
 {
   "metadata": {
-    "title": "Next 启动模板",
-    "description": "一个生产就绪的 Next.js 启动模板，包含 TypeScript、Tailwind CSS、shadcn/ui、Prisma 和多平台部署支持。"
+    "title": "linux.do 预申请系统",
+    "description": "linux.do 社区预申请与邀请码管理系统"
   },
   "nav": {
     "features": "功能特性",
@@ -12,17 +12,29 @@
     "login": "登录",
     "register": "注册",
     "dashboard": "控制台",
-    "logout": "退出登录"
+    "logout": "退出登录",
+    "queryStatus": "查询进度"
   },
   "hero": {
-    "badge": "生产就绪模板",
-    "title": "使用以下技术构建现代应用",
-    "titleHighlight": "Next.js 启动模板",
-    "description": "一个功能完善的启动模板，包含 React、TypeScript、Tailwind CSS、shadcn/ui、Prisma 和 Docker。可部署到 Vercel、Cloudflare、Netlify、Railway 等平台。",
-    "cta": "快速开始",
-    "viewGithub": "在 GitHub 查看",
+    "badge": "linux.do 社区",
+    "title": "欢迎来到",
+    "titleHighlight": "linux.do 预申请系统",
+    "description": "在这里提交预申请，管理员审核通过后即可获得邀请码加入社区。",
+    "cta": "立即申请",
+    "viewGithub": "了解更多",
     "terminal": "终端",
-    "readyOn": "已就绪: http://localhost:3000"
+    "readyOn": "已就绪: http://localhost:3000",
+    "tip": "已有账号？请先登录后再提交申请",
+    "actions": {
+      "apply": {
+        "title": "提交预申请",
+        "description": "填写表单申请加入 linux.do 社区"
+      },
+      "query": {
+        "title": "查询进度",
+        "description": "使用查询码查看申请状态和邀请码"
+      }
+    }
   },
   "features": {
     "title": "你需要的一切",
@@ -90,22 +102,15 @@
     }
   },
   "footer": {
-    "description": "一个生产就绪的 Next.js 启动模板，包含构建现代 Web 应用所需的一切。",
-    "product": "产品",
-    "resources": "资源",
-    "legal": "法律",
-    "documentation": "文档",
-    "apiReference": "API 参考",
-    "examples": "示例",
+    "description": "linux.do 社区预申请与邀请码管理系统",
+    "visitCommunity": "访问社区",
     "privacy": "隐私政策",
     "terms": "服务条款",
-    "license": "许可证",
-    "copyright": "保留所有权利。",
-    "deployTime": "部署时间"
+    "copyright": "保留所有权利。"
   },
   "docs": {
     "title": "文档",
-    "description": "开始使用 Next 启动模板所需的一切信息。",
+    "description": "linux.do 预申请系统使用指南",
     "backHome": "返回首页",
     "envTitle": "环境变量",
     "envDescription": "应用程序所需的配置",
@@ -504,6 +509,7 @@
       "used": "已使用",
       "unused": "未使用"
     },
+    "queryTokenCopied": "查询码已复制",
     "notifications": {
       "approvedTitle": "预申请已通过",
       "rejectedTitle": "预申请已驳回",
@@ -560,6 +566,32 @@
         "footer": "如有疑问，请联系管理员。"
       }
     }
+  },
+  "queryInviteCodes": {
+    "metaTitle": "查询申请状态",
+    "metaDescription": "使用查询码查看预申请审核状态和邀请码",
+    "title": "查询",
+    "description": "输入查询码查看申请状态或可用的邀请码",
+    "placeholder": "输入查询码",
+    "submit": "查询",
+    "notFound": "未找到或查询码已失效",
+    "result": "查询结果",
+    "copyCode": "复制",
+    "copied": "已复制",
+    "expiresAt": "有效期至",
+    "noExpiry": "永久有效",
+    "expired": "已过期",
+    "statusPending": "审核中",
+    "statusApproved": "已通过",
+    "statusRejected": "未通过",
+    "applicationStatus": "申请状态",
+    "statusLabel": "状态",
+    "submittedAt": "提交时间",
+    "reviewedAt": "审核时间",
+    "guidance": "审核意见",
+    "inviteCodeTitle": "邀请码",
+    "used": "已使用",
+    "noInviteCode": "暂无邀请码"
   },
   "admin": {
     "title": "管理面板",
@@ -729,6 +761,14 @@
     "inviteCodeMarkUsed": "标记已用",
     "inviteCodeMarkUnused": "标记未用",
     "inviteCodeNoRecords": "暂无邀请码",
+    "queryTokenGenerate": "生成查询码",
+    "queryTokenGenerateDesc": "已选择 {count} 个邀请码",
+    "queryTokenGenerateSuccess": "查询码已生成，请复制并发送给用户",
+    "queryTokenCopy": "复制查询码",
+    "queryTokenCopied": "已复制",
+    "queryTokenExpiry": "查询码有效期",
+    "queryTokenResult": "查询码",
+    "queryTokenSelectHint": "用户可在查询页面使用此查询码查看邀请码",
     "noPreApplications": "暂无预申请",
     "saving": "保存中...",
     "ban": "封禁",

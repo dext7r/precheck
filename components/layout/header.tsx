@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { Github, Menu, X, User } from "lucide-react"
+import { ExternalLink, Menu, X, User, Search } from "lucide-react"
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
@@ -20,33 +20,24 @@ interface HeaderProps {
 export function Header({ locale, dict, user, authEnabled = true }: HeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
-  const navigation = [
-    { name: dict.nav.features, href: `/${locale}#features` },
-    { name: dict.nav.techStack, href: `/${locale}#stack` },
-    { name: dict.nav.deploy, href: `/${locale}#deploy` },
-    { name: dict.nav.docs, href: `/${locale}/docs` },
-  ]
-
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-lg">
       <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link href={`/${locale}`} className="flex items-center gap-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-            <span className="text-sm font-bold text-primary-foreground">NS</span>
+            <span className="text-sm font-bold text-primary-foreground">L</span>
           </div>
-          <span className="text-lg font-semibold">Next Starter</span>
+          <span className="text-lg font-semibold">linux.do</span>
         </Link>
 
         <div className="hidden items-center gap-1 md:flex">
-          {navigation.map((item) => (
-            <Link
-              key={item.name}
-              href={item.href}
-              className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
-            >
-              {item.name}
-            </Link>
-          ))}
+          <Link
+            href={`/${locale}/query-invite-codes`}
+            className="flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
+          >
+            <Search className="h-4 w-4" />
+            {dict.nav.queryStatus || "查询进度"}
+          </Link>
         </div>
 
         <div className="flex items-center gap-2">
@@ -54,12 +45,12 @@ export function Header({ locale, dict, user, authEnabled = true }: HeaderProps) 
           <ThemeToggle dict={dict} />
           <Button variant="ghost" size="icon" asChild className="hidden sm:flex">
             <a
-              href="https://github.com/h7ml/next-starter"
+              href="https://linux.do"
               target="_blank"
               rel="noopener noreferrer"
             >
-              <Github className="h-5 w-5" />
-              <span className="sr-only">GitHub</span>
+              <ExternalLink className="h-5 w-5" />
+              <span className="sr-only">linux.do</span>
             </a>
           </Button>
 
@@ -112,16 +103,14 @@ export function Header({ locale, dict, user, authEnabled = true }: HeaderProps) 
             className="border-t border-border md:hidden"
           >
             <div className="space-y-1 px-4 py-3">
-              {navigation.map((item) => (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  className="block rounded-md px-3 py-2 text-base font-medium text-muted-foreground hover:bg-primary/10 hover:text-primary"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  {item.name}
-                </Link>
-              ))}
+              <Link
+                href={`/${locale}/query-invite-codes`}
+                className="flex items-center gap-2 rounded-md px-3 py-2 text-base font-medium text-muted-foreground hover:bg-primary/10 hover:text-primary"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <Search className="h-4 w-4" />
+                {dict.nav.queryStatus || "查询进度"}
+              </Link>
               {authEnabled && (
                 <div className="flex gap-2 pt-2">
                   {user ? (

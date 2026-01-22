@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
 import { PostContent } from "@/components/posts/post-content"
+import { Copy, Check } from "lucide-react"
 import type { Dictionary } from "@/lib/i18n/get-dictionary"
 import type { Locale } from "@/lib/i18n/config"
 import { allowedEmailDomains, preApplicationGroups, preApplicationSources } from "@/lib/pre-application/constants"
@@ -56,12 +57,12 @@ export function PreApplicationForm({ locale, dict }: PreApplicationFormProps) {
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [records, setRecords] = useState<PreApplicationRecord[]>([])
+  const [tokenCopied, setTokenCopied] = useState(false)
   const [formData, setFormData] = useState({
     essay: "",
     source: "",
     sourceDetail: "",
     registerEmail: "",
-    queryToken: "",
     group: "GROUP_ONE",
   })
 
@@ -128,7 +129,6 @@ export function PreApplicationForm({ locale, dict }: PreApplicationFormProps) {
       source: latest.source || "",
       sourceDetail: latest.sourceDetail || "",
       registerEmail: latest.registerEmail || "",
-      queryToken: latest.queryToken || "",
       group: latest.group || "GROUP_ONE",
     })
   }, [latest?.id])
@@ -184,7 +184,6 @@ export function PreApplicationForm({ locale, dict }: PreApplicationFormProps) {
           source: formData.source || null,
           sourceDetail: formData.source === "OTHER" ? formData.sourceDetail : null,
           registerEmail: formData.registerEmail,
-          queryToken: formData.queryToken || null,
           group: formData.group,
         }),
       })
@@ -308,7 +307,30 @@ export function PreApplicationForm({ locale, dict }: PreApplicationFormProps) {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">{t.fields.queryToken}</p>
-                <p className="font-medium">{latest.queryToken || "-"}</p>
+                {latest.queryToken ? (
+                  <div className="flex items-center gap-2">
+                    <code className="font-mono font-medium tracking-widest">{latest.queryToken}</code>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6"
+                      onClick={async () => {
+                        try {
+                          await navigator.clipboard.writeText(latest.queryToken!)
+                          setTokenCopied(true)
+                          toast.success(t.queryTokenCopied || "查询码已复制")
+                          setTimeout(() => setTokenCopied(false), 2000)
+                        } catch {
+                          toast.error("复制失败")
+                        }
+                      }}
+                    >
+                      {tokenCopied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                    </Button>
+                  </div>
+                ) : (
+                  <p className="font-medium">-</p>
+                )}
               </div>
               {latest.sourceDetail && (
                 <div>
@@ -403,20 +425,6 @@ export function PreApplicationForm({ locale, dict }: PreApplicationFormProps) {
                   readOnly={isEditing}
                 />
                 <p className="text-xs text-muted-foreground">{t.fields.registerEmailHint}</p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="queryToken">{t.fields.queryToken}</Label>
-                <Input
-                  id="queryToken"
-                  value={formData.queryToken}
-                  onChange={(event) =>
-                    setFormData({ ...formData, queryToken: event.target.value })
-                  }
-                  placeholder={t.fields.queryTokenHint}
-                  readOnly={isEditing}
-                />
-                <p className="text-xs text-muted-foreground">{t.fields.queryTokenHint}</p>
               </div>
 
               <div className="space-y-2">

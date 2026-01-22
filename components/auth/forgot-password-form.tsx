@@ -54,7 +54,7 @@ export function ForgotPasswordForm({ locale, dict }: ForgotPasswordFormProps) {
       <div className="text-center">
         <Link href={`/${locale}`} className="inline-flex items-center gap-2 mb-8">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary">
-            <span className="text-lg font-bold text-primary-foreground">NS</span>
+            <span className="text-lg font-bold text-primary-foreground">L</span>
           </div>
         </Link>
         <h1 className="text-2xl font-bold tracking-tight">{t.title}</h1>

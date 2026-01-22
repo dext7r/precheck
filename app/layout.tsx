@@ -7,8 +7,8 @@ const geistSans = Geist({ subsets: ["latin"], variable: "--font-geist-sans" })
 const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono" })
 
 export const metadata: Metadata = {
-  title: "Next Starter Template",
-  description: "A production-ready Next.js starter template",
+  title: "linux.do 预申请系统",
+  description: "linux.do 社区预申请与邀请码管理系统",
   generator: "v0.app",
 }
 

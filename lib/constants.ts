@@ -1,5 +1,5 @@
-export const APP_NAME = "Next Starter"
-export const APP_DESCRIPTION = "A production-ready Next.js starter template"
+export const APP_NAME = "linux.do"
+export const APP_DESCRIPTION = "linux.do 社区预申请与邀请码管理系统"
 
 export const ROUTES = {
   HOME: "/",

@@ -41,6 +41,7 @@ model User {
   inviteCodesAssigned    InviteCode[] @relation("InviteCodesAssigned")
   inviteCodesUsed        InviteCode[] @relation("InviteCodesUsed")
   inviteCodesIssued      InviteCode[] @relation("InviteCodesIssued")
+  queryTokensCreated     InviteCodeQueryToken[] @relation("QueryTokensCreated")
   auditLogs              AuditLog[] @relation("AuditActor")
   
   // 密码重置
@@ -138,7 +139,7 @@ model PreApplication {
   source        PreApplicationSource?
   sourceDetail  String?
   registerEmail String
-  queryToken    String?
+  queryToken    String?                @unique
   group         PreApplicationGroup
   status        PreApplicationStatus   @default(PENDING)
   guidance      String?
@@ -170,6 +171,7 @@ model InviteCode {
   issuedToUserId String?
   issuedToEmail  String?
   issuedAt       DateTime?
+  queryTokenId   String?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
@@ -178,11 +180,28 @@ model InviteCode {
   createdBy  User? @relation("InviteCodesCreated", fields: [createdById], references: [id])
   issuedToUser User? @relation("InviteCodesIssued", fields: [issuedToUserId], references: [id])
   preApplication PreApplication? @relation("PreApplicationInviteCode")
+  queryToken InviteCodeQueryToken? @relation(fields: [queryTokenId], references: [id])
 
   @@index([expiresAt])
   @@index([usedAt])
   @@index([issuedToUserId])
   @@index([issuedToEmail])
+  @@index([queryTokenId])
+}
+
+model InviteCodeQueryToken {
+  id          String    @id @default(cuid())
+  token       String    @unique
+  expiresAt   DateTime?
+  queriedAt   DateTime?
+  createdById String
+  createdAt   DateTime  @default(now())
+
+  createdBy   User         @relation("QueryTokensCreated", fields: [createdById], references: [id])
+  inviteCodes InviteCode[]
+
+  @@index([token])
+  @@index([createdById])
 }
 
 model AuditLog {

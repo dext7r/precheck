@@ -1,7 +1,7 @@
 {
   "metadata": {
-    "title": "Next Starter Template",
-    "description": "A production-ready Next.js starter template with TypeScript, Tailwind CSS, shadcn/ui, Prisma, and multi-platform deployment support."
+    "title": "linux.do Pre-Application System",
+    "description": "linux.do community pre-application and invite code management system"
   },
   "nav": {
     "features": "Features",
@@ -12,17 +12,29 @@
     "login": "Login",
     "register": "Register",
     "dashboard": "Dashboard",
-    "logout": "Logout"
+    "logout": "Logout",
+    "queryStatus": "Check Status"
   },
   "hero": {
-    "badge": "Production Ready Template",
-    "title": "Build Modern Apps with",
-    "titleHighlight": "Next.js Starter",
-    "description": "A comprehensive starter template featuring React, TypeScript, Tailwind CSS, shadcn/ui, Prisma, and Docker. Deploy anywhere — Vercel, Cloudflare, Netlify, Railway, and more.",
-    "cta": "Get Started",
-    "viewGithub": "View on GitHub",
+    "badge": "linux.do Community",
+    "title": "Welcome to",
+    "titleHighlight": "linux.do Pre-Application",
+    "description": "Submit your pre-application here. Once approved by admin, you'll receive an invite code to join the community.",
+    "cta": "Apply Now",
+    "viewGithub": "Learn More",
     "terminal": "terminal",
-    "readyOn": "Ready on http://localhost:3000"
+    "readyOn": "Ready on http://localhost:3000",
+    "tip": "Already have an account? Please login first",
+    "actions": {
+      "apply": {
+        "title": "Submit Application",
+        "description": "Fill out the form to apply for linux.do community"
+      },
+      "query": {
+        "title": "Check Status",
+        "description": "Use query code to check application status"
+      }
+    }
   },
   "features": {
     "title": "Everything You Need",
@@ -90,22 +102,15 @@
     }
   },
   "footer": {
-    "description": "A production-ready Next.js starter template with everything you need to build modern web applications.",
-    "product": "Product",
-    "resources": "Resources",
-    "legal": "Legal",
-    "documentation": "Documentation",
-    "apiReference": "API Reference",
-    "examples": "Examples",
+    "description": "linux.do community pre-application and invite code management system",
+    "visitCommunity": "Visit Community",
     "privacy": "Privacy",
     "terms": "Terms",
-    "license": "License",
-    "copyright": "All rights reserved.",
-    "deployTime": "Deployed"
+    "copyright": "All rights reserved."
   },
   "docs": {
     "title": "Documentation",
-    "description": "Everything you need to know to get started with Next Starter Template.",
+    "description": "linux.do pre-application system user guide",
     "backHome": "Back to Home",
     "envTitle": "Environment Variables",
     "envDescription": "Required configuration for your application",
@@ -482,6 +487,7 @@
       "used": "Used",
       "unused": "Unused"
     },
+    "queryTokenCopied": "Query code copied",
     "notifications": {
       "approvedTitle": "Pre-application approved",
       "rejectedTitle": "Pre-application rejected",
@@ -538,6 +544,32 @@
         "footer": "If you have questions, please contact an admin."
       }
     }
+  },
+  "queryInviteCodes": {
+    "metaTitle": "Query Application Status",
+    "metaDescription": "Use query code to check pre-application review status and invite codes",
+    "title": "Query",
+    "description": "Enter a query code to check application status or available invite codes",
+    "placeholder": "Enter query code",
+    "submit": "Query",
+    "notFound": "Not found or query code has expired",
+    "result": "Results",
+    "copyCode": "Copy",
+    "copied": "Copied",
+    "expiresAt": "Expires at",
+    "noExpiry": "No expiry",
+    "expired": "Expired",
+    "statusPending": "Pending",
+    "statusApproved": "Approved",
+    "statusRejected": "Rejected",
+    "applicationStatus": "Application Status",
+    "statusLabel": "Status",
+    "submittedAt": "Submitted at",
+    "reviewedAt": "Reviewed at",
+    "guidance": "Review guidance",
+    "inviteCodeTitle": "Invite Code",
+    "used": "Used",
+    "noInviteCode": "No invite code available"
   },
   "admin": {
     "title": "Admin Panel",
@@ -707,6 +739,14 @@
     "inviteCodeMarkUsed": "Mark Used",
     "inviteCodeMarkUnused": "Mark Unused",
     "inviteCodeNoRecords": "No invite codes",
+    "queryTokenGenerate": "Generate Query Code",
+    "queryTokenGenerateDesc": "{count} invite codes selected",
+    "queryTokenGenerateSuccess": "Query code generated. Copy and send to the user.",
+    "queryTokenCopy": "Copy Query Code",
+    "queryTokenCopied": "Copied",
+    "queryTokenExpiry": "Query Code Expiry",
+    "queryTokenResult": "Query Code",
+    "queryTokenSelectHint": "Users can view invite codes using this query code on the query page",
     "noPreApplications": "No pre-applications",
     "saving": "Saving...",
     "ban": "Ban",

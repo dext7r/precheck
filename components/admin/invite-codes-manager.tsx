@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { ConfirmDialog } from "@/components/admin/confirm-dialog"
-import { ChevronsUpDown, CheckIcon, MoreHorizontal, Send, ShieldOff, CheckCircle2 } from "lucide-react"
+import { ChevronsUpDown, CheckIcon, MoreHorizontal, Send, ShieldOff, CheckCircle2, Copy, Check } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -58,6 +58,7 @@ type InviteCodeRecord = {
   createdAt: string
   issuedToEmail: string | null
   issuedAt: string | null
+  queryTokenId: string | null
   preApplication: {
     id: string
     registerEmail: string
@@ -107,6 +108,12 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
   const [invalidateRecord, setInvalidateRecord] = useState<InviteCodeRecord | null>(null)
   const [invalidating, setInvalidating] = useState(false)
   const [now, setNow] = useState(Date.now())
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [queryTokenDialogOpen, setQueryTokenDialogOpen] = useState(false)
+  const [generatedToken, setGeneratedToken] = useState("")
+  const [queryTokenExpiry, setQueryTokenExpiry] = useState("")
+  const [generatingToken, setGeneratingToken] = useState(false)
+  const [tokenCopied, setTokenCopied] = useState(false)
 
   const inviteCodePattern = /(?:https?:\/\/linux\.do)?\/?invites\/([A-Za-z0-9_-]{4,64})/i
 
@@ -440,6 +447,55 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
     }
   }
 
+  const isRowSelectable = (record: InviteCodeRecord) => {
+    if (record.usedAt) return false
+    if (record.expiresAt && new Date(record.expiresAt).getTime() <= now) return false
+    if (record.queryTokenId) return false
+    return true
+  }
+
+  const handleGenerateQueryToken = async () => {
+    if (selectedIds.size === 0) return
+    setGeneratingToken(true)
+    try {
+      const payload: { inviteCodeIds: string[]; expiresAt?: string } = {
+        inviteCodeIds: Array.from(selectedIds),
+      }
+      if (queryTokenExpiry) {
+        payload.expiresAt = new Date(queryTokenExpiry).toISOString()
+      }
+      const res = await fetch("/api/admin/invite-codes/query-token", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data?.error || t.actionFailed)
+      }
+      const data = await res.json()
+      setGeneratedToken(data.token)
+      setQueryTokenDialogOpen(true)
+      setSelectedIds(new Set())
+      await fetchRecords()
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t.actionFailed)
+    } finally {
+      setGeneratingToken(false)
+    }
+  }
+
+  const handleCopyToken = async () => {
+    try {
+      await navigator.clipboard.writeText(generatedToken)
+      setTokenCopied(true)
+      toast.success(t.queryTokenCopied)
+      setTimeout(() => setTokenCopied(false), 2000)
+    } catch {
+      toast.error(t.actionFailed)
+    }
+  }
+
   const columns: Column<InviteCodeRecord>[] = useMemo(
     () => [
       {
@@ -692,6 +748,29 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
         </div>
       </div>
 
+      {selectedIds.size > 0 && (
+        <Card className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="text-sm text-muted-foreground">
+            {t.queryTokenGenerateDesc?.replace("{count}", selectedIds.size.toString()) ||
+              `已选择 ${selectedIds.size} 个邀请码`}
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <div className="flex items-center gap-2">
+              <span className="text-sm">{t.queryTokenExpiry || "查询码有效期"}</span>
+              <Input
+                type="datetime-local"
+                value={queryTokenExpiry}
+                onChange={(e) => setQueryTokenExpiry(e.target.value)}
+                className="w-auto"
+              />
+            </div>
+            <Button onClick={handleGenerateQueryToken} disabled={generatingToken}>
+              {generatingToken ? t.saving : (t.queryTokenGenerate || "生成查询码")}
+            </Button>
+          </div>
+        </Card>
+      )}
+
       <DataTable
         columns={columns}
         data={records}
@@ -705,6 +784,10 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
         loadingText={t.loading}
         perPageText={t.perPage}
         summaryFormatter={formatPageSummary}
+        selectable
+        selectedIds={selectedIds}
+        onSelectionChange={setSelectedIds}
+        isRowSelectable={isRowSelectable}
         mobileCardRender={(record) => {
           const status = getStatus(record)
           return (
@@ -915,6 +998,41 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
         destructive
         onConfirm={handleInvalidate}
       />
+
+      <Dialog open={queryTokenDialogOpen} onOpenChange={setQueryTokenDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t.queryTokenResult || "查询码"}</DialogTitle>
+            <DialogDescription>
+              {t.queryTokenGenerateSuccess || "查询码已生成，请复制并发送给用户"}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Input
+                value={generatedToken}
+                readOnly
+                className="flex-1 font-mono text-lg tracking-widest"
+              />
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={handleCopyToken}
+              >
+                {tokenCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+              </Button>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              {t.queryTokenSelectHint || "用户可在查询页面使用此查询码查看邀请码"}
+            </p>
+          </div>
+          <DialogFooter>
+            <Button onClick={() => setQueryTokenDialogOpen(false)}>
+              {t.confirm || "确定"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
