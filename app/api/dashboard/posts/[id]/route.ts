@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { getCurrentUser } from "@/lib/auth/session"
 import { getSiteSettings } from "@/lib/site-settings"
+import { writeAuditLog } from "@/lib/audit"
 import { z } from "zod"
 
 const updatePostSchema = z.object({
@@ -99,6 +100,17 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
       },
     })
 
+    await writeAuditLog(db, {
+      action: "POST_UPDATE",
+      entityType: "POST",
+      entityId: id,
+      actor: user,
+      before: post,
+      after: updatedPost,
+      metadata: { payload: updateData },
+      request,
+    })
+
     return NextResponse.json(updatedPost)
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -135,6 +147,16 @@ export async function DELETE(_request: NextRequest, context: { params: Promise<{
     }
 
     await db.post.delete({ where: { id } })
+
+    await writeAuditLog(db, {
+      action: "POST_DELETE",
+      entityType: "POST",
+      entityId: id,
+      actor: user,
+      before: post,
+      after: null,
+      request: _request,
+    })
 
     return NextResponse.json({ success: true })
   } catch (error) {

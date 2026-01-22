@@ -35,6 +35,13 @@ model User {
   messageRecipients MessageRecipient[]
   messagesCreated   Message[] @relation("CreatedMessages")
   messagesRevoked   Message[] @relation("RevokedMessages")
+  preApplications          PreApplication[]
+  preApplicationsReviewed PreApplication[] @relation("ReviewedPreApplications")
+  inviteCodesCreated     InviteCode[] @relation("InviteCodesCreated")
+  inviteCodesAssigned    InviteCode[] @relation("InviteCodesAssigned")
+  inviteCodesUsed        InviteCode[] @relation("InviteCodesUsed")
+  inviteCodesIssued      InviteCode[] @relation("InviteCodesIssued")
+  auditLogs              AuditLog[] @relation("AuditActor")
   
   // 密码重置
   resetToken       String?   @unique
@@ -124,6 +131,83 @@ model MessageRecipient {
   @@index([userId, readAt])
 }
 
+model PreApplication {
+  id            String                 @id @default(cuid())
+  userId        String
+  essay         String
+  source        PreApplicationSource?
+  sourceDetail  String?
+  registerEmail String
+  queryToken    String?
+  group         PreApplicationGroup
+  status        PreApplicationStatus   @default(PENDING)
+  guidance      String?
+  reviewedAt    DateTime?
+  reviewedById  String?
+  reviewCount   Int                    @default(0)
+  inviteCodeId  String?                @unique
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @updatedAt
+
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reviewedBy User?      @relation("ReviewedPreApplications", fields: [reviewedById], references: [id])
+  inviteCode InviteCode? @relation("PreApplicationInviteCode", fields: [inviteCodeId], references: [id])
+
+  @@index([status, createdAt])
+  @@index([userId, createdAt])
+  @@index([registerEmail])
+}
+
+model InviteCode {
+  id          String    @id @default(cuid())
+  code        String    @unique
+  expiresAt   DateTime?
+  assignedAt  DateTime?
+  assignedById String?
+  usedAt      DateTime?
+  usedById    String?
+  createdById String?
+  issuedToUserId String?
+  issuedToEmail  String?
+  issuedAt       DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  assignedBy User? @relation("InviteCodesAssigned", fields: [assignedById], references: [id])
+  usedBy     User? @relation("InviteCodesUsed", fields: [usedById], references: [id])
+  createdBy  User? @relation("InviteCodesCreated", fields: [createdById], references: [id])
+  issuedToUser User? @relation("InviteCodesIssued", fields: [issuedToUserId], references: [id])
+  preApplication PreApplication? @relation("PreApplicationInviteCode")
+
+  @@index([expiresAt])
+  @@index([usedAt])
+  @@index([issuedToUserId])
+  @@index([issuedToEmail])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  entityType String
+  entityId   String?
+  action     String
+  actorId    String?
+  actorName  String?
+  actorEmail String?
+  actorRole  Role?
+  ip         String?
+  userAgent  String?
+  before     Json?
+  after      Json?
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  actor User? @relation("AuditActor", fields: [actorId], references: [id])
+
+  @@index([entityType, entityId])
+  @@index([actorId, createdAt])
+  @@index([createdAt])
+}
+
 enum Role {
   USER
   ADMIN
@@ -140,6 +224,25 @@ enum PostStatus {
   PUBLISHED
   PENDING
   REJECTED
+}
+
+enum PreApplicationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum PreApplicationSource {
+  TIEBA
+  BILIBILI
+  DOUYIN
+  XIAOHONGSHU
+  OTHER
+}
+
+enum PreApplicationGroup {
+  GROUP_ONE
+  GROUP_TWO
 }
 
 model SiteSettings {

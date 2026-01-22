@@ -1,8 +1,9 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { getCurrentUser } from "@/lib/auth/session"
+import { writeAuditLog } from "@/lib/audit"
 
-export async function POST(_request: NextRequest, context: { params: Promise<{ id: string }> }) {
+export async function POST(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
     const user = await getCurrentUser()
 
@@ -21,7 +22,6 @@ export async function POST(_request: NextRequest, context: { params: Promise<{ i
     const { id } = await context.params
     const message = await db.message.findUnique({
       where: { id },
-      select: { id: true, revokedAt: true },
     })
 
     if (!message) {
@@ -32,9 +32,19 @@ export async function POST(_request: NextRequest, context: { params: Promise<{ i
       return NextResponse.json({ error: "Message already revoked" }, { status: 400 })
     }
 
-    await db.message.update({
+    const updated = await db.message.update({
       where: { id },
       data: { revokedAt: new Date(), revokedById: user.id },
+    })
+
+    await writeAuditLog(db, {
+      action: "MESSAGE_REVOKE",
+      entityType: "MESSAGE",
+      entityId: id,
+      actor: user,
+      before: message,
+      after: updated,
+      request,
     })
 
     return NextResponse.json({ success: true })

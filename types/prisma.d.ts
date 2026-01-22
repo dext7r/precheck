@@ -1,8 +1,16 @@
+import type { Prisma } from "@prisma/client"
+
 export type Role = "USER" | "ADMIN"
 
 export type UserStatus = "ACTIVE" | "INACTIVE" | "BANNED"
 
 export type PostStatus = "DRAFT" | "PUBLISHED" | "PENDING" | "REJECTED"
+
+export type PreApplicationStatus = "PENDING" | "APPROVED" | "REJECTED"
+
+export type PreApplicationSource = "TIEBA" | "BILIBILI" | "DOUYIN" | "XIAOHONGSHU" | "OTHER"
+
+export type PreApplicationGroup = "GROUP_ONE" | "GROUP_TWO"
 
 export interface User {
   id: string
@@ -22,6 +30,13 @@ export interface User {
   messageRecipients: MessageRecipient[]
   messagesCreated: Message[]
   messagesRevoked: Message[]
+  preApplications: PreApplication[]
+  preApplicationsReviewed: PreApplication[]
+  inviteCodesCreated: InviteCode[]
+  inviteCodesAssigned: InviteCode[]
+  inviteCodesUsed: InviteCode[]
+  inviteCodesIssued: InviteCode[]
+  auditLogs: AuditLog[]
   resetToken: string | null
   resetTokenExpiry: Date | null
 }
@@ -90,6 +105,67 @@ export interface MessageRecipient {
   createdAt: Date
   message: Message
   user: User
+}
+
+export interface PreApplication {
+  id: string
+  userId: string
+  essay: string
+  source: PreApplicationSource | null
+  sourceDetail: string | null
+  registerEmail: string
+  queryToken: string | null
+  group: PreApplicationGroup
+  status: PreApplicationStatus
+  guidance: string | null
+  reviewedAt: Date | null
+  reviewedById: string | null
+  reviewCount: number
+  inviteCodeId: string | null
+  createdAt: Date
+  updatedAt: Date
+  user: User
+  reviewedBy: User | null
+  inviteCode: InviteCode | null
+}
+
+export interface InviteCode {
+  id: string
+  code: string
+  expiresAt: Date | null
+  assignedAt: Date | null
+  assignedById: string | null
+  usedAt: Date | null
+  usedById: string | null
+  createdById: string | null
+  issuedToUserId: string | null
+  issuedToEmail: string | null
+  issuedAt: Date | null
+  createdAt: Date
+  updatedAt: Date
+  assignedBy: User | null
+  usedBy: User | null
+  createdBy: User | null
+  issuedToUser: User | null
+  preApplication: PreApplication | null
+}
+
+export interface AuditLog {
+  id: string
+  entityType: string
+  entityId: string | null
+  action: string
+  actorId: string | null
+  actorName: string | null
+  actorEmail: string | null
+  actorRole: Role | null
+  ip: string | null
+  userAgent: string | null
+  before: Prisma.JsonValue | null
+  after: Prisma.JsonValue | null
+  metadata: Prisma.JsonValue | null
+  createdAt: Date
+  actor: User | null
 }
 
 export interface SiteSettings {

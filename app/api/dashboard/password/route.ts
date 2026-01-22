@@ -3,6 +3,7 @@ import { z } from "zod"
 import { db } from "@/lib/db"
 import { getCurrentUser } from "@/lib/auth/session"
 import { hashPassword, validatePassword, verifyPassword } from "@/lib/auth/password"
+import { writeAuditLog } from "@/lib/audit"
 
 const passwordSchema = z.object({
   currentPassword: z.string().optional(),
@@ -42,10 +43,24 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: passwordValidation.errors[0] }, { status: 400 })
     }
 
+    const before = await db.user.findUnique({ where: { id: user.id } })
+
     const hashedPassword = await hashPassword(newPassword)
     await db.user.update({
       where: { id: user.id },
       data: { password: hashedPassword },
+    })
+
+    const after = await db.user.findUnique({ where: { id: user.id } })
+
+    await writeAuditLog(db, {
+      action: "USER_PASSWORD_UPDATE",
+      entityType: "USER",
+      entityId: user.id,
+      actor: user,
+      before,
+      after,
+      request,
     })
 
     return NextResponse.json({ success: true })

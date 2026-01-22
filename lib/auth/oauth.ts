@@ -2,6 +2,7 @@ import { db } from "@/lib/db"
 import { authConfig } from "./config"
 import { features } from "@/lib/features"
 import { getSiteSettings } from "@/lib/site-settings"
+import { writeAuditLog } from "@/lib/audit"
 import type { OAuthProvider } from "./config"
 
 interface OAuthProfile {
@@ -130,7 +131,11 @@ export async function getGoogleProfile(code: string): Promise<OAuthProfile | nul
 }
 
 // 处理 OAuth 登录/注册
-export async function handleOAuthSignIn(provider: OAuthProvider, profile: OAuthProfile) {
+export async function handleOAuthSignIn(
+  provider: OAuthProvider,
+  profile: OAuthProfile,
+  request?: Request,
+) {
   if (!db) {
     throw new Error("Database not configured")
   }
@@ -162,13 +167,22 @@ export async function handleOAuthSignIn(provider: OAuthProvider, profile: OAuthP
 
   if (existingUser) {
     // 关联 OAuth 账号到现有用户
-    await db.account.create({
+    const account = await db.account.create({
       data: {
         userId: existingUser.id,
         type: "oauth",
         provider,
         providerAccountId: profile.id,
       },
+    })
+    await writeAuditLog(db, {
+      action: "OAUTH_ACCOUNT_LINK",
+      entityType: "ACCOUNT",
+      entityId: account.id,
+      actor: existingUser,
+      after: account,
+      metadata: { provider },
+      request,
     })
     return existingUser
   }
@@ -192,6 +206,16 @@ export async function handleOAuthSignIn(provider: OAuthProvider, profile: OAuthP
         },
       },
     },
+  })
+
+  await writeAuditLog(db, {
+    action: "USER_REGISTER_OAUTH",
+    entityType: "USER",
+    entityId: newUser.id,
+    actor: newUser,
+    after: newUser,
+    metadata: { provider },
+    request,
   })
 
   return newUser

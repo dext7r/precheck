@@ -8,6 +8,7 @@ import { features } from "@/lib/features"
 import { getDictionary } from "@/lib/i18n/get-dictionary"
 import { defaultLocale, locales } from "@/lib/i18n/config"
 import { getSiteSettings } from "@/lib/site-settings"
+import { writeAuditLog } from "@/lib/audit"
 import { z } from "zod"
 
 const forgotPasswordSchema = z.object({
@@ -50,12 +51,25 @@ export async function POST(request: NextRequest) {
     const resetToken = generateResetToken()
     const resetTokenExpiry = new Date(Date.now() + authConfig.resetTokenExpiry)
 
-    await prisma.user.update({
+    const before = await prisma.user.findUnique({ where: { id: user.id } })
+
+    const updated = await prisma.user.update({
       where: { id: user.id },
       data: {
         resetToken,
         resetTokenExpiry,
       },
+    })
+
+    await writeAuditLog(prisma, {
+      action: "USER_PASSWORD_RESET_REQUEST",
+      entityType: "USER",
+      entityId: user.id,
+      actor: user,
+      before,
+      after: updated,
+      metadata: { email },
+      request,
     })
 
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin

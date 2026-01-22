@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { getCurrentUser } from "@/lib/auth/session"
+import { writeAuditLog } from "@/lib/audit"
 
 export async function POST(_request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
@@ -16,15 +17,44 @@ export async function POST(_request: NextRequest, context: { params: Promise<{ i
 
     const { id } = await context.params
 
-    await db.messageRecipient.updateMany({
+    const record = await db.messageRecipient.findUnique({
       where: {
-        messageId: id,
-        userId: user.id,
-        readAt: null,
-        message: { revokedAt: null },
+        messageId_userId: {
+          messageId: id,
+          userId: user.id,
+        },
       },
-      data: { readAt: new Date() },
+      include: {
+        message: { select: { revokedAt: true } },
+      },
     })
+
+    if (!record || record.message.revokedAt) {
+      return NextResponse.json({ error: "Message not found" }, { status: 404 })
+    }
+
+    if (!record.readAt) {
+      const readAt = new Date()
+      await db.messageRecipient.update({
+        where: {
+          messageId_userId: {
+            messageId: id,
+            userId: user.id,
+          },
+        },
+        data: { readAt },
+      })
+
+      await writeAuditLog(db, {
+        action: "MESSAGE_READ",
+        entityType: "MESSAGE_RECIPIENT",
+        entityId: `${id}:${user.id}`,
+        actor: user,
+        before: record,
+        after: { ...record, readAt },
+        request: _request,
+      })
+    }
 
     return NextResponse.json({ success: true })
   } catch (error) {

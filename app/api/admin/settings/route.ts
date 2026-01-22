@@ -2,6 +2,8 @@ import { type NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { getCurrentUser } from "@/lib/auth/session"
 import { getSiteSettings, updateSiteSettings } from "@/lib/site-settings"
+import { db } from "@/lib/db"
+import { writeAuditLog } from "@/lib/audit"
 
 const settingsSchema = z
   .object({
@@ -46,7 +48,21 @@ export async function PUT(request: NextRequest) {
   try {
     const body = await request.json()
     const updates = settingsSchema.parse(body)
+    const before = await getSiteSettings()
     const settings = await updateSiteSettings(updates)
+
+    if (db) {
+      await writeAuditLog(db, {
+        action: "SETTINGS_UPDATE",
+        entityType: "SITE_SETTINGS",
+        entityId: "global",
+        actor: user,
+        before,
+        after: settings,
+        metadata: { payload: updates },
+        request,
+      })
+    }
     return NextResponse.json(settings)
   } catch (error) {
     if (error instanceof z.ZodError) {

@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { db } from "@/lib/db"
 import { getCurrentUser } from "@/lib/auth/session"
+import { writeAuditLog } from "@/lib/audit"
 
 const createMessageSchema = z.object({
   title: z.string().min(1).max(200),
@@ -166,6 +167,20 @@ export async function POST(request: NextRequest) {
         title: true,
         createdAt: true,
       },
+    })
+
+    const messageFull = await db.message.findUnique({
+      where: { id: message.id },
+    })
+
+    await writeAuditLog(db, {
+      action: "MESSAGE_CREATE",
+      entityType: "MESSAGE",
+      entityId: message.id,
+      actor: user,
+      after: messageFull ?? message,
+      metadata: { recipients: recipients.map((recipient) => recipient.id) },
+      request,
     })
 
     return NextResponse.json(message)

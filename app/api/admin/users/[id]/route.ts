@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { getCurrentUser } from "@/lib/auth/session"
 import { z } from "zod"
+import { writeAuditLog } from "@/lib/audit"
 
 const updateUserSchema = z.object({
   role: z.enum(["USER", "ADMIN"]).optional(),
@@ -74,6 +75,8 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
       return NextResponse.json({ error: "No fields to update" }, { status: 400 })
     }
 
+    const before = await db.user.findUnique({ where: { id } })
+
     const updatedUser = await db.user.update({
       where: { id },
       data,
@@ -86,6 +89,17 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
         createdAt: true,
         updatedAt: true,
       },
+    })
+
+    await writeAuditLog(db, {
+      action: "USER_ADMIN_UPDATE",
+      entityType: "USER",
+      entityId: id,
+      actor: user,
+      before,
+      after: updatedUser,
+      metadata: { payload: data },
+      request,
     })
 
     return NextResponse.json(updatedUser)
@@ -120,7 +134,19 @@ export async function DELETE(_request: NextRequest, context: { params: Promise<{
       return NextResponse.json({ error: "Cannot delete yourself" }, { status: 400 })
     }
 
+    const before = await db.user.findUnique({ where: { id } })
+
     await db.user.delete({ where: { id } })
+
+    await writeAuditLog(db, {
+      action: "USER_ADMIN_DELETE",
+      entityType: "USER",
+      entityId: id,
+      actor: user,
+      before,
+      after: null,
+      request,
+    })
 
     return NextResponse.json({ success: true })
   } catch (error) {

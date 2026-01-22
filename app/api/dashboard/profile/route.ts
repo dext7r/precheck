@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { db } from "@/lib/db"
 import { getCurrentUser } from "@/lib/auth/session"
+import { writeAuditLog } from "@/lib/audit"
 
 const profileSchema = z.object({
   name: z.string().max(80, "Name is too long").optional(),
@@ -23,6 +24,8 @@ export async function PUT(request: NextRequest) {
     const trimmedName = name?.trim()
     const trimmedAvatar = avatar?.trim()
 
+    const before = await db.user.findUnique({ where: { id: user.id } })
+
     const updated = await db.user.update({
       where: { id: user.id },
       data: {
@@ -34,6 +37,17 @@ export async function PUT(request: NextRequest) {
         email: true,
         avatar: true,
       },
+    })
+
+    await writeAuditLog(db, {
+      action: "USER_PROFILE_UPDATE",
+      entityType: "USER",
+      entityId: user.id,
+      actor: user,
+      before,
+      after: updated,
+      metadata: { payload: { name: trimmedName, avatar: trimmedAvatar } },
+      request,
     })
 
     return NextResponse.json(updated)

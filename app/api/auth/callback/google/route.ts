@@ -2,6 +2,8 @@ import { type NextRequest, NextResponse } from "next/server"
 import { getGoogleProfile, handleOAuthSignIn } from "@/lib/auth/oauth"
 import { createSession, setSessionCookie } from "@/lib/auth/session"
 import { features } from "@/lib/features"
+import { writeAuditLog } from "@/lib/audit"
+import { db } from "@/lib/db"
 
 export async function GET(request: NextRequest) {
   if (!features.oauth.google) {
@@ -21,10 +23,33 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(new URL("/login?error=oauth_failed", request.url))
     }
 
-    const user = await handleOAuthSignIn("google", profile)
+    const user = await handleOAuthSignIn("google", profile, request)
     const { token, expires } = await createSession(user.id)
+    const sessionRecord = await db?.session.findUnique({
+      where: { sessionToken: token },
+    })
     const response = NextResponse.redirect(new URL("/dashboard", request.url))
     setSessionCookie(response, token, expires)
+    if (db) {
+      await writeAuditLog(db, {
+        action: "AUTH_OAUTH_LOGIN",
+        entityType: "AUTH",
+        entityId: user.id,
+        actor: user,
+        metadata: { provider: "google" },
+        request,
+      })
+      if (sessionRecord) {
+        await writeAuditLog(db, {
+          action: "SESSION_CREATE",
+          entityType: "SESSION",
+          entityId: sessionRecord.id,
+          actor: user,
+          after: sessionRecord,
+          request,
+        })
+      }
+    }
     return response
   } catch {
     return NextResponse.redirect(new URL("/login?error=oauth_failed", request.url))

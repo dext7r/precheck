@@ -5,6 +5,7 @@ import { createSession, setSessionCookie } from "@/lib/auth/session"
 import { features } from "@/lib/features"
 import { getCountryFromIP } from "@/lib/utils/geolocation"
 import { getSiteSettings } from "@/lib/site-settings"
+import { writeAuditLog } from "@/lib/audit"
 import { z } from "zod"
 
 const registerSchema = z.object({
@@ -57,8 +58,21 @@ export async function POST(request: NextRequest) {
       },
     })
 
+    await writeAuditLog(db, {
+      action: "USER_REGISTER",
+      entityType: "USER",
+      entityId: user.id,
+      actor: user,
+      after: user,
+      metadata: { country },
+      request,
+    })
+
     // 创建 Session
     const { token, expires } = await createSession(user.id)
+    const sessionRecord = await db.session.findUnique({
+      where: { sessionToken: token },
+    })
     const response = NextResponse.json({
       success: true,
       user: {
@@ -69,6 +83,17 @@ export async function POST(request: NextRequest) {
       },
     })
     setSessionCookie(response, token, expires)
+
+    if (sessionRecord) {
+      await writeAuditLog(db, {
+        action: "SESSION_CREATE",
+        entityType: "SESSION",
+        entityId: sessionRecord.id,
+        actor: user,
+        after: sessionRecord,
+        request,
+      })
+    }
     return response
   } catch (error) {
     if (error instanceof z.ZodError) {

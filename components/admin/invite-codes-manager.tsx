@@ -1,0 +1,920 @@
+"use client"
+
+import { useEffect, useMemo, useState } from "react"
+import { toast } from "sonner"
+import { Card } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { DataTable, type Column } from "@/components/ui/data-table"
+import { Textarea } from "@/components/ui/textarea"
+import { Label } from "@/components/ui/label"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import {
+  Command,
+  CommandEmpty,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { ConfirmDialog } from "@/components/admin/confirm-dialog"
+import { ChevronsUpDown, CheckIcon, MoreHorizontal, Send, ShieldOff, CheckCircle2 } from "lucide-react"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import type { Dictionary } from "@/lib/i18n/get-dictionary"
+import type { Locale } from "@/lib/i18n/config"
+
+type InviteCodeRecord = {
+  id: string
+  code: string
+  expiresAt: string | null
+  usedAt: string | null
+  assignedAt: string | null
+  createdAt: string
+  issuedToEmail: string | null
+  issuedAt: string | null
+  preApplication: {
+    id: string
+    registerEmail: string
+    user: { id: string; name: string | null; email: string }
+  } | null
+  assignedBy: { id: string; name: string | null; email: string } | null
+  usedBy: { id: string; name: string | null; email: string } | null
+  issuedToUser: { id: string; name: string | null; email: string } | null
+}
+
+interface AdminInviteCodesManagerProps {
+  locale: Locale
+  dict: Dictionary
+}
+
+export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManagerProps) {
+  const t = dict.admin
+  const [records, setRecords] = useState<InviteCodeRecord[]>([])
+  const [total, setTotal] = useState(0)
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(20)
+  const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState("")
+  const [searchInput, setSearchInput] = useState("")
+  const [sortBy, setSortBy] = useState("createdAt")
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc")
+  const [statusFilter, setStatusFilter] = useState("all")
+  const [expiringWithin, setExpiringWithin] = useState("all")
+  const [creating, setCreating] = useState(false)
+  const [code, setCode] = useState("")
+  const [expiresAt, setExpiresAt] = useState("")
+  const [bulkInput, setBulkInput] = useState("")
+  const [bulkExpiresAt, setBulkExpiresAt] = useState("")
+  const [importing, setImporting] = useState(false)
+  const [issueOpen, setIssueOpen] = useState(false)
+  const [issueRecord, setIssueRecord] = useState<InviteCodeRecord | null>(null)
+  const [issueTargetType, setIssueTargetType] = useState<"email" | "user">("email")
+  const [issueTargetValue, setIssueTargetValue] = useState("")
+  const [issueNote, setIssueNote] = useState("")
+  const [issuing, setIssuing] = useState(false)
+  const [userSearch, setUserSearch] = useState("")
+  const [userResults, setUserResults] = useState<Array<{ id: string; name: string | null; email: string }>>([])
+  const [userLoading, setUserLoading] = useState(false)
+  const [selectedUser, setSelectedUser] = useState<{ id: string; name: string | null; email: string } | null>(null)
+  const [userPickerOpen, setUserPickerOpen] = useState(false)
+  const [invalidateOpen, setInvalidateOpen] = useState(false)
+  const [invalidateRecord, setInvalidateRecord] = useState<InviteCodeRecord | null>(null)
+  const [invalidating, setInvalidating] = useState(false)
+  const [now, setNow] = useState(Date.now())
+
+  const inviteCodePattern = /(?:https?:\/\/linux\.do)?\/?invites\/([A-Za-z0-9_-]{4,64})/i
+
+  const bulkSummary = useMemo(() => {
+    const lines = bulkInput.split(/\r?\n/)
+    const matches: string[] = []
+    let invalidCount = 0
+    let totalCount = 0
+
+    for (const rawLine of lines) {
+      const line = rawLine.trim()
+      if (!line) continue
+      totalCount += 1
+      const match = line.match(inviteCodePattern)
+      if (match?.[1]) {
+        matches.push(match[1])
+      } else {
+        invalidCount += 1
+      }
+    }
+
+    const unique = Array.from(new Set(matches))
+    return {
+      totalCount,
+      invalidCount,
+      duplicates: Math.max(0, matches.length - unique.length),
+      codes: unique,
+    }
+  }, [bulkInput])
+
+  useEffect(() => {
+    const interval = setInterval(() => setNow(Date.now()), 60000)
+    return () => clearInterval(interval)
+  }, [])
+
+  const fetchRecords = async () => {
+    setLoading(true)
+    try {
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: pageSize.toString(),
+        sortBy,
+        sortOrder,
+        ...(search && { search }),
+        ...(statusFilter !== "all" && { status: statusFilter }),
+        ...(expiringWithin !== "all" && { expiringWithin }),
+      })
+      const res = await fetch(`/api/admin/invite-codes?${params}`)
+      if (!res.ok) {
+        throw new Error("Fetch failed")
+      }
+      const data = await res.json()
+      setRecords(data.records || [])
+      setTotal(data.total || 0)
+    } catch (error) {
+      console.error("Invite codes fetch error:", error)
+      toast.error(t.fetchFailed)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchRecords()
+  }, [page, pageSize, search, statusFilter, expiringWithin, sortBy, sortOrder])
+
+  const handleSearch = () => {
+    setSearch(searchInput)
+    setPage(1)
+  }
+
+  const formatPageSummary = (summary: { total: number; page: number; totalPages: number }) =>
+    t.pageSummary
+      .replace("{total}", summary.total.toString())
+      .replace("{page}", summary.page.toString())
+      .replace("{totalPages}", summary.totalPages.toString())
+
+  const getStatus = (record: InviteCodeRecord) => {
+    if (record.usedAt) return { label: t.inviteCodeStatusUsed, className: "bg-slate-200 text-slate-700" }
+    if (record.expiresAt && new Date(record.expiresAt).getTime() <= now) {
+      return { label: t.inviteCodeStatusExpired, className: "bg-rose-100 text-rose-700" }
+    }
+    return { label: t.inviteCodeStatusUnused, className: "bg-emerald-100 text-emerald-700" }
+  }
+
+  const isExpired = (record: InviteCodeRecord) =>
+    !!record.expiresAt && new Date(record.expiresAt).getTime() <= now
+
+  const isIssued = (record: InviteCodeRecord) =>
+    !!record.preApplication || !!record.issuedToEmail || !!record.issuedToUser
+
+  const getExpiryBadge = (expiresAtValue: string | null) => {
+    if (!expiresAtValue) {
+      return <span className="text-xs text-muted-foreground">-</span>
+    }
+    const expiresAtDate = new Date(expiresAtValue)
+    const diffMs = expiresAtDate.getTime() - now
+    const diffHours = diffMs / (60 * 60 * 1000)
+    const label = expiresAtDate.toLocaleString(locale)
+
+    if (diffMs <= 0) {
+      return <Badge className="bg-rose-100 text-rose-700">{label}</Badge>
+    }
+    if (diffHours <= 1) {
+      return <Badge className="bg-rose-50 text-rose-700">{label}</Badge>
+    }
+    if (diffHours <= 2) {
+      return <Badge className="bg-amber-50 text-amber-700">{label}</Badge>
+    }
+    return <Badge variant="outline">{label}</Badge>
+  }
+
+  const handleCreate = async () => {
+    if (!code.trim()) {
+      toast.error(t.inviteCodeRequired)
+      return
+    }
+    setCreating(true)
+    try {
+      const payload: { code: string; expiresAt?: string } = { code: code.trim() }
+      if (expiresAt) {
+        payload.expiresAt = new Date(expiresAt).toISOString()
+      }
+      const res = await fetch("/api/admin/invite-codes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data?.error || t.actionFailed)
+      }
+      setCode("")
+      setExpiresAt("")
+      toast.success(t.inviteCodeCreateButton)
+      await fetchRecords()
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t.actionFailed)
+    } finally {
+      setCreating(false)
+    }
+  }
+
+  const handleImport = async () => {
+    if (bulkSummary.codes.length === 0) {
+      toast.error(t.inviteCodeImportEmpty)
+      return
+    }
+    setImporting(true)
+    try {
+      const payload: { codes: string[]; expiresAt?: string } = { codes: bulkSummary.codes }
+      if (bulkExpiresAt) {
+        payload.expiresAt = new Date(bulkExpiresAt).toISOString()
+      }
+      const res = await fetch("/api/admin/invite-codes/import", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data?.error || t.actionFailed)
+      }
+      const data = await res.json()
+      toast.success(
+        t.inviteCodeImportSuccess
+          .replace("{created}", String(data?.createdCount ?? 0))
+          .replace("{skipped}", String(data?.skippedCount ?? 0)),
+      )
+      setBulkInput("")
+      setBulkExpiresAt("")
+      await fetchRecords()
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t.actionFailed)
+    } finally {
+      setImporting(false)
+    }
+  }
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+    try {
+      const text = await file.text()
+      setBulkInput((prev) => (prev ? `${prev}\n${text}` : text))
+    } catch (error) {
+      console.error("Invite codes file read error:", error)
+      toast.error(t.actionFailed)
+    } finally {
+      event.target.value = ""
+    }
+  }
+
+  const updateUsage = async (record: InviteCodeRecord, used: boolean) => {
+    try {
+      const res = await fetch(`/api/admin/invite-codes/${record.id}/usage`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ used }),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data?.error || t.actionFailed)
+      }
+      await fetchRecords()
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t.actionFailed)
+    }
+  }
+
+  const openIssueDialog = (record: InviteCodeRecord) => {
+    setIssueRecord(record)
+    setIssueTargetType("email")
+    setIssueTargetValue("")
+    setIssueNote("")
+    setUserSearch("")
+    setUserResults([])
+    setSelectedUser(null)
+    setUserPickerOpen(false)
+    setIssueOpen(true)
+  }
+
+  const handleIssue = async () => {
+    if (!issueRecord) return
+    if (issueTargetType === "user" && !selectedUser) {
+      toast.error(t.inviteCodeIssueUserRequired)
+      return
+    }
+    if (issueTargetType === "email" && !issueTargetValue.trim()) {
+      toast.error(
+        issueTargetType === "user" ? t.inviteCodeIssueUserRequired : t.inviteCodeIssueEmailRequired,
+      )
+      return
+    }
+    setIssuing(true)
+    try {
+      const payload: {
+        recipientType: "email" | "user"
+        email?: string
+        userId?: string
+        note?: string
+        locale?: string
+      } = {
+        recipientType: issueTargetType,
+        note: issueNote.trim() || undefined,
+        locale,
+      }
+
+      if (issueTargetType === "user") {
+        payload.userId = selectedUser.id
+      } else {
+        payload.email = issueTargetValue.trim()
+      }
+
+      const res = await fetch(`/api/admin/invite-codes/${issueRecord.id}/assign`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      })
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data?.error || t.actionFailed)
+      }
+
+      toast.success(t.inviteCodeIssueSuccess)
+      setIssueOpen(false)
+      setIssueRecord(null)
+      setIssueTargetValue("")
+      setIssueNote("")
+      await fetchRecords()
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t.actionFailed)
+    } finally {
+      setIssuing(false)
+    }
+  }
+
+  useEffect(() => {
+    if (!issueOpen || issueTargetType !== "user" || !userPickerOpen) return
+    const keyword = userSearch.trim()
+
+    const timer = setTimeout(async () => {
+      setUserLoading(true)
+      try {
+        const params = new URLSearchParams({ page: "1", limit: "10" })
+        if (keyword) {
+          params.set("search", keyword)
+        }
+        const res = await fetch(`/api/admin/users?${params}`)
+        if (!res.ok) {
+          throw new Error("Fetch failed")
+        }
+        const data = await res.json()
+        setUserResults(data.users || [])
+      } catch (error) {
+        console.error("Invite code user search error:", error)
+        setUserResults([])
+      } finally {
+        setUserLoading(false)
+      }
+    }, 300)
+
+    return () => clearTimeout(timer)
+  }, [issueOpen, issueTargetType, userPickerOpen, userSearch])
+
+  const openInvalidate = (record: InviteCodeRecord) => {
+    setInvalidateRecord(record)
+    setInvalidateOpen(true)
+  }
+
+  const handleInvalidate = async () => {
+    if (!invalidateRecord) return
+    setInvalidating(true)
+    try {
+      const res = await fetch(`/api/admin/invite-codes/${invalidateRecord.id}/invalidate`, {
+        method: "POST",
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data?.error || t.actionFailed)
+      }
+      toast.success(t.inviteCodeInvalidateSuccess)
+      setInvalidateOpen(false)
+      setInvalidateRecord(null)
+      await fetchRecords()
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t.actionFailed)
+    } finally {
+      setInvalidating(false)
+    }
+  }
+
+  const columns: Column<InviteCodeRecord>[] = useMemo(
+    () => [
+      {
+        key: "code",
+        label: t.inviteCode,
+        width: "18%",
+        sortable: true,
+        render: (record) => (
+          <div className="space-y-1">
+            <p className="font-medium tracking-wide">{record.code}</p>
+            {record.issuedAt && (
+              <p className="text-xs text-muted-foreground">
+                {t.inviteCodeIssuedAt} {new Date(record.issuedAt).toLocaleString(locale)}
+              </p>
+            )}
+          </div>
+        ),
+      },
+      {
+        key: "status",
+        label: t.inviteCodeStatus,
+        width: "12%",
+        render: (record) => {
+          const status = getStatus(record)
+          return <Badge className={status.className}>{status.label}</Badge>
+        },
+      },
+      {
+        key: "expiresAt",
+        label: t.inviteExpiresAt,
+        width: "18%",
+        sortable: true,
+        render: (record) => getExpiryBadge(record.expiresAt),
+      },
+      {
+        key: "assignedTo",
+        label: t.inviteCodeAssignedTo,
+        width: "20%",
+        render: (record) =>
+          record.preApplication ? (
+            <div>
+              <p className="text-sm">{record.preApplication.user.name || record.preApplication.user.email}</p>
+              <p className="text-xs text-muted-foreground">{record.preApplication.registerEmail}</p>
+            </div>
+          ) : record.issuedToUser ? (
+            <div>
+              <p className="text-sm">{record.issuedToUser.name || record.issuedToUser.email}</p>
+              <p className="text-xs text-muted-foreground">{t.inviteCodeIssuedByAdmin}</p>
+            </div>
+          ) : record.issuedToEmail ? (
+            <div>
+              <p className="text-sm">{record.issuedToEmail}</p>
+              <p className="text-xs text-muted-foreground">{t.inviteCodeIssuedByAdmin}</p>
+            </div>
+          ) : (
+            <span className="text-xs text-muted-foreground">-</span>
+          ),
+      },
+      {
+        key: "usedBy",
+        label: t.inviteCodeUsedBy,
+        width: "16%",
+        render: (record) =>
+          record.usedBy ? (
+            <div>
+              <p className="text-sm">{record.usedBy.name || record.usedBy.email}</p>
+              <p className="text-xs text-muted-foreground">
+                {record.usedAt ? new Date(record.usedAt).toLocaleString(locale) : "-"}
+              </p>
+            </div>
+          ) : (
+            <span className="text-xs text-muted-foreground">-</span>
+          ),
+      },
+      {
+        key: "createdAt",
+        label: t.inviteCodeCreatedAt,
+        width: "14%",
+        sortable: true,
+        render: (record) => (
+          <span className="text-xs text-muted-foreground">
+            {new Date(record.createdAt).toLocaleDateString(locale)}
+          </span>
+        ),
+      },
+      {
+        key: "actions",
+        label: t.actions,
+        width: "10%",
+        render: (record) => (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                disabled={record.usedAt || isExpired(record) || isIssued(record)}
+                onClick={() => openIssueDialog(record)}
+              >
+                <Send className="mr-2 h-4 w-4" />
+                {t.inviteCodeIssue}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                disabled={record.usedAt || isExpired(record)}
+                onClick={() => openInvalidate(record)}
+              >
+                <ShieldOff className="mr-2 h-4 w-4" />
+                {t.inviteCodeInvalidate}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => updateUsage(record, !record.usedAt)}>
+                <CheckCircle2 className="mr-2 h-4 w-4" />
+                {record.usedAt ? t.inviteCodeMarkUnused : t.inviteCodeMarkUsed}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ),
+      },
+    ],
+    [t, locale, now],
+  )
+
+  return (
+    <div className="space-y-6">
+      <Accordion type="single" collapsible className="rounded-lg border">
+        <AccordionItem value="import" className="border-none">
+          <AccordionTrigger className="px-4">
+            <div className="space-y-1 text-left">
+              <p className="text-sm font-medium">{t.inviteCodeImportTitle}</p>
+              <p className="text-xs text-muted-foreground">{t.inviteCodeImportDesc}</p>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent className="px-4">
+            <div className="grid gap-4 md:grid-cols-[2fr_1fr]">
+              <div className="space-y-2">
+                <Textarea
+                  value={bulkInput}
+                  onChange={(event) => setBulkInput(event.target.value)}
+                  placeholder={t.inviteCodeImportPlaceholder}
+                  rows={6}
+                />
+              </div>
+              <div className="space-y-3">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">{t.inviteCodeImportExpiresAt}</label>
+                  <Input
+                    type="datetime-local"
+                    value={bulkExpiresAt}
+                    onChange={(event) => setBulkExpiresAt(event.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">{t.inviteCodeImportFile}</label>
+                  <Input type="file" accept=".txt,text/plain" onChange={handleFileUpload} />
+                </div>
+                <div className="rounded-md border border-dashed p-3 text-xs text-muted-foreground">
+                  <p>
+                    {t.inviteCodeImportMatched.replace("{count}", bulkSummary.codes.length.toString())}
+                  </p>
+                  <p>
+                    {t.inviteCodeImportInvalid.replace("{count}", bulkSummary.invalidCount.toString())}
+                  </p>
+                  <p>
+                    {t.inviteCodeImportDuplicates.replace("{count}", bulkSummary.duplicates.toString())}
+                  </p>
+                </div>
+                <Button onClick={handleImport} disabled={importing || bulkSummary.codes.length === 0}>
+                  {importing ? t.inviteCodeImporting : t.inviteCodeImportButton}
+                </Button>
+              </div>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
+
+      <Card className="p-4">
+        <div className="grid gap-4 md:grid-cols-[1fr_1fr_auto] md:items-end">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">{t.inviteCode}</label>
+            <Input
+              value={code}
+              onChange={(event) => setCode(event.target.value)}
+              placeholder={t.inviteCodePlaceholder}
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">{t.inviteCodeExpiresAt}</label>
+            <Input
+              type="datetime-local"
+              value={expiresAt}
+              onChange={(event) => setExpiresAt(event.target.value)}
+            />
+          </div>
+          <Button onClick={handleCreate} disabled={creating} className="md:w-auto">
+            {creating ? t.saving : t.inviteCodeCreateButton}
+          </Button>
+        </div>
+      </Card>
+
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-1 flex-col gap-2 md:flex-row md:items-center">
+          <Input
+            value={searchInput}
+            onChange={(event) => setSearchInput(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") handleSearch()
+            }}
+            placeholder={t.inviteCodeSearchPlaceholder}
+            className="md:w-72"
+          />
+          <Button variant="outline" onClick={handleSearch}>
+            {t.searchAction}
+          </Button>
+          <Select
+            value={statusFilter}
+            onValueChange={(value) => {
+              setStatusFilter(value)
+              setPage(1)
+            }}
+          >
+            <SelectTrigger className="md:w-44">
+              <SelectValue placeholder={t.inviteCodeStatusAll} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t.inviteCodeStatusAll}</SelectItem>
+              <SelectItem value="unused">{t.inviteCodeStatusUnused}</SelectItem>
+              <SelectItem value="used">{t.inviteCodeStatusUsed}</SelectItem>
+              <SelectItem value="expired">{t.inviteCodeStatusExpired}</SelectItem>
+              <SelectItem value="assigned">{t.inviteCodeStatusAssigned}</SelectItem>
+              <SelectItem value="unassigned">{t.inviteCodeStatusUnassigned}</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select
+            value={expiringWithin}
+            onValueChange={(value) => {
+              setExpiringWithin(value)
+              setPage(1)
+            }}
+          >
+            <SelectTrigger className="md:w-44">
+              <SelectValue placeholder={t.inviteCodeExpiringAll} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t.inviteCodeExpiringAll}</SelectItem>
+              <SelectItem value="2">{t.inviteCodeExpiring2h}</SelectItem>
+              <SelectItem value="1">{t.inviteCodeExpiring1h}</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <DataTable
+        columns={columns}
+        data={records}
+        total={total}
+        page={page}
+        pageSize={pageSize}
+        onPageChange={setPage}
+        onPageSizeChange={setPageSize}
+        loading={loading}
+        emptyMessage={t.inviteCodeNoRecords}
+        loadingText={t.loading}
+        perPageText={t.perPage}
+        summaryFormatter={formatPageSummary}
+        mobileCardRender={(record) => {
+          const status = getStatus(record)
+          return (
+            <Card className="p-4">
+              <div className="flex items-center justify-between">
+                <p className="font-medium">{record.code}</p>
+                <Badge className={status.className}>{status.label}</Badge>
+              </div>
+              <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                <span>{t.inviteExpiresAt}:</span>
+                {getExpiryBadge(record.expiresAt)}
+              </div>
+              {record.preApplication && (
+                <div className="mt-2 text-xs text-muted-foreground">
+                  {t.inviteCodeAssignedTo}：{record.preApplication.user.name || record.preApplication.user.email}
+                </div>
+              )}
+              {!record.preApplication && record.issuedToUser && (
+                <div className="mt-2 text-xs text-muted-foreground">
+                  {t.inviteCodeAssignedTo}：{record.issuedToUser.name || record.issuedToUser.email}
+                </div>
+              )}
+              {!record.preApplication && !record.issuedToUser && record.issuedToEmail && (
+                <div className="mt-2 text-xs text-muted-foreground">
+                  {t.inviteCodeAssignedTo}：{record.issuedToEmail}
+                </div>
+              )}
+              <Button
+                className="mt-3 w-full"
+                variant="outline"
+                onClick={() => updateUsage(record, !record.usedAt)}
+              >
+                {record.usedAt ? t.inviteCodeMarkUnused : t.inviteCodeMarkUsed}
+              </Button>
+              <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                <Button
+                  variant="outline"
+                  onClick={() => openIssueDialog(record)}
+                  disabled={record.usedAt || isExpired(record) || isIssued(record)}
+                >
+                  {t.inviteCodeIssue}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => openInvalidate(record)}
+                  disabled={record.usedAt || isExpired(record)}
+                >
+                  {t.inviteCodeInvalidate}
+                </Button>
+              </div>
+            </Card>
+          )
+        }}
+      />
+
+      <Dialog open={issueOpen} onOpenChange={setIssueOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t.inviteCodeIssueTitle}</DialogTitle>
+            <DialogDescription>{t.inviteCodeIssueDesc}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>{t.inviteCodeIssueTargetType}</Label>
+              <Select
+                value={issueTargetType}
+                onValueChange={(value) => {
+                  const next = value as "email" | "user"
+                  setIssueTargetType(next)
+                  setIssueTargetValue("")
+                  setUserSearch("")
+                  setUserResults([])
+                  setSelectedUser(null)
+                  setUserPickerOpen(false)
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="email">{t.inviteCodeIssueTargetEmail}</SelectItem>
+                  <SelectItem value="user">{t.inviteCodeIssueTargetUser}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>
+                {issueTargetType === "user"
+                  ? t.inviteCodeIssueTargetUserId
+                  : t.inviteCodeIssueTargetEmail}
+              </Label>
+              {issueTargetType === "user" ? (
+                <div className="space-y-2">
+                  <Popover open={userPickerOpen} onOpenChange={setUserPickerOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        className="w-full justify-between"
+                      >
+                        {selectedUser ? (
+                          <span>{selectedUser.name || selectedUser.email}</span>
+                        ) : (
+                          <span className="text-muted-foreground">
+                            {t.inviteCodeIssueSelectUserPlaceholder}
+                          </span>
+                        )}
+                        <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="p-0" align="start">
+                      <Command>
+                        <CommandInput
+                          placeholder={t.inviteCodeIssueSearchPlaceholder}
+                          value={userSearch}
+                          onValueChange={setUserSearch}
+                        />
+                        <CommandList>
+                          {userLoading && (
+                            <CommandEmpty>{t.inviteCodeIssueSearchLoading}</CommandEmpty>
+                          )}
+                          {!userLoading && userResults.length === 0 && (
+                            <CommandEmpty>{t.inviteCodeIssueSearchEmpty}</CommandEmpty>
+                          )}
+                          {userResults.map((user) => {
+                            const label = user.name || user.email
+                            const selected = selectedUser?.id === user.id
+                            return (
+                              <CommandItem
+                                key={user.id}
+                                value={`${label} ${user.email}`}
+                                onSelect={() => {
+                                  setSelectedUser(user)
+                                  setIssueTargetValue(user.id)
+                                  setUserPickerOpen(false)
+                                }}
+                              >
+                                <CheckIcon
+                                  className={`mr-2 size-4 ${selected ? "opacity-100" : "opacity-0"}`}
+                                />
+                                <div className="flex flex-col">
+                                  <span className="text-sm">{label}</span>
+                                  <span className="text-xs text-muted-foreground">{user.email}</span>
+                                </div>
+                              </CommandItem>
+                            )
+                          })}
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                  {selectedUser && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-fit"
+                      onClick={() => {
+                        setSelectedUser(null)
+                        setIssueTargetValue("")
+                      }}
+                    >
+                      {t.inviteCodeIssueClearUser}
+                    </Button>
+                  )}
+                </div>
+              ) : (
+                <Input
+                  value={issueTargetValue}
+                  onChange={(event) => setIssueTargetValue(event.target.value)}
+                  placeholder={t.inviteCodeIssueTargetEmailPlaceholder}
+                />
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label>{t.inviteCodeIssueNote}</Label>
+              <Textarea
+                value={issueNote}
+                onChange={(event) => setIssueNote(event.target.value)}
+                placeholder={t.inviteCodeIssueNotePlaceholder}
+                rows={3}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIssueOpen(false)}>
+              {t.cancel}
+            </Button>
+            <Button onClick={handleIssue} disabled={issuing}>
+              {issuing ? t.saving : t.inviteCodeIssueSubmit}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <ConfirmDialog
+        open={invalidateOpen}
+        onOpenChange={(open) => {
+          setInvalidateOpen(open)
+          if (!open && !invalidating) {
+            setInvalidateRecord(null)
+          }
+        }}
+        title={t.inviteCodeInvalidateTitle}
+        description={t.inviteCodeInvalidateDesc}
+        confirmLabel={t.inviteCodeInvalidate}
+        cancelLabel={t.cancel}
+        confirming={invalidating}
+        destructive
+        onConfirm={handleInvalidate}
+      />
+    </div>
+  )
+}

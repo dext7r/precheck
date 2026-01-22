@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { getCurrentUser } from "@/lib/auth/session"
 import { getSiteSettings } from "@/lib/site-settings"
+import { writeAuditLog } from "@/lib/audit"
 import { z } from "zod"
 
 const createPostSchema = z.object({
@@ -110,6 +111,16 @@ export async function POST(request: NextRequest) {
         status: true,
         createdAt: true,
       },
+    })
+
+    await writeAuditLog(db, {
+      action: "POST_CREATE",
+      entityType: "POST",
+      entityId: post.id,
+      actor: user,
+      after: post,
+      metadata: { payload: { title, content, status: effectiveStatus } },
+      request,
     })
 
     return NextResponse.json(post, { status: 201 })

@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { getCurrentUser } from "@/lib/auth/session"
 import { z } from "zod"
+import { writeAuditLog } from "@/lib/audit"
 
 const updatePostSchema = z.object({
   status: z.enum(["DRAFT", "PUBLISHED", "PENDING", "REJECTED"]),
@@ -75,6 +76,8 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     const body = await request.json()
     const { status } = updatePostSchema.parse(body)
 
+    const before = await db.post.findUnique({ where: { id } })
+
     const updatedPost = await db.post.update({
       where: { id },
       data: { status },
@@ -93,6 +96,17 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
         createdAt: true,
         updatedAt: true,
       },
+    })
+
+    await writeAuditLog(db, {
+      action: "POST_STATUS_UPDATE",
+      entityType: "POST",
+      entityId: id,
+      actor: user,
+      before,
+      after: updatedPost,
+      metadata: { status },
+      request,
     })
 
     return NextResponse.json(updatedPost)
@@ -123,7 +137,19 @@ export async function DELETE(_request: NextRequest, context: { params: Promise<{
 
     const { id } = await context.params
 
+    const before = await db.post.findUnique({ where: { id } })
+
     await db.post.delete({ where: { id } })
+
+    await writeAuditLog(db, {
+      action: "POST_DELETE",
+      entityType: "POST",
+      entityId: id,
+      actor: user,
+      before,
+      after: null,
+      request: _request,
+    })
 
     return NextResponse.json({ success: true })
   } catch (error) {

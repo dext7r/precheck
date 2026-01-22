@@ -2,16 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import {
-  FileText,
-  BarChart3,
-  Settings,
-  PenLine,
-  Search,
-  Clock,
-  Mail,
-  ChevronRight,
-} from "lucide-react"
+import { LayoutDashboard, Search, Clock, Mail, ChevronRight, ClipboardList } from "lucide-react"
 import { motion } from "framer-motion"
 import {
   CommandDialog,
@@ -105,43 +96,29 @@ export function DashboardCommandMenu({ locale }: DashboardCommandMenuProps) {
       id: "overview",
       label: dict.dashboard.overview,
       path: `/${locale}/dashboard`,
-      icon: BarChart3,
+      icon: LayoutDashboard,
       shortcut: "⌘1",
-    },
-    {
-      id: "posts",
-      label: dict.dashboard.myPosts,
-      path: `/${locale}/dashboard/posts`,
-      icon: FileText,
-      shortcut: "⌘2",
-    },
-    {
-      id: "new-post",
-      label: dict.dashboard.newPost,
-      path: `/${locale}/dashboard/posts/new`,
-      icon: PenLine,
-      shortcut: "⌘N",
     },
     {
       id: "messages",
       label: dict.dashboard.messages,
       path: `/${locale}/dashboard/messages`,
       icon: Mail,
-      shortcut: "⌘M",
+      shortcut: "⌘2",
     },
     {
-      id: "analytics",
-      label: dict.dashboard.analytics,
-      path: `/${locale}/dashboard/analytics`,
-      icon: BarChart3,
+      id: "pre-application",
+      label: dict.dashboard.preApplication,
+      path: `/${locale}/dashboard/pre-application`,
+      icon: ClipboardList,
       shortcut: "⌘3",
     },
     {
-      id: "settings",
-      label: dict.dashboard.settings,
-      path: `/${locale}/dashboard/settings`,
-      icon: Settings,
-      shortcut: "⌘,",
+      id: "review-history",
+      label: dict.dashboard.reviewHistory,
+      path: `/${locale}/dashboard/pre-application/history`,
+      icon: Clock,
+      shortcut: "⌘4",
     },
   ]
 
@@ -176,7 +153,7 @@ export function DashboardCommandMenu({ locale }: DashboardCommandMenuProps) {
       </motion.button>
 
       <CommandDialog open={open} onOpenChange={setOpen}>
-        <CommandInput placeholder={`> ${dict.dashboard.searchPosts}`} />
+        <CommandInput placeholder={`> ${dict.dashboard.searchPlaceholder}`} />
         <CommandList>
           <CommandEmpty>
             <div className="flex flex-col items-center gap-2 py-6">

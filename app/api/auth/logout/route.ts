@@ -1,9 +1,13 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { clearSessionCookie, deleteSession } from "@/lib/auth/session"
+import { clearSessionCookie, deleteSession, getCurrentUser, getSession } from "@/lib/auth/session"
+import { db } from "@/lib/db"
 import { defaultLocale, locales } from "@/lib/i18n/config"
+import { writeAuditLog } from "@/lib/audit"
 
 export async function POST(request: NextRequest) {
   try {
+    const user = await getCurrentUser()
+    const session = await getSession()
     await deleteSession()
 
     // 从 referer 中提取 locale
@@ -21,6 +25,28 @@ export async function POST(request: NextRequest) {
     const loginUrl = new URL(`/${locale}/login`, request.url)
     const response = NextResponse.redirect(loginUrl)
     clearSessionCookie(response)
+
+    if (user && db) {
+      await writeAuditLog(db, {
+        action: "AUTH_LOGOUT",
+        entityType: "AUTH",
+        entityId: user.id,
+        actor: user,
+        request,
+      })
+      if (session) {
+        await writeAuditLog(db, {
+          action: "SESSION_DELETE",
+          entityType: "SESSION",
+          entityId: session.id,
+          actor: user,
+          before: session,
+          after: null,
+          request,
+        })
+      }
+    }
+
     return response
   } catch {
     return NextResponse.json({ error: "Logout failed" }, { status: 500 })

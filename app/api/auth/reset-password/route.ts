@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { hashPassword, validatePassword } from "@/lib/auth/password"
 import { features } from "@/lib/features"
+import { writeAuditLog } from "@/lib/audit"
 import { z } from "zod"
 
 const resetPasswordSchema = z.object({
@@ -39,13 +40,25 @@ export async function POST(request: NextRequest) {
 
     // 更新密码
     const hashedPassword = await hashPassword(password)
-    await prisma.user.update({
+    const before = await prisma.user.findUnique({ where: { id: user.id } })
+
+    const updated = await prisma.user.update({
       where: { id: user.id },
       data: {
         password: hashedPassword,
         resetToken: null,
         resetTokenExpiry: null,
       },
+    })
+
+    await writeAuditLog(prisma, {
+      action: "USER_PASSWORD_RESET",
+      entityType: "USER",
+      entityId: user.id,
+      actor: user,
+      before,
+      after: updated,
+      request,
     })
 
     return NextResponse.json({

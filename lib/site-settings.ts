@@ -1,4 +1,5 @@
 import { db } from "@/lib/db"
+import { writeAuditLog } from "@/lib/audit"
 import { siteConfig } from "@/lib/seo"
 
 export type SiteSettings = {
@@ -50,6 +51,14 @@ export async function getSiteSettings(): Promise<SiteSettings> {
       id: "global",
       ...defaultSettings,
     },
+  })
+
+  await writeAuditLog(db, {
+    action: "SETTINGS_INIT",
+    entityType: "SITE_SETTINGS",
+    entityId: "global",
+    after: created,
+    metadata: { source: "auto-init" },
   })
 
   return {

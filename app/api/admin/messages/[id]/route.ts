@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { db } from "@/lib/db"
 import { getCurrentUser } from "@/lib/auth/session"
+import { writeAuditLog } from "@/lib/audit"
 
 const updateMessageSchema = z.object({
   title: z.string().min(1).max(200).optional(),
@@ -70,7 +71,6 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
 
     const existing = await db.message.findUnique({
       where: { id },
-      select: { revokedAt: true },
     })
 
     if (!existing) {
@@ -90,6 +90,17 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
         content: true,
         updatedAt: true,
       },
+    })
+
+    await writeAuditLog(db, {
+      action: "MESSAGE_UPDATE",
+      entityType: "MESSAGE",
+      entityId: id,
+      actor: user,
+      before: existing,
+      after: updated,
+      metadata: { payload: data },
+      request,
     })
 
     return NextResponse.json(updated)

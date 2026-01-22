@@ -3,6 +3,7 @@ import { db } from "@/lib/db"
 import { verifyPassword } from "@/lib/auth/password"
 import { createSession, setSessionCookie } from "@/lib/auth/session"
 import { features } from "@/lib/features"
+import { writeAuditLog } from "@/lib/audit"
 import { z } from "zod"
 
 const loginSchema = z.object({
@@ -36,6 +37,9 @@ export async function POST(request: NextRequest) {
 
     // 创建 Session
     const { token, expires } = await createSession(user.id)
+    const sessionRecord = await db.session.findUnique({
+      where: { sessionToken: token },
+    })
     const response = NextResponse.json({
       success: true,
       user: {
@@ -46,6 +50,27 @@ export async function POST(request: NextRequest) {
       },
     })
     setSessionCookie(response, token, expires)
+
+    await writeAuditLog(db, {
+      action: "AUTH_LOGIN",
+      entityType: "AUTH",
+      entityId: user.id,
+      actor: user,
+      metadata: { email },
+      request,
+    })
+
+    if (sessionRecord) {
+      await writeAuditLog(db, {
+        action: "SESSION_CREATE",
+        entityType: "SESSION",
+        entityId: sessionRecord.id,
+        actor: user,
+        after: sessionRecord,
+        request,
+      })
+    }
+
     return response
   } catch (error) {
     if (error instanceof z.ZodError) {

@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import {
-  FileText,
   Users,
   Settings,
   BarChart3,
@@ -12,6 +11,9 @@ import {
   Mail,
   ChevronRight,
   Shield,
+  ClipboardList,
+  Key,
+  ScrollText,
 } from "lucide-react"
 import { motion } from "framer-motion"
 import {
@@ -117,25 +119,32 @@ export function CommandMenu({ locale }: CommandMenuProps) {
       shortcut: "⌘2",
     },
     {
-      id: "posts",
-      label: dict.admin.postManagement,
-      path: `/${locale}/admin/posts`,
-      icon: FileText,
+      id: "pre-applications",
+      label: dict.admin.preApplications,
+      path: `/${locale}/admin/pre-applications`,
+      icon: ClipboardList,
       shortcut: "⌘3",
+    },
+    {
+      id: "invite-codes",
+      label: dict.admin.inviteCodes,
+      path: `/${locale}/admin/invite-codes`,
+      icon: Key,
+      shortcut: "⌘4",
     },
     {
       id: "messages",
       label: dict.admin.messages,
       path: `/${locale}/admin/messages`,
       icon: Mail,
-      shortcut: "⌘M",
+      shortcut: "⌘5",
     },
     {
-      id: "analytics",
-      label: dict.dashboard.analytics,
-      path: `/${locale}/admin/analytics`,
-      icon: BarChart3,
-      shortcut: "⌘4",
+      id: "audit-logs",
+      label: dict.admin.auditLogs,
+      path: `/${locale}/admin/audit-logs`,
+      icon: ScrollText,
+      shortcut: "⌘6",
     },
     {
       id: "settings",
@@ -251,9 +260,8 @@ export function CommandMenu({ locale }: CommandMenuProps) {
                       "mr-2 h-4 w-4",
                       cmd.id === "overview" && "text-blue-500",
                       cmd.id === "users" && "text-purple-500",
-                      cmd.id === "posts" && "text-green-500",
                       cmd.id === "messages" && "text-orange-500",
-                      cmd.id === "analytics" && "text-cyan-500",
+                      cmd.id === "audit-logs" && "text-slate-500",
                       cmd.id === "settings" && "text-gray-500",
                     )}
                   />
