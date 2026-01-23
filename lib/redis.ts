@@ -20,10 +20,16 @@ export function getRedisClient(): Redis | null {
   try {
     // 优先使用 REDIS_URL
     if (process.env.REDIS_URL) {
-      redis = new Redis(process.env.REDIS_URL, {
+      const redisUrl = process.env.REDIS_URL
+      // Upstash Redis 需要 TLS
+      const needsTLS = redisUrl.includes("upstash.io")
+
+      redis = new Redis(redisUrl, {
         maxRetriesPerRequest: 3,
         enableReadyCheck: false,
         lazyConnect: true,
+        tls: needsTLS ? {} : undefined,
+        family: 6, // 优先使用 IPv6
       })
     }
     // 使用 Upstash Redis（兼容 KV）
