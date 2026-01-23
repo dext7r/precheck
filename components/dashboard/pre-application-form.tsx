@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
+import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { motion, AnimatePresence } from "framer-motion"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -21,7 +22,7 @@ import {
 } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
 import { PostContent } from "@/components/posts/post-content"
-import { Copy, Check, History, FileText, AlertCircle } from "lucide-react"
+import { Copy, Check, History, FileText, AlertCircle, ExternalLink } from "lucide-react"
 import type { Dictionary } from "@/lib/i18n/get-dictionary"
 import type { Locale } from "@/lib/i18n/config"
 import {
@@ -118,6 +119,7 @@ export function PreApplicationForm({
   maxResubmitCount: initialMaxResubmit = 3,
   userEmail,
 }: PreApplicationFormProps) {
+  const router = useRouter()
   const t = dict.preApplication
   const essayMinChars = 50
   const [loading, setLoading] = useState(!initialRecords)
@@ -481,9 +483,14 @@ export function PreApplicationForm({
                         className="h-6 w-6"
                         onClick={async () => {
                           try {
-                            await navigator.clipboard.writeText(latest.queryToken!)
+                            const appUrl =
+                              typeof window !== "undefined"
+                                ? window.location.origin
+                                : process.env.NEXT_PUBLIC_APP_URL || ""
+                            const queryUrl = `${appUrl}/${locale}/query-invite-codes?queryCode=${latest.queryToken}`
+                            await navigator.clipboard.writeText(queryUrl)
                             setTokenCopied(true)
-                            toast.success(t.queryTokenCopied || "查询码已复制")
+                            toast.success(t.queryTokenCopied || "查询链接已复制")
                             setTimeout(() => setTokenCopied(false), 2000)
                           } catch {
                             toast.error("复制失败")
@@ -491,6 +498,16 @@ export function PreApplicationForm({
                         }}
                       >
                         {tokenCopied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
+                        onClick={() => {
+                          router.push(`/${locale}/query-invite-codes?queryCode=${latest.queryToken}`)
+                        }}
+                      >
+                        <ExternalLink className="h-3 w-3" />
                       </Button>
                     </div>
                   ) : (
