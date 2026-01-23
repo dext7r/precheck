@@ -5,12 +5,12 @@ import { db } from "@/lib/db"
 
 const staticRoutes = [
   { path: "", changeFrequency: "daily" as const, priority: 1.0 },
-  { path: "/docs", changeFrequency: "weekly" as const, priority: 0.8 },
-  { path: "/docs/api", changeFrequency: "weekly" as const, priority: 0.7 },
-  { path: "/docs/examples", changeFrequency: "weekly" as const, priority: 0.7 },
-  { path: "/privacy", changeFrequency: "monthly" as const, priority: 0.3 },
-  { path: "/terms", changeFrequency: "monthly" as const, priority: 0.3 },
-  { path: "/license", changeFrequency: "monthly" as const, priority: 0.3 },
+  { path: "/login", changeFrequency: "monthly" as const, priority: 0.6 },
+  { path: "/register", changeFrequency: "monthly" as const, priority: 0.6 },
+  { path: "/pre-application", changeFrequency: "monthly" as const, priority: 0.8 },
+  { path: "/query-invite-codes", changeFrequency: "monthly" as const, priority: 0.7 },
+  { path: "/privacy", changeFrequency: "yearly" as const, priority: 0.3 },
+  { path: "/terms", changeFrequency: "yearly" as const, priority: 0.3 },
 ]
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {

@@ -2,11 +2,27 @@ import { locales, type Locale } from "@/lib/i18n/config"
 
 export const siteConfig = {
   name: "linux.do 预申请系统",
-  url: process.env.NEXT_PUBLIC_SITE_URL || "https://linux.do",
+  shortName: "linux.do 预申请",
+  url: process.env.NEXT_PUBLIC_SITE_URL || "https://linuxhub.de5.net",
   ogImage: "/og-image.png",
+  description: "linux.do 社区官方预申请与邀请码管理平台，快速获取社区注册邀请码",
+  keywords: [
+    "linux.do",
+    "预申请",
+    "邀请码",
+    "社区注册",
+    "Linux社区",
+    "开发者社区",
+    "技术社区",
+    "邀请码管理",
+  ],
   links: {
-    github: "https://linux.do",
-    twitter: "",
+    community: "https://linux.do",
+    github: "https://github.com/linuxdotdo",
+    twitter: "https://twitter.com/linuxdotdo",
+  },
+  contact: {
+    email: "contact@linux.do",
   },
 }
 

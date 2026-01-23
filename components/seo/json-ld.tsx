@@ -41,9 +41,11 @@ export function SoftwareApplicationJsonLd({ locale }: JsonLdProps) {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
     name: siteConfig.name,
-    applicationCategory: "DeveloperApplication",
-    operatingSystem: "Any",
+    applicationCategory: "WebApplication",
+    applicationSubCategory: "CommunityManagementApplication",
+    operatingSystem: "Web",
     url: `${baseUrl}/${locale}`,
+    description: siteConfig.description,
     offers: {
       "@type": "Offer",
       price: "0",
@@ -51,14 +53,16 @@ export function SoftwareApplicationJsonLd({ locale }: JsonLdProps) {
     },
     author: {
       "@type": "Organization",
-      name: siteConfig.name,
-      url: baseUrl,
+      name: "linux.do",
+      url: siteConfig.links.community,
     },
-    aggregateRating: {
-      "@type": "AggregateRating",
-      ratingValue: "5",
-      ratingCount: "100",
-    },
+    featureList: [
+      "社区预申请管理",
+      "邀请码生成与分配",
+      "用户审核流程",
+      "多语言支持",
+      "站内消息系统",
+    ],
   }
 
   return (
@@ -97,10 +101,21 @@ export function OrganizationJsonLd() {
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Organization",
-    name: siteConfig.name,
-    url: baseUrl,
+    name: "linux.do",
+    alternateName: siteConfig.name,
+    url: siteConfig.links.community,
     logo: `${baseUrl}/logo.png`,
-    sameAs: [siteConfig.links.github, siteConfig.links.twitter],
+    description: "linux.do 开发者技术社区",
+    contactPoint: {
+      "@type": "ContactPoint",
+      contactType: "Customer Service",
+      email: siteConfig.contact.email,
+    },
+    sameAs: [
+      siteConfig.links.community,
+      siteConfig.links.github,
+      ...(siteConfig.links.twitter ? [siteConfig.links.twitter] : []),
+    ],
   }
 
   return (
@@ -111,3 +126,27 @@ export function OrganizationJsonLd() {
     />
   )
 }
+
+export function FAQJsonLd({ faqs }: { faqs: { question: string; answer: string }[] }) {
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: faqs.map((faq) => ({
+      "@type": "Question",
+      name: faq.question,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: faq.answer,
+      },
+    })),
+  }
+
+  return (
+    <Script
+      id="jsonld-faq"
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+    />
+  )
+}
+
