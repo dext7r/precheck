@@ -232,9 +232,9 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
 
   const statusBadge = (status: AdminPreApplication["status"]) => {
     const map: Record<string, { label: string; className: string }> = {
-      PENDING: { label: t.pending, className: "bg-amber-100 text-amber-800" },
-      APPROVED: { label: t.approved, className: "bg-emerald-100 text-emerald-700" },
-      REJECTED: { label: t.rejected, className: "bg-rose-100 text-rose-700" },
+      PENDING: { label: t.pending, className: "bg-amber-100 text-amber-800 text-xs" },
+      APPROVED: { label: t.approved, className: "bg-emerald-100 text-emerald-700 text-xs" },
+      REJECTED: { label: t.rejected, className: "bg-rose-100 text-rose-700 text-xs" },
     }
     const config = map[status] || map.PENDING
     return <Badge className={config.className}>{config.label}</Badge>
@@ -357,55 +357,40 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
       {
         key: "user",
         label: t.preApplicationUser,
-        width: "14%",
+        width: "28%",
         render: (record) => (
-          <div>
-            <p className="font-medium">{record.user.name || record.user.email}</p>
-            <p className="text-xs text-muted-foreground">{record.user.email}</p>
+          <div className="space-y-0.5">
+            <p className="text-sm font-medium">{record.user.name || record.user.email}</p>
+            <p className="text-xs text-muted-foreground">{record.registerEmail}</p>
           </div>
         ),
       },
       {
-        key: "registerEmail",
-        label: t.preApplicationRegisterEmail,
-        width: "14%",
-        render: (record) => <span className="text-sm">{record.registerEmail}</span>,
-      },
-      {
-        key: "group",
-        label: t.preApplicationGroup,
-        width: "8%",
-        render: (record) => <span className="text-sm">{getGroupLabel(record.group)}</span>,
-      },
-      {
         key: "status",
         label: t.preApplicationStatus,
-        width: "8%",
-        sortable: true,
-        render: (record) => statusBadge(record.status),
-      },
-      {
-        key: "reviewRound",
-        label: t.reviewRound,
-        width: "8%",
+        width: "20%",
         sortable: true,
         render: (record) => (
-          <span className="text-sm text-muted-foreground">
-            {t.reviewRoundLabel?.replace("{n}", String(record.reviewRound ?? 1)) ??
-              `${record.reviewRound ?? 1}审`}
-          </span>
+          <div className="flex flex-wrap items-center gap-1.5">
+            {statusBadge(record.status)}
+            <Badge variant="outline" className="text-xs">
+              {t.reviewRoundLabel?.replace("{n}", String(record.reviewRound ?? 1)) ??
+                `${record.reviewRound ?? 1}审`}
+            </Badge>
+          </div>
         ),
       },
       {
         key: "inviteStatus",
         label: t.inviteStatus,
-        width: "8%",
+        width: "12%",
         sortable: true,
         render: (record) => (
           <Badge
-            className={
-              record.inviteCode ? "bg-emerald-100 text-emerald-700" : "bg-gray-100 text-gray-600"
-            }
+            className={cn(
+              "text-xs",
+              record.inviteCode ? "bg-emerald-100 text-emerald-700" : "bg-gray-100 text-gray-600",
+            )}
           >
             {record.inviteCode ? t.inviteStatusIssued : t.inviteStatusNone}
           </Badge>
@@ -414,31 +399,26 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
       {
         key: "createdAt",
         label: t.preApplicationCreatedAt,
-        width: "12%",
+        width: "18%",
         sortable: true,
         render: (record) => (
-          <span className="text-sm text-muted-foreground">
-            {new Date(record.createdAt).toLocaleString(locale)}
-          </span>
-        ),
-      },
-      {
-        key: "updatedAt",
-        label: t.preApplicationUpdatedAt,
-        width: "12%",
-        sortable: true,
-        render: (record) => (
-          <span className="text-sm text-muted-foreground">
-            {new Date(record.updatedAt).toLocaleString(locale)}
+          <span className="text-xs text-muted-foreground">
+            {new Date(record.createdAt).toLocaleString(locale, {
+              year: "numeric",
+              month: "2-digit",
+              day: "2-digit",
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
           </span>
         ),
       },
       {
         key: "actions",
         label: t.actions,
-        width: "10%",
+        width: "12%",
         render: (record) => (
-          <Button variant="ghost" size="sm" onClick={() => openDialog(record)}>
+          <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => openDialog(record)}>
             {record.status === "PENDING" ? t.preApplicationReviewAction : t.preApplicationView}
           </Button>
         ),
@@ -611,40 +591,39 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
         perPageText={t.perPage}
         summaryFormatter={formatPageSummary}
         mobileCardRender={(record) => (
-          <Card className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium">{record.user.name || record.user.email}</p>
-                <p className="text-xs text-muted-foreground">{record.registerEmail}</p>
+          <Card className="p-3">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium truncate">{record.user.name || record.user.email}</p>
+                <p className="text-xs text-muted-foreground truncate">{record.registerEmail}</p>
               </div>
               <div className="flex flex-col items-end gap-1">
                 {statusBadge(record.status)}
-                <Badge
-                  className={
-                    record.inviteCode
-                      ? "bg-emerald-100 text-emerald-700"
-                      : "bg-gray-100 text-gray-600"
-                  }
-                >
-                  {record.inviteCode ? t.inviteStatusIssued : t.inviteStatusNone}
+                <Badge variant="outline" className="text-xs">
+                  {t.reviewRoundLabel?.replace("{n}", String(record.reviewRound ?? 1)) ??
+                    `${record.reviewRound ?? 1}审`}
                 </Badge>
               </div>
             </div>
-            <div className="mt-2 text-xs text-muted-foreground">
-              {t.reviewRound}：
-              {t.reviewRoundLabel?.replace("{n}", String(record.reviewRound ?? 1)) ??
-                `${record.reviewRound ?? 1}审`}
-            </div>
-            <div className="mt-2 grid grid-cols-2 gap-2 text-xs text-muted-foreground">
-              <span>
-                {t.preApplicationCreatedAt}：{new Date(record.createdAt).toLocaleString(locale)}
+            <div className="mt-2 flex items-center justify-between">
+              <Badge
+                className={cn(
+                  "text-xs",
+                  record.inviteCode ? "bg-emerald-100 text-emerald-700" : "bg-gray-100 text-gray-600",
+                )}
+              >
+                {record.inviteCode ? t.inviteStatusIssued : t.inviteStatusNone}
+              </Badge>
+              <span className="text-xs text-muted-foreground">
+                {new Date(record.createdAt).toLocaleString(locale, {
+                  month: "2-digit",
+                  day: "2-digit",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
               </span>
-              <span>
-                {t.preApplicationUpdatedAt}：{new Date(record.updatedAt).toLocaleString(locale)}
-              </span>
             </div>
-            <div className="mt-2 text-xs text-muted-foreground">{getGroupLabel(record.group)}</div>
-            <Button className="mt-3 w-full" variant="outline" onClick={() => openDialog(record)}>
+            <Button className="mt-2 w-full h-8 text-xs" variant="outline" onClick={() => openDialog(record)}>
               {record.status === "PENDING" ? t.preApplicationReviewAction : t.preApplicationView}
             </Button>
           </Card>

@@ -58,6 +58,7 @@ import {
 } from "@/components/ui/select"
 import type { Dictionary } from "@/lib/i18n/get-dictionary"
 import type { Locale } from "@/lib/i18n/config"
+import { cn } from "@/lib/utils"
 
 type InviteCodeRecord = {
   id: string
@@ -233,18 +234,24 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
     const expiresAtDate = new Date(expiresAtValue)
     const diffMs = expiresAtDate.getTime() - now
     const diffHours = diffMs / (60 * 60 * 1000)
-    const label = expiresAtDate.toLocaleString(locale)
+    const label = expiresAtDate.toLocaleString(locale, {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    })
 
     if (diffMs <= 0) {
-      return <Badge className="bg-rose-100 text-rose-700">{label}</Badge>
+      return <Badge className="bg-rose-100 text-rose-700 text-xs">{label}</Badge>
     }
     if (diffHours <= 1) {
-      return <Badge className="bg-rose-50 text-rose-700">{label}</Badge>
+      return <Badge className="bg-rose-50 text-rose-700 text-xs">{label}</Badge>
     }
     if (diffHours <= 2) {
-      return <Badge className="bg-amber-50 text-amber-700">{label}</Badge>
+      return <Badge className="bg-amber-50 text-amber-700 text-xs">{label}</Badge>
     }
-    return <Badge variant="outline">{label}</Badge>
+    return <Badge variant="outline" className="text-xs">{label}</Badge>
   }
 
   const handleCreate = async () => {
@@ -520,14 +527,19 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
       {
         key: "code",
         label: t.inviteCode,
-        width: "18%",
+        width: "25%",
         sortable: true,
         render: (record) => (
-          <div className="space-y-1">
-            <p className="font-medium tracking-wide">{record.code}</p>
+          <div className="space-y-0.5">
+            <p className="text-sm font-medium font-mono tracking-wide">{record.code}</p>
             {record.issuedAt && (
               <p className="text-xs text-muted-foreground">
-                {t.inviteCodeIssuedAt} {new Date(record.issuedAt).toLocaleString(locale)}
+                {new Date(record.issuedAt).toLocaleString(locale, {
+                  month: "2-digit",
+                  day: "2-digit",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
               </p>
             )}
           </div>
@@ -536,80 +548,72 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
       {
         key: "status",
         label: t.inviteCodeStatus,
-        width: "12%",
+        width: "15%",
         render: (record) => {
           const status = getStatus(record)
-          return <Badge className={status.className}>{status.label}</Badge>
+          return (
+            <div className="space-y-1">
+              <Badge className={cn("text-xs", status.className)}>{status.label}</Badge>
+              {record.usedBy && record.usedAt && (
+                <p className="text-xs text-muted-foreground">
+                  {new Date(record.usedAt).toLocaleString(locale, {
+                    month: "2-digit",
+                    day: "2-digit",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </p>
+              )}
+            </div>
+          )
         },
       },
       {
         key: "expiresAt",
         label: t.inviteExpiresAt,
-        width: "18%",
+        width: "20%",
         sortable: true,
         render: (record) => getExpiryBadge(record.expiresAt),
       },
       {
         key: "assignedTo",
         label: t.inviteCodeAssignedTo,
-        width: "20%",
+        width: "28%",
         render: (record) =>
           record.preApplication ? (
-            <div>
+            <div className="space-y-0.5">
               <p className="text-sm">
                 {record.preApplication.user.name || record.preApplication.user.email}
               </p>
               <p className="text-xs text-muted-foreground">{record.preApplication.registerEmail}</p>
             </div>
           ) : record.issuedToUser ? (
-            <div>
+            <div className="space-y-0.5">
               <p className="text-sm">{record.issuedToUser.name || record.issuedToUser.email}</p>
               <p className="text-xs text-muted-foreground">{t.inviteCodeIssuedByAdmin}</p>
             </div>
           ) : record.issuedToEmail ? (
-            <div>
+            <div className="space-y-0.5">
               <p className="text-sm">{record.issuedToEmail}</p>
               <p className="text-xs text-muted-foreground">{t.inviteCodeIssuedByAdmin}</p>
             </div>
-          ) : (
-            <span className="text-xs text-muted-foreground">-</span>
-          ),
-      },
-      {
-        key: "usedBy",
-        label: t.inviteCodeUsedBy,
-        width: "16%",
-        render: (record) =>
-          record.usedBy ? (
-            <div>
+          ) : record.usedBy ? (
+            <div className="space-y-0.5">
               <p className="text-sm">{record.usedBy.name || record.usedBy.email}</p>
-              <p className="text-xs text-muted-foreground">
-                {record.usedAt ? new Date(record.usedAt).toLocaleString(locale) : "-"}
-              </p>
+              <p className="text-xs text-muted-foreground">{t.inviteCodeUsedBy}</p>
             </div>
           ) : (
             <span className="text-xs text-muted-foreground">-</span>
           ),
-      },
-      {
-        key: "createdAt",
-        label: t.inviteCodeCreatedAt,
-        width: "14%",
-        sortable: true,
-        render: (record) => (
-          <span className="text-xs text-muted-foreground">
-            {new Date(record.createdAt).toLocaleDateString(locale)}
-          </span>
-        ),
       },
       {
         key: "actions",
         label: t.actions,
-        width: "10%",
+        width: "12%",
         render: (record) => (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" className="h-7 w-7">
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
@@ -853,40 +857,36 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
         mobileCardRender={(record) => {
           const status = getStatus(record)
           return (
-            <Card className="p-4">
-              <div className="flex items-center justify-between">
-                <p className="font-medium">{record.code}</p>
-                <Badge className={status.className}>{status.label}</Badge>
+            <Card className="p-3">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-sm font-medium font-mono truncate">{record.code}</p>
+                <Badge className={cn("text-xs", status.className)}>{status.label}</Badge>
               </div>
-              <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                <span>{t.inviteExpiresAt}:</span>
+              <div className="mt-2 flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">{t.inviteExpiresAt}:</span>
                 {getExpiryBadge(record.expiresAt)}
               </div>
-              {record.preApplication && (
-                <div className="mt-2 text-xs text-muted-foreground">
-                  {t.inviteCodeAssignedTo}：
-                  {record.preApplication.user.name || record.preApplication.user.email}
+              {(record.preApplication || record.issuedToUser || record.issuedToEmail) && (
+                <div className="mt-1.5 text-xs text-muted-foreground truncate">
+                  {record.preApplication
+                    ? record.preApplication.user.name || record.preApplication.user.email
+                    : record.issuedToUser
+                      ? record.issuedToUser.name || record.issuedToUser.email
+                      : record.issuedToEmail}
                 </div>
               )}
-              {!record.preApplication && record.issuedToUser && (
-                <div className="mt-2 text-xs text-muted-foreground">
-                  {t.inviteCodeAssignedTo}：{record.issuedToUser.name || record.issuedToUser.email}
-                </div>
-              )}
-              {!record.preApplication && !record.issuedToUser && record.issuedToEmail && (
-                <div className="mt-2 text-xs text-muted-foreground">
-                  {t.inviteCodeAssignedTo}：{record.issuedToEmail}
-                </div>
-              )}
-              <Button
-                className="mt-3 w-full"
-                variant="outline"
-                onClick={() => updateUsage(record, !record.usedAt)}
-              >
-                {record.usedAt ? t.inviteCodeMarkUnused : t.inviteCodeMarkUsed}
-              </Button>
-              <div className="mt-2 grid gap-2 sm:grid-cols-2">
+              <div className="mt-2 grid gap-1.5 sm:grid-cols-3">
                 <Button
+                  size="sm"
+                  className="h-7 text-xs"
+                  variant="outline"
+                  onClick={() => updateUsage(record, !record.usedAt)}
+                >
+                  {record.usedAt ? t.inviteCodeMarkUnused : t.inviteCodeMarkUsed}
+                </Button>
+                <Button
+                  size="sm"
+                  className="h-7 text-xs"
                   variant="outline"
                   onClick={() => openIssueDialog(record)}
                   disabled={!!record.usedAt || isExpired(record) || isIssued(record)}
@@ -894,6 +894,8 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
                   {t.inviteCodeIssue}
                 </Button>
                 <Button
+                  size="sm"
+                  className="h-7 text-xs"
                   variant="outline"
                   onClick={() => openInvalidate(record)}
                   disabled={!!record.usedAt || isExpired(record)}
