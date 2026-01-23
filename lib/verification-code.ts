@@ -1,5 +1,6 @@
 import { getRedisClient } from "./redis"
 import { sendEmail } from "./email/mailer"
+import { buildVerificationCodeEmail } from "./email/templates"
 
 /**
  * 验证码配置
@@ -161,50 +162,17 @@ export async function sendVerificationEmail(
 
   // 发送邮件
   try {
-    const purposeText = {
-      register: "注册账户",
-      "reset-password": "重置密码",
-      "change-email": "更换邮箱",
-    }[purpose]
+    // 使用邮件模板
+    const emailContent = buildVerificationCodeEmail({
+      code,
+      purpose,
+      expiryMinutes: VERIFICATION_CODE_CONFIG.expiryMinutes,
+      locale: "zh",
+    })
 
     await sendEmail({
       to: email,
-      subject: `【linux.do】邮箱验证码 - ${purposeText}`,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <h2 style="color: #2563eb;">邮箱验证</h2>
-          <p>您正在${purposeText}，您的验证码是：</p>
-
-          <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center;">
-            <p style="font-size: 32px; font-weight: bold; color: #2563eb; letter-spacing: 8px; margin: 0;">
-              ${code}
-            </p>
-          </div>
-
-          <p style="color: #6b7280; font-size: 14px;">
-            ⏰ 此验证码将在 <strong>${VERIFICATION_CODE_CONFIG.expiryMinutes} 分钟</strong>后失效
-          </p>
-
-          <p style="color: #dc2626; font-size: 14px;">
-            ⚠️ 如果这不是您的操作，请忽略此邮件
-          </p>
-
-          <hr style="margin: 30px 0; border: none; border-top: 1px solid #e5e7eb;" />
-          <p style="color: #6b7280; font-size: 12px;">此邮件由系统自动发送，请勿回复。</p>
-        </div>
-      `,
-      text: `
-您正在${purposeText}，您的验证码是：
-
-${code}
-
-⏰ 此验证码将在 ${VERIFICATION_CODE_CONFIG.expiryMinutes} 分钟后失效
-
-⚠️ 如果这不是您的操作，请忽略此邮件
-
----
-此邮件由系统自动发送，请勿回复。
-      `,
+      ...emailContent,
     })
 
     return { success: true }

@@ -255,3 +255,104 @@ export function buildInviteCodeIssueEmail({
 
   return { subject, html, text: textLines.join("\n") }
 }
+
+
+/**
+ * 验证码邮件模板
+ */
+export function buildVerificationCodeEmail({
+  code,
+  purpose,
+  expiryMinutes = 5,
+  locale = "zh",
+}: {
+  code: string
+  purpose: "register" | "reset-password" | "change-email"
+  expiryMinutes?: number
+  locale?: string
+}) {
+  const purposeText = {
+    register: locale === "zh" ? "注册账户" : "Register Account",
+    "reset-password": locale === "zh" ? "重置密码" : "Reset Password",
+    "change-email": locale === "zh" ? "更换邮箱" : "Change Email",
+  }[purpose]
+
+  const subject =
+    locale === "zh"
+      ? `【linux.do】邮箱验证码 - ${purposeText}`
+      : `【linux.do】Verification Code - ${purposeText}`
+
+  const title = locale === "zh" ? "邮箱验证" : "Email Verification"
+  const intro =
+    locale === "zh"
+      ? `您正在${purposeText}，您的验证码是：`
+      : `You are ${purposeText.toLowerCase()}, your verification code is:`
+  const expiryText =
+    locale === "zh"
+      ? `此验证码将在 ${expiryMinutes} 分钟后失效`
+      : `This code will expire in ${expiryMinutes} minutes`
+  const warningText =
+    locale === "zh"
+      ? "如果这不是您的操作，请忽略此邮件"
+      : "If you did not request this, please ignore this email"
+  const footer =
+    locale === "zh"
+      ? "此邮件由系统自动发送，请勿回复。"
+      : "This email was sent automatically, please do not reply."
+
+  const html = `<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>${subject}</title>
+  </head>
+  <body style="margin:0;padding:24px;background:#f6f7fb;font-family:Arial,Helvetica,sans-serif;color:#111827;">
+    <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+      <tr>
+        <td align="center">
+          <table role="presentation" cellpadding="0" cellspacing="0" width="600" style="max-width:600px;background:#ffffff;border-radius:12px;overflow:hidden;">
+            <tr>
+              <td style="padding:32px;">
+                <h1 style="margin:0 0 16px;font-size:22px;line-height:1.4;color:#2563eb;">${title}</h1>
+                <p style="margin:0 0 16px;font-size:14px;line-height:1.6;color:#4b5563;">${intro}</p>
+                <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 24px;">
+                  <tr>
+                    <td style="background:#f3f4f6;border-radius:8px;padding:24px;text-align:center;">
+                      <p style="margin:0;font-size:36px;font-weight:bold;color:#2563eb;letter-spacing:8px;font-family:monospace;">
+                        ${code}
+                      </p>
+                    </td>
+                  </tr>
+                </table>
+                <p style="margin:0 0 8px;font-size:14px;line-height:1.6;color:#6b7280;">
+                  ⏰ ${expiryText}
+                </p>
+                <p style="margin:0 0 24px;font-size:14px;line-height:1.6;color:#dc2626;">
+                  ⚠️ ${warningText}
+                </p>
+                <p style="margin:0;font-size:12px;line-height:1.6;color:#9ca3af;">${footer}</p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>`
+
+  const text = `${title}
+
+${intro}
+
+${code}
+
+⏰ ${expiryText}
+
+⚠️ ${warningText}
+
+---
+${footer}`
+
+  return { subject, html, text }
+}
