@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { motion } from "framer-motion"
@@ -80,7 +80,7 @@ export function RegisterForm({ locale, dict, oauthProviders }: RegisterFormProps
   const isPasswordValid = Object.values(passwordChecks).every(Boolean)
 
   // 倒计时效果
-  React.useEffect(() => {
+  useEffect(() => {
     if (countdown > 0) {
       const timer = setTimeout(() => setCountdown(countdown - 1), 1000)
       return () => clearTimeout(timer)
