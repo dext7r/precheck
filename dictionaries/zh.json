@@ -712,6 +712,11 @@
       "恭喜通过预申请，请使用邀请码完成注册，如有疑问请联系管理员。",
       "预申请已通过，请按指引使用邀请码完成注册。"
     ],
+    "preApplicationGuidanceRejectSuggestions": [
+      "申请小作文不符合要求，请根据指导意见修改后重新提交。",
+      "申请内容需要进一步完善，请参考社区规范后重新提交。",
+      "暂未通过预申请，请根据反馈调整后再次提交。"
+    ],
     "inviteCodeCreate": "新增邀请码",
     "inviteCodeRequired": "请输入邀请码",
     "inviteCodePlaceholder": "输入邀请码",

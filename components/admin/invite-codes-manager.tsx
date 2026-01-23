@@ -213,6 +213,10 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
     if (record.expiresAt && new Date(record.expiresAt).getTime() <= now) {
       return { label: t.inviteCodeStatusExpired, className: "bg-rose-100 text-rose-700" }
     }
+    // 已发放状态
+    if (isIssued(record)) {
+      return { label: t.inviteCodeStatusAssigned, className: "bg-blue-100 text-blue-700" }
+    }
     return { label: t.inviteCodeStatusUnused, className: "bg-emerald-100 text-emerald-700" }
   }
 

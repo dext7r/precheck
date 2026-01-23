@@ -124,6 +124,15 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
     return suggestions[index] ?? ""
   }, [t])
 
+  const getRandomRejectGuidance = useCallback(() => {
+    const suggestions = Array.isArray(t.preApplicationGuidanceRejectSuggestions)
+      ? t.preApplicationGuidanceRejectSuggestions
+      : []
+    if (suggestions.length === 0) return ""
+    const index = Math.floor(Math.random() * suggestions.length)
+    return suggestions[index] ?? ""
+  }, [t])
+
   useEffect(() => {
     if (reviewAction === "REJECT") {
       setInviteCode("")
@@ -132,11 +141,15 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
   }, [reviewAction])
 
   useEffect(() => {
-    if (reviewAction !== "APPROVE") return
     if (selected?.status !== "PENDING") return
     if (guidance.trim()) return
-    setGuidance(getRandomApproveGuidance())
-  }, [reviewAction, selected?.status, selected?.id, guidance, getRandomApproveGuidance])
+
+    if (reviewAction === "APPROVE") {
+      setGuidance(getRandomApproveGuidance())
+    } else if (reviewAction === "REJECT") {
+      setGuidance(getRandomRejectGuidance())
+    }
+  }, [reviewAction, selected?.status, selected?.id, guidance, getRandomApproveGuidance, getRandomRejectGuidance])
 
   useEffect(() => {
     if (!dialogOpen || reviewAction !== "APPROVE" || selected?.status !== "PENDING") return
@@ -676,12 +689,18 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
                 </div>
               </div>
 
-              <div>
-                <p className="text-xs text-muted-foreground">{t.preApplicationEssay}</p>
-                <div className="mt-2 rounded-lg border bg-card p-4">
-                  <PostContent content={selected.essay} emptyMessage={t.preApplicationEssay} />
-                </div>
-              </div>
+              <Accordion type="multiple" defaultValue={["essay"]} className="rounded-lg border">
+                <AccordionItem value="essay">
+                  <AccordionTrigger className="px-4 py-3 text-sm font-medium">
+                    {t.preApplicationEssay}
+                  </AccordionTrigger>
+                  <AccordionContent className="px-4 pb-4">
+                    <div className="rounded-lg border bg-card p-4">
+                      <PostContent content={selected.essay} emptyMessage={t.preApplicationEssay} />
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
 
               <Separator />
 

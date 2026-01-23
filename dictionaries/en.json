@@ -716,6 +716,11 @@
       "Approved. The invite code has been issued. If you have questions, contact an admin.",
       "Congratulations! Your pre-application is approved. Please complete registration with the invite code."
     ],
+    "preApplicationGuidanceRejectSuggestions": [
+      "Your application essay does not meet requirements. Please revise and resubmit.",
+      "Please improve your application based on community guidelines.",
+      "Not approved. Please adjust based on feedback and resubmit."
+    ],
     "inviteCodeCreate": "Create Invite Code",
     "inviteCodeRequired": "Invite code is required",
     "inviteCodePlaceholder": "Enter invite code",
