@@ -41,6 +41,7 @@ export function RegisterForm({ locale, dict, oauthProviders }: RegisterFormProps
   })
   const [sendingCode, setSendingCode] = useState(false)
   const [countdown, setCountdown] = useState(0)
+  const [verificationAvailable, setVerificationAvailable] = useState(true) // 验证码功能是否可用
 
   const t = dict.auth.register
   const errorMap: Record<string, string> = {
@@ -112,7 +113,11 @@ export function RegisterForm({ locale, dict, oauthProviders }: RegisterFormProps
       const data = await res.json()
 
       if (!res.ok) {
-        if (res.status === 429 && data.waitSeconds) {
+        // 如果是服务不可用（Redis未配置），隐藏验证码功能
+        if (res.status === 503 || data.error?.includes("not available") || data.error?.includes("not configured")) {
+          setVerificationAvailable(false)
+          setError("验证码服务暂不可用，您可以直接注册")
+        } else if (res.status === 429 && data.waitSeconds) {
           setCountdown(data.waitSeconds)
           setError(`请等待 ${data.waitSeconds} 秒后再次发送`)
         } else {
@@ -252,53 +257,54 @@ export function RegisterForm({ locale, dict, oauthProviders }: RegisterFormProps
             </Label>
           </div>
 
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <Input
-                id="verificationCode"
-                type="text"
-                placeholder=" "
-                value={formData.verificationCode}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    verificationCode: e.target.value.replace(/\D/g, "").slice(0, 6),
-                  })
-                }
-                required
-                disabled={isLoading}
-                maxLength={6}
-                className="peer pt-6 pb-2 focus:border-primary focus:ring-2 focus:ring-primary/20"
-              />
-              <Label
-                htmlFor="verificationCode"
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-all duration-300 peer-focus:top-2 peer-focus:text-xs peer-focus:text-primary peer-[:not(:placeholder-shown)]:top-2 peer-[:not(:placeholder-shown)]:text-xs"
+          {verificationAvailable && (
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <Input
+                  id="verificationCode"
+                  type="text"
+                  placeholder=" "
+                  value={formData.verificationCode}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      verificationCode: e.target.value.replace(/\D/g, "").slice(0, 6),
+                    })
+                  }
+                  disabled={isLoading}
+                  maxLength={6}
+                  className="peer pt-6 pb-2 focus:border-primary focus:ring-2 focus:ring-primary/20"
+                />
+                <Label
+                  htmlFor="verificationCode"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-all duration-300 peer-focus:top-2 peer-focus:text-xs peer-focus:text-primary peer-[:not(:placeholder-shown)]:top-2 peer-[:not(:placeholder-shown)]:text-xs"
+                >
+                  验证码（可选）
+                </Label>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleSendCode}
+                disabled={sendingCode || countdown > 0 || isLoading}
+                className="whitespace-nowrap"
               >
-                验证码
-              </Label>
+                {sendingCode ? (
+                  <>
+                    <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                    发送中
+                  </>
+                ) : countdown > 0 ? (
+                  `${countdown}秒后重试`
+                ) : (
+                  <>
+                    <Mail className="mr-1 h-3 w-3" />
+                    发送验证码
+                  </>
+                )}
+              </Button>
             </div>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleSendCode}
-              disabled={sendingCode || countdown > 0 || isLoading}
-              className="whitespace-nowrap"
-            >
-              {sendingCode ? (
-                <>
-                  <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-                  发送中
-                </>
-              ) : countdown > 0 ? (
-                `${countdown}秒后重试`
-              ) : (
-                <>
-                  <Mail className="mr-1 h-3 w-3" />
-                  发送验证码
-                </>
-              )}
-            </Button>
-          </div>
+          )}
 
           <div className="space-y-2">
             <div className="relative">

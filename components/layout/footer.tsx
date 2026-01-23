@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { ExternalLink, MessageCircle } from "lucide-react"
+import { ExternalLink, MessageCircle, Github } from "lucide-react"
 import type { Dictionary } from "@/lib/i18n/get-dictionary"
 import type { Locale } from "@/lib/i18n/config"
 
@@ -51,6 +51,16 @@ export function Footer({ dict, locale }: FooterProps) {
               <span>QQ 群：</span>
               <span className="font-mono font-semibold text-foreground">1080464482</span>
             </div>
+            <a
+              href="https://github.com/dext7r/precheck"
+              className="flex items-center gap-1.5 transition-colors hover:text-primary"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Github className="h-4 w-4" />
+              <span>GitHub</span>
+              <ExternalLink className="h-3 w-3" />
+            </a>
           </div>
         </div>
 

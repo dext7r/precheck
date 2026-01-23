@@ -15,7 +15,7 @@ const registerSchema = z.object({
   email: z.string().email("Invalid email address"),
   password: z.string().min(8, "Password must be at least 8 characters"),
   name: z.string().min(2, "Name must be at least 2 characters").optional(),
-  verificationCode: z.string().length(6, "Verification code must be 6 digits"),
+  verificationCode: z.string().optional(), // 改为可选
   turnstileToken: z.string().optional(),
 })
 
@@ -42,8 +42,8 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 如果 Redis 可用，验证验证码
-    if (await isRedisAvailable()) {
+    // 如果 Redis 可用且提供了验证码，验证验证码
+    if (verificationCode && (await isRedisAvailable())) {
       const codeVerification = await verifyCode(email, verificationCode)
       if (!codeVerification.valid) {
         return NextResponse.json(
