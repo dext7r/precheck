@@ -25,12 +25,8 @@ export function ProcessSection({ dict }: ProcessSectionProps) {
           transition={{ duration: 0.5 }}
           className="text-center mb-16"
         >
-          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl mb-4">
-            {title}
-          </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            {subtitle}
-          </p>
+          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl mb-4">{title}</h2>
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">{subtitle}</p>
         </motion.div>
 
         <div className="relative">
@@ -60,9 +56,7 @@ export function ProcessSection({ dict }: ProcessSectionProps) {
                     </div>
 
                     <h3 className="mb-2 text-xl font-semibold">{step.title}</h3>
-                    <p className="text-muted-foreground">
-                      {step.description}
-                    </p>
+                    <p className="text-muted-foreground">{step.description}</p>
                   </div>
 
                   {/* Arrow (hidden on last item and mobile) */}

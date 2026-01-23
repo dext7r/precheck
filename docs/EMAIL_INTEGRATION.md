@@ -82,6 +82,7 @@ await sendEmail({
 ```
 
 **⚠️ 注意事项：**
+
 - 大多数 SMTP 服务器要求发件人地址必须是已认证的邮箱
 - 如果 `from` 地址与 `EMAIL_API_USER` 不匹配，可能会被拒绝发送
 - `fromName` 仅影响显示名称，不影响实际邮箱地址
@@ -121,10 +122,7 @@ import { sendEmail, isEmailConfigured } from "@/lib/email/mailer"
 export async function POST(request: Request) {
   // 检查邮件服务是否配置
   if (!isEmailConfigured()) {
-    return NextResponse.json(
-      { error: "Email service not configured" },
-      { status: 503 },
-    )
+    return NextResponse.json({ error: "Email service not configured" }, { status: 503 })
   }
 
   try {
@@ -136,10 +134,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    return NextResponse.json(
-      { error: "Failed to send email" },
-      { status: 500 },
-    )
+    return NextResponse.json({ error: "Failed to send email" }, { status: 500 })
   }
 }
 ```
@@ -171,6 +166,7 @@ curl -X POST http://localhost:3000/api/admin/test-email \
 **原因：** 环境变量未正确配置
 
 **解决：** 检查 `.env` 文件中的配置项，确保：
+
 - `EMAIL_PROVIDER` 设置为 `api` 或 `smtp`
 - 相应的配置项（`EMAIL_API_*` 或 `SMTP_*`）已填写
 
@@ -179,6 +175,7 @@ curl -X POST http://localhost:3000/api/admin/test-email \
 **原因：** QQ 邮箱授权码错误或已过期
 
 **解决：**
+
 1. 重新生成 QQ 邮箱 SMTP 授权码
 2. 确认 `EMAIL_API_USER` 和 `EMAIL_API_PASS` 正确
 
@@ -193,6 +190,7 @@ curl -X POST http://localhost:3000/api/admin/test-email \
 **原因：** 邮件内容可能被识别为垃圾邮件
 
 **解决：**
+
 - 配置 SPF、DKIM、DMARC 记录（如果使用自己的域名）
 - 避免使用敏感词汇
 - 增加邮件个性化内容
@@ -283,8 +281,8 @@ await Promise.all(
       to,
       subject: "批量通知",
       text: "消息内容",
-    })
-  )
+    }),
+  ),
 )
 ```
 

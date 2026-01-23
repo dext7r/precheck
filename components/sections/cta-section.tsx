@@ -42,27 +42,17 @@ export function CTASection({ dict, locale }: CTASectionProps) {
           <h2 className="text-3xl font-bold tracking-tight sm:text-5xl mb-6 bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent">
             {title}
           </h2>
-          <p className="text-lg text-muted-foreground mb-10 max-w-2xl mx-auto">
-            {subtitle}
-          </p>
+          <p className="text-lg text-muted-foreground mb-10 max-w-2xl mx-auto">{subtitle}</p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href={`/${locale}/dashboard/pre-application`}>
-              <Button
-                size="lg"
-                variant="glow"
-                className="group min-w-[200px]"
-              >
+              <Button size="lg" variant="glow" className="group min-w-[200px]">
                 {applyButton}
                 <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
               </Button>
             </Link>
             <Link href={`/${locale}/query-invite-codes`}>
-              <Button
-                size="lg"
-                variant="outline"
-                className="min-w-[200px]"
-              >
+              <Button size="lg" variant="outline" className="min-w-[200px]">
                 <Search className="mr-2 h-4 w-4" />
                 {queryButton}
               </Button>

@@ -65,12 +65,12 @@ curl http://localhost:3000/api/features
 
 ### 常见错误
 
-| 错误信息 | 解决方案 |
-|---------|---------|
-| `Email service not configured` | 检查 `.env` 文件配置 |
-| `Email API request failed: 401` | QQ 邮箱授权码错误，重新生成 |
-| `Invalid email domain` | 收件人域名不在白名单，在系统配置添加 |
-| `SMTP not configured` | 确认 `EMAIL_PROVIDER` 设置正确 |
+| 错误信息                        | 解决方案                             |
+| ------------------------------- | ------------------------------------ |
+| `Email service not configured`  | 检查 `.env` 文件配置                 |
+| `Email API request failed: 401` | QQ 邮箱授权码错误，重新生成          |
+| `Invalid email domain`          | 收件人域名不在白名单，在系统配置添加 |
+| `SMTP not configured`           | 确认 `EMAIL_PROVIDER` 设置正确       |
 
 ## 📚 更多文档
 
@@ -81,18 +81,21 @@ curl http://localhost:3000/api/features
 ### 使用其他邮箱服务商
 
 **163 邮箱：**
+
 ```bash
 EMAIL_API_HOST="smtp.163.com"
 EMAIL_API_PORT="25"
 ```
 
 **Gmail：**
+
 ```bash
 EMAIL_API_HOST="smtp.gmail.com"
 EMAIL_API_PORT="587"
 ```
 
 **企业邮箱：**
+
 ```bash
 EMAIL_API_HOST="smtp.exmail.qq.com"  # 腾讯企业邮箱
 EMAIL_API_PORT="587"

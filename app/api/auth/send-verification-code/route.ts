@@ -16,10 +16,7 @@ export async function POST(request: NextRequest) {
   try {
     // 检查邮件服务是否配置
     if (!isEmailConfigured()) {
-      return NextResponse.json(
-        { error: "Email service not configured" },
-        { status: 503 },
-      )
+      return NextResponse.json({ error: "Email service not configured" }, { status: 503 })
     }
 
     // 检查 Redis 是否可用
@@ -63,9 +60,6 @@ export async function POST(request: NextRequest) {
     }
 
     console.error("Send verification code error:", error)
-    return NextResponse.json(
-      { error: "Failed to send verification code" },
-      { status: 500 },
-    )
+    return NextResponse.json({ error: "Failed to send verification code" }, { status: 500 })
   }
 }

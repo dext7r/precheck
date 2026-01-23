@@ -110,7 +110,9 @@ export async function verifyCode(
 /**
  * 检查发送频率限制
  */
-export async function checkRateLimit(email: string): Promise<{ allowed: boolean; waitSeconds?: number }> {
+export async function checkRateLimit(
+  email: string,
+): Promise<{ allowed: boolean; waitSeconds?: number }> {
   const redis = getRedisClient()
   if (!redis) {
     return { allowed: true } // Redis 未配置时不限制

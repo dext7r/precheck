@@ -149,7 +149,14 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
     } else if (reviewAction === "REJECT") {
       setGuidance(getRandomRejectGuidance())
     }
-  }, [reviewAction, selected?.status, selected?.id, guidance, getRandomApproveGuidance, getRandomRejectGuidance])
+  }, [
+    reviewAction,
+    selected?.status,
+    selected?.id,
+    guidance,
+    getRandomApproveGuidance,
+    getRandomRejectGuidance,
+  ])
 
   useEffect(() => {
     if (!dialogOpen || reviewAction !== "APPROVE" || selected?.status !== "PENDING") return
@@ -420,7 +427,12 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
         label: t.actions,
         width: "12%",
         render: (record) => (
-          <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => openDialog(record)}>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 text-xs"
+            onClick={() => openDialog(record)}
+          >
             {record.status === "PENDING" ? t.preApplicationReviewAction : t.preApplicationView}
           </Button>
         ),
@@ -596,7 +608,9 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
           <Card className="p-3">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium truncate">{record.user.name || record.user.email}</p>
+                <p className="text-sm font-medium truncate">
+                  {record.user.name || record.user.email}
+                </p>
                 <p className="text-xs text-muted-foreground truncate">{record.registerEmail}</p>
               </div>
               <div className="flex flex-col items-end gap-1">
@@ -611,7 +625,9 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
               <Badge
                 className={cn(
                   "text-xs",
-                  record.inviteCode ? "bg-emerald-100 text-emerald-700" : "bg-gray-100 text-gray-600",
+                  record.inviteCode
+                    ? "bg-emerald-100 text-emerald-700"
+                    : "bg-gray-100 text-gray-600",
                 )}
               >
                 {record.inviteCode ? t.inviteStatusIssued : t.inviteStatusNone}
@@ -625,7 +641,11 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
                 })}
               </span>
             </div>
-            <Button className="mt-2 w-full h-8 text-xs" variant="outline" onClick={() => openDialog(record)}>
+            <Button
+              className="mt-2 w-full h-8 text-xs"
+              variant="outline"
+              onClick={() => openDialog(record)}
+            >
               {record.status === "PENDING" ? t.preApplicationReviewAction : t.preApplicationView}
             </Button>
           </Card>

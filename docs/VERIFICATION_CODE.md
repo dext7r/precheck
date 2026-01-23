@@ -80,6 +80,7 @@ Content-Type: application/json
 ```
 
 **成功响应：**
+
 ```json
 {
   "success": true,
@@ -88,6 +89,7 @@ Content-Type: application/json
 ```
 
 **频率限制响应（429）：**
+
 ```json
 {
   "error": "Please wait 45 seconds before requesting another code",
@@ -280,6 +282,7 @@ TTL: 60 秒
 ### 验证码收不到
 
 1. **检查邮件服务配置**
+
    ```bash
    # 测试邮件发送
    curl -X POST http://localhost:3000/api/admin/test-email \
@@ -288,6 +291,7 @@ TTL: 60 秒
    ```
 
 2. **查看服务器日志**
+
    ```bash
    # 开发环境
    npm run dev
@@ -333,6 +337,7 @@ console.log(`验证码剩余 ${ttl} 秒`)
 ### 1. 使用生产级 Redis
 
 **推荐服务商：**
+
 - **Upstash**：无服务器、按请求计费、免费额度
 - **AWS ElastiCache**：高性能、集群支持
 - **阿里云 Redis**：国内低延迟

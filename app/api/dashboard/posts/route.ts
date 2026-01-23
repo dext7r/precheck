@@ -93,7 +93,10 @@ export async function POST(request: NextRequest) {
     const { title, content, status } = createPostSchema.parse(body)
     const settings = await getSiteSettings()
     const effectiveStatus =
-      settings.postModeration && status === "PUBLISHED" && user.role !== "ADMIN" && user.role !== "SUPER_ADMIN"
+      settings.postModeration &&
+      status === "PUBLISHED" &&
+      user.role !== "ADMIN" &&
+      user.role !== "SUPER_ADMIN"
         ? "PENDING"
         : status
 

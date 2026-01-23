@@ -56,7 +56,9 @@ async function test() {
     console.log("\n📋 使用此验证码测试注册：")
     console.log(`curl -X POST http://localhost:3000/api/auth/register \\`)
     console.log(`  -H "Content-Type: application/json" \\`)
-    console.log(`  -d '{"email":"${testEmail}","password":"Test123456","name":"测试用户","verificationCode":"${parsed.code}"}'`)
+    console.log(
+      `  -d '{"email":"${testEmail}","password":"Test123456","name":"测试用户","verificationCode":"${parsed.code}"}'`,
+    )
 
     redis.disconnect()
   } catch (error) {

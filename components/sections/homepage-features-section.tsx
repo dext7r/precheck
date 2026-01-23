@@ -45,12 +45,8 @@ export function HomepageFeaturesSection({ dict }: HomepageFeaturesSectionProps) 
           transition={{ duration: 0.5 }}
           className="text-center mb-12"
         >
-          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl mb-4">
-            {title}
-          </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            {subtitle}
-          </p>
+          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl mb-4">{title}</h2>
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">{subtitle}</p>
         </motion.div>
 
         <motion.div

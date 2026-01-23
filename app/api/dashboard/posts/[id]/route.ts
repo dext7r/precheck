@@ -72,7 +72,12 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
       status?: "DRAFT" | "PUBLISHED" | "PENDING"
     } = { ...data }
     const settings = await getSiteSettings()
-    if (updateData.status === "PUBLISHED" && settings.postModeration && user.role !== "ADMIN" && user.role !== "SUPER_ADMIN") {
+    if (
+      updateData.status === "PUBLISHED" &&
+      settings.postModeration &&
+      user.role !== "ADMIN" &&
+      user.role !== "SUPER_ADMIN"
+    ) {
       updateData.status = "PENDING"
     }
 

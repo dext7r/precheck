@@ -30,7 +30,9 @@ export function Turnstile({ siteKey, onVerify, onError, onExpire, className }: T
 
   if (!mounted) {
     return (
-      <div className={`flex h-[65px] items-center justify-center rounded-md border bg-muted ${className || ""}`}>
+      <div
+        className={`flex h-[65px] items-center justify-center rounded-md border bg-muted ${className || ""}`}
+      >
         <span className="text-sm text-muted-foreground">Loading verification...</span>
       </div>
     )

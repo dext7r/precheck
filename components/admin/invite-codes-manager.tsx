@@ -272,7 +272,11 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
     if (diffHours <= 2) {
       return <Badge className="bg-amber-50 text-amber-700 text-xs">{label}</Badge>
     }
-    return <Badge variant="outline" className="text-xs">{label}</Badge>
+    return (
+      <Badge variant="outline" className="text-xs">
+        {label}
+      </Badge>
+    )
   }
 
   const handleCreate = async () => {
@@ -522,7 +526,10 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
         throw new Error(data?.error || t.actionFailed)
       }
       const data = await res.json()
-      setGeneratedToken(data.token)
+      // 生成完整的查询链接
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin
+      const queryUrl = `${appUrl}/${locale}/query-invite-codes?queryCode=${data.token}`
+      setGeneratedToken(queryUrl)
       setQueryTokenDialogOpen(true)
       setSelectedIds(new Set())
       await fetchRecords()
@@ -1119,17 +1126,13 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
           </DialogHeader>
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <Input
-                value={generatedToken}
-                readOnly
-                className="flex-1 font-mono text-lg tracking-widest"
-              />
+              <Input value={generatedToken} readOnly className="flex-1 font-mono text-sm" />
               <Button variant="outline" size="icon" onClick={handleCopyToken}>
                 {tokenCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
               </Button>
             </div>
             <p className="text-sm text-muted-foreground">
-              {t.queryTokenSelectHint || "用户可在查询页面使用此查询码查看邀请码"}
+              {t.queryTokenSelectHint || "用户可直接点击此链接查看邀请码"}
             </p>
           </div>
           <DialogFooter>

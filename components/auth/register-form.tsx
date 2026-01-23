@@ -114,7 +114,11 @@ export function RegisterForm({ locale, dict, oauthProviders }: RegisterFormProps
 
       if (!res.ok) {
         // 如果是服务不可用（Redis未配置），隐藏验证码功能
-        if (res.status === 503 || data.error?.includes("not available") || data.error?.includes("not configured")) {
+        if (
+          res.status === 503 ||
+          data.error?.includes("not available") ||
+          data.error?.includes("not configured")
+        ) {
           setVerificationAvailable(false)
           setError(t.verificationServiceUnavailable)
         } else if (res.status === 429 && data.waitSeconds) {

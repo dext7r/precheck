@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useSearchParams } from "next/navigation"
 import { motion } from "framer-motion"
 import { toast } from "sonner"
 import Link from "next/link"
@@ -42,6 +43,7 @@ interface QueryInviteCodesFormProps {
 
 export function QueryInviteCodesForm({ locale, dict }: QueryInviteCodesFormProps) {
   const t = dict.queryInviteCodes || {}
+  const searchParams = useSearchParams()
   const [token, setToken] = useState("")
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<QueryResult | null>(null)
@@ -51,8 +53,8 @@ export function QueryInviteCodesForm({ locale, dict }: QueryInviteCodesFormProps
 
   const getFullUrl = (code: string) => `https://linux.do/invites/${code}`
 
-  const handleQuery = async () => {
-    const trimmedToken = token.trim().toUpperCase()
+  const handleQuery = async (queryToken?: string) => {
+    const trimmedToken = (queryToken || token).trim().toUpperCase()
     if (!trimmedToken) {
       toast.error(t.placeholder || "请输入查询码")
       return
@@ -80,6 +82,17 @@ export function QueryInviteCodesForm({ locale, dict }: QueryInviteCodesFormProps
       setLoading(false)
     }
   }
+
+  // 自动从URL参数读取queryCode并查询
+  useEffect(() => {
+    const queryCode = searchParams.get("queryCode")
+    if (queryCode) {
+      const upperCode = queryCode.trim().toUpperCase()
+      setToken(upperCode)
+      handleQuery(upperCode)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const handleCopy = async (code: string, index: number) => {
     try {
@@ -338,7 +351,7 @@ export function QueryInviteCodesForm({ locale, dict }: QueryInviteCodesFormProps
         </div>
 
         <Button
-          onClick={handleQuery}
+          onClick={() => handleQuery()}
           className="group relative w-full overflow-hidden"
           disabled={loading}
         >

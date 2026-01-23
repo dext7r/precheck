@@ -20,8 +20,12 @@ if (emailProvider === "api") {
   console.log(`   EMAIL_API_HOST = ${process.env.EMAIL_API_HOST || "(未设置)"}`)
   console.log(`   EMAIL_API_PORT = ${process.env.EMAIL_API_PORT || "(未设置)"}`)
   console.log(`   EMAIL_API_USER = ${process.env.EMAIL_API_USER ? "✅ 已设置" : "❌ 未设置"}`)
-  console.log(`   EMAIL_API_PASS = ${process.env.EMAIL_API_PASS ? "✅ 已设置 (${process.env.EMAIL_API_PASS.substring(0, 4)}...)" : "❌ 未设置"}`)
-  console.log(`   EMAIL_API_FROM = ${process.env.EMAIL_API_FROM || "(可选，默认使用 EMAIL_API_USER)"}`)
+  console.log(
+    `   EMAIL_API_PASS = ${process.env.EMAIL_API_PASS ? "✅ 已设置 (${process.env.EMAIL_API_PASS.substring(0, 4)}...)" : "❌ 未设置"}`,
+  )
+  console.log(
+    `   EMAIL_API_FROM = ${process.env.EMAIL_API_FROM || "(可选，默认使用 EMAIL_API_USER)"}`,
+  )
 
   // 检查配置完整性
   const isConfigured = !!(process.env.EMAIL_API_USER && process.env.EMAIL_API_PASS)

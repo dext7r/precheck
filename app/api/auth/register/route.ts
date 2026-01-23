@@ -35,7 +35,10 @@ export async function POST(request: NextRequest) {
 
     // 验证 Turnstile (如果提供)
     if (turnstileToken) {
-      const clientIp = request.headers.get("x-forwarded-for")?.split(",")[0] || request.headers.get("x-real-ip") || undefined
+      const clientIp =
+        request.headers.get("x-forwarded-for")?.split(",")[0] ||
+        request.headers.get("x-real-ip") ||
+        undefined
       const isValid = await verifyTurnstileToken(turnstileToken, clientIp)
       if (!isValid) {
         return NextResponse.json({ error: "Verification failed" }, { status: 400 })

@@ -256,7 +256,6 @@ export function buildInviteCodeIssueEmail({
   return { subject, html, text: textLines.join("\n") }
 }
 
-
 /**
  * 验证码邮件模板
  */
