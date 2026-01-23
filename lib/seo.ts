@@ -18,8 +18,8 @@ export const siteConfig = {
   ],
   links: {
     community: "https://linux.do",
-    github: "https://github.com/linuxdotdo",
-    twitter: "https://twitter.com/linuxdotdo",
+    github: "https://github.com/linux-do",
+    twitter: "https://twitter.com/",
   },
   contact: {
     email: "contact@linux.do",

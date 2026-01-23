@@ -3,12 +3,16 @@ import { locales, defaultLocale } from "@/lib/i18n/config"
 import { getBaseUrl } from "@/lib/seo"
 import { db } from "@/lib/db"
 
+// 缓存1小时
+export const revalidate = 3600
+
 const staticRoutes = [
   { path: "", changeFrequency: "daily" as const, priority: 1.0 },
   { path: "/login", changeFrequency: "monthly" as const, priority: 0.6 },
   { path: "/register", changeFrequency: "monthly" as const, priority: 0.6 },
   { path: "/pre-application", changeFrequency: "monthly" as const, priority: 0.8 },
   { path: "/query-invite-codes", changeFrequency: "monthly" as const, priority: 0.7 },
+  { path: "/posts", changeFrequency: "daily" as const, priority: 0.8 },
   { path: "/privacy", changeFrequency: "yearly" as const, priority: 0.3 },
   { path: "/terms", changeFrequency: "yearly" as const, priority: 0.3 },
 ]
@@ -61,13 +65,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   })
 
-  // 已发布文章
+  // 已发布文章（限制1000篇，按更新时间倒序）
   if (db) {
     try {
       const posts = await db.post.findMany({
         where: { status: "PUBLISHED" },
         select: { id: true, updatedAt: true },
+        orderBy: { updatedAt: "desc" },
+        take: 1000,
       })
+
       for (const post of posts) {
         for (const locale of locales) {
           sitemapEntries.push({
@@ -87,8 +94,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           })
         }
       }
-    } catch {
-      // 数据库不可用时静默跳过
+    } catch (error) {
+      // 数据库不可用时静默跳过，避免构建失败
+      console.warn("Sitemap: Database unavailable, skipping posts")
     }
   }
 
