@@ -29,7 +29,7 @@ export function getRedisClient(): Redis | null {
         enableReadyCheck: false,
         lazyConnect: true,
         tls: needsTLS ? {} : undefined,
-        family: 6, // 优先使用 IPv6
+        family: 0, // 自动选择 IPv4/IPv6
       })
     }
     // 使用 Upstash Redis（兼容 KV）
