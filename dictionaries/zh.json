@@ -209,7 +209,7 @@
         "lowercase": "包含小写字母",
         "number": "包含数字"
       },
-      "verificationCode": "验证码（可选）",
+      "verificationCode": "验证码",
       "sendCode": "发送验证码",
       "sending": "发送中",
       "retryAfter": "{seconds}秒后重试",

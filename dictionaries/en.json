@@ -209,7 +209,7 @@
         "lowercase": "Lowercase letter",
         "number": "Number"
       },
-      "verificationCode": "Verification Code (Optional)",
+      "verificationCode": "Verification Code",
       "sendCode": "Send Code",
       "sending": "Sending",
       "retryAfter": "Retry after {seconds}s",
