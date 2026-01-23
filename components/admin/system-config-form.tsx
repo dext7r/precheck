@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
-import { X, Plus } from "lucide-react"
+import { X, Plus, Mail } from "lucide-react"
 import type { Locale } from "@/lib/i18n/config"
 
 interface SystemConfigFormProps {
@@ -22,6 +22,8 @@ export function SystemConfigForm({ locale, dict }: SystemConfigFormProps) {
   const [newDomain, setNewDomain] = useState("")
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [testingEmail, setTestingEmail] = useState(false)
+  const [testEmailAddress, setTestEmailAddress] = useState("")
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null)
 
   useEffect(() => {
@@ -93,6 +95,43 @@ export function SystemConfigForm({ locale, dict }: SystemConfigFormProps) {
 
   function handleRemoveDomain(domain: string) {
     setEmailDomains(emailDomains.filter((d) => d !== domain))
+  }
+
+  async function handleTestEmail() {
+    if (!testEmailAddress || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(testEmailAddress)) {
+      setMessage({ type: "error", text: "请输入有效的邮箱地址" })
+      return
+    }
+
+    setTestingEmail(true)
+    setMessage(null)
+
+    try {
+      const res = await fetch("/api/admin/test-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ to: testEmailAddress }),
+      })
+
+      if (!res.ok) {
+        const error = await res.json()
+        throw new Error(error.error || "发送失败")
+      }
+
+      const result = await res.json()
+      setMessage({
+        type: "success",
+        text: `测试邮件已发送到 ${testEmailAddress}，使用 ${result.provider} 发送`,
+      })
+      setTestEmailAddress("")
+    } catch (error) {
+      setMessage({
+        type: "error",
+        text: error instanceof Error ? error.message : "发送测试邮件失败",
+      })
+    } finally {
+      setTestingEmail(false)
+    }
   }
 
   if (loading) {
@@ -182,6 +221,42 @@ export function SystemConfigForm({ locale, dict }: SystemConfigFormProps) {
           {emailDomains.length === 0 && (
             <p className="text-sm text-muted-foreground">暂无域名,请添加至少一个</p>
           )}
+        </div>
+      </Card>
+
+      <Card className="p-6">
+        <div className="space-y-4">
+          <div>
+            <Label htmlFor="testEmail">测试邮件发送</Label>
+            <p className="text-sm text-muted-foreground mb-2">
+              发送测试邮件以验证邮件服务配置是否正确
+            </p>
+          </div>
+
+          <div className="flex gap-2">
+            <Input
+              id="testEmail"
+              type="email"
+              value={testEmailAddress}
+              onChange={(e) => setTestEmailAddress(e.target.value)}
+              placeholder="输入接收测试邮件的邮箱地址"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault()
+                  handleTestEmail()
+                }
+              }}
+            />
+            <Button onClick={handleTestEmail} type="button" disabled={testingEmail}>
+              <Mail className="h-4 w-4 mr-1" />
+              {testingEmail ? "发送中..." : "发送测试"}
+            </Button>
+          </div>
+
+          <p className="text-xs text-muted-foreground">
+            当前邮件发送方式：
+            <strong className="ml-1">{process.env.NEXT_PUBLIC_EMAIL_PROVIDER || "未配置"}</strong>
+          </p>
         </div>
       </Card>
 

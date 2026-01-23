@@ -1,6 +1,15 @@
 // 功能检测配置
 // 根据环境变量是否配置来决定功能是否启用
 
+// 检查邮件服务配置（支持 API 和 SMTP 两种方式）
+const isEmailConfigured = () => {
+  const emailProvider = process.env.EMAIL_PROVIDER || "smtp"
+  if (emailProvider === "api") {
+    return !!(process.env.EMAIL_API_USER && process.env.EMAIL_API_PASS)
+  }
+  return !!(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS)
+}
+
 export const features = {
   // OAuth 登录
   oauth: {
@@ -10,7 +19,7 @@ export const features = {
   // 数据库
   database: !!process.env.DATABASE_URL,
   // 邮件服务（用于找回密码等）
-  email: !!(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS),
+  email: isEmailConfigured(),
   // 文件上传
   fileUpload: !!process.env.BLOB_READ_WRITE_TOKEN,
   // Redis 缓存
