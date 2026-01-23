@@ -5,7 +5,7 @@ import { getCurrentUser } from "@/lib/auth/session"
 import { writeAuditLog } from "@/lib/audit"
 
 const createInviteCodeSchema = z.object({
-  code: z.string().min(4).max(64),
+  code: z.string().min(4).max(128), // 增加长度限制以支持完整 URL 格式
   expiresAt: z.string().optional().nullable(),
 })
 

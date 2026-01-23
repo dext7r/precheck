@@ -5,12 +5,22 @@ import { getCurrentUser } from "@/lib/auth/session"
 import { writeAuditLog } from "@/lib/audit"
 
 const importInviteCodesSchema = z.object({
-  codes: z.array(z.string().min(1)).min(1).max(2000),
+  codes: z.array(z.string().min(1).max(128)).min(1).max(2000), // 增加长度限制以支持完整 URL
   expiresAt: z.string().optional().nullable(),
 })
 
-const inviteCodePattern = /(?:https?:\/\/linux\.do)?\/?invites\/([A-Za-z0-9_-]{4,64})/i
-const rawCodePattern = /^[A-Za-z0-9_-]{4,64}$/
+// 验证邀请码格式（完整 URL 或纯邀请码）
+const validateInviteCode = (code: string): boolean => {
+  // 完整 URL 格式
+  if (/^https:\/\/linux\.do\/invites\/[A-Za-z0-9_-]{4,64}$/i.test(code)) {
+    return true
+  }
+  // 纯邀请码格式
+  if (/^[A-Za-z0-9_-]{4,64}$/.test(code)) {
+    return true
+  }
+  return false
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -45,16 +55,12 @@ export async function POST(request: NextRequest) {
     for (const raw of data.codes) {
       const value = raw.trim()
       if (!value) continue
-      const match = value.match(inviteCodePattern)
-      if (match?.[1]) {
-        matched.push(match[1])
-        continue
-      }
-      if (rawCodePattern.test(value)) {
+      // 前端已经转换为完整 URL，直接验证并存储
+      if (validateInviteCode(value)) {
         matched.push(value)
-        continue
+      } else {
+        invalidCount += 1
       }
-      invalidCount += 1
     }
 
     const uniqueCodes = Array.from(new Set(matched))

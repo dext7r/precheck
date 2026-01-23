@@ -135,6 +135,21 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
 
   const inviteCodePattern = /(?:https?:\/\/linux\.do)?\/?invites\/([A-Za-z0-9_-]{4,64})/i
 
+  // 将任何格式的输入转换为完整 URL
+  const normalizeInviteCode = (input: string): string => {
+    const trimmed = input.trim()
+    const match = trimmed.match(inviteCodePattern)
+    if (match?.[1]) {
+      // 提取到邀请码，转换为完整 URL
+      return `https://linux.do/invites/${match[1]}`
+    }
+    // 如果只是纯邀请码（没有 invites/ 前缀），直接拼接
+    if (/^[A-Za-z0-9_-]{4,64}$/.test(trimmed)) {
+      return `https://linux.do/invites/${trimmed}`
+    }
+    return trimmed // 返回原始输入让后端验证
+  }
+
   const bulkSummary = useMemo(() => {
     const lines = bulkInput.split(/\r?\n/)
     const matches: string[] = []
@@ -147,7 +162,11 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
       totalCount += 1
       const match = line.match(inviteCodePattern)
       if (match?.[1]) {
-        matches.push(match[1])
+        // 转换为完整 URL 格式
+        matches.push(`https://linux.do/invites/${match[1]}`)
+      } else if (/^[A-Za-z0-9_-]{4,64}$/.test(line)) {
+        // 如果是纯邀请码，也转换为完整 URL
+        matches.push(`https://linux.do/invites/${line}`)
       } else {
         invalidCount += 1
       }
@@ -263,7 +282,8 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
     }
     setCreating(true)
     try {
-      const payload: { code: string; expiresAt?: string } = { code: code.trim() }
+      const normalizedCode = normalizeInviteCode(code)
+      const payload: { code: string; expiresAt?: string } = { code: normalizedCode }
       if (expiresAt) {
         payload.expiresAt = new Date(expiresAt).toISOString()
       }
