@@ -1096,5 +1096,79 @@
         }
       }
     }
+  },
+  "homepage": {
+    "features": {
+      "title": "Core Features",
+      "subtitle": "Simple and efficient pre-application process",
+      "items": [
+        {
+          "title": "Submit Application",
+          "description": "Fill out a simple form to express your interest and let us know you"
+        },
+        {
+          "title": "Real-time Tracking",
+          "description": "Check application status and updates anytime with your query code"
+        },
+        {
+          "title": "Get Invite Code",
+          "description": "Receive your exclusive invite code immediately after approval"
+        }
+      ]
+    },
+    "process": {
+      "title": "Application Process",
+      "subtitle": "Four simple steps to join linux.do community",
+      "steps": [
+        {
+          "title": "Submit Application",
+          "description": "Register an account and fill out the pre-application form"
+        },
+        {
+          "title": "Admin Review",
+          "description": "We carefully review each and every application"
+        },
+        {
+          "title": "Get Invite Code",
+          "description": "System automatically issues invite code upon approval"
+        },
+        {
+          "title": "Join Community",
+          "description": "Use invite code to register your linux.do account"
+        }
+      ]
+    },
+    "faq": {
+      "title": "Frequently Asked Questions",
+      "subtitle": "Answers to your questions",
+      "items": [
+        {
+          "question": "How long does the approval process take?",
+          "answer": "Typically 1-3 business days depending on application volume. You can check your application status anytime using your query code."
+        },
+        {
+          "question": "What if my application is rejected?",
+          "answer": "If rejected, you can revise and resubmit based on admin feedback, up to 3 times maximum."
+        },
+        {
+          "question": "Does the invite code expire?",
+          "answer": "Invite codes are valid for 12 hours after issuance. Please use your code promptly or reapply if expired."
+        },
+        {
+          "question": "Can I submit multiple applications?",
+          "answer": "Each account can only submit one pre-application. If you need changes, please update your existing application."
+        },
+        {
+          "question": "How do I check my application status?",
+          "answer": "After submission, you'll receive a query code. Use it on the query page to view status, admin feedback, and invite code."
+        }
+      ]
+    },
+    "cta": {
+      "title": "Ready to Join linux.do?",
+      "subtitle": "Submit your pre-application now and start your open-source journey",
+      "applyButton": "Apply Now",
+      "queryButton": "Check Status"
+    }
   }
 }

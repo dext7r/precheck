@@ -4,11 +4,13 @@ import { verifyPassword } from "@/lib/auth/password"
 import { createSession, setSessionCookie } from "@/lib/auth/session"
 import { features } from "@/lib/features"
 import { writeAuditLog } from "@/lib/audit"
+import { verifyTurnstileToken } from "@/lib/turnstile"
 import { z } from "zod"
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
   password: z.string().min(1, "Password is required"),
+  turnstileToken: z.string().optional(),
 })
 
 export async function POST(request: NextRequest) {
@@ -18,7 +20,16 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json()
-    const { email, password } = loginSchema.parse(body)
+    const { email, password, turnstileToken } = loginSchema.parse(body)
+
+    // 验证 Turnstile (如果提供)
+    if (turnstileToken) {
+      const clientIp = request.headers.get("x-forwarded-for")?.split(",")[0] || request.headers.get("x-real-ip") || undefined
+      const isValid = await verifyTurnstileToken(turnstileToken, clientIp)
+      if (!isValid) {
+        return NextResponse.json({ error: "Verification failed" }, { status: 400 })
+      }
+    }
 
     // 查找用户
     const user = await db.user.findUnique({

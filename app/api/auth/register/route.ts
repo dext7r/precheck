@@ -8,6 +8,7 @@ import { getSiteSettings } from "@/lib/site-settings"
 import { writeAuditLog } from "@/lib/audit"
 import { verifyCode } from "@/lib/verification-code"
 import { isRedisAvailable } from "@/lib/redis"
+import { verifyTurnstileToken } from "@/lib/turnstile"
 import { z } from "zod"
 
 const registerSchema = z.object({
@@ -15,6 +16,7 @@ const registerSchema = z.object({
   password: z.string().min(8, "Password must be at least 8 characters"),
   name: z.string().min(2, "Name must be at least 2 characters").optional(),
   verificationCode: z.string().length(6, "Verification code must be 6 digits"),
+  turnstileToken: z.string().optional(),
 })
 
 export async function POST(request: NextRequest) {
@@ -29,7 +31,16 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { email, password, name, verificationCode } = registerSchema.parse(body)
+    const { email, password, name, verificationCode, turnstileToken } = registerSchema.parse(body)
+
+    // 验证 Turnstile (如果提供)
+    if (turnstileToken) {
+      const clientIp = request.headers.get("x-forwarded-for")?.split(",")[0] || request.headers.get("x-real-ip") || undefined
+      const isValid = await verifyTurnstileToken(turnstileToken, clientIp)
+      if (!isValid) {
+        return NextResponse.json({ error: "Verification failed" }, { status: 400 })
+      }
+    }
 
     // 如果 Redis 可用，验证验证码
     if (await isRedisAvailable()) {

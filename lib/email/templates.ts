@@ -279,8 +279,8 @@ export function buildVerificationCodeEmail({
 
   const subject =
     locale === "zh"
-      ? `【linux.do】邮箱验证码 - ${purposeText}`
-      : `【linux.do】Verification Code - ${purposeText}`
+      ? `【linux.do 预申请系统】邮箱验证码 - ${purposeText}`
+      : `【linux.do Pre-application system】Verification Code - ${purposeText}`
 
   const title = locale === "zh" ? "邮箱验证" : "Email Verification"
   const intro =

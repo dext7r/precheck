@@ -71,6 +71,7 @@
   "dependencies": {
     "@emotion/is-prop-valid": "latest",
     "@hookform/resolvers": "^3.10.0",
+    "@marsidev/react-turnstile": "^1.4.1",
     "@prisma/client": "^6.0.0",
     "@prisma/generator-helper": "^6.0.0",
     "@radix-ui/react-accordion": "1.2.2",

@@ -12,9 +12,12 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Turnstile } from "@/components/ui/turnstile"
 import { OAuthButtons } from "./oauth-buttons"
 import type { Dictionary } from "@/lib/i18n/get-dictionary"
 import type { Locale } from "@/lib/i18n/config"
+
+const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || "0x4AAAAAACOeLh2CoI1m3v1U"
 
 interface LoginFormProps {
   locale: Locale
@@ -27,6 +30,7 @@ export function LoginForm({ locale, dict, oauthProviders }: LoginFormProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState("")
+  const [turnstileToken, setTurnstileToken] = useState("")
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -51,6 +55,12 @@ export function LoginForm({ locale, dict, oauthProviders }: LoginFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (!turnstileToken) {
+      setError(dict.auth.errors?.turnstileRequired || "Please complete the verification")
+      return
+    }
+
     setIsLoading(true)
     setError("")
 
@@ -61,6 +71,7 @@ export function LoginForm({ locale, dict, oauthProviders }: LoginFormProps) {
         body: JSON.stringify({
           email: formData.email,
           password: formData.password,
+          turnstileToken,
         }),
       })
 
@@ -185,10 +196,17 @@ export function LoginForm({ locale, dict, oauthProviders }: LoginFormProps) {
           </Link>
         </div>
 
+        <Turnstile
+          siteKey={TURNSTILE_SITE_KEY}
+          onVerify={(token) => setTurnstileToken(token)}
+          onError={() => setTurnstileToken("")}
+          onExpire={() => setTurnstileToken("")}
+        />
+
         <Button
           type="submit"
           className="group relative w-full overflow-hidden"
-          disabled={isLoading}
+          disabled={isLoading || !turnstileToken}
         >
           <motion.div
             className="absolute inset-0 bg-gradient-to-r from-primary to-primary/80"

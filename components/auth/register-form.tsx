@@ -11,9 +11,12 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Turnstile } from "@/components/ui/turnstile"
 import { OAuthButtons } from "./oauth-buttons"
 import type { Dictionary } from "@/lib/i18n/get-dictionary"
 import type { Locale } from "@/lib/i18n/config"
+
+const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || "0x4AAAAAACOeLh2CoI1m3v1U"
 
 interface RegisterFormProps {
   locale: Locale
@@ -26,6 +29,7 @@ export function RegisterForm({ locale, dict, oauthProviders }: RegisterFormProps
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState("")
+  const [turnstileToken, setTurnstileToken] = useState("")
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -127,6 +131,12 @@ export function RegisterForm({ locale, dict, oauthProviders }: RegisterFormProps
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (!turnstileToken) {
+      setError(dict.auth.errors?.turnstileRequired || "Please complete the verification")
+      return
+    }
+
     setIsLoading(true)
     setError("")
 
@@ -151,6 +161,7 @@ export function RegisterForm({ locale, dict, oauthProviders }: RegisterFormProps
           email: formData.email,
           password: formData.password,
           verificationCode: formData.verificationCode,
+          turnstileToken,
         }),
       })
 
@@ -406,10 +417,17 @@ export function RegisterForm({ locale, dict, oauthProviders }: RegisterFormProps
           </Label>
         </div>
 
+        <Turnstile
+          siteKey={TURNSTILE_SITE_KEY}
+          onVerify={(token) => setTurnstileToken(token)}
+          onError={() => setTurnstileToken("")}
+          onExpire={() => setTurnstileToken("")}
+        />
+
         <Button
           type="submit"
           className="group relative w-full overflow-hidden"
-          disabled={isLoading || !formData.agreeTerms}
+          disabled={isLoading || !formData.agreeTerms || !turnstileToken}
         >
           <motion.div
             className="absolute inset-0 bg-gradient-to-r from-primary to-primary/80"

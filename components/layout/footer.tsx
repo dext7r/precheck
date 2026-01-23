@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { ExternalLink } from "lucide-react"
+import { ExternalLink, MessageCircle } from "lucide-react"
 import type { Dictionary } from "@/lib/i18n/get-dictionary"
 import type { Locale } from "@/lib/i18n/config"
 
@@ -46,6 +46,11 @@ export function Footer({ dict, locale }: FooterProps) {
                 {link.name}
               </Link>
             ))}
+            <div className="flex items-center gap-1.5 text-sm">
+              <MessageCircle className="h-4 w-4" />
+              <span>QQ 群：</span>
+              <span className="font-mono font-semibold text-foreground">1080464482</span>
+            </div>
           </div>
         </div>
 
