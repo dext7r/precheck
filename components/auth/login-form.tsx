@@ -17,7 +17,8 @@ import { OAuthButtons } from "./oauth-buttons"
 import type { Dictionary } from "@/lib/i18n/get-dictionary"
 import type { Locale } from "@/lib/i18n/config"
 
-const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || "0x4AAAAAACOeLh2CoI1m3v1U"
+const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || ""
+const TURNSTILE_ENABLED = Boolean(TURNSTILE_SITE_KEY)
 
 interface LoginFormProps {
   locale: Locale
@@ -56,7 +57,7 @@ export function LoginForm({ locale, dict, oauthProviders }: LoginFormProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!turnstileToken) {
+    if (TURNSTILE_ENABLED && !turnstileToken) {
       setError(dict.auth.errors?.turnstileRequired || "Please complete the verification")
       return
     }
@@ -71,7 +72,7 @@ export function LoginForm({ locale, dict, oauthProviders }: LoginFormProps) {
         body: JSON.stringify({
           email: formData.email,
           password: formData.password,
-          turnstileToken,
+          turnstileToken: TURNSTILE_ENABLED ? turnstileToken : undefined,
         }),
       })
 
@@ -196,17 +197,19 @@ export function LoginForm({ locale, dict, oauthProviders }: LoginFormProps) {
           </Link>
         </div>
 
-        <Turnstile
-          siteKey={TURNSTILE_SITE_KEY}
-          onVerify={(token) => setTurnstileToken(token)}
-          onError={() => setTurnstileToken("")}
-          onExpire={() => setTurnstileToken("")}
-        />
+        {TURNSTILE_ENABLED && (
+          <Turnstile
+            siteKey={TURNSTILE_SITE_KEY}
+            onVerify={(token) => setTurnstileToken(token)}
+            onError={() => setTurnstileToken("")}
+            onExpire={() => setTurnstileToken("")}
+          />
+        )}
 
         <Button
           type="submit"
           className="group relative w-full overflow-hidden"
-          disabled={isLoading || !turnstileToken}
+          disabled={isLoading || (TURNSTILE_ENABLED && !turnstileToken)}
         >
           <motion.div
             className="absolute inset-0 bg-gradient-to-r from-primary to-primary/80"

@@ -16,7 +16,8 @@ import { OAuthButtons } from "./oauth-buttons"
 import type { Dictionary } from "@/lib/i18n/get-dictionary"
 import type { Locale } from "@/lib/i18n/config"
 
-const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || "0x4AAAAAACOeLh2CoI1m3v1U"
+const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || ""
+const TURNSTILE_ENABLED = Boolean(TURNSTILE_SITE_KEY)
 
 interface RegisterFormProps {
   locale: Locale
@@ -132,7 +133,7 @@ export function RegisterForm({ locale, dict, oauthProviders }: RegisterFormProps
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!turnstileToken) {
+    if (TURNSTILE_ENABLED && !turnstileToken) {
       setError(dict.auth.errors?.turnstileRequired || "Please complete the verification")
       return
     }
@@ -161,7 +162,7 @@ export function RegisterForm({ locale, dict, oauthProviders }: RegisterFormProps
           email: formData.email,
           password: formData.password,
           verificationCode: formData.verificationCode,
-          turnstileToken,
+          turnstileToken: TURNSTILE_ENABLED ? turnstileToken : undefined,
         }),
       })
 
@@ -417,17 +418,19 @@ export function RegisterForm({ locale, dict, oauthProviders }: RegisterFormProps
           </Label>
         </div>
 
-        <Turnstile
-          siteKey={TURNSTILE_SITE_KEY}
-          onVerify={(token) => setTurnstileToken(token)}
-          onError={() => setTurnstileToken("")}
-          onExpire={() => setTurnstileToken("")}
-        />
+        {TURNSTILE_ENABLED && (
+          <Turnstile
+            siteKey={TURNSTILE_SITE_KEY}
+            onVerify={(token) => setTurnstileToken(token)}
+            onError={() => setTurnstileToken("")}
+            onExpire={() => setTurnstileToken("")}
+          />
+        )}
 
         <Button
           type="submit"
           className="group relative w-full overflow-hidden"
-          disabled={isLoading || !formData.agreeTerms || !turnstileToken}
+          disabled={isLoading || !formData.agreeTerms || (TURNSTILE_ENABLED && !turnstileToken)}
         >
           <motion.div
             className="absolute inset-0 bg-gradient-to-r from-primary to-primary/80"

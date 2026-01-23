@@ -2,7 +2,7 @@
  * Cloudflare Turnstile 验证
  */
 
-const TURNSTILE_SECRET = process.env.TURNSTILE_SECRET_KEY || "0x4AAAAAACOeLqJjjeFGHVg12m8HiVpk0Zg"
+const TURNSTILE_SECRET = process.env.TURNSTILE_SECRET_KEY || ""
 const TURNSTILE_VERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify"
 
 interface TurnstileVerifyResponse {
@@ -13,6 +13,11 @@ interface TurnstileVerifyResponse {
 }
 
 export async function verifyTurnstileToken(token: string, remoteIp?: string): Promise<boolean> {
+  // 如果没有配置密钥，跳过验证
+  if (!TURNSTILE_SECRET) {
+    return true
+  }
+
   if (!token) {
     return false
   }
