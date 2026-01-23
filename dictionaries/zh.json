@@ -763,6 +763,8 @@
     "inviteCodeCreateButton": "创建",
     "inviteCodeSearchPlaceholder": "搜索邀请码...",
     "inviteCodeStatus": "状态",
+    "inviteCodeUsageStatus": "使用状态",
+    "inviteCodeAssignmentStatus": "分配状态",
     "inviteCodeStatusAll": "全部",
     "inviteCodeStatusUnused": "未使用",
     "inviteCodeStatusUsed": "已使用",

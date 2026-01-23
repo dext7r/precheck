@@ -97,6 +97,7 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
   const [sortBy, setSortBy] = useState("createdAt")
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc")
   const [statusFilter, setStatusFilter] = useState("unused")
+  const [assignmentFilter, setAssignmentFilter] = useState("unassigned")
   const [expiringWithin, setExpiringWithin] = useState("all")
   const [creating, setCreating] = useState(false)
   const [code, setCode] = useState("")
@@ -176,6 +177,7 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
         sortOrder,
         ...(search && { search }),
         ...(statusFilter !== "all" && { status: statusFilter }),
+        ...(assignmentFilter !== "all" && { assignment: assignmentFilter }),
         ...(expiringWithin !== "all" && { expiringWithin }),
       })
       const res = await fetch(`/api/admin/invite-codes?${params}`)
@@ -195,7 +197,7 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
 
   useEffect(() => {
     fetchRecords()
-  }, [page, pageSize, search, statusFilter, expiringWithin, sortBy, sortOrder])
+  }, [page, pageSize, search, statusFilter, assignmentFilter, expiringWithin, sortBy, sortOrder])
 
   const handleSearch = () => {
     setSearch(searchInput)
@@ -763,25 +765,49 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
           <Button variant="outline" onClick={handleSearch}>
             {t.searchAction}
           </Button>
-          <Select
-            value={statusFilter}
-            onValueChange={(value) => {
-              setStatusFilter(value)
-              setPage(1)
-            }}
-          >
-            <SelectTrigger className="md:w-44">
-              <SelectValue placeholder={t.inviteCodeStatusAll} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t.inviteCodeStatusAll}</SelectItem>
-              <SelectItem value="unused">{t.inviteCodeStatusUnused}</SelectItem>
-              <SelectItem value="used">{t.inviteCodeStatusUsed}</SelectItem>
-              <SelectItem value="expired">{t.inviteCodeStatusExpired}</SelectItem>
-              <SelectItem value="assigned">{t.inviteCodeStatusAssigned}</SelectItem>
-              <SelectItem value="unassigned">{t.inviteCodeStatusUnassigned}</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-medium text-muted-foreground">
+              {t.inviteCodeUsageStatus || "使用状态"}
+            </label>
+            <Select
+              value={statusFilter}
+              onValueChange={(value) => {
+                setStatusFilter(value)
+                setPage(1)
+              }}
+            >
+              <SelectTrigger className="md:w-44">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t.inviteCodeStatusAll}</SelectItem>
+                <SelectItem value="unused">{t.inviteCodeStatusUnused}</SelectItem>
+                <SelectItem value="used">{t.inviteCodeStatusUsed}</SelectItem>
+                <SelectItem value="expired">{t.inviteCodeStatusExpired}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-medium text-muted-foreground">
+              {t.inviteCodeAssignmentStatus || "分配状态"}
+            </label>
+            <Select
+              value={assignmentFilter}
+              onValueChange={(value) => {
+                setAssignmentFilter(value)
+                setPage(1)
+              }}
+            >
+              <SelectTrigger className="md:w-44">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t.inviteCodeStatusAll}</SelectItem>
+                <SelectItem value="unassigned">{t.inviteCodeStatusUnassigned}</SelectItem>
+                <SelectItem value="assigned">{t.inviteCodeStatusAssigned}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           <Select
             value={expiringWithin}
             onValueChange={(value) => {
@@ -805,6 +831,7 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
               setSearchInput("")
               setSearch("")
               setStatusFilter("unused")
+              setAssignmentFilter("unassigned")
               setExpiringWithin("all")
               setPage(1)
             }}

@@ -767,6 +767,8 @@
     "inviteCodeCreateButton": "Create",
     "inviteCodeSearchPlaceholder": "Search invite codes...",
     "inviteCodeStatus": "Status",
+    "inviteCodeUsageStatus": "Usage Status",
+    "inviteCodeAssignmentStatus": "Assignment Status",
     "inviteCodeStatusAll": "All",
     "inviteCodeStatusUnused": "Unused",
     "inviteCodeStatusUsed": "Used",

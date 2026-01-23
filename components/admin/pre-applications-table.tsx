@@ -262,7 +262,8 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
     setInviteOptionsLoading(true)
     try {
       const params = new URLSearchParams({
-        status: "unassigned",
+        status: "unused",
+        assignment: "unassigned",
         page: "1",
         limit: "200",
       })
@@ -272,9 +273,10 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
       }
       const data = await res.json()
       const now = new Date()
+      // 过滤掉已过期的邀请码
       const available = (data.records || []).filter(
-        (record: { usedAt: string | null; expiresAt: string | null }) =>
-          !record.usedAt && (!record.expiresAt || new Date(record.expiresAt) > now),
+        (record: { expiresAt: string | null }) =>
+          !record.expiresAt || new Date(record.expiresAt) > now,
       )
       setInviteOptions(available)
     } catch (error) {

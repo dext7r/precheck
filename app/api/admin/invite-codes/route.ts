@@ -28,6 +28,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = request.nextUrl
     const search = (searchParams.get("search") || "").trim()
     const status = searchParams.get("status") || ""
+    const assignment = searchParams.get("assignment") || ""
     const expiringWithin = Number.parseInt(searchParams.get("expiringWithin") || "0")
     const page = Number.parseInt(searchParams.get("page") || "1")
     const limit = Number.parseInt(searchParams.get("limit") || "20")
@@ -49,20 +50,22 @@ export async function GET(request: NextRequest) {
     if (status === "expired") {
       where.expiresAt = { not: null, lte: now }
     }
-    if (status === "assigned") {
+
+    if (assignment === "assigned") {
       where.OR = [
         { preApplication: { isNot: null } },
         { issuedToEmail: { not: null } },
         { issuedToUserId: { not: null } },
       ]
     }
-    if (status === "unassigned") {
+    if (assignment === "unassigned") {
       where.AND = [
         { preApplication: { is: null } },
         { issuedToEmail: null },
         { issuedToUserId: null },
       ]
     }
+
     if (expiringWithin === 1 || expiringWithin === 2) {
       where.expiresAt = {
         gt: now,
