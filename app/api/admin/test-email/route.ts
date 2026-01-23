@@ -8,13 +8,13 @@ const testEmailSchema = z.object({
 })
 
 /**
- * 测试邮件发送功能（仅 SUPER_ADMIN 可用）
+ * 测试邮件发送功能（ADMIN 和 SUPER_ADMIN 可用）
  */
 export async function POST(request: NextRequest) {
   try {
     const user = await getCurrentUser()
 
-    if (!user || user.role !== "SUPER_ADMIN") {
+    if (!user || (user.role !== "ADMIN" && user.role !== "SUPER_ADMIN")) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 

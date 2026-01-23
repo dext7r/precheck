@@ -17,7 +17,7 @@ export default async function SystemConfigPage({ params }: SystemConfigPageProps
     redirect(`/${locale}/login`)
   }
 
-  if (user.role !== "SUPER_ADMIN") {
+  if (user.role !== "ADMIN" && user.role !== "SUPER_ADMIN") {
     redirect(`/${locale}/error/403`)
   }
 

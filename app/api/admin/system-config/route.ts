@@ -15,7 +15,7 @@ export async function GET() {
   try {
     const user = await getCurrentUser()
 
-    if (!user || user.role !== "SUPER_ADMIN") {
+    if (!user || (user.role !== "ADMIN" && user.role !== "SUPER_ADMIN")) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
@@ -57,7 +57,7 @@ export async function PUT(request: NextRequest) {
   try {
     const user = await getCurrentUser()
 
-    if (!user || user.role !== "SUPER_ADMIN") {
+    if (!user || (user.role !== "ADMIN" && user.role !== "SUPER_ADMIN")) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 

@@ -24,7 +24,7 @@ export async function GET(_request: NextRequest, context: { params: Promise<{ id
     }
 
     const { id } = await context.params
-    const isAdmin = user.role === "ADMIN"
+    const isAdmin = user.role === "ADMIN" || user.role === "SUPER_ADMIN"
     const where = isAdmin ? { id } : { id, authorId: user.id }
 
     const post = await db.post.findFirst({
@@ -72,11 +72,11 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
       status?: "DRAFT" | "PUBLISHED" | "PENDING"
     } = { ...data }
     const settings = await getSiteSettings()
-    if (updateData.status === "PUBLISHED" && settings.postModeration && user.role !== "ADMIN") {
+    if (updateData.status === "PUBLISHED" && settings.postModeration && user.role !== "ADMIN" && user.role !== "SUPER_ADMIN") {
       updateData.status = "PENDING"
     }
 
-    const isAdmin = user.role === "ADMIN"
+    const isAdmin = user.role === "ADMIN" || user.role === "SUPER_ADMIN"
     const where = isAdmin ? { id } : { id, authorId: user.id }
 
     const post = await db.post.findFirst({
@@ -135,7 +135,7 @@ export async function DELETE(_request: NextRequest, context: { params: Promise<{
 
     const { id } = await context.params
 
-    const isAdmin = user.role === "ADMIN"
+    const isAdmin = user.role === "ADMIN" || user.role === "SUPER_ADMIN"
     const where = isAdmin ? { id } : { id, authorId: user.id }
 
     const post = await db.post.findFirst({

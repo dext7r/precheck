@@ -39,7 +39,7 @@ export default async function PostPage({ params }: PostPageProps) {
     notFound()
   }
 
-  if (user.role !== "ADMIN" && basePost.authorId !== user.id) {
+  if (user.role !== "ADMIN" && user.role !== "SUPER_ADMIN" && basePost.authorId !== user.id) {
     redirect(`/${currentLocale}/error/403`)
   }
 

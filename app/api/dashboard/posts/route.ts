@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get("search") || ""
 
     const skip = (page - 1) * pageSize
-    const isAdmin = user.role === "ADMIN"
+    const isAdmin = user.role === "ADMIN" || user.role === "SUPER_ADMIN"
     const where = isAdmin
       ? search
         ? { title: { contains: search, mode: "insensitive" as const } }
@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
     const { title, content, status } = createPostSchema.parse(body)
     const settings = await getSiteSettings()
     const effectiveStatus =
-      settings.postModeration && status === "PUBLISHED" && user.role !== "ADMIN"
+      settings.postModeration && status === "PUBLISHED" && user.role !== "ADMIN" && user.role !== "SUPER_ADMIN"
         ? "PENDING"
         : status
 
