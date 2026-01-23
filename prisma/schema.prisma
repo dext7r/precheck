@@ -256,6 +256,7 @@ model AuditLog {
 enum Role {
   USER
   ADMIN
+  SUPER_ADMIN
 }
 
 enum UserStatus {
@@ -300,6 +301,9 @@ model SiteSettings {
   emailNotifications Boolean @default(true)
   postModeration    Boolean  @default(false)
   maintenanceMode   Boolean  @default(false)
+  auditLogEnabled   Boolean  @default(false)
+  preApplicationEssayHint String @default("建议 100 字左右,避免夸赞社区与版主,只说明你的目的与需求。")
+  allowedEmailDomains     Json   @default("[]")
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 }

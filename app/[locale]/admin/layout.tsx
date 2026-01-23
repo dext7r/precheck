@@ -22,7 +22,7 @@ export default async function AdminLayout({ children, params }: AdminLayoutProps
     redirect(`/${currentLocale}/login`)
   }
 
-  if (user.role !== "ADMIN") {
+  if (user.role !== "ADMIN" && user.role !== "SUPER_ADMIN") {
     redirect(`/${currentLocale}/error/403`)
   }
 

@@ -35,6 +35,7 @@ import {
   CheckCircle2,
   Copy,
   Check,
+  X,
 } from "lucide-react"
 import {
   DropdownMenu,
@@ -94,7 +95,7 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
   const [searchInput, setSearchInput] = useState("")
   const [sortBy, setSortBy] = useState("createdAt")
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc")
-  const [statusFilter, setStatusFilter] = useState("all")
+  const [statusFilter, setStatusFilter] = useState("unused")
   const [expiringWithin, setExpiringWithin] = useState("all")
   const [creating, setCreating] = useState(false)
   const [code, setCode] = useState("")
@@ -726,15 +727,31 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
 
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div className="flex flex-1 flex-col gap-2 md:flex-row md:items-center">
-          <Input
-            value={searchInput}
-            onChange={(event) => setSearchInput(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") handleSearch()
-            }}
-            placeholder={t.inviteCodeSearchPlaceholder}
-            className="md:w-72"
-          />
+          <div className="relative md:w-72">
+            <Input
+              value={searchInput}
+              onChange={(event) => setSearchInput(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") handleSearch()
+              }}
+              placeholder={t.inviteCodeSearchPlaceholder}
+              className="pr-8"
+            />
+            {searchInput && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute right-1 top-1/2 h-6 w-6 -translate-y-1/2"
+                onClick={() => {
+                  setSearchInput("")
+                  setSearch("")
+                  setPage(1)
+                }}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
           <Button variant="outline" onClick={handleSearch}>
             {t.searchAction}
           </Button>
@@ -773,6 +790,19 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
               <SelectItem value="1">{t.inviteCodeExpiring1h}</SelectItem>
             </SelectContent>
           </Select>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setSearchInput("")
+              setSearch("")
+              setStatusFilter("unused")
+              setExpiringWithin("all")
+              setPage(1)
+            }}
+          >
+            {t.reset || "重置"}
+          </Button>
         </div>
       </div>
 

@@ -21,13 +21,13 @@ export function AdminLayoutClient({ locale, dict, user, children }: AdminLayoutC
     <div className="flex min-h-screen bg-muted/30">
       {/* Desktop Sidebar */}
       <div className="hidden lg:block">
-        <AdminSidebar locale={locale} dict={dict} />
+        <AdminSidebar locale={locale} dict={dict} user={user} />
       </div>
 
       {/* Mobile Sidebar */}
       <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
         <SheetContent side="left" className="w-[280px] p-0">
-          <AdminSidebar locale={locale} dict={dict} />
+          <AdminSidebar locale={locale} dict={dict} user={user} />
         </SheetContent>
       </Sheet>
 

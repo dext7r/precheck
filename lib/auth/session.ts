@@ -107,3 +107,15 @@ export async function isAdmin(): Promise<boolean> {
   const user = await getCurrentUser()
   return user?.role === "ADMIN"
 }
+
+// 检查是否是超级管理员
+export async function isSuperAdmin(): Promise<boolean> {
+  const user = await getCurrentUser()
+  return user?.role === "SUPER_ADMIN"
+}
+
+// 检查是否是管理员或更高级别
+export async function isAdminOrAbove(): Promise<boolean> {
+  const user = await getCurrentUser()
+  return user?.role === "ADMIN" || user?.role === "SUPER_ADMIN"
+}

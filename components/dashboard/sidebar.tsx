@@ -5,12 +5,12 @@ import { usePathname } from "next/navigation"
 import { motion } from "framer-motion"
 import {
   LayoutDashboard,
-  User,
   LogOut,
   ChevronLeft,
   ChevronRight,
   Mail,
   ClipboardList,
+  Shield,
 } from "lucide-react"
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
@@ -60,7 +60,9 @@ export function DashboardSidebar({ locale, dict, user }: DashboardSidebarProps) 
   ]
 
   const adminLink =
-    user.role === "ADMIN" ? { name: dict.admin.title, href: `/${locale}/admin`, icon: User } : null
+    user.role === "ADMIN" || user.role === "SUPER_ADMIN"
+      ? { name: dict.admin.title, href: `/${locale}/admin`, icon: Shield }
+      : null
 
   return (
     <motion.aside

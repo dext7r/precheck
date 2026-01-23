@@ -3,7 +3,7 @@ import { z } from "zod"
 import { db } from "@/lib/db"
 import { getCurrentUser } from "@/lib/auth/session"
 import { writeAuditLog } from "@/lib/audit"
-import { isAllowedEmailDomain, normalizeEmail } from "@/lib/pre-application/validation"
+import { isAllowedEmailDomainAsync, normalizeEmail } from "@/lib/pre-application/validation"
 import { PreApplicationGroup, PreApplicationSource } from "@prisma/client"
 import { randomBytes } from "crypto"
 
@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "ESSAY_TOO_SHORT" }, { status: 400 })
     }
 
-    if (!isAllowedEmailDomain(registerEmail)) {
+    if (!(await isAllowedEmailDomainAsync(registerEmail))) {
       return NextResponse.json({ error: "Invalid email domain" }, { status: 400 })
     }
 
@@ -184,7 +184,7 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: "ESSAY_TOO_SHORT" }, { status: 400 })
     }
 
-    if (!isAllowedEmailDomain(registerEmail)) {
+    if (!(await isAllowedEmailDomainAsync(registerEmail))) {
       return NextResponse.json({ error: "Invalid email domain" }, { status: 400 })
     }
 

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { DataTable, type Column } from "@/components/ui/data-table"
 import { Input } from "@/components/ui/input"
+import { X } from "lucide-react"
 import {
   Select,
   SelectContent,
@@ -54,10 +55,40 @@ const entityTypeOptions = [
   "POST",
   "PRE_APPLICATION",
   "INVITE_CODE",
+  "INVITE_CODE_QUERY_TOKEN",
   "MESSAGE",
   "MESSAGE_RECIPIENT",
   "SITE_SETTINGS",
   "SYSTEM",
+]
+
+const actionTypeOptions = [
+  "ALL",
+  // Auth actions
+  "LOGIN",
+  "LOGOUT",
+  "REGISTER",
+  // User actions
+  "USER_CREATE",
+  "USER_ADMIN_UPDATE",
+  "USER_ADMIN_DELETE",
+  // Invite code actions
+  "INVITE_CODE_CREATE",
+  "INVITE_CODE_BULK_IMPORT",
+  "INVITE_CODE_MANUAL_ASSIGN",
+  "INVITE_CODE_INVALIDATE",
+  "QUERY_TOKEN_CREATE",
+  // Pre-application actions
+  "PRE_APPLICATION_SUBMIT",
+  "PRE_APPLICATION_UPDATE",
+  "PRE_APPLICATION_RESUBMIT",
+  "PRE_APPLICATION_REVIEW",
+  // Message actions
+  "MESSAGE_CREATE",
+  "MESSAGE_REVOKE",
+  "MESSAGE_READ",
+  // Settings actions
+  "SYSTEM_CONFIG_UPDATE",
 ]
 
 export function AdminAuditLogsTable({ locale, dict }: AdminAuditLogsTableProps) {
@@ -70,6 +101,7 @@ export function AdminAuditLogsTable({ locale, dict }: AdminAuditLogsTableProps) 
   const [search, setSearch] = useState("")
   const [searchInput, setSearchInput] = useState("")
   const [entityType, setEntityType] = useState("ALL")
+  const [actionType, setActionType] = useState("ALL")
   const [selected, setSelected] = useState<AuditLogRecord | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
 
@@ -81,6 +113,7 @@ export function AdminAuditLogsTable({ locale, dict }: AdminAuditLogsTableProps) 
         limit: pageSize.toString(),
         entityType,
         ...(search && { search }),
+        ...(actionType !== "ALL" && { action: actionType }),
       })
       const res = await fetch(`/api/admin/audit-logs?${params}`)
       if (!res.ok) {
@@ -98,7 +131,7 @@ export function AdminAuditLogsTable({ locale, dict }: AdminAuditLogsTableProps) 
 
   useEffect(() => {
     fetchLogs()
-  }, [page, pageSize, search, entityType])
+  }, [page, pageSize, search, entityType, actionType])
 
   const formatPageSummary = (summary: { total: number; page: number; totalPages: number }) =>
     t.pageSummary
@@ -188,18 +221,34 @@ export function AdminAuditLogsTable({ locale, dict }: AdminAuditLogsTableProps) 
     <div className="space-y-4">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div className="flex flex-1 flex-col gap-2 md:flex-row md:items-center">
-          <Input
-            value={searchInput}
-            onChange={(event) => setSearchInput(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") {
-                setSearch(searchInput)
-                setPage(1)
-              }
-            }}
-            placeholder={t.auditSearchPlaceholder}
-            className="md:w-72"
-          />
+          <div className="relative md:w-72">
+            <Input
+              value={searchInput}
+              onChange={(event) => setSearchInput(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  setSearch(searchInput)
+                  setPage(1)
+                }
+              }}
+              placeholder={t.auditSearchPlaceholder}
+              className="pr-8"
+            />
+            {searchInput && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute right-1 top-1/2 h-6 w-6 -translate-y-1/2"
+                onClick={() => {
+                  setSearchInput("")
+                  setSearch("")
+                  setPage(1)
+                }}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
           <Button
             variant="outline"
             onClick={() => {
@@ -227,6 +276,37 @@ export function AdminAuditLogsTable({ locale, dict }: AdminAuditLogsTableProps) 
               ))}
             </SelectContent>
           </Select>
+          <Select
+            value={actionType}
+            onValueChange={(value) => {
+              setActionType(value)
+              setPage(1)
+            }}
+          >
+            <SelectTrigger className="md:w-48">
+              <SelectValue placeholder={t.auditAction || "操作类型"} />
+            </SelectTrigger>
+            <SelectContent>
+              {actionTypeOptions.map((option) => (
+                <SelectItem key={option} value={option}>
+                  {option === "ALL" ? t.statusAll || "全部" : option}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setSearchInput("")
+              setSearch("")
+              setEntityType("ALL")
+              setActionType("ALL")
+              setPage(1)
+            }}
+          >
+            {t.reset || "重置"}
+          </Button>
         </div>
       </div>
 

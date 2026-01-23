@@ -16,6 +16,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Home,
+  Cog,
 } from "lucide-react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
@@ -26,9 +27,10 @@ import type { Locale } from "@/lib/i18n/config"
 interface AdminSidebarProps {
   locale: Locale
   dict: Dictionary
+  user?: { id: string; name?: string | null; email: string; role: string }
 }
 
-export function AdminSidebar({ locale, dict }: AdminSidebarProps) {
+export function AdminSidebar({ locale, dict, user }: AdminSidebarProps) {
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
 
@@ -45,6 +47,14 @@ export function AdminSidebar({ locale, dict }: AdminSidebarProps) {
     { name: dict.admin.auditLogs, href: `/${locale}/admin/audit-logs`, icon: ScrollText },
     { name: dict.admin.settings, href: `/${locale}/admin/settings`, icon: Settings },
   ]
+
+  if (user?.role === "SUPER_ADMIN") {
+    navigation.push({
+      name: "系统配置",
+      href: `/${locale}/admin/system-config`,
+      icon: Cog,
+    })
+  }
 
   return (
     <motion.aside

@@ -49,23 +49,39 @@ const toSnapshot = (value: unknown): Prisma.InputJsonValue | undefined => {
 }
 
 export async function writeAuditLog(client: AuditClient, input: AuditInput) {
-  const { ip, userAgent } = extractRequestMeta(input.request)
-  const actor = input.actor || {}
+  try {
+    // 检查是否启用审计日志
+    const settings = await (client as any).siteSettings?.findUnique?.({
+      where: { id: "global" },
+      select: { auditLogEnabled: true },
+    })
 
-  return client.auditLog.create({
-    data: {
-      entityType: input.entityType,
-      entityId: input.entityId ?? null,
-      action: input.action,
-      actorId: actor.id ?? null,
-      actorName: actor.name ?? null,
-      actorEmail: actor.email ?? null,
-      actorRole: (actor.role as Role | undefined) ?? null,
-      ip,
-      userAgent,
-      before: toSnapshot(input.before),
-      after: toSnapshot(input.after),
-      metadata: toSnapshot(input.metadata),
-    },
-  })
+    // 默认不记录，除非明确启用
+    if (!settings?.auditLogEnabled) {
+      return null
+    }
+
+    const { ip, userAgent } = extractRequestMeta(input.request)
+    const actor = input.actor || {}
+
+    return client.auditLog.create({
+      data: {
+        entityType: input.entityType,
+        entityId: input.entityId ?? null,
+        action: input.action,
+        actorId: actor.id ?? null,
+        actorName: actor.name ?? null,
+        actorEmail: actor.email ?? null,
+        actorRole: (actor.role as Role | undefined) ?? null,
+        ip,
+        userAgent,
+        before: toSnapshot(input.before),
+        after: toSnapshot(input.after),
+        metadata: toSnapshot(input.metadata),
+      },
+    })
+  } catch (error) {
+    console.error("Audit log write error:", error)
+    return null
+  }
 }

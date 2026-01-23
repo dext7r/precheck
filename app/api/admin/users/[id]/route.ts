@@ -5,7 +5,7 @@ import { z } from "zod"
 import { writeAuditLog } from "@/lib/audit"
 
 const updateUserSchema = z.object({
-  role: z.enum(["USER", "ADMIN"]).optional(),
+  role: z.enum(["USER", "ADMIN", "SUPER_ADMIN"]).optional(),
   status: z.enum(["ACTIVE", "INACTIVE", "BANNED"]).optional(),
 })
 
@@ -17,7 +17,7 @@ export async function GET(_request: NextRequest, context: { params: Promise<{ id
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
     }
 
-    if (user.role !== "ADMIN") {
+    if (user.role !== "ADMIN" && user.role !== "SUPER_ADMIN") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
@@ -59,7 +59,7 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
     }
 
-    if (user.role !== "ADMIN") {
+    if (user.role !== "ADMIN" && user.role !== "SUPER_ADMIN") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
@@ -73,6 +73,22 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
 
     if (Object.keys(data).length === 0) {
       return NextResponse.json({ error: "No fields to update" }, { status: 400 })
+    }
+
+    if (data.role && user.role !== "SUPER_ADMIN") {
+      return NextResponse.json({ error: "Only SUPER_ADMIN can modify user roles" }, { status: 403 })
+    }
+
+    const targetUser = await db.user.findUnique({ where: { id } })
+    if (!targetUser) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 })
+    }
+
+    if (
+      user.role === "ADMIN" &&
+      (targetUser.role === "ADMIN" || targetUser.role === "SUPER_ADMIN")
+    ) {
+      return NextResponse.json({ error: "ADMIN cannot modify other admins" }, { status: 403 })
     }
 
     const before = await db.user.findUnique({ where: { id } })
@@ -120,7 +136,7 @@ export async function DELETE(request: NextRequest, context: { params: Promise<{ 
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
     }
 
-    if (user.role !== "ADMIN") {
+    if (user.role !== "ADMIN" && user.role !== "SUPER_ADMIN") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
@@ -132,6 +148,18 @@ export async function DELETE(request: NextRequest, context: { params: Promise<{ 
 
     if (id === user.id) {
       return NextResponse.json({ error: "Cannot delete yourself" }, { status: 400 })
+    }
+
+    const targetUser = await db.user.findUnique({ where: { id } })
+    if (!targetUser) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 })
+    }
+
+    if (
+      user.role === "ADMIN" &&
+      (targetUser.role === "ADMIN" || targetUser.role === "SUPER_ADMIN")
+    ) {
+      return NextResponse.json({ error: "ADMIN cannot delete other admins" }, { status: 403 })
     }
 
     const before = await db.user.findUnique({ where: { id } })

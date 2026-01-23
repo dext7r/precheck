@@ -1,6 +1,6 @@
 import type { Prisma } from "@prisma/client"
 
-export type Role = "USER" | "ADMIN"
+export type Role = "USER" | "ADMIN" | "SUPER_ADMIN"
 
 export type UserStatus = "ACTIVE" | "INACTIVE" | "BANNED"
 
@@ -213,6 +213,9 @@ export interface SiteSettings {
   emailNotifications: boolean
   postModeration: boolean
   maintenanceMode: boolean
+  auditLogEnabled: boolean
+  preApplicationEssayHint: string
+  allowedEmailDomains: Prisma.JsonValue
   createdAt: Date
   updatedAt: Date
 }

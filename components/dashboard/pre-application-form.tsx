@@ -126,6 +126,8 @@ export function PreApplicationForm({
   const [maxResubmitCount, setMaxResubmitCount] = useState(initialMaxResubmit)
   const [tokenCopied, setTokenCopied] = useState(false)
   const [activeTab, setActiveTab] = useState<"form" | "history">("form")
+  const [essayHint, setEssayHint] = useState(t.fields.essayHint)
+  const [allowedDomains, setAllowedDomains] = useState<string[]>(allowedEmailDomains as any)
   const [formData, setFormData] = useState({
     essay: "",
     source: "",
@@ -136,8 +138,8 @@ export function PreApplicationForm({
 
   const allowedDomainsText = useMemo(() => {
     const joiner = locale === "zh" ? "、" : ", "
-    return allowedEmailDomains.join(joiner)
-  }, [locale])
+    return allowedDomains.join(joiner)
+  }, [locale, allowedDomains])
 
   const latest = records[0] ?? null
   const isEditing = Boolean(latest)
@@ -175,6 +177,26 @@ export function PreApplicationForm({
 
   useEffect(() => {
     if (!initialRecords) loadRecord()
+  }, [])
+
+  useEffect(() => {
+    const loadSystemConfig = async () => {
+      try {
+        const res = await fetch("/api/public/system-config")
+        if (res.ok) {
+          const data = await res.json()
+          if (data.preApplicationEssayHint) {
+            setEssayHint(data.preApplicationEssayHint)
+          }
+          if (data.allowedEmailDomains && Array.isArray(data.allowedEmailDomains)) {
+            setAllowedDomains(data.allowedEmailDomains)
+          }
+        }
+      } catch (error) {
+        console.error("Failed to load system config:", error)
+      }
+    }
+    loadSystemConfig()
   }, [])
 
   useEffect(() => {
@@ -488,7 +510,7 @@ export function PreApplicationForm({
               <div>
                 <p className="text-sm text-muted-foreground">{t.fields.essay}</p>
                 <div className="mt-2 rounded-lg border bg-card p-4">
-                  <PostContent content={latest.essay} emptyMessage={t.fields.essayHint} />
+                  <PostContent content={latest.essay} emptyMessage={essayHint} />
                 </div>
               </div>
             </CardContent>
@@ -515,10 +537,10 @@ export function PreApplicationForm({
                   value={formData.essay}
                   onChange={(event) => setFormData({ ...formData, essay: event.target.value })}
                   rows={6}
-                  placeholder={t.fields.essayHint}
+                  placeholder={essayHint}
                 />
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <span>{t.fields.essayHint}</span>
+                  <span>{essayHint}</span>
                   <span>
                     {formData.essay.length}/{essayMinChars}
                   </span>
