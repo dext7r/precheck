@@ -53,13 +53,38 @@ SMTP_SECURE="false"  # 使用 TLS 时设为 false，使用 SSL 时设为 true
 ```typescript
 import { sendEmail } from "@/lib/email/mailer"
 
+// 使用默认发件人（从环境变量 EMAIL_API_FROM 或 EMAIL_API_USER）
 await sendEmail({
   to: "recipient@example.com",
   subject: "测试邮件",
   html: "<p>这是 HTML 格式邮件</p>",
   text: "这是纯文本格式邮件",
 })
+
+// 自定义发件人地址
+await sendEmail({
+  to: "recipient@example.com",
+  subject: "测试邮件",
+  html: "<p>这是 HTML 格式邮件</p>",
+  text: "这是纯文本格式邮件",
+  from: "noreply@example.com", // 自定义发件人邮箱
+})
+
+// 自定义发件人显示名称
+await sendEmail({
+  to: "recipient@example.com",
+  subject: "测试邮件",
+  html: "<p>这是 HTML 格式邮件</p>",
+  text: "这是纯文本格式邮件",
+  from: "noreply@example.com",
+  fromName: "linux.do 社区", // 收件箱显示为 "linux.do 社区 <noreply@example.com>"
+})
 ```
+
+**⚠️ 注意事项：**
+- 大多数 SMTP 服务器要求发件人地址必须是已认证的邮箱
+- 如果 `from` 地址与 `EMAIL_API_USER` 不匹配，可能会被拒绝发送
+- `fromName` 仅影响显示名称，不影响实际邮箱地址
 
 ### 2. 使用现有邮件模板
 

@@ -5,6 +5,8 @@ export type EmailPayload = {
   subject: string
   html?: string
   text: string
+  from?: string // 可选：发件人地址（默认使用 EMAIL_API_USER）
+  fromName?: string // 可选：发件人显示名称
 }
 
 // 邮件发送方式配置
@@ -16,7 +18,8 @@ const emailApiHost = process.env.EMAIL_API_HOST || "smtp.qq.com"
 const emailApiPort = Number(process.env.EMAIL_API_PORT || "587")
 const emailApiUser = process.env.EMAIL_API_USER
 const emailApiPass = process.env.EMAIL_API_PASS
-const emailApiFrom = process.env.EMAIL_API_FROM || emailApiUser
+// 默认发件人（可被 payload.from 覆盖）
+const emailApiDefaultFrom = process.env.EMAIL_API_FROM || emailApiUser
 
 // 传统 SMTP 配置（备用）
 const smtpHost = process.env.SMTP_HOST
@@ -24,7 +27,8 @@ const smtpPort = Number(process.env.SMTP_PORT || "587")
 const smtpUser = process.env.SMTP_USER
 const smtpPass = process.env.SMTP_PASS
 const smtpSecure = process.env.SMTP_SECURE === "true"
-const smtpFrom = process.env.SMTP_FROM || smtpUser
+// 默认发件人（可被 payload.from 覆盖）
+const smtpDefaultFrom = process.env.SMTP_FROM || smtpUser
 
 // Nodemailer 传输器（仅在 SMTP 模式下使用）
 const transporter =
@@ -48,6 +52,12 @@ async function sendEmailViaAPI(payload: EmailPayload): Promise<void> {
     throw new Error("EMAIL_API_USER and EMAIL_API_PASS must be configured")
   }
 
+  // 使用用户指定的发件人，或使用默认值
+  const fromEmail = payload.from || emailApiDefaultFrom || emailApiUser
+
+  // 构建发件人字段（支持显示名称）
+  const fromField = payload.fromName ? `${payload.fromName} <${fromEmail}>` : fromEmail
+
   const requestBody = {
     title: payload.subject,
     desp: payload.html || payload.text,
@@ -59,6 +69,7 @@ async function sendEmailViaAPI(payload: EmailPayload): Promise<void> {
       EMAIL_AUTH_PASS: emailApiPass,
       EMAIL_HOST: emailApiHost,
       EMAIL_PORT: emailApiPort,
+      EMAIL_FROM_ADDRESS: fromField, // 使用动态发件人
     },
     option: {},
   }
@@ -88,12 +99,18 @@ async function sendEmailViaAPI(payload: EmailPayload): Promise<void> {
  * 使用传统 SMTP 发送邮件
  */
 async function sendEmailViaSMTP(payload: EmailPayload): Promise<void> {
-  if (!transporter || !smtpFrom) {
+  if (!transporter || !smtpDefaultFrom) {
     throw new Error("SMTP not configured")
   }
 
+  // 使用用户指定的发件人，或使用默认值
+  const fromEmail = payload.from || smtpDefaultFrom
+
+  // 构建发件人字段（支持显示名称）
+  const fromField = payload.fromName ? `${payload.fromName} <${fromEmail}>` : fromEmail
+
   await transporter.sendMail({
-    from: smtpFrom,
+    from: fromField,
     to: payload.to,
     subject: payload.subject,
     text: payload.text,
