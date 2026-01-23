@@ -6,7 +6,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { Eye, EyeOff, Loader2, Check, X } from "lucide-react"
+import { Eye, EyeOff, Loader2, Check, X, Mail } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -31,8 +31,11 @@ export function RegisterForm({ locale, dict, oauthProviders }: RegisterFormProps
     email: "",
     password: "",
     confirmPassword: "",
+    verificationCode: "",
     agreeTerms: false,
   })
+  const [sendingCode, setSendingCode] = useState(false)
+  const [countdown, setCountdown] = useState(0)
 
   const t = dict.auth.register
   const errorMap: Record<string, string> = {
@@ -76,6 +79,52 @@ export function RegisterForm({ locale, dict, oauthProviders }: RegisterFormProps
 
   const isPasswordValid = Object.values(passwordChecks).every(Boolean)
 
+  // 倒计时效果
+  React.useEffect(() => {
+    if (countdown > 0) {
+      const timer = setTimeout(() => setCountdown(countdown - 1), 1000)
+      return () => clearTimeout(timer)
+    }
+  }, [countdown])
+
+  // 发送验证码
+  const handleSendCode = async () => {
+    if (!formData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      setError(t.errors.invalidEmail)
+      return
+    }
+
+    setSendingCode(true)
+    setError("")
+
+    try {
+      const res = await fetch("/api/auth/send-verification-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: formData.email, purpose: "register" }),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        if (res.status === 429 && data.waitSeconds) {
+          setCountdown(data.waitSeconds)
+          setError(`请等待 ${data.waitSeconds} 秒后再次发送`)
+        } else {
+          setError(data.error || "发送验证码失败")
+        }
+        return
+      }
+
+      setCountdown(60)
+      setError("")
+    } catch {
+      setError("发送验证码失败，请稍后重试")
+    } finally {
+      setSendingCode(false)
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
@@ -101,6 +150,7 @@ export function RegisterForm({ locale, dict, oauthProviders }: RegisterFormProps
           name: formData.name,
           email: formData.email,
           password: formData.password,
+          verificationCode: formData.verificationCode,
         }),
       })
 
@@ -188,6 +238,54 @@ export function RegisterForm({ locale, dict, oauthProviders }: RegisterFormProps
             >
               {t.email}
             </Label>
+          </div>
+
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <Input
+                id="verificationCode"
+                type="text"
+                placeholder=" "
+                value={formData.verificationCode}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    verificationCode: e.target.value.replace(/\D/g, "").slice(0, 6),
+                  })
+                }
+                required
+                disabled={isLoading}
+                maxLength={6}
+                className="peer pt-6 pb-2 focus:border-primary focus:ring-2 focus:ring-primary/20"
+              />
+              <Label
+                htmlFor="verificationCode"
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-all duration-300 peer-focus:top-2 peer-focus:text-xs peer-focus:text-primary peer-[:not(:placeholder-shown)]:top-2 peer-[:not(:placeholder-shown)]:text-xs"
+              >
+                验证码
+              </Label>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleSendCode}
+              disabled={sendingCode || countdown > 0 || isLoading}
+              className="whitespace-nowrap"
+            >
+              {sendingCode ? (
+                <>
+                  <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                  发送中
+                </>
+              ) : countdown > 0 ? (
+                `${countdown}秒后重试`
+              ) : (
+                <>
+                  <Mail className="mr-1 h-3 w-3" />
+                  发送验证码
+                </>
+              )}
+            </Button>
           </div>
 
           <div className="space-y-2">

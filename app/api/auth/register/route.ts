@@ -6,12 +6,15 @@ import { features } from "@/lib/features"
 import { getCountryFromIP } from "@/lib/utils/geolocation"
 import { getSiteSettings } from "@/lib/site-settings"
 import { writeAuditLog } from "@/lib/audit"
+import { verifyCode } from "@/lib/verification-code"
+import { isRedisAvailable } from "@/lib/redis"
 import { z } from "zod"
 
 const registerSchema = z.object({
   email: z.string().email("Invalid email address"),
   password: z.string().min(8, "Password must be at least 8 characters"),
   name: z.string().min(2, "Name must be at least 2 characters").optional(),
+  verificationCode: z.string().length(6, "Verification code must be 6 digits"),
 })
 
 export async function POST(request: NextRequest) {
@@ -26,7 +29,18 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { email, password, name } = registerSchema.parse(body)
+    const { email, password, name, verificationCode } = registerSchema.parse(body)
+
+    // 如果 Redis 可用，验证验证码
+    if (await isRedisAvailable()) {
+      const codeVerification = await verifyCode(email, verificationCode)
+      if (!codeVerification.valid) {
+        return NextResponse.json(
+          { error: codeVerification.error || "Invalid verification code" },
+          { status: 400 },
+        )
+      }
+    }
 
     // 验证密码强度
     const passwordValidation = validatePassword(password)
