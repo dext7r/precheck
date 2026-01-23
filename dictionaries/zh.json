@@ -209,6 +209,13 @@
         "lowercase": "包含小写字母",
         "number": "包含数字"
       },
+      "verificationCode": "验证码（可选）",
+      "sendCode": "发送验证码",
+      "sending": "发送中",
+      "retryAfter": "{seconds}秒后重试",
+      "verificationServiceUnavailable": "验证码服务暂不可用，您可以直接注册",
+      "sendCodeFailed": "发送验证码失败",
+      "sendCodeError": "发送验证码失败，请稍后重试",
       "errors": {
         "emailExists": "邮箱已被注册",
         "passwordMismatch": "两次输入的密码不一致",

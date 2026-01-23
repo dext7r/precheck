@@ -116,12 +116,12 @@ export function RegisterForm({ locale, dict, oauthProviders }: RegisterFormProps
         // 如果是服务不可用（Redis未配置），隐藏验证码功能
         if (res.status === 503 || data.error?.includes("not available") || data.error?.includes("not configured")) {
           setVerificationAvailable(false)
-          setError("验证码服务暂不可用，您可以直接注册")
+          setError(t.verificationServiceUnavailable)
         } else if (res.status === 429 && data.waitSeconds) {
           setCountdown(data.waitSeconds)
           setError(`请等待 ${data.waitSeconds} 秒后再次发送`)
         } else {
-          setError(data.error || "发送验证码失败")
+          setError(data.error || t.sendCodeFailed)
         }
         return
       }
@@ -129,7 +129,7 @@ export function RegisterForm({ locale, dict, oauthProviders }: RegisterFormProps
       setCountdown(60)
       setError("")
     } catch {
-      setError("发送验证码失败，请稍后重试")
+      setError(t.sendCodeError)
     } finally {
       setSendingCode(false)
     }
@@ -279,7 +279,7 @@ export function RegisterForm({ locale, dict, oauthProviders }: RegisterFormProps
                   htmlFor="verificationCode"
                   className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-all duration-300 peer-focus:top-2 peer-focus:text-xs peer-focus:text-primary peer-[:not(:placeholder-shown)]:top-2 peer-[:not(:placeholder-shown)]:text-xs"
                 >
-                  验证码（可选）
+                  {t.verificationCode}
                 </Label>
               </div>
               <Button
@@ -292,14 +292,14 @@ export function RegisterForm({ locale, dict, oauthProviders }: RegisterFormProps
                 {sendingCode ? (
                   <>
                     <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-                    发送中
+                    {t.sending}
                   </>
                 ) : countdown > 0 ? (
-                  `${countdown}秒后重试`
+                  t.retryAfter.replace("{seconds}", countdown.toString())
                 ) : (
                   <>
                     <Mail className="mr-1 h-3 w-3" />
-                    发送验证码
+                    {t.sendCode}
                   </>
                 )}
               </Button>

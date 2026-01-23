@@ -209,6 +209,13 @@
         "lowercase": "Lowercase letter",
         "number": "Number"
       },
+      "verificationCode": "Verification Code (Optional)",
+      "sendCode": "Send Code",
+      "sending": "Sending",
+      "retryAfter": "Retry after {seconds}s",
+      "verificationServiceUnavailable": "Verification service unavailable. You can register directly.",
+      "sendCodeFailed": "Failed to send verification code",
+      "sendCodeError": "Failed to send verification code. Please try again later.",
       "errors": {
         "emailExists": "Email already registered",
         "passwordMismatch": "Passwords do not match",
