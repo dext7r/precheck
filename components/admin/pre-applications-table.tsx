@@ -18,7 +18,6 @@ import {
 } from "@/components/ui/drawer"
 import { Badge } from "@/components/ui/badge"
 import { Label } from "@/components/ui/label"
-import { Separator } from "@/components/ui/separator"
 import {
   Select,
   SelectContent,
@@ -487,181 +486,179 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
   )
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col gap-3">
-        <div className="flex flex-wrap gap-2">
-          {/* 用户搜索 */}
-          <div className="relative">
-            <Input
-              value={searchInput}
-              onChange={(event) => setSearchInput(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") handleSearch()
-              }}
-              placeholder={t.searchUsers}
-              className="w-48 pr-8"
-            />
-            {searchInput && (
-              <button
-                type="button"
-                onClick={() => {
-                  setSearchInput("")
-                  setSearch("")
-                  setPage(1)
-                }}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            )}
-          </div>
-          {/* 注册邮箱 */}
-          <div className="relative">
-            <Input
-              value={registerEmailInput}
-              onChange={(event) => setRegisterEmailInput(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") {
-                  setRegisterEmailFilter(registerEmailInput)
-                  setPage(1)
-                }
-              }}
-              placeholder={t.preApplicationRegisterEmail}
-              className="w-48 pr-8"
-            />
-            {registerEmailInput && (
-              <button
-                type="button"
-                onClick={() => {
-                  setRegisterEmailInput("")
-                  setRegisterEmailFilter("")
-                  setPage(1)
-                }}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            )}
-          </div>
-          {/* 查询标志 */}
-          <div className="relative">
-            <Input
-              value={queryTokenInput}
-              onChange={(event) => setQueryTokenInput(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") {
-                  setQueryTokenFilter(queryTokenInput)
-                  setPage(1)
-                }
-              }}
-              placeholder={t.preApplicationQueryToken}
-              className="w-48 pr-8"
-            />
-            {queryTokenInput && (
-              <button
-                type="button"
-                onClick={() => {
-                  setQueryTokenInput("")
-                  setQueryTokenFilter("")
-                  setPage(1)
-                }}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            )}
-          </div>
-          <Button
-            variant="outline"
-            onClick={() => {
-              setSearch(searchInput)
-              setRegisterEmailFilter(registerEmailInput)
-              setQueryTokenFilter(queryTokenInput)
-              setPage(1)
+    <div className="space-y-3">
+      {/* 精简筛选栏 */}
+      <div className="flex flex-wrap items-center gap-1.5">
+        {/* 搜索输入框组 */}
+        <div className="relative">
+          <Input
+            value={searchInput}
+            onChange={(event) => setSearchInput(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") handleSearch()
             }}
-          >
-            {t.searchAction}
-          </Button>
+            placeholder={t.searchUsers}
+            className="h-8 w-32 pr-6 text-xs"
+          />
+          {searchInput && (
+            <button
+              type="button"
+              onClick={() => {
+                setSearchInput("")
+                setSearch("")
+                setPage(1)
+              }}
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          )}
         </div>
-        <div className="flex flex-wrap gap-2">
-          {/* 状态筛选 */}
-          <Select
-            value={statusFilter}
-            onValueChange={(value) => {
-              setStatusFilter(value)
-              setPage(1)
+        <div className="relative">
+          <Input
+            value={registerEmailInput}
+            onChange={(event) => setRegisterEmailInput(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                setRegisterEmailFilter(registerEmailInput)
+                setPage(1)
+              }
             }}
-          >
-            <SelectTrigger className="w-36">
-              <SelectValue placeholder={t.statusAll} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">{t.statusAll}</SelectItem>
-              <SelectItem value="PENDING">{t.pending}</SelectItem>
-              <SelectItem value="DISPUTED">{t.disputed || "有争议"}</SelectItem>
-              <SelectItem value="APPROVED">{t.approved}</SelectItem>
-              <SelectItem value="REJECTED">{t.rejected}</SelectItem>
-            </SelectContent>
-          </Select>
-          {/* 审核轮次筛选 */}
-          <Select
-            value={reviewRoundFilter}
-            onValueChange={(value) => {
-              setReviewRoundFilter(value)
-              setPage(1)
-            }}
-          >
-            <SelectTrigger className="w-36">
-              <SelectValue placeholder={t.reviewRound} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">
-                {t.reviewRound}: {t.statusAll}
-              </SelectItem>
-              <SelectItem value="1">{t.reviewRoundLabel?.replace("{n}", "1") ?? "1审"}</SelectItem>
-              <SelectItem value="2">{t.reviewRoundLabel?.replace("{n}", "2") ?? "2审"}</SelectItem>
-              <SelectItem value="3">{t.reviewRoundLabel?.replace("{n}", "3") ?? "3审"}</SelectItem>
-            </SelectContent>
-          </Select>
-          {/* 发码状态筛选 */}
-          <Select
-            value={inviteStatusFilter}
-            onValueChange={(value) => {
-              setInviteStatusFilter(value)
-              setPage(1)
-            }}
-          >
-            <SelectTrigger className="w-36">
-              <SelectValue placeholder={t.inviteStatus} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">
-                {t.inviteStatus}: {t.statusAll}
-              </SelectItem>
-              <SelectItem value="issued">{t.inviteStatusIssued}</SelectItem>
-              <SelectItem value="none">{t.inviteStatusNone}</SelectItem>
-            </SelectContent>
-          </Select>
-          {/* 重置按钮 */}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              setSearchInput("")
-              setSearch("")
-              setRegisterEmailInput("")
-              setRegisterEmailFilter("")
-              setQueryTokenInput("")
-              setQueryTokenFilter("")
-              setStatusFilter("PENDING")
-              setReviewRoundFilter("ALL")
-              setInviteStatusFilter("none")
-              setPage(1)
-            }}
-          >
-            {t.reset}
-          </Button>
+            placeholder={t.preApplicationRegisterEmail}
+            className="h-8 w-36 pr-6 text-xs"
+          />
+          {registerEmailInput && (
+            <button
+              type="button"
+              onClick={() => {
+                setRegisterEmailInput("")
+                setRegisterEmailFilter("")
+                setPage(1)
+              }}
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          )}
         </div>
+        <div className="relative">
+          <Input
+            value={queryTokenInput}
+            onChange={(event) => setQueryTokenInput(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                setQueryTokenFilter(queryTokenInput)
+                setPage(1)
+              }
+            }}
+            placeholder={t.preApplicationQueryToken}
+            className="h-8 w-28 pr-6 text-xs"
+          />
+          {queryTokenInput && (
+            <button
+              type="button"
+              onClick={() => {
+                setQueryTokenInput("")
+                setQueryTokenFilter("")
+                setPage(1)
+              }}
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          )}
+        </div>
+
+        <div className="h-4 w-px bg-border" />
+
+        {/* 筛选下拉组 */}
+        <Select
+          value={statusFilter}
+          onValueChange={(value) => {
+            setStatusFilter(value)
+            setPage(1)
+          }}
+        >
+          <SelectTrigger className="h-8 w-24 text-xs">
+            <SelectValue placeholder={t.statusAll} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ALL" className="text-xs">{t.statusAll}</SelectItem>
+            <SelectItem value="PENDING" className="text-xs">{t.pending}</SelectItem>
+            <SelectItem value="DISPUTED" className="text-xs">{t.disputed || "有争议"}</SelectItem>
+            <SelectItem value="APPROVED" className="text-xs">{t.approved}</SelectItem>
+            <SelectItem value="REJECTED" className="text-xs">{t.rejected}</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select
+          value={reviewRoundFilter}
+          onValueChange={(value) => {
+            setReviewRoundFilter(value)
+            setPage(1)
+          }}
+        >
+          <SelectTrigger className="h-8 w-20 text-xs">
+            <SelectValue placeholder={t.reviewRound} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ALL" className="text-xs">{t.statusAll}</SelectItem>
+            <SelectItem value="1" className="text-xs">{t.reviewRoundLabel?.replace("{n}", "1") ?? "1审"}</SelectItem>
+            <SelectItem value="2" className="text-xs">{t.reviewRoundLabel?.replace("{n}", "2") ?? "2审"}</SelectItem>
+            <SelectItem value="3" className="text-xs">{t.reviewRoundLabel?.replace("{n}", "3") ?? "3审"}</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select
+          value={inviteStatusFilter}
+          onValueChange={(value) => {
+            setInviteStatusFilter(value)
+            setPage(1)
+          }}
+        >
+          <SelectTrigger className="h-8 w-24 text-xs">
+            <SelectValue placeholder={t.inviteStatus} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ALL" className="text-xs">{t.statusAll}</SelectItem>
+            <SelectItem value="issued" className="text-xs">{t.inviteStatusIssued}</SelectItem>
+            <SelectItem value="none" className="text-xs">{t.inviteStatusNone}</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <div className="h-4 w-px bg-border" />
+
+        {/* 操作按钮组 */}
+        <Button
+          variant="default"
+          size="sm"
+          className="h-8 px-3 text-xs"
+          onClick={() => {
+            setSearch(searchInput)
+            setRegisterEmailFilter(registerEmailInput)
+            setQueryTokenFilter(queryTokenInput)
+            setPage(1)
+          }}
+        >
+          {t.searchAction}
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground"
+          onClick={() => {
+            setSearchInput("")
+            setSearch("")
+            setRegisterEmailInput("")
+            setRegisterEmailFilter("")
+            setQueryTokenInput("")
+            setQueryTokenFilter("")
+            setStatusFilter("PENDING")
+            setReviewRoundFilter("ALL")
+            setInviteStatusFilter("none")
+            setPage(1)
+          }}
+        >
+          {t.reset}
+        </Button>
       </div>
 
       <DataTable
@@ -732,108 +729,98 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
       />
 
       <Drawer open={dialogOpen} onOpenChange={setDialogOpen} direction="right">
-        <DrawerContent className="h-full data-[vaul-drawer-direction=right]:w-[92vw] data-[vaul-drawer-direction=right]:sm:max-w-3xl">
-          <DrawerHeader className="sticky top-0 z-10 border-b bg-background">
-            <DrawerTitle>{t.reviewApplication}</DrawerTitle>
-            <DrawerDescription>{t.reviewApplicationDesc}</DrawerDescription>
+        <DrawerContent className="h-full data-[vaul-drawer-direction=right]:w-[88vw] data-[vaul-drawer-direction=right]:sm:max-w-xl">
+          <DrawerHeader className="sticky top-0 z-10 border-b bg-background px-4 py-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <DrawerTitle className="text-base">{t.reviewApplication}</DrawerTitle>
+                <DrawerDescription className="text-xs">{t.reviewApplicationDesc}</DrawerDescription>
+              </div>
+              {selected && statusBadge(selected.status)}
+            </div>
           </DrawerHeader>
 
           {selected && (
-            <div className="flex-1 space-y-4 overflow-y-auto px-4 py-4">
-              <div className="grid gap-4 md:grid-cols-2">
-                <div>
-                  <p className="text-xs text-muted-foreground">{t.preApplicationUser}</p>
-                  <p className="font-medium">{selected.user.name || selected.user.email}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">{t.preApplicationRegisterEmail}</p>
-                  <p className="font-medium">{selected.registerEmail}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">{t.preApplicationGroup}</p>
-                  <p className="font-medium">{getGroupLabel(selected.group)}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">{t.preApplicationSource}</p>
-                  <p className="font-medium">{getSourceLabel(selected.source)}</p>
-                </div>
-                {selected.sourceDetail && (
+            <div className="flex-1 space-y-3 overflow-y-auto px-4 py-3">
+              {/* 申请人信息卡片 */}
+              <div className="rounded-lg border bg-muted/30 p-3">
+                <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
                   <div>
-                    <p className="text-xs text-muted-foreground">{t.preApplicationSourceDetail}</p>
-                    <p className="font-medium">{selected.sourceDetail}</p>
+                    <span className="text-muted-foreground">{t.preApplicationUser}</span>
+                    <p className="font-medium truncate">{selected.user.name || selected.user.email}</p>
                   </div>
-                )}
-                <div>
-                  <p className="text-xs text-muted-foreground">{t.preApplicationQueryToken}</p>
-                  <p className="font-medium">{selected.queryToken || "-"}</p>
+                  <div>
+                    <span className="text-muted-foreground">{t.preApplicationRegisterEmail}</span>
+                    <p className="font-medium truncate">{selected.registerEmail}</p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">{t.preApplicationGroup}</span>
+                    <p className="font-medium">{getGroupLabel(selected.group)}</p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">{t.preApplicationSource}</span>
+                    <p className="font-medium">{getSourceLabel(selected.source)}</p>
+                  </div>
+                  {selected.sourceDetail && (
+                    <div className="col-span-2">
+                      <span className="text-muted-foreground">{t.preApplicationSourceDetail}</span>
+                      <p className="font-medium">{selected.sourceDetail}</p>
+                    </div>
+                  )}
+                  <div>
+                    <span className="text-muted-foreground">{t.preApplicationQueryToken}</span>
+                    <p className="font-medium font-mono text-[10px]">{selected.queryToken || "-"}</p>
+                  </div>
                 </div>
               </div>
 
+              {/* 申请理由 */}
               <Accordion type="multiple" defaultValue={["essay"]} className="rounded-lg border">
-                <AccordionItem value="essay">
-                  <AccordionTrigger className="px-4 py-3 text-sm font-medium">
+                <AccordionItem value="essay" className="border-none">
+                  <AccordionTrigger className="px-3 py-2 text-xs font-medium hover:no-underline">
                     {t.preApplicationEssay}
                   </AccordionTrigger>
-                  <AccordionContent className="px-4 pb-4">
-                    <div className="rounded-lg border bg-card p-4">
+                  <AccordionContent className="px-3 pb-3">
+                    <div className="rounded border bg-card p-3 text-sm">
                       <PostContent content={selected.essay} emptyMessage={t.preApplicationEssay} />
                     </div>
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
 
-              <Separator />
-
-              <div className="space-y-3">
-                <p className="text-sm font-medium">{dict.preApplication.historyTitle}</p>
+              {/* 审核历史 */}
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-muted-foreground">{dict.preApplication.historyTitle}</p>
                 {historyLoading && <p className="text-xs text-muted-foreground">{t.loading}</p>}
                 {!historyLoading && historyRecords.length === 0 && (
-                  <p className="text-xs text-muted-foreground">
-                    {dict.preApplication.historyEmpty}
-                  </p>
+                  <p className="text-xs text-muted-foreground italic">{dict.preApplication.historyEmpty}</p>
                 )}
                 {!historyLoading && historyRecords.length > 0 && (
-                  <Accordion type="multiple" className="rounded-lg border border-border">
+                  <Accordion type="multiple" className="rounded-lg border">
                     {historyRecords.map((item) => (
-                      <AccordionItem key={item.id} value={item.id} className="px-3">
-                        <AccordionTrigger className="py-3 text-sm">
-                          <div className="flex flex-1 items-center justify-between gap-3 pr-3">
-                            <span>
-                              {t.reviewRoundLabel?.replace("{n}", String(item.version)) ??
-                                `${item.version}审`}{" "}
-                              · {new Date(item.createdAt).toLocaleString(locale)}
+                      <AccordionItem key={item.id} value={item.id} className="border-b last:border-none">
+                        <AccordionTrigger className="px-3 py-2 text-xs hover:no-underline">
+                          <div className="flex flex-1 items-center justify-between gap-2 pr-2">
+                            <span className="text-muted-foreground">
+                              {t.reviewRoundLabel?.replace("{n}", String(item.version)) ?? `${item.version}审`}
+                              {" · "}
+                              {new Date(item.createdAt).toLocaleDateString(locale)}
                             </span>
                             {statusBadge(item.status)}
                           </div>
                         </AccordionTrigger>
-                        <AccordionContent className="space-y-3 pb-3">
-                          <div className="rounded-lg border bg-muted/30 p-3">
-                            <p className="mb-2 text-xs font-medium text-muted-foreground">
-                              {t.preApplicationEssay}
-                            </p>
-                            <PostContent
-                              content={item.essay}
-                              emptyMessage={t.preApplicationEssay}
-                            />
+                        <AccordionContent className="space-y-2 px-3 pb-3">
+                          <div className="rounded border bg-muted/30 p-2 text-xs">
+                            <PostContent content={item.essay} emptyMessage={t.preApplicationEssay} />
                           </div>
                           {item.reviewedAt ? (
-                            <div className="space-y-1 text-xs text-muted-foreground">
-                              <p>
-                                {t.preApplicationReviewer}：
-                                {item.reviewedBy?.name || item.reviewedBy?.email || "-"}
-                              </p>
-                              <p>
-                                {dict.preApplication.review.reviewedAt}：
-                                {new Date(item.reviewedAt).toLocaleString(locale)}
-                              </p>
-                              <p className="whitespace-pre-wrap">
-                                {dict.preApplication.review.guidance}：{item.guidance || "-"}
-                              </p>
+                            <div className="space-y-0.5 text-[10px] text-muted-foreground">
+                              <p>{t.preApplicationReviewer}：{item.reviewedBy?.name || item.reviewedBy?.email || "-"}</p>
+                              <p>{dict.preApplication.review.reviewedAt}：{new Date(item.reviewedAt).toLocaleString(locale)}</p>
+                              <p className="whitespace-pre-wrap">{dict.preApplication.review.guidance}：{item.guidance || "-"}</p>
                             </div>
                           ) : (
-                            <p className="text-xs text-muted-foreground italic">
-                              {dict.preApplication.status.pending}
-                            </p>
+                            <p className="text-[10px] text-muted-foreground italic">{dict.preApplication.status.pending}</p>
                           )}
                         </AccordionContent>
                       </AccordionItem>
@@ -842,146 +829,139 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
                 )}
               </div>
 
-              <Separator />
+              {/* 当前审核状态 */}
+              {selected.reviewedBy && (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <span>{t.preApplicationReviewer}：{selected.reviewedBy.name || selected.reviewedBy.email}</span>
+                </div>
+              )}
 
-              <div className="flex items-center gap-3">
-                {statusBadge(selected.status)}
-                {selected.reviewedBy && (
-                  <span className="text-xs text-muted-foreground">
-                    {t.preApplicationReviewer}：
-                    {selected.reviewedBy.name || selected.reviewedBy.email}
-                  </span>
-                )}
-              </div>
-
+              {/* 审核操作表单 */}
               {selected.status === "PENDING" || selected.status === "DISPUTED" ? (
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label>{t.reviewAction}</Label>
-                    <Select
-                      value={reviewAction}
-                      onValueChange={(value) =>
-                        setReviewAction(value as "APPROVE" | "REJECT" | "DISPUTE")
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="APPROVE">{t.reviewApprove}</SelectItem>
-                        <SelectItem value="REJECT">{t.reviewReject}</SelectItem>
-                        <SelectItem value="DISPUTE">{t.reviewDispute || "标记有争议"}</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  {reviewAction === "APPROVE" && (
-                    <div className="space-y-2">
-                      <Label htmlFor="inviteCode">{t.inviteCode}</Label>
+                <div className="space-y-3 rounded-lg border bg-muted/20 p-3">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <Label className="text-xs">{t.reviewAction}</Label>
                       <Select
-                        value={inviteCode}
-                        onValueChange={setInviteCode}
-                        disabled={inviteOptionsLoading || inviteOptions.length === 0}
+                        value={reviewAction}
+                        onValueChange={(value) => setReviewAction(value as "APPROVE" | "REJECT" | "DISPUTE")}
                       >
-                        <SelectTrigger>
-                          <SelectValue
-                            placeholder={
-                              inviteOptionsLoading
-                                ? t.loading
-                                : inviteOptions.length === 0
-                                  ? t.inviteCodeNoRecords
-                                  : t.inviteCodePlaceholder
-                            }
-                          />
+                        <SelectTrigger className="h-8 text-xs">
+                          <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          {inviteOptions.map((option) => (
-                            <SelectItem key={option.id} value={option.code}>
-                              <div className="flex flex-col gap-1">
-                                <span className="text-sm">{option.code}</span>
-                                <span className="text-xs text-muted-foreground">
-                                  {option.expiresAt
-                                    ? `${t.inviteExpiresAt} ${new Date(option.expiresAt).toLocaleString(locale)}`
-                                    : t.inviteCodeSelectNoExpiry}
-                                </span>
-                              </div>
-                            </SelectItem>
-                          ))}
+                          <SelectItem value="APPROVE" className="text-xs">{t.reviewApprove}</SelectItem>
+                          <SelectItem value="REJECT" className="text-xs">{t.reviewReject}</SelectItem>
+                          <SelectItem value="DISPUTE" className="text-xs">{t.reviewDispute || "标记有争议"}</SelectItem>
                         </SelectContent>
                       </Select>
-                      <p className="text-xs text-muted-foreground">{t.inviteCodeSelectHint}</p>
                     </div>
-                  )}
+                    {reviewAction === "APPROVE" && (
+                      <div className="space-y-1">
+                        <Label className="text-xs">{t.inviteCode}</Label>
+                        <Select
+                          value={inviteCode}
+                          onValueChange={setInviteCode}
+                          disabled={inviteOptionsLoading || inviteOptions.length === 0}
+                        >
+                          <SelectTrigger className="h-8 text-xs">
+                            <SelectValue
+                              placeholder={
+                                inviteOptionsLoading ? t.loading
+                                  : inviteOptions.length === 0 ? t.inviteCodeNoRecords
+                                  : t.inviteCodePlaceholder
+                              }
+                            />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {inviteOptions.map((option) => (
+                              <SelectItem key={option.id} value={option.code} className="text-xs">
+                                <div className="flex flex-col">
+                                  <span>{option.code}</span>
+                                  <span className="text-[10px] text-muted-foreground">
+                                    {option.expiresAt
+                                      ? `${t.inviteExpiresAt} ${new Date(option.expiresAt).toLocaleDateString(locale)}`
+                                      : t.inviteCodeSelectNoExpiry}
+                                  </span>
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+                  </div>
                   {reviewAction === "APPROVE" && (
-                    <div className="space-y-2">
-                      <Label htmlFor="inviteExpiresAt">{t.inviteExpiresAt}</Label>
+                    <div className="space-y-1">
+                      <Label className="text-xs">{t.inviteExpiresAt}</Label>
                       <Input
-                        id="inviteExpiresAt"
                         type="datetime-local"
                         value={inviteExpiresAt}
                         onChange={(event) => setInviteExpiresAt(event.target.value)}
+                        className="h-8 text-xs"
                       />
                     </div>
                   )}
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-xs">{t.guidance}</Label>
+                      {getCurrentTemplates().length > 0 && (
+                        <Select onValueChange={(value) => setGuidance(value)}>
+                          <SelectTrigger className="h-6 w-32 text-[10px]">
+                            <SelectValue placeholder={t.reviewTemplateSelect} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {getCurrentTemplates().map((template, index) => (
+                              <SelectItem key={index} value={template} className="text-xs">
+                                <span className="line-clamp-1">{template}</span>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    </div>
+                    <Textarea
+                      value={guidance}
+                      onChange={(event) => setGuidance(event.target.value)}
+                      rows={3}
+                      className="text-xs resize-none"
+                    />
+                  </div>
                 </div>
               ) : (
-                <div className="grid gap-4 md:grid-cols-2">
-                  {selected.inviteCode && (
-                    <div>
-                      <p className="text-xs text-muted-foreground">{t.inviteCode}</p>
-                      <p className="font-medium">{selected.inviteCode.code}</p>
-                    </div>
-                  )}
-                  {selected.inviteCode?.expiresAt && (
-                    <div>
-                      <p className="text-xs text-muted-foreground">{t.inviteExpiresAt}</p>
-                      <p className="font-medium">
-                        {new Date(selected.inviteCode.expiresAt).toLocaleString(locale)}
-                      </p>
+                <div className="rounded-lg border bg-muted/20 p-3">
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    {selected.inviteCode && (
+                      <div>
+                        <span className="text-muted-foreground">{t.inviteCode}</span>
+                        <p className="font-mono font-medium">{selected.inviteCode.code}</p>
+                      </div>
+                    )}
+                    {selected.inviteCode?.expiresAt && (
+                      <div>
+                        <span className="text-muted-foreground">{t.inviteExpiresAt}</span>
+                        <p className="font-medium">{new Date(selected.inviteCode.expiresAt).toLocaleString(locale)}</p>
+                      </div>
+                    )}
+                  </div>
+                  {selected.guidance && (
+                    <div className="mt-2 text-xs">
+                      <span className="text-muted-foreground">{t.guidance}</span>
+                      <p className="mt-1 whitespace-pre-wrap rounded border bg-card p-2">{selected.guidance}</p>
                     </div>
                   )}
                 </div>
               )}
-
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="guidance">{t.guidance}</Label>
-                  {(selected.status === "PENDING" || selected.status === "DISPUTED") &&
-                    getCurrentTemplates().length > 0 && (
-                      <Select onValueChange={(value) => setGuidance(value)}>
-                        <SelectTrigger className="w-48 h-8 text-xs">
-                          <SelectValue placeholder={t.reviewTemplateSelect} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {getCurrentTemplates().map((template, index) => (
-                            <SelectItem key={index} value={template} className="text-xs">
-                              <span className="line-clamp-1">{template}</span>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    )}
-                </div>
-                <Textarea
-                  id="guidance"
-                  value={guidance}
-                  onChange={(event) => setGuidance(event.target.value)}
-                  rows={5}
-                  disabled={selected.status !== "PENDING" && selected.status !== "DISPUTED"}
-                  className={cn(
-                    selected.status !== "PENDING" && selected.status !== "DISPUTED" && "opacity-80",
-                  )}
-                />
-              </div>
             </div>
           )}
 
-          <DrawerFooter className="sticky bottom-0 z-10 border-t bg-background">
-            <div className="flex w-full flex-col gap-2 sm:flex-row sm:justify-end">
-              <Button variant="outline" onClick={() => setDialogOpen(false)}>
+          <DrawerFooter className="sticky bottom-0 z-10 border-t bg-background px-4 py-2">
+            <div className="flex w-full justify-end gap-2">
+              <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => setDialogOpen(false)}>
                 {t.reviewCancel}
               </Button>
               {(selected?.status === "PENDING" || selected?.status === "DISPUTED") && (
-                <Button onClick={handleReview} disabled={submitting}>
+                <Button size="sm" className="h-8 text-xs" onClick={handleReview} disabled={submitting}>
                   {submitting ? t.saving : t.reviewSubmit}
                 </Button>
               )}

@@ -99,7 +99,12 @@ export function AdminSettingsForm({ locale, dict }: AdminSettingsFormProps) {
     { id: "security", label: t.tabSecurity || "功能开关", icon: ToggleLeft },
     { id: "email", label: t.tabEmail || "邮件配置", icon: Mail },
     { id: "templates", label: t.tabTemplates || "审核模板", icon: MessageSquare },
-    { id: "danger", label: t.tabDanger || "危险操作", icon: AlertTriangle, color: "text-destructive" },
+    {
+      id: "danger",
+      label: t.tabDanger || "危险操作",
+      icon: AlertTriangle,
+      color: "text-destructive",
+    },
   ]
 
   const hasChanges = useMemo(() => {
@@ -445,7 +450,9 @@ export function AdminSettingsForm({ locale, dict }: AdminSettingsFormProps) {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold">{t.settings}</h1>
-          <p className="mt-1 text-sm sm:text-base text-muted-foreground">{t.configureSystemSettings}</p>
+          <p className="mt-1 text-sm sm:text-base text-muted-foreground">
+            {t.configureSystemSettings}
+          </p>
         </div>
         <div className="flex items-center gap-2 sm:gap-3">
           <AnimatePresence>
@@ -455,19 +462,20 @@ export function AdminSettingsForm({ locale, dict }: AdminSettingsFormProps) {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 10 }}
               >
-                <Badge variant="outline" className="text-xs sm:text-sm bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800">
+                <Badge
+                  variant="outline"
+                  className="text-xs sm:text-sm bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800"
+                >
                   {t.unsavedChanges || "有未保存的修改"}
                 </Badge>
               </motion.div>
             )}
           </AnimatePresence>
           <Button onClick={handleSaveAll} disabled={saving || !hasChanges} className="gap-2">
-            {saving ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Save className="h-4 w-4" />
-            )}
-            <span className="hidden sm:inline">{saving ? t.saving : t.saveAll || "保存所有修改"}</span>
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+            <span className="hidden sm:inline">
+              {saving ? t.saving : t.saveAll || "保存所有修改"}
+            </span>
             <span className="sm:hidden">{saving ? t.saving : t.save}</span>
           </Button>
         </div>
@@ -502,7 +510,7 @@ export function AdminSettingsForm({ locale, dict }: AdminSettingsFormProps) {
           <ChevronDown
             className={cn(
               "h-4 w-4 text-muted-foreground transition-transform duration-200",
-              mobileNavOpen && "rotate-180"
+              mobileNavOpen && "rotate-180",
             )}
           />
         </button>
