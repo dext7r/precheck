@@ -9,4 +9,19 @@ export const getDictionary = async (locale: Locale) => {
   return dictionaries[locale]?.() ?? dictionaries.en()
 }
 
-export type Dictionary = Awaited<ReturnType<typeof getDictionary>>
+type DictionaryBase = Awaited<ReturnType<typeof getDictionary>>
+
+type AdditionalDictionaryEntries = {
+  auth: {
+    register: {
+      emailSuffixLabel?: string
+      emailSuffixPlaceholder?: string
+    }
+  }
+  preApplication: {
+    emailSuffixLabel?: string
+    emailSuffixPlaceholder?: string
+  }
+}
+
+export type Dictionary = DictionaryBase & AdditionalDictionaryEntries

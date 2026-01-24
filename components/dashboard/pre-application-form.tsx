@@ -25,11 +25,9 @@ import { PostContent } from "@/components/posts/post-content"
 import { Copy, Check, History, FileText, AlertCircle, ExternalLink } from "lucide-react"
 import type { Dictionary } from "@/lib/i18n/get-dictionary"
 import type { Locale } from "@/lib/i18n/config"
-import {
-  allowedEmailDomains,
-  preApplicationGroups,
-  preApplicationSources,
-} from "@/lib/pre-application/constants"
+import { preApplicationGroups, preApplicationSources } from "@/lib/pre-application/constants"
+import { EmailWithDomainInput } from "@/components/ui/email-with-domain-input"
+import { useAllowedEmailDomains } from "@/lib/hooks/use-allowed-email-domains"
 
 type PreApplicationVersion = {
   id: string
@@ -121,6 +119,8 @@ export function PreApplicationForm({
 }: PreApplicationFormProps) {
   const router = useRouter()
   const t = dict.preApplication
+  const emailSuffixLabel = t.emailSuffixLabel ?? "Choose an allowed email suffix"
+  const emailSuffixPlaceholder = t.emailSuffixPlaceholder ?? ""
   const essayMinChars = 50
   const [loading, setLoading] = useState(!initialRecords)
   const [submitting, setSubmitting] = useState(false)
@@ -129,7 +129,7 @@ export function PreApplicationForm({
   const [tokenCopied, setTokenCopied] = useState(false)
   const [activeTab, setActiveTab] = useState<"form" | "history">("form")
   const [essayHint, setEssayHint] = useState(t.fields.essayHint)
-  const [allowedDomains, setAllowedDomains] = useState<string[]>(allowedEmailDomains as any)
+  const allowedDomains = useAllowedEmailDomains()
   const [formData, setFormData] = useState({
     essay: "",
     source: "",
@@ -189,9 +189,6 @@ export function PreApplicationForm({
           const data = await res.json()
           if (data.preApplicationEssayHint) {
             setEssayHint(data.preApplicationEssayHint)
-          }
-          if (data.allowedEmailDomains && Array.isArray(data.allowedEmailDomains)) {
-            setAllowedDomains(data.allowedEmailDomains)
           }
         }
       } catch (error) {
@@ -598,15 +595,15 @@ export function PreApplicationForm({
 
                 <div className="space-y-2">
                   <Label htmlFor="registerEmail">{t.fields.registerEmail}</Label>
-                  <Input
-                    id="registerEmail"
-                    type="email"
+                  <EmailWithDomainInput
                     value={formData.registerEmail}
-                    onChange={(event) =>
-                      setFormData({ ...formData, registerEmail: event.target.value })
-                    }
-                    placeholder={t.fields.registerEmailHint}
-                    readOnly={isEditing}
+                    domains={allowedDomains}
+                    onChange={(email) => setFormData({ ...formData, registerEmail: email })}
+                    selectLabel={emailSuffixLabel}
+                    selectPlaceholder={emailSuffixPlaceholder}
+                    inputId="registerEmail"
+                    inputPlaceholder={t.fields.registerEmailHint}
+                    disabled={isEditing}
                   />
                   <p className="text-xs text-muted-foreground">{t.fields.registerEmailHint}</p>
                 </div>

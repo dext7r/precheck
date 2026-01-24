@@ -13,9 +13,16 @@ import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Turnstile } from "@/components/ui/turnstile"
 import { OAuthButtons } from "./oauth-buttons"
+import { EmailWithDomainInput } from "@/components/ui/email-with-domain-input"
 import { getDictionaryEntry } from "@/lib/i18n/get-dictionary-entry"
 import type { Dictionary } from "@/lib/i18n/get-dictionary"
 import type { Locale } from "@/lib/i18n/config"
+import { useAllowedEmailDomains } from "@/lib/hooks/use-allowed-email-domains"
+import {
+  isDomainPartValid,
+  LOCAL_PART_MIN_LENGTH,
+  normalizeLocalPart,
+} from "@/lib/validators/email"
 
 const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || ""
 const TURNSTILE_ENABLED = Boolean(TURNSTILE_SITE_KEY)
@@ -45,6 +52,11 @@ export function RegisterForm({ locale, dict, oauthProviders }: RegisterFormProps
   const [verificationAvailable, setVerificationAvailable] = useState(true) // 验证码功能是否可用
 
   const t = dict.auth.register
+  const emailLocalPartError =
+    getDictionaryEntry(dict, "auth.register.errors.invalidEmailLocalPart") ?? t.errors.invalidEmail
+  const emailSuffixLabel = t.emailSuffixLabel ?? "Choose an allowed email suffix"
+  const emailSuffixPlaceholder = t.emailSuffixPlaceholder ?? t.emailPlaceholder
+  const allowedDomains = useAllowedEmailDomains()
   const errorMap: Record<string, string> = {
     "Registration service not configured": t.errors.serviceUnavailable,
     "User registration is disabled": t.errors.registrationDisabled,
@@ -52,6 +64,26 @@ export function RegisterForm({ locale, dict, oauthProviders }: RegisterFormProps
     "Invalid email address": t.errors.invalidEmail,
     "Name must be at least 2 characters": t.errors.nameTooShort,
     "Registration failed": t.errors.failed,
+  }
+
+  const getEmailValidationError = (email: string) => {
+    if (!email) {
+      return t.errors.invalidEmail
+    }
+
+    const [rawLocal, ...domainParts] = email.split("@")
+    const normalizedLocal = normalizeLocalPart(rawLocal ?? "")
+
+    if (normalizedLocal.length < LOCAL_PART_MIN_LENGTH) {
+      return emailLocalPartError
+    }
+
+    const domain = domainParts.join("@")
+    if (!isDomainPartValid(domain)) {
+      return t.errors.invalidEmail
+    }
+
+    return null
   }
 
   const resolveErrorMessage = (payload?: string | { code?: string; message?: string }) => {
@@ -115,8 +147,9 @@ export function RegisterForm({ locale, dict, oauthProviders }: RegisterFormProps
 
   // 发送验证码
   const handleSendCode = async () => {
-    if (!formData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      setError(t.errors.invalidEmail)
+    const emailErrorMessage = getEmailValidationError(formData.email)
+    if (emailErrorMessage) {
+      setError(emailErrorMessage)
       return
     }
 
@@ -168,20 +201,25 @@ export function RegisterForm({ locale, dict, oauthProviders }: RegisterFormProps
       return
     }
 
-    setIsLoading(true)
     setError("")
+
+    const emailErrorMessage = getEmailValidationError(formData.email)
+    if (emailErrorMessage) {
+      setError(emailErrorMessage)
+      return
+    }
 
     if (formData.password !== formData.confirmPassword) {
       setError(t.errors.passwordMismatch)
-      setIsLoading(false)
       return
     }
 
     if (!isPasswordValid) {
       setError(t.errors.weakPassword)
-      setIsLoading(false)
       return
     }
+
+    setIsLoading(true)
 
     try {
       const res = await fetch("/api/auth/register", {
@@ -263,23 +301,18 @@ export function RegisterForm({ locale, dict, oauthProviders }: RegisterFormProps
             </Label>
           </div>
 
-          <div className="relative">
-            <Input
-              id="email"
-              type="email"
-              placeholder=" "
+          <div className="space-y-1">
+            <Label htmlFor="email">{t.email}</Label>
+            <EmailWithDomainInput
               value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              required
+              domains={allowedDomains}
+              onChange={(email) => setFormData({ ...formData, email })}
+              selectLabel={emailSuffixLabel}
+              selectPlaceholder={emailSuffixPlaceholder}
+              inputId="email"
+              inputPlaceholder={t.emailPlaceholder}
               disabled={isLoading}
-              className="peer pt-6 pb-2 focus:border-primary focus:ring-2 focus:ring-primary/20"
             />
-            <Label
-              htmlFor="email"
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-all duration-300 peer-focus:top-2 peer-focus:text-xs peer-focus:text-primary peer-[:not(:placeholder-shown)]:top-2 peer-[:not(:placeholder-shown)]:text-xs"
-            >
-              {t.email}
-            </Label>
           </div>
 
           {verificationAvailable && (

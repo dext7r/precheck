@@ -48,7 +48,9 @@
         "weakPassword": "Password does not meet requirements",
         "emailExists": "Email already registered",
         "validationFailed": "Invalid registration data",
-        "registrationFailed": "Registration failed"
+        "registrationFailed": "Registration failed",
+        "emailSuffixLabel": "Quickly choose an allowed email suffix",
+        "emailSuffixPlaceholder": "Select suffix"
       },
       "forgotPassword": {
         "serviceUnavailable": "Authentication service not configured",
@@ -215,6 +217,8 @@
     },
     "preApplication": {
       "failedToFetch": "Failed to fetch pre-application",
+      "emailSuffixLabel": "Choose an allowed email suffix",
+      "emailSuffixPlaceholder": "Select suffix",
       "failedToSubmit": "Failed to submit pre-application",
       "alreadySubmitted": "Already submitted",
       "alreadyApproved": "Already approved",
@@ -429,11 +433,14 @@
       "verificationServiceUnavailable": "Verification service unavailable. You can register directly.",
       "sendCodeFailed": "Failed to send verification code",
       "sendCodeError": "Failed to send verification code. Please try again later.",
+      "emailSuffixLabel": "Choose an allowed email suffix",
+      "emailSuffixPlaceholder": "Select suffix",
       "errors": {
         "emailExists": "Email already registered",
         "passwordMismatch": "Passwords do not match",
         "weakPassword": "Password is too weak",
         "invalidEmail": "Invalid email address",
+        "invalidEmailLocalPart": "Email must start with at least 3 letters or numbers and cannot include spaces or alias characters",
         "passwordTooShort": "Password must be at least 8 characters",
         "passwordUppercase": "Password must contain at least one uppercase letter",
         "passwordLowercase": "Password must contain at least one lowercase letter",

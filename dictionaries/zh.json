@@ -48,7 +48,9 @@
         "weakPassword": "密码不符合要求",
         "emailExists": "邮箱已被注册",
         "validationFailed": "注册信息不合法",
-        "registrationFailed": "注册失败"
+        "registrationFailed": "注册失败",
+        "emailSuffixLabel": "快速选择允许的邮箱后缀",
+        "emailSuffixPlaceholder": "请选择后缀"
       },
       "forgotPassword": {
         "serviceUnavailable": "认证服务未配置",
@@ -215,6 +217,8 @@
     },
     "preApplication": {
       "failedToFetch": "获取预申请失败",
+      "emailSuffixLabel": "请选择允许的邮箱后缀",
+      "emailSuffixPlaceholder": "请选择后缀",
       "failedToSubmit": "提交预申请失败",
       "alreadySubmitted": "已提交",
       "alreadyApproved": "已通过",
@@ -393,6 +397,7 @@
         "invalid": "邮箱或密码错误",
         "required": "请输入邮箱和密码",
         "invalidEmail": "邮箱格式不正确",
+        "invalidEmailLocalPart": "邮箱本地部分需为至少 3 位字母数字组合，且不能包含空格或别名",
         "passwordRequired": "请输入密码",
         "serviceUnavailable": "认证服务未配置",
         "failed": "登录失败"
@@ -429,6 +434,8 @@
       "verificationServiceUnavailable": "验证码服务暂不可用，您可以直接注册",
       "sendCodeFailed": "发送验证码失败",
       "sendCodeError": "发送验证码失败，请稍后重试",
+      "emailSuffixLabel": "快速选择允许的邮箱后缀",
+      "emailSuffixPlaceholder": "请选择后缀",
       "errors": {
         "emailExists": "邮箱已被注册",
         "passwordMismatch": "两次输入的密码不一致",
