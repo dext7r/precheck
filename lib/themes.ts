@@ -115,3 +115,19 @@ export const colorThemes = {
 
 export type ColorTheme = keyof typeof colorThemes
 export const colorThemeNames = Object.keys(colorThemes) as ColorTheme[]
+
+// 每周 7 天的默认色彩序列，避免默认颜色重复
+export const weeklyColorThemeSequence: ColorTheme[] = [
+  "blue", // Sunday
+  "green", // Monday
+  "orange", // Tuesday
+  "red", // Wednesday
+  "rose", // Thursday
+  "violet", // Friday
+  "yellow", // Saturday
+]
+
+export function getDailyColorTheme(date = new Date()): ColorTheme {
+  const index = date.getDay() % weeklyColorThemeSequence.length
+  return weeklyColorThemeSequence[index]
+}

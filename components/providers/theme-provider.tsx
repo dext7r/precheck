@@ -3,7 +3,7 @@
 import type * as React from "react"
 import { createContext, useContext, useEffect, useState } from "react"
 import { ThemeProvider as NextThemesProvider } from "next-themes"
-import { colorThemes, type ColorTheme } from "@/lib/themes"
+import { colorThemes, getDailyColorTheme, type ColorTheme } from "@/lib/themes"
 
 type ColorThemeContextType = {
   colorTheme: ColorTheme
@@ -27,7 +27,11 @@ function ColorThemeProvider({ children }: { children: React.ReactNode }) {
     }
 
     const saved = localStorage.getItem("color-theme") as ColorTheme | null
-    return saved && colorThemes[saved] ? saved : "zinc"
+    if (saved && colorThemes[saved]) {
+      return saved
+    }
+
+    return getDailyColorTheme()
   })
 
   const applyColorTheme = (theme: ColorTheme) => {

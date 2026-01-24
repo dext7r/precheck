@@ -11,7 +11,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ArrowUpDown } from "lucide-react"
+import {
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+  Loader2,
+  Inbox,
+} from "lucide-react"
+import { cn } from "@/lib/utils"
 
 export interface Column<T> {
   key: string
@@ -19,6 +30,7 @@ export interface Column<T> {
   sortable?: boolean
   render?: (item: T) => React.ReactNode
   width?: string
+  align?: "left" | "center" | "right"
 }
 
 export interface DataTableProps<T> {
@@ -43,6 +55,8 @@ export interface DataTableProps<T> {
   onSelectionChange?: (selectedIds: Set<string>) => void
   rowKey?: keyof T
   isRowSelectable?: (item: T) => boolean
+  striped?: boolean
+  compact?: boolean
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -68,6 +82,8 @@ export function DataTable<T extends Record<string, any>>({
   onSelectionChange,
   rowKey = "id" as keyof T,
   isRowSelectable,
+  striped = false,
+  compact = false,
 }: DataTableProps<T>) {
   const [sortKey, setSortKey] = useState<string>("")
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc")
@@ -110,8 +126,6 @@ export function DataTable<T extends Record<string, any>>({
 
   const visibleData = enableVirtualScroll ? data.slice(visibleRange.start, visibleRange.end) : data
 
-  const offsetY = enableVirtualScroll ? visibleRange.start * rowHeight : 0
-
   const selectableData = selectable
     ? data.filter((item) => (isRowSelectable ? isRowSelectable(item) : true))
     : []
@@ -144,23 +158,32 @@ export function DataTable<T extends Record<string, any>>({
     onSelectionChange(newSelection)
   }
 
+  const cellPadding = compact ? "px-3 py-2" : "px-4 py-4"
+  const headerPadding = compact ? "px-3 py-2.5" : "px-4 py-3.5"
+
   return (
     <div className="space-y-4">
       {/* Mobile Card View */}
       {mobileCardRender && (
         <div className="block md:hidden">
           {loading && (
-            <div className="flex items-center justify-center py-12">
-              <p className="text-muted-foreground">{loadingText}</p>
+            <div className="flex flex-col items-center justify-center gap-3 py-16">
+              <Loader2 className="h-8 w-8 animate-spin text-primary/60" />
+              <p className="text-sm text-muted-foreground">{loadingText}</p>
             </div>
           )}
           {!loading && data.length === 0 && (
-            <div className="py-12 text-center text-muted-foreground">{emptyMessage}</div>
+            <div className="flex flex-col items-center justify-center gap-3 py-16">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+                <Inbox className="h-8 w-8 text-muted-foreground" />
+              </div>
+              <p className="text-muted-foreground">{emptyMessage}</p>
+            </div>
           )}
           {!loading && data.length > 0 && (
             <div className="space-y-3">
               {data.map((item, index) => (
-                <div key={item.id || index}>{mobileCardRender(item)}</div>
+                <div key={(item.id as string) || index}>{mobileCardRender(item)}</div>
               ))}
             </div>
           )}
@@ -171,174 +194,284 @@ export function DataTable<T extends Record<string, any>>({
       <div className={mobileCardRender ? "hidden md:block" : "block"}>
         <div
           ref={scrollContainerRef}
-          className="relative overflow-auto rounded-lg border border-border"
-          style={enableVirtualScroll ? { maxHeight: "600px" } : undefined}
+          className="relative overflow-hidden rounded-xl border border-border bg-card shadow-sm"
+          style={enableVirtualScroll ? { maxHeight: "600px", overflow: "auto" } : undefined}
         >
+          {/* Loading Overlay */}
           {loading && (
-            <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/50">
-              <p className="text-muted-foreground">{loadingText}</p>
-            </div>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-background/80 backdrop-blur-sm"
+            >
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <p className="text-sm font-medium text-muted-foreground">{loadingText}</p>
+            </motion.div>
           )}
 
-          <table
-            className="w-full"
-            style={enableVirtualScroll ? { tableLayout: "fixed" } : undefined}
-          >
-            <thead className="sticky top-0 z-10 bg-muted">
-              <tr className="border-b border-border">
-                {selectable && (
-                  <th className="w-12 px-4 py-3">
-                    <Checkbox
-                      checked={allSelected}
-                      ref={(el) => {
-                        if (el)
-                          (el as HTMLButtonElement).dataset.state = someSelected
-                            ? "indeterminate"
-                            : allSelected
-                              ? "checked"
-                              : "unchecked"
-                      }}
-                      onCheckedChange={(checked) => handleSelectAll(checked === true)}
-                      aria-label="Select all"
-                    />
-                  </th>
-                )}
-                {columns.map((column) => (
-                  <th
-                    key={column.key}
-                    className="px-4 py-3 text-left font-medium"
-                    style={column.width ? { width: column.width } : undefined}
-                  >
-                    {column.sortable ? (
-                      <button
-                        onClick={() => handleSort(column.key)}
-                        className="flex items-center gap-2 hover:text-primary cursor-pointer"
-                      >
-                        {column.label}
-                        <ArrowUpDown className="h-4 w-4" />
-                      </button>
-                    ) : (
-                      column.label
-                    )}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody
-              style={
-                enableVirtualScroll
-                  ? { height: `${data.length * rowHeight}px`, position: "relative" }
-                  : undefined
-              }
+          <div className="overflow-x-auto">
+            <table
+              className="w-full border-collapse"
+              style={enableVirtualScroll ? { tableLayout: "fixed" } : undefined}
             >
-              {visibleData.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={columns.length + (selectable ? 1 : 0)}
-                    className="py-12 text-center text-muted-foreground"
-                  >
-                    {emptyMessage}
-                  </td>
-                </tr>
-              ) : (
-                visibleData.map((item, index) => {
-                  const itemId = String(item[rowKey])
-                  const rowSelectable = isRowSelectable ? isRowSelectable(item) : true
-                  const isSelected = selectedIds.has(itemId)
-
-                  return (
-                    <motion.tr
-                      key={item.id || index}
-                      initial={{ x: -20, opacity: 0 }}
-                      animate={{ x: 0, opacity: 1 }}
-                      transition={{ duration: 0.3, delay: index * 0.05 }}
-                      className={`group border-b border-border last:border-0 transition-colors hover:bg-muted/50 ${isSelected ? "bg-muted/30" : ""}`}
-                      style={
-                        enableVirtualScroll
-                          ? {
-                              position: "absolute",
-                              top: `${(visibleRange.start + index) * rowHeight}px`,
-                              left: 0,
-                              right: 0,
-                              height: `${rowHeight}px`,
-                            }
-                          : undefined
-                      }
-                    >
-                      {selectable && (
-                        <td className="w-12 px-4 py-4">
-                          <Checkbox
-                            checked={isSelected}
-                            disabled={!rowSelectable}
-                            onCheckedChange={(checked) => handleSelectRow(itemId, checked === true)}
-                            aria-label={`Select row ${index + 1}`}
-                          />
-                        </td>
+              <thead>
+                <tr className="border-b border-border bg-muted/50">
+                  {selectable && (
+                    <th className={cn("w-12", headerPadding)}>
+                      <Checkbox
+                        checked={allSelected}
+                        ref={(el) => {
+                          if (el)
+                            (el as HTMLButtonElement).dataset.state = someSelected
+                              ? "indeterminate"
+                              : allSelected
+                                ? "checked"
+                                : "unchecked"
+                        }}
+                        onCheckedChange={(checked) => handleSelectAll(checked === true)}
+                        aria-label="Select all"
+                        className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                      />
+                    </th>
+                  )}
+                  {columns.map((column) => (
+                    <th
+                      key={column.key}
+                      className={cn(
+                        headerPadding,
+                        "text-xs font-semibold uppercase tracking-wider text-muted-foreground",
+                        column.align === "center" && "text-center",
+                        column.align === "right" && "text-right",
+                        !column.align && "text-left",
                       )}
-                      {columns.map((column) => (
-                        <td
-                          key={column.key}
-                          className="px-4 py-4"
-                          style={column.width ? { width: column.width } : undefined}
+                      style={column.width ? { width: column.width } : undefined}
+                    >
+                      {column.sortable ? (
+                        <button
+                          onClick={() => handleSort(column.key)}
+                          className={cn(
+                            "group inline-flex items-center gap-1.5 rounded-md px-2 py-1 -ml-2",
+                            "transition-colors hover:bg-primary/10 hover:text-primary",
+                            sortKey === column.key && "text-primary",
+                          )}
                         >
-                          {column.render ? column.render(item) : item[column.key]}
-                        </td>
-                      ))}
-                    </motion.tr>
-                  )
-                })
-              )}
-            </tbody>
-          </table>
+                          <span>{column.label}</span>
+                          <span className="flex h-4 w-4 items-center justify-center">
+                            {sortKey === column.key ? (
+                              sortDirection === "asc" ? (
+                                <ArrowUp className="h-3.5 w-3.5" />
+                              ) : (
+                                <ArrowDown className="h-3.5 w-3.5" />
+                              )
+                            ) : (
+                              <ArrowUpDown className="h-3.5 w-3.5 opacity-0 transition-opacity group-hover:opacity-50" />
+                            )}
+                          </span>
+                        </button>
+                      ) : (
+                        column.label
+                      )}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody
+                className="divide-y divide-border"
+                style={
+                  enableVirtualScroll
+                    ? { height: `${data.length * rowHeight}px`, position: "relative" }
+                    : undefined
+                }
+              >
+                {visibleData.length === 0 && !loading ? (
+                  <tr>
+                    <td colSpan={columns.length + (selectable ? 1 : 0)} className="py-16">
+                      <div className="flex flex-col items-center justify-center gap-3">
+                        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+                          <Inbox className="h-8 w-8 text-muted-foreground" />
+                        </div>
+                        <p className="text-muted-foreground">{emptyMessage}</p>
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  visibleData.map((item, index) => {
+                    const itemId = String(item[rowKey])
+                    const rowSelectable = isRowSelectable ? isRowSelectable(item) : true
+                    const isSelected = selectedIds.has(itemId)
+                    const actualIndex = enableVirtualScroll ? visibleRange.start + index : index
+
+                    return (
+                      <motion.tr
+                        key={(item.id as string) || index}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.2, delay: Math.min(index * 0.02, 0.2) }}
+                        className={cn(
+                          "group transition-colors",
+                          isSelected
+                            ? "bg-primary/5 hover:bg-primary/10"
+                            : striped && actualIndex % 2 === 1
+                              ? "bg-muted/30 hover:bg-muted/50"
+                              : "hover:bg-muted/40",
+                        )}
+                        style={
+                          enableVirtualScroll
+                            ? {
+                                position: "absolute",
+                                top: `${actualIndex * rowHeight}px`,
+                                left: 0,
+                                right: 0,
+                                height: `${rowHeight}px`,
+                              }
+                            : undefined
+                        }
+                      >
+                        {selectable && (
+                          <td className={cn("w-12", cellPadding)}>
+                            <Checkbox
+                              checked={isSelected}
+                              disabled={!rowSelectable}
+                              onCheckedChange={(checked) =>
+                                handleSelectRow(itemId, checked === true)
+                              }
+                              aria-label={`Select row ${actualIndex + 1}`}
+                              className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                            />
+                          </td>
+                        )}
+                        {columns.map((column) => (
+                          <td
+                            key={column.key}
+                            className={cn(
+                              cellPadding,
+                              "text-sm",
+                              column.align === "center" && "text-center",
+                              column.align === "right" && "text-right",
+                            )}
+                            style={column.width ? { width: column.width } : undefined}
+                          >
+                            {column.render
+                              ? column.render(item)
+                              : (item[column.key] as React.ReactNode)}
+                          </td>
+                        ))}
+                      </motion.tr>
+                    )
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
+      {/* Pagination */}
       {total > 0 && (
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">{perPageText}</span>
-            <Select value={pageSize.toString()} onValueChange={(v) => onPageSizeChange(Number(v))}>
-              <SelectTrigger className="w-20">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="10">10</SelectItem>
-                <SelectItem value="20">20</SelectItem>
-                <SelectItem value="50">50</SelectItem>
-                <SelectItem value="100">100</SelectItem>
-              </SelectContent>
-            </Select>
-            <span className="text-sm text-muted-foreground">{summaryText}</span>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-1.5">
+              <span className="text-xs font-medium text-muted-foreground">{perPageText}</span>
+              <Select
+                value={pageSize.toString()}
+                onValueChange={(v) => onPageSizeChange(Number(v))}
+              >
+                <SelectTrigger className="h-7 w-16 border-0 bg-transparent text-xs font-medium shadow-none focus:ring-0">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="20">20</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                  <SelectItem value="100">100</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <span className="text-xs text-muted-foreground">{summaryText}</span>
           </div>
 
           <div className="flex items-center gap-1">
             <Button
-              variant="outline"
+              variant="ghost"
               size="icon"
+              className="h-8 w-8"
               onClick={() => onPageChange(1)}
               disabled={page === 1}
             >
               <ChevronsLeft className="h-4 w-4" />
             </Button>
             <Button
-              variant="outline"
+              variant="ghost"
               size="icon"
+              className="h-8 w-8"
               onClick={() => onPageChange(page - 1)}
               disabled={page === 1}
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
+
+            {/* Page Numbers */}
+            <div className="flex items-center gap-1 px-1">
+              {(() => {
+                const pages: (number | "ellipsis")[] = []
+                const showPages = 5
+                let start = Math.max(1, page - Math.floor(showPages / 2))
+                const end = Math.min(totalPages, start + showPages - 1)
+
+                if (end - start + 1 < showPages) {
+                  start = Math.max(1, end - showPages + 1)
+                }
+
+                if (start > 1) {
+                  pages.push(1)
+                  if (start > 2) pages.push("ellipsis")
+                }
+
+                for (let i = start; i <= end; i++) {
+                  if (i !== 1 && i !== totalPages) pages.push(i)
+                }
+
+                if (end < totalPages) {
+                  if (end < totalPages - 1) pages.push("ellipsis")
+                  pages.push(totalPages)
+                }
+
+                return pages.map((p, i) =>
+                  p === "ellipsis" ? (
+                    <span key={`ellipsis-${i}`} className="px-1 text-muted-foreground">
+                      ...
+                    </span>
+                  ) : (
+                    <Button
+                      key={p}
+                      variant={page === p ? "default" : "ghost"}
+                      size="icon"
+                      className={cn(
+                        "h-8 w-8 text-xs font-medium",
+                        page === p && "pointer-events-none",
+                      )}
+                      onClick={() => onPageChange(p)}
+                    >
+                      {p}
+                    </Button>
+                  ),
+                )
+              })()}
+            </div>
+
             <Button
-              variant="outline"
+              variant="ghost"
               size="icon"
+              className="h-8 w-8"
               onClick={() => onPageChange(page + 1)}
               disabled={page === totalPages}
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
             <Button
-              variant="outline"
+              variant="ghost"
               size="icon"
+              className="h-8 w-8"
               onClick={() => onPageChange(totalPages)}
               disabled={page === totalPages}
             >

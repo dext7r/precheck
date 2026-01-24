@@ -52,6 +52,7 @@ export function RegisterForm({ locale, dict, oauthProviders }: RegisterFormProps
   const [verificationAvailable, setVerificationAvailable] = useState(true) // 验证码功能是否可用
 
   const t = dict.auth.register
+  const termsAgreement = t.termsAgreement
   const emailLocalPartError =
     getDictionaryEntry(dict, "auth.register.errors.invalidEmailLocalPart") ?? t.errors.invalidEmail
   const emailSuffixPlaceholder = t.emailSuffixPlaceholder ?? t.emailPlaceholder
@@ -476,7 +477,28 @@ export function RegisterForm({ locale, dict, oauthProviders }: RegisterFormProps
             required
           />
           <Label htmlFor="terms" className="text-sm font-normal leading-relaxed">
-            {t.terms}
+            {termsAgreement ? (
+              <>
+                <span>{termsAgreement.prefix}</span>
+                <Link
+                  href={`/${locale}/terms`}
+                  className="font-medium text-primary transition-colors hover:text-primary/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                  aria-label={termsAgreement.terms}
+                >
+                  {termsAgreement.terms}
+                </Link>
+                <span>{termsAgreement.middle}</span>
+                <Link
+                  href={`/${locale}/privacy`}
+                  className="font-medium text-primary transition-colors hover:text-primary/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                  aria-label={termsAgreement.privacy}
+                >
+                  {termsAgreement.privacy}
+                </Link>
+              </>
+            ) : (
+              t.terms
+            )}
           </Label>
         </div>
 

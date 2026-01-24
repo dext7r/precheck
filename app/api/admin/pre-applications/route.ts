@@ -95,42 +95,58 @@ export async function GET(request: NextRequest) {
       ]
     }
 
-    const [records, total] = await Promise.all([
-      db.preApplication.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy: { [sortBy]: sortOrder },
-        select: {
-          id: true,
-          essay: true,
-          source: true,
-          sourceDetail: true,
-          registerEmail: true,
-          queryToken: true,
-          group: true,
-          status: true,
-          guidance: true,
-          reviewedAt: true,
-          createdAt: true,
-          updatedAt: true,
-          resubmitCount: true,
-          user: { select: { id: true, name: true, email: true } },
-          reviewedBy: { select: { id: true, name: true, email: true } },
-          inviteCode: {
-            select: { id: true, code: true, expiresAt: true, usedAt: true, assignedAt: true },
+    const [records, total, pendingCount, approvedCount, rejectedCount, disputedCount] =
+      await Promise.all([
+        db.preApplication.findMany({
+          where,
+          skip,
+          take: limit,
+          orderBy: { [sortBy]: sortOrder },
+          select: {
+            id: true,
+            essay: true,
+            source: true,
+            sourceDetail: true,
+            registerEmail: true,
+            queryToken: true,
+            group: true,
+            status: true,
+            guidance: true,
+            reviewedAt: true,
+            createdAt: true,
+            updatedAt: true,
+            resubmitCount: true,
+            user: { select: { id: true, name: true, email: true } },
+            reviewedBy: { select: { id: true, name: true, email: true } },
+            inviteCode: {
+              select: { id: true, code: true, expiresAt: true, usedAt: true, assignedAt: true },
+            },
           },
-        },
-      }),
-      db.preApplication.count({ where }),
-    ])
+        }),
+        db.preApplication.count({ where }),
+        db.preApplication.count({ where: { status: "PENDING" } }),
+        db.preApplication.count({ where: { status: "APPROVED" } }),
+        db.preApplication.count({ where: { status: "REJECTED" } }),
+        db.preApplication.count({ where: { status: "DISPUTED" } }),
+      ])
 
     const enrichedRecords = records.map((record) => {
       const reviewRound = record.resubmitCount + 1
       return { ...record, reviewRound }
     })
 
-    return NextResponse.json({ records: enrichedRecords, total, page, limit })
+    return NextResponse.json({
+      records: enrichedRecords,
+      total,
+      page,
+      limit,
+      stats: {
+        pending: pendingCount,
+        approved: approvedCount,
+        rejected: rejectedCount,
+        disputed: disputedCount,
+      },
+    })
   } catch (error) {
     console.error("Admin pre-application list error:", error)
     return createApiErrorResponse(request, ApiErrorKeys.admin.preApplications.failedToFetch, {

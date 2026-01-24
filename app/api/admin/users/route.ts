@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
+import { type Prisma, Role, UserStatus } from "@prisma/client"
 import { db } from "@/lib/db"
 import { getCurrentUser } from "@/lib/auth/session"
 import { isSuperAdmin } from "@/lib/auth/permissions"
@@ -33,16 +34,37 @@ export async function GET(request: NextRequest) {
     const sortBy = allowedSortBy.has(sortByParam) ? sortByParam : "createdAt"
     const sortOrder = sortOrderParam === "asc" ? "asc" : "desc"
 
-    const where = search
-      ? {
-          OR: [
-            { email: { contains: search, mode: "insensitive" as const } },
-            { name: { contains: search, mode: "insensitive" as const } },
-          ],
-        }
-      : {}
+    // 筛选参数
+    const roleFilter = searchParams.get("role")
+    const statusFilter = searchParams.get("status")
 
-    const [users, total] = await Promise.all([
+    // 构建查询条件
+    const conditions: Prisma.UserWhereInput[] = []
+
+    if (search) {
+      conditions.push({
+        OR: [
+          { email: { contains: search, mode: "insensitive" as const } },
+          { name: { contains: search, mode: "insensitive" as const } },
+        ],
+      })
+    }
+
+    if (roleFilter && roleFilter !== "all" && Object.values(Role).includes(roleFilter as Role)) {
+      conditions.push({ role: roleFilter as Role })
+    }
+
+    if (
+      statusFilter &&
+      statusFilter !== "all" &&
+      Object.values(UserStatus).includes(statusFilter as UserStatus)
+    ) {
+      conditions.push({ status: statusFilter as UserStatus })
+    }
+
+    const where = conditions.length > 0 ? { AND: conditions } : {}
+
+    const [users, total, stats] = await Promise.all([
       db.user.findMany({
         where,
         skip,
@@ -58,9 +80,21 @@ export async function GET(request: NextRequest) {
         },
       }),
       db.user.count({ where }),
+      // 统计数据
+      Promise.all([
+        db.user.count(),
+        db.user.count({ where: { role: "ADMIN" } }),
+        db.user.count({ where: { status: "ACTIVE" } }),
+        db.user.count({ where: { status: "BANNED" } }),
+      ]).then(([totalUsers, admins, active, banned]) => ({
+        total: totalUsers,
+        admins,
+        active,
+        banned,
+      })),
     ])
 
-    return NextResponse.json({ users, total, page, limit })
+    return NextResponse.json({ users, total, page, limit, stats })
   } catch (error) {
     console.error("Users API error:", error)
     return createApiErrorResponse(request, ApiErrorKeys.admin.users.failedToFetch, {

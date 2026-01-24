@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
+import { motion, AnimatePresence } from "framer-motion"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -38,6 +39,20 @@ import {
   X,
   Trash2,
   Ticket,
+  Key,
+  Users,
+  Clock,
+  AlertTriangle,
+  Search,
+  Plus,
+  Upload,
+  Filter,
+  RotateCcw,
+  Eye,
+  Pencil,
+  Ban,
+  Loader2,
+  FileUp,
 } from "lucide-react"
 import {
   DropdownMenu,
@@ -87,10 +102,77 @@ interface AdminInviteCodesManagerProps {
   dict: Dictionary
 }
 
+// 统计卡片组件
+function StatCard({
+  icon: Icon,
+  label,
+  value,
+  trend,
+  color = "primary",
+  active = false,
+  onClick,
+}: {
+  icon: React.ElementType
+  label: string
+  value: string | number
+  trend?: string
+  color?: "primary" | "success" | "warning" | "danger"
+  active?: boolean
+  onClick?: () => void
+}) {
+  const colorStyles = {
+    primary: "from-primary/20 to-primary/5 text-primary",
+    success: "from-emerald-500/20 to-emerald-500/5 text-emerald-600 dark:text-emerald-400",
+    warning: "from-amber-500/20 to-amber-500/5 text-amber-600 dark:text-amber-400",
+    danger: "from-rose-500/20 to-rose-500/5 text-rose-600 dark:text-rose-400",
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      onClick={onClick}
+      className={`relative overflow-hidden rounded-xl border bg-card p-4 ${
+        onClick ? "cursor-pointer transition-all hover:scale-[1.02] hover:shadow-md" : ""
+      } ${active ? "ring-2 ring-primary ring-offset-2" : ""}`}
+    >
+      <div className={`absolute inset-0 bg-gradient-to-br opacity-50 ${colorStyles[color]}`} />
+      <div className="relative flex items-center gap-4">
+        <div
+          className={`flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${colorStyles[color]}`}
+        >
+          <Icon className="h-6 w-6" />
+        </div>
+        <div>
+          <p className="text-sm text-muted-foreground">{label}</p>
+          <p className="text-2xl font-bold">
+            {typeof value === "number" ? value.toLocaleString() : value}
+          </p>
+          {trend && <p className="text-xs text-muted-foreground">{trend}</p>}
+        </div>
+      </div>
+    </motion.div>
+  )
+}
+
+// 格式化完整日期时间
+function formatDateTime(dateStr: string | null, locale: Locale): string {
+  if (!dateStr) return "-"
+  return new Date(dateStr).toLocaleString(locale, {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  })
+}
+
 export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManagerProps) {
   const t = dict.admin
   const [records, setRecords] = useState<InviteCodeRecord[]>([])
   const [total, setTotal] = useState(0)
+  const [stats, setStats] = useState({ unused: 0, used: 0, expired: 0, expiringSoon: 0 })
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(20)
   const [loading, setLoading] = useState(true)
@@ -147,14 +229,12 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
     const trimmed = input.trim()
     const match = trimmed.match(inviteCodePattern)
     if (match?.[1]) {
-      // 提取到邀请码，转换为完整 URL
       return `https://linux.do/invites/${match[1]}`
     }
-    // 如果只是纯邀请码（没有 invites/ 前缀），直接拼接
     if (/^[A-Za-z0-9_-]{4,64}$/.test(trimmed)) {
       return `https://linux.do/invites/${trimmed}`
     }
-    return trimmed // 返回原始输入让后端验证
+    return trimmed
   }
 
   const bulkSummary = useMemo(() => {
@@ -169,10 +249,8 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
       totalCount += 1
       const match = line.match(inviteCodePattern)
       if (match?.[1]) {
-        // 转换为完整 URL 格式
         matches.push(`https://linux.do/invites/${match[1]}`)
       } else if (/^[A-Za-z0-9_-]{4,64}$/.test(line)) {
-        // 如果是纯邀请码，也转换为完整 URL
         matches.push(`https://linux.do/invites/${line}`)
       } else {
         invalidCount += 1
@@ -213,6 +291,9 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
       const data = await res.json()
       setRecords(data.records || [])
       setTotal(data.total || 0)
+      if (data.stats) {
+        setStats(data.stats)
+      }
     } catch (error) {
       console.error("Invite codes fetch error:", error)
       toast.error(t.fetchFailed)
@@ -223,10 +304,17 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
 
   useEffect(() => {
     fetchRecords()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, pageSize, search, statusFilter, assignmentFilter, expiringWithin, sortBy, sortOrder])
 
   const handleSearch = () => {
     setSearch(searchInput)
+    setPage(1)
+  }
+
+  const handleSort = (key: string, direction: "asc" | "desc") => {
+    setSortBy(key)
+    setSortOrder(direction)
     setPage(1)
   }
 
@@ -238,15 +326,26 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
 
   const getStatus = (record: InviteCodeRecord) => {
     if (record.usedAt)
-      return { label: t.inviteCodeStatusUsed, className: "bg-slate-200 text-slate-700" }
+      return {
+        label: t.inviteCodeStatusUsed,
+        className: "bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300",
+      }
     if (record.expiresAt && new Date(record.expiresAt).getTime() <= now) {
-      return { label: t.inviteCodeStatusExpired, className: "bg-rose-100 text-rose-700" }
+      return {
+        label: t.inviteCodeStatusExpired,
+        className: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400",
+      }
     }
-    // 已发放状态
     if (isIssued(record)) {
-      return { label: t.inviteCodeStatusAssigned, className: "bg-blue-100 text-blue-700" }
+      return {
+        label: t.inviteCodeStatusAssigned,
+        className: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+      }
     }
-    return { label: t.inviteCodeStatusUnused, className: "bg-emerald-100 text-emerald-700" }
+    return {
+      label: t.inviteCodeStatusUnused,
+      className: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
+    }
   }
 
   const isExpired = (record: InviteCodeRecord) =>
@@ -262,27 +361,37 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
     const expiresAtDate = new Date(expiresAtValue)
     const diffMs = expiresAtDate.getTime() - now
     const diffHours = diffMs / (60 * 60 * 1000)
-    const label = expiresAtDate.toLocaleString(locale, {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-    })
+    const label = formatDateTime(expiresAtValue, locale)
 
     if (diffMs <= 0) {
-      return <Badge className="bg-rose-100 text-rose-700 text-xs">{label}</Badge>
+      return (
+        <div className="flex items-center gap-1.5">
+          <Ban className="h-3.5 w-3.5 text-rose-500" />
+          <span className="text-xs text-rose-600 dark:text-rose-400">{label}</span>
+        </div>
+      )
     }
     if (diffHours <= 1) {
-      return <Badge className="bg-rose-50 text-rose-700 text-xs">{label}</Badge>
+      return (
+        <div className="flex items-center gap-1.5">
+          <AlertTriangle className="h-3.5 w-3.5 text-rose-500" />
+          <span className="text-xs text-rose-600 dark:text-rose-400">{label}</span>
+        </div>
+      )
     }
     if (diffHours <= 2) {
-      return <Badge className="bg-amber-50 text-amber-700 text-xs">{label}</Badge>
+      return (
+        <div className="flex items-center gap-1.5">
+          <Clock className="h-3.5 w-3.5 text-amber-500" />
+          <span className="text-xs text-amber-600 dark:text-amber-400">{label}</span>
+        </div>
+      )
     }
     return (
-      <Badge variant="outline" className="text-xs">
-        {label}
-      </Badge>
+      <div className="flex items-center gap-1.5">
+        <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+        <span className="text-xs text-muted-foreground">{label}</span>
+      </div>
     )
   }
 
@@ -533,7 +642,6 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
         throw new Error(data?.error || t.actionFailed)
       }
       const data = await res.json()
-      // 生成完整的查询链接
       const appUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin
       const queryUrl = `${appUrl}/${locale}/query-invite-codes?queryCode=${data.token}`
       setGeneratedToken(queryUrl)
@@ -620,79 +728,93 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
       {
         key: "code",
         label: t.inviteCode,
-        width: "25%",
+        width: "22%",
         sortable: true,
         render: (record) => (
-          <div className="space-y-0.5">
-            <p className="text-sm font-medium font-mono tracking-wide">{record.code}</p>
-            {record.issuedAt && (
+          <div className="flex items-center gap-3">
+            <div
+              className={cn(
+                "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg",
+                record.usedAt
+                  ? "bg-slate-100 text-slate-500 dark:bg-slate-800"
+                  : isExpired(record)
+                    ? "bg-rose-100 text-rose-600 dark:bg-rose-900/30"
+                    : "bg-primary/10 text-primary",
+              )}
+            >
+              <Key className="h-4 w-4" />
+            </div>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-medium font-mono tracking-wide">{record.code}</p>
               <p className="text-xs text-muted-foreground">
-                {new Date(record.issuedAt).toLocaleString(locale, {
-                  month: "2-digit",
-                  day: "2-digit",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
+                {formatDateTime(record.createdAt, locale)}
               </p>
-            )}
+            </div>
           </div>
         ),
       },
       {
         key: "status",
         label: t.inviteCodeStatus,
-        width: "15%",
+        width: "12%",
         render: (record) => {
           const status = getStatus(record)
           return (
-            <div className="space-y-1">
-              <Badge className={cn("text-xs", status.className)}>{status.label}</Badge>
-              {record.usedBy && record.usedAt && (
-                <p className="text-xs text-muted-foreground">
-                  {new Date(record.usedAt).toLocaleString(locale, {
-                    month: "2-digit",
-                    day: "2-digit",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </p>
-              )}
-            </div>
+            <Badge className={cn("text-xs font-medium", status.className)}>{status.label}</Badge>
           )
         },
       },
       {
         key: "expiresAt",
         label: t.inviteExpiresAt,
-        width: "20%",
+        width: "18%",
         sortable: true,
         render: (record) => getExpiryBadge(record.expiresAt),
       },
       {
+        key: "usedAt",
+        label: t.inviteCodeUsedAt || "使用时间",
+        width: "16%",
+        sortable: true,
+        render: (record) =>
+          record.usedAt ? (
+            <div className="flex items-center gap-1.5">
+              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+              <span className="text-xs">{formatDateTime(record.usedAt, locale)}</span>
+            </div>
+          ) : (
+            <span className="text-xs text-muted-foreground">-</span>
+          ),
+      },
+      {
         key: "assignedTo",
         label: t.inviteCodeAssignedTo,
-        width: "28%",
+        width: "20%",
         render: (record) =>
           record.preApplication ? (
-            <div className="space-y-0.5">
-              <p className="text-sm">
+            <div className="min-w-0">
+              <p className="truncate text-sm">
                 {record.preApplication.user.name || record.preApplication.user.email}
               </p>
-              <p className="text-xs text-muted-foreground">{record.preApplication.registerEmail}</p>
+              <p className="truncate text-xs text-muted-foreground">
+                {record.preApplication.registerEmail}
+              </p>
             </div>
           ) : record.issuedToUser ? (
-            <div className="space-y-0.5">
-              <p className="text-sm">{record.issuedToUser.name || record.issuedToUser.email}</p>
+            <div className="min-w-0">
+              <p className="truncate text-sm">
+                {record.issuedToUser.name || record.issuedToUser.email}
+              </p>
               <p className="text-xs text-muted-foreground">{t.inviteCodeIssuedByAdmin}</p>
             </div>
           ) : record.issuedToEmail ? (
-            <div className="space-y-0.5">
-              <p className="text-sm">{record.issuedToEmail}</p>
+            <div className="min-w-0">
+              <p className="truncate text-sm">{record.issuedToEmail}</p>
               <p className="text-xs text-muted-foreground">{t.inviteCodeIssuedByAdmin}</p>
             </div>
           ) : record.usedBy ? (
-            <div className="space-y-0.5">
-              <p className="text-sm">{record.usedBy.name || record.usedBy.email}</p>
+            <div className="min-w-0">
+              <p className="truncate text-sm">{record.usedBy.name || record.usedBy.email}</p>
               <p className="text-xs text-muted-foreground">{t.inviteCodeUsedBy}</p>
             </div>
           ) : (
@@ -704,40 +826,44 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
         label: t.actions,
         width: "12%",
         render: (record) => (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-7 w-7">
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                disabled={!!record.usedAt || isExpired(record) || isIssued(record)}
-                onClick={() => openIssueDialog(record)}
-              >
-                <Send className="mr-2 h-4 w-4" />
-                {t.inviteCodeIssue}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                disabled={!!record.usedAt || isExpired(record)}
-                onClick={() => openInvalidate(record)}
-              >
-                <ShieldOff className="mr-2 h-4 w-4" />
-                {t.inviteCodeInvalidate}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => updateUsage(record, !record.usedAt)}>
-                <CheckCircle2 className="mr-2 h-4 w-4" />
-                {record.usedAt ? t.inviteCodeMarkUnused : t.inviteCodeMarkUsed}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className="text-destructive focus:text-destructive"
-                onClick={() => openDeleteDialog(record)}
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                {t.inviteCodeDelete || "删除"}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0"
+              onClick={() => openIssueDialog(record)}
+              disabled={!!record.usedAt || isExpired(record) || isIssued(record)}
+            >
+              <Send className="h-4 w-4" />
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  disabled={!!record.usedAt || isExpired(record)}
+                  onClick={() => openInvalidate(record)}
+                >
+                  <ShieldOff className="mr-2 h-4 w-4" />
+                  {t.inviteCodeInvalidate}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => updateUsage(record, !record.usedAt)}>
+                  <CheckCircle2 className="mr-2 h-4 w-4" />
+                  {record.usedAt ? t.inviteCodeMarkUnused : t.inviteCodeMarkUsed}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="text-destructive focus:text-destructive"
+                  onClick={() => openDeleteDialog(record)}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  {t.inviteCodeDelete || "删除"}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         ),
       },
     ],
@@ -746,15 +872,90 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
 
   return (
     <div className="space-y-6">
-      <Accordion type="single" collapsible className="rounded-lg border">
+      {/* 页面头部 */}
+      <div className="relative overflow-hidden rounded-2xl border bg-gradient-to-br from-primary/5 via-background to-primary/10 p-6">
+        <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-primary/10 blur-3xl" />
+        <div className="absolute -bottom-20 -left-20 h-64 w-64 rounded-full bg-primary/5 blur-3xl" />
+        <div className="relative flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-lg shadow-primary/25">
+              <Key className="h-7 w-7" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold md:text-3xl">{t.inviteCodes}</h1>
+              <p className="text-muted-foreground">{t.inviteCodesDesc || "管理和发放邀请码"}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 统计卡片 */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard
+          icon={Ticket}
+          label={t.inviteCodeStatusUnused}
+          value={stats.unused}
+          color="success"
+          active={statusFilter === "unused" && expiringWithin === "all"}
+          onClick={() => {
+            setStatusFilter("unused")
+            setExpiringWithin("all")
+            setPage(1)
+          }}
+        />
+        <StatCard
+          icon={CheckCircle2}
+          label={t.inviteCodeStatusUsed}
+          value={stats.used}
+          color="primary"
+          active={statusFilter === "used"}
+          onClick={() => {
+            setStatusFilter("used")
+            setExpiringWithin("all")
+            setPage(1)
+          }}
+        />
+        <StatCard
+          icon={Ban}
+          label={t.inviteCodeStatusExpired}
+          value={stats.expired}
+          color="danger"
+          active={statusFilter === "expired"}
+          onClick={() => {
+            setStatusFilter("expired")
+            setExpiringWithin("all")
+            setPage(1)
+          }}
+        />
+        <StatCard
+          icon={AlertTriangle}
+          label={t.inviteCodeExpiring2h || "即将过期"}
+          value={stats.expiringSoon}
+          color="warning"
+          active={expiringWithin === "2"}
+          onClick={() => {
+            setStatusFilter("all")
+            setExpiringWithin("2")
+            setPage(1)
+          }}
+        />
+      </div>
+
+      {/* 批量导入折叠面板 */}
+      <Accordion type="single" collapsible className="rounded-xl border bg-card shadow-sm">
         <AccordionItem value="import" className="border-none">
-          <AccordionTrigger className="px-4">
-            <div className="space-y-1 text-left">
-              <p className="text-sm font-medium">{t.inviteCodeImportTitle}</p>
-              <p className="text-xs text-muted-foreground">{t.inviteCodeImportDesc}</p>
+          <AccordionTrigger className="px-5 py-4 hover:no-underline">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <Upload className="h-5 w-5" />
+              </div>
+              <div className="text-left">
+                <p className="font-medium">{t.inviteCodeImportTitle}</p>
+                <p className="text-sm text-muted-foreground">{t.inviteCodeImportDesc}</p>
+              </div>
             </div>
           </AccordionTrigger>
-          <AccordionContent className="px-4">
+          <AccordionContent className="px-5 pb-5">
             <div className="grid gap-4 md:grid-cols-[2fr_1fr]">
               <div className="space-y-2">
                 <Textarea
@@ -762,11 +963,12 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
                   onChange={(event) => setBulkInput(event.target.value)}
                   placeholder={t.inviteCodeImportPlaceholder}
                   rows={6}
+                  className="font-mono text-sm"
                 />
               </div>
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">{t.inviteCodeImportExpiresAt}</label>
+                  <Label className="text-sm">{t.inviteCodeImportExpiresAt}</Label>
                   <Input
                     type="datetime-local"
                     value={bulkExpiresAt}
@@ -774,34 +976,48 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">{t.inviteCodeImportFile}</label>
-                  <Input type="file" accept=".txt,text/plain" onChange={handleFileUpload} />
+                  <Label className="text-sm">{t.inviteCodeImportFile}</Label>
+                  <div className="relative">
+                    <Input
+                      type="file"
+                      accept=".txt,text/plain"
+                      onChange={handleFileUpload}
+                      className="cursor-pointer"
+                    />
+                  </div>
                 </div>
-                <div className="rounded-md border border-dashed p-3 text-xs text-muted-foreground">
-                  <p>
-                    {t.inviteCodeImportMatched.replace(
-                      "{count}",
-                      bulkSummary.codes.length.toString(),
-                    )}
-                  </p>
-                  <p>
-                    {t.inviteCodeImportInvalid.replace(
-                      "{count}",
-                      bulkSummary.invalidCount.toString(),
-                    )}
-                  </p>
-                  <p>
-                    {t.inviteCodeImportDuplicates.replace(
-                      "{count}",
-                      bulkSummary.duplicates.toString(),
-                    )}
-                  </p>
+                <div className="rounded-lg border border-dashed bg-muted/30 p-3 text-sm">
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">{t.inviteCodeImportMatchedLabel}</span>
+                    <span className="font-medium text-emerald-600">{bulkSummary.codes.length}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">{t.inviteCodeImportInvalidLabel}</span>
+                    <span className="font-medium text-rose-600">{bulkSummary.invalidCount}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">
+                      {t.inviteCodeImportDuplicatesLabel}
+                    </span>
+                    <span className="font-medium text-amber-600">{bulkSummary.duplicates}</span>
+                  </div>
                 </div>
                 <Button
                   onClick={handleImport}
                   disabled={importing || bulkSummary.codes.length === 0}
+                  className="w-full gap-2"
                 >
-                  {importing ? t.inviteCodeImporting : t.inviteCodeImportButton}
+                  {importing ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      {t.inviteCodeImporting}
+                    </>
+                  ) : (
+                    <>
+                      <FileUp className="h-4 w-4" />
+                      {t.inviteCodeImportButton}
+                    </>
+                  )}
                 </Button>
               </div>
             </div>
@@ -809,274 +1025,375 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
         </AccordionItem>
       </Accordion>
 
-      <Card className="p-4">
+      {/* 单个添加卡片 */}
+      <Card className="p-5">
+        <div className="mb-4 flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600">
+            <Plus className="h-5 w-5" />
+          </div>
+          <div>
+            <p className="font-medium">{t.inviteCodeCreateButton}</p>
+            <p className="text-sm text-muted-foreground">{t.inviteCodePlaceholder}</p>
+          </div>
+        </div>
         <div className="grid gap-4 md:grid-cols-[1fr_1fr_auto] md:items-end">
           <div className="space-y-2">
-            <label className="text-sm font-medium">{t.inviteCode}</label>
+            <Label className="text-sm">{t.inviteCode}</Label>
             <Input
               value={code}
               onChange={(event) => setCode(event.target.value)}
               placeholder={t.inviteCodePlaceholder}
+              className="font-mono"
             />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium">{t.inviteCodeExpiresAt}</label>
+            <Label className="text-sm">{t.inviteCodeExpiresAt}</Label>
             <Input
               type="datetime-local"
               value={expiresAt}
               onChange={(event) => setExpiresAt(event.target.value)}
             />
           </div>
-          <Button onClick={handleCreate} disabled={creating} className="md:w-auto">
-            {creating ? t.saving : t.inviteCodeCreateButton}
+          <Button
+            onClick={handleCreate}
+            disabled={creating}
+            className="gap-2 shadow-lg shadow-primary/25"
+          >
+            {creating ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                {t.saving}
+              </>
+            ) : (
+              <>
+                <Plus className="h-4 w-4" />
+                {t.inviteCodeCreateButton}
+              </>
+            )}
           </Button>
         </div>
       </Card>
 
-      <div className="space-y-4">
-        {/* 搜索和筛选区域 */}
-        <Card className="p-4">
-          <div className="flex flex-col gap-4">
-            {/* 搜索行 */}
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-              <div className="relative flex-1 sm:max-w-xs">
-                <Input
-                  value={searchInput}
-                  onChange={(event) => setSearchInput(event.target.value)}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter") handleSearch()
+      {/* 搜索和筛选 */}
+      <Card className="p-4">
+        <div className="flex flex-col gap-4">
+          {/* 搜索行 */}
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="relative flex-1 sm:max-w-sm">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={searchInput}
+                onChange={(event) => setSearchInput(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") handleSearch()
+                }}
+                placeholder={t.inviteCodeSearchPlaceholder}
+                className="pl-9 pr-8"
+              />
+              {searchInput && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-1 top-1/2 h-6 w-6 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  onClick={() => {
+                    setSearchInput("")
+                    setSearch("")
+                    setPage(1)
                   }}
-                  placeholder={t.inviteCodeSearchPlaceholder}
-                  className="pr-8"
-                />
-                {searchInput && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute right-1 top-1/2 h-6 w-6 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                    onClick={() => {
-                      setSearchInput("")
-                      setSearch("")
-                      setPage(1)
-                    }}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-              <Button variant="secondary" onClick={handleSearch} className="shrink-0">
-                {t.searchAction}
-              </Button>
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
             </div>
+            <Button variant="outline" onClick={handleSearch} className="shrink-0 gap-2">
+              <Search className="h-4 w-4" />
+              {t.searchAction}
+            </Button>
+          </div>
 
-            {/* 筛选行 */}
-            <div className="flex flex-wrap items-end gap-3">
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-medium text-muted-foreground">
-                  {t.inviteCodeUsageStatus || "使用状态"}
-                </label>
-                <Select
-                  value={statusFilter}
-                  onValueChange={(value) => {
-                    setStatusFilter(value)
-                    setPage(1)
-                  }}
-                >
-                  <SelectTrigger className="w-32">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">{t.inviteCodeStatusAll}</SelectItem>
-                    <SelectItem value="unused">{t.inviteCodeStatusUnused}</SelectItem>
-                    <SelectItem value="used">{t.inviteCodeStatusUsed}</SelectItem>
-                    <SelectItem value="expired">{t.inviteCodeStatusExpired}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-medium text-muted-foreground">
-                  {t.inviteCodeAssignmentStatus || "分配状态"}
-                </label>
-                <Select
-                  value={assignmentFilter}
-                  onValueChange={(value) => {
-                    setAssignmentFilter(value)
-                    setPage(1)
-                  }}
-                >
-                  <SelectTrigger className="w-32">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">{t.inviteCodeStatusAll}</SelectItem>
-                    <SelectItem value="unassigned">{t.inviteCodeStatusUnassigned}</SelectItem>
-                    <SelectItem value="assigned">{t.inviteCodeStatusAssigned}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-medium text-muted-foreground">
-                  {t.inviteCodeExpiringLabel || "即将过期"}
-                </label>
-                <Select
-                  value={expiringWithin}
-                  onValueChange={(value) => {
-                    setExpiringWithin(value)
-                    setPage(1)
-                  }}
-                >
-                  <SelectTrigger className="w-32">
-                    <SelectValue placeholder={t.inviteCodeExpiringAll} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">{t.inviteCodeExpiringAll}</SelectItem>
-                    <SelectItem value="2">{t.inviteCodeExpiring2h}</SelectItem>
-                    <SelectItem value="1">{t.inviteCodeExpiring1h}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-muted-foreground hover:text-foreground"
-                onClick={() => {
-                  setSearchInput("")
-                  setSearch("")
-                  setStatusFilter("unused")
-                  setAssignmentFilter("unassigned")
-                  setExpiringWithin("all")
+          {/* 筛选行 */}
+          <div className="flex flex-wrap items-end gap-3">
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-xs text-muted-foreground">
+                {t.inviteCodeUsageStatus || "使用状态"}
+              </Label>
+              <Select
+                value={statusFilter}
+                onValueChange={(value) => {
+                  setStatusFilter(value)
                   setPage(1)
                 }}
               >
-                {t.reset || "重置"}
-              </Button>
+                <SelectTrigger className="w-28">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t.inviteCodeStatusAll}</SelectItem>
+                  <SelectItem value="unused">{t.inviteCodeStatusUnused}</SelectItem>
+                  <SelectItem value="used">{t.inviteCodeStatusUsed}</SelectItem>
+                  <SelectItem value="expired">{t.inviteCodeStatusExpired}</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-          </div>
-        </Card>
-      </div>
 
-      {selectedIds.size > 0 && (
-        <Card className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="text-sm text-muted-foreground">
-            {t.queryTokenGenerateDesc?.replace("{count}", selectedIds.size.toString()) ||
-              `已选择 ${selectedIds.size} 个邀请码`}
-          </div>
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-            <div className="flex items-center gap-2">
-              <span className="text-sm">{t.queryTokenExpiry || "查询码有效期"}</span>
-              <Input
-                type="datetime-local"
-                value={queryTokenExpiry}
-                onChange={(e) => setQueryTokenExpiry(e.target.value)}
-                className="w-auto"
-              />
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-xs text-muted-foreground">
+                {t.inviteCodeAssignmentStatus || "分配状态"}
+              </Label>
+              <Select
+                value={assignmentFilter}
+                onValueChange={(value) => {
+                  setAssignmentFilter(value)
+                  setPage(1)
+                }}
+              >
+                <SelectTrigger className="w-28">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t.inviteCodeStatusAll}</SelectItem>
+                  <SelectItem value="unassigned">{t.inviteCodeStatusUnassigned}</SelectItem>
+                  <SelectItem value="assigned">{t.inviteCodeStatusAssigned}</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            <Button onClick={handleGenerateQueryToken} disabled={generatingToken}>
-              {generatingToken ? t.saving : t.queryTokenGenerate || "生成查询码"}
-            </Button>
+
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-xs text-muted-foreground">
+                {t.inviteCodeExpiringLabel || "即将过期"}
+              </Label>
+              <Select
+                value={expiringWithin}
+                onValueChange={(value) => {
+                  setExpiringWithin(value)
+                  setPage(1)
+                }}
+              >
+                <SelectTrigger className="w-28">
+                  <SelectValue placeholder={t.inviteCodeExpiringAll} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t.inviteCodeExpiringAll}</SelectItem>
+                  <SelectItem value="2">{t.inviteCodeExpiring2h}</SelectItem>
+                  <SelectItem value="1">{t.inviteCodeExpiring1h}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
             <Button
-              variant="destructive"
-              onClick={() => setBatchDeleteOpen(true)}
-              disabled={batchDeleting}
+              variant="ghost"
+              size="sm"
+              className="gap-1.5 text-muted-foreground hover:text-foreground"
+              onClick={() => {
+                setSearchInput("")
+                setSearch("")
+                setStatusFilter("unused")
+                setAssignmentFilter("unassigned")
+                setExpiringWithin("all")
+                setPage(1)
+              }}
             >
-              <Trash2 className="mr-2 h-4 w-4" />
-              {t.inviteCodeBatchDelete || "批量删除"}
+              <RotateCcw className="h-3.5 w-3.5" />
+              {t.reset || "重置"}
             </Button>
           </div>
-        </Card>
-      )}
+        </div>
+      </Card>
 
-      <DataTable
-        columns={columns}
-        data={records}
-        total={total}
-        page={page}
-        pageSize={pageSize}
-        onPageChange={setPage}
-        onPageSizeChange={setPageSize}
-        loading={loading}
-        emptyMessage={
-          <div className="flex flex-col items-center justify-center py-8">
-            <div className="rounded-full bg-muted p-4 mb-4">
-              <Ticket className="h-8 w-8 text-muted-foreground" />
-            </div>
-            <p className="text-muted-foreground font-medium">{t.inviteCodeNoRecords}</p>
-            <p className="text-sm text-muted-foreground/70 mt-1">
-              {t.inviteCodeNoRecordsHint || "尝试调整筛选条件或导入新的邀请码"}
-            </p>
-          </div>
-        }
-        loadingText={t.loading}
-        perPageText={t.perPage}
-        summaryFormatter={formatPageSummary}
-        selectable
-        selectedIds={selectedIds}
-        onSelectionChange={setSelectedIds}
-        isRowSelectable={isRowSelectable}
-        mobileCardRender={(record) => {
-          const status = getStatus(record)
-          return (
-            <Card className="p-3">
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-sm font-medium font-mono truncate">{record.code}</p>
-                <Badge className={cn("text-xs", status.className)}>{status.label}</Badge>
-              </div>
-              <div className="mt-2 flex items-center gap-2">
-                <span className="text-xs text-muted-foreground">{t.inviteExpiresAt}:</span>
-                {getExpiryBadge(record.expiresAt)}
-              </div>
-              {(record.preApplication || record.issuedToUser || record.issuedToEmail) && (
-                <div className="mt-1.5 text-xs text-muted-foreground truncate">
-                  {record.preApplication
-                    ? record.preApplication.user.name || record.preApplication.user.email
-                    : record.issuedToUser
-                      ? record.issuedToUser.name || record.issuedToUser.email
-                      : record.issuedToEmail}
+      {/* 批量操作栏 */}
+      <AnimatePresence>
+        {selectedIds.size > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+          >
+            <Card className="border-primary/50 bg-primary/5 p-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-2 text-sm">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                    {selectedIds.size}
+                  </div>
+                  <span className="text-muted-foreground">
+                    {t.queryTokenGenerateDesc?.replace("{count}", selectedIds.size.toString()) ||
+                      `已选择 ${selectedIds.size} 个邀请码`}
+                  </span>
                 </div>
-              )}
-              <div className="mt-2 grid gap-1.5 sm:grid-cols-3">
-                <Button
-                  size="sm"
-                  className="h-7 text-xs"
-                  variant="outline"
-                  onClick={() => updateUsage(record, !record.usedAt)}
-                >
-                  {record.usedAt ? t.inviteCodeMarkUnused : t.inviteCodeMarkUsed}
-                </Button>
-                <Button
-                  size="sm"
-                  className="h-7 text-xs"
-                  variant="outline"
-                  onClick={() => openIssueDialog(record)}
-                  disabled={!!record.usedAt || isExpired(record) || isIssued(record)}
-                >
-                  {t.inviteCodeIssue}
-                </Button>
-                <Button
-                  size="sm"
-                  className="h-7 text-xs"
-                  variant="outline"
-                  onClick={() => openInvalidate(record)}
-                  disabled={!!record.usedAt || isExpired(record)}
-                >
-                  {t.inviteCodeInvalidate}
-                </Button>
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex items-center gap-2">
+                    <Label className="text-sm whitespace-nowrap">
+                      {t.queryTokenExpiry || "查询码有效期"}
+                    </Label>
+                    <Input
+                      type="datetime-local"
+                      value={queryTokenExpiry}
+                      onChange={(e) => setQueryTokenExpiry(e.target.value)}
+                      className="w-auto"
+                    />
+                  </div>
+                  <Button
+                    onClick={handleGenerateQueryToken}
+                    disabled={generatingToken}
+                    className="gap-2"
+                  >
+                    {generatingToken ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                    {generatingToken ? t.saving : t.queryTokenGenerate || "生成查询码"}
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={() => setBatchDeleteOpen(true)}
+                    disabled={batchDeleting}
+                    className="gap-2"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    {t.inviteCodeBatchDelete || "批量删除"}
+                  </Button>
+                </div>
               </div>
             </Card>
-          )
-        }}
-      />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
+      {/* 数据表格 */}
+      <Card className="overflow-hidden">
+        <DataTable
+          columns={columns}
+          data={records}
+          total={total}
+          page={page}
+          pageSize={pageSize}
+          onPageChange={setPage}
+          onPageSizeChange={setPageSize}
+          onSort={handleSort}
+          loading={loading}
+          emptyMessage={
+            <div className="flex flex-col items-center justify-center py-12">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+                <Ticket className="h-8 w-8 text-muted-foreground" />
+              </div>
+              <p className="mt-4 font-medium text-muted-foreground">{t.inviteCodeNoRecords}</p>
+              <p className="mt-1 text-sm text-muted-foreground/70">
+                {t.inviteCodeNoRecordsHint || "尝试调整筛选条件或导入新的邀请码"}
+              </p>
+            </div>
+          }
+          loadingText={t.loading}
+          perPageText={t.perPage}
+          summaryFormatter={formatPageSummary}
+          selectable
+          selectedIds={selectedIds}
+          onSelectionChange={setSelectedIds}
+          isRowSelectable={isRowSelectable}
+          mobileCardRender={(record) => {
+            const status = getStatus(record)
+            return (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="rounded-xl border bg-card p-4 shadow-sm"
+              >
+                <div className="flex items-start gap-3">
+                  <div
+                    className={cn(
+                      "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg",
+                      record.usedAt
+                        ? "bg-slate-100 text-slate-500 dark:bg-slate-800"
+                        : isExpired(record)
+                          ? "bg-rose-100 text-rose-600 dark:bg-rose-900/30"
+                          : "bg-primary/10 text-primary",
+                    )}
+                  >
+                    <Key className="h-5 w-5" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="truncate text-sm font-medium font-mono">{record.code}</p>
+                      <Badge className={cn("shrink-0 text-xs", status.className)}>
+                        {status.label}
+                      </Badge>
+                    </div>
+                    <div className="mt-2 space-y-1 text-xs text-muted-foreground">
+                      <div className="flex items-center gap-1.5">
+                        <Clock className="h-3.5 w-3.5" />
+                        <span>
+                          {t.inviteExpiresAt}: {formatDateTime(record.expiresAt, locale)}
+                        </span>
+                      </div>
+                      {record.usedAt && (
+                        <div className="flex items-center gap-1.5">
+                          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+                          <span>{formatDateTime(record.usedAt, locale)}</span>
+                        </div>
+                      )}
+                    </div>
+                    {(record.preApplication || record.issuedToUser || record.issuedToEmail) && (
+                      <p className="mt-2 truncate text-xs text-muted-foreground">
+                        {record.preApplication
+                          ? record.preApplication.user.name || record.preApplication.user.email
+                          : record.issuedToUser
+                            ? record.issuedToUser.name || record.issuedToUser.email
+                            : record.issuedToEmail}
+                      </p>
+                    )}
+                    <div className="mt-3 flex flex-wrap gap-1.5">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 gap-1.5 text-xs"
+                        onClick={() => openIssueDialog(record)}
+                        disabled={!!record.usedAt || isExpired(record) || isIssued(record)}
+                      >
+                        <Send className="h-3 w-3" />
+                        {t.inviteCodeIssue}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 gap-1.5 text-xs"
+                        onClick={() => openInvalidate(record)}
+                        disabled={!!record.usedAt || isExpired(record)}
+                      >
+                        <ShieldOff className="h-3 w-3" />
+                        {t.inviteCodeInvalidate}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 gap-1.5 text-xs"
+                        onClick={() => updateUsage(record, !record.usedAt)}
+                      >
+                        <CheckCircle2 className="h-3 w-3" />
+                        {record.usedAt ? t.inviteCodeMarkUnused : t.inviteCodeMarkUsed}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )
+          }}
+        />
+      </Card>
+
+      {/* 发放对话框 */}
       <Dialog open={issueOpen} onOpenChange={setIssueOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{t.inviteCodeIssueTitle}</DialogTitle>
-            <DialogDescription>{t.inviteCodeIssueDesc}</DialogDescription>
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                <Send className="h-5 w-5" />
+              </div>
+              <div>
+                <DialogTitle>{t.inviteCodeIssueTitle}</DialogTitle>
+                <DialogDescription>{t.inviteCodeIssueDesc}</DialogDescription>
+              </div>
+            </div>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-4 pt-2">
             <div className="space-y-2">
               <Label>{t.inviteCodeIssueTargetType}</Label>
               <Select
@@ -1200,7 +1517,12 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
             <Button variant="outline" onClick={() => setIssueOpen(false)}>
               {t.cancel}
             </Button>
-            <Button onClick={handleIssue} disabled={issuing}>
+            <Button onClick={handleIssue} disabled={issuing} className="gap-2">
+              {issuing ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Send className="h-4 w-4" />
+              )}
               {issuing ? t.saving : t.inviteCodeIssueSubmit}
             </Button>
           </DialogFooter>
@@ -1227,16 +1549,27 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
       <Dialog open={queryTokenDialogOpen} onOpenChange={setQueryTokenDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{t.queryTokenResult || "查询码"}</DialogTitle>
-            <DialogDescription>
-              {t.queryTokenGenerateSuccess || "查询码已生成，请复制并发送给用户"}
-            </DialogDescription>
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600">
+                <Eye className="h-5 w-5" />
+              </div>
+              <div>
+                <DialogTitle>{t.queryTokenResult || "查询码"}</DialogTitle>
+                <DialogDescription>
+                  {t.queryTokenGenerateSuccess || "查询码已生成，请复制并发送给用户"}
+                </DialogDescription>
+              </div>
+            </div>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-4 pt-2">
             <div className="flex items-center gap-2">
               <Input value={generatedToken} readOnly className="flex-1 font-mono text-sm" />
               <Button variant="outline" size="icon" onClick={handleCopyToken}>
-                {tokenCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                {tokenCopied ? (
+                  <Check className="h-4 w-4 text-emerald-500" />
+                ) : (
+                  <Copy className="h-4 w-4" />
+                )}
               </Button>
             </div>
             <p className="text-sm text-muted-foreground">

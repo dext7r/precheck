@@ -10,13 +10,5 @@ export default async function AdminPreApplicationsPage({ params }: AdminPreAppli
   const { locale } = await params
   const dict = await getDictionary(locale)
 
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">{dict.admin.preApplications}</h1>
-        <p className="mt-1 text-muted-foreground">{dict.admin.preApplicationsDesc}</p>
-      </div>
-      <AdminPreApplicationsTable locale={locale} dict={dict} />
-    </div>
-  )
+  return <AdminPreApplicationsTable locale={locale} dict={dict} />
 }

@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { motion } from "framer-motion"
 import {
   Search,
   MoreHorizontal,
@@ -10,6 +11,7 @@ import {
   CheckCircle2,
   Trash2,
   X,
+  Users,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -25,6 +27,56 @@ import {
 import { ConfirmDialog } from "@/components/admin/confirm-dialog"
 import type { Dictionary } from "@/lib/i18n/get-dictionary"
 import type { Locale } from "@/lib/i18n/config"
+
+// 统计卡片组件
+function StatCard({
+  icon: Icon,
+  label,
+  value,
+  color = "primary",
+  active = false,
+  onClick,
+}: {
+  icon: React.ElementType
+  label: string
+  value: string | number
+  color?: "primary" | "success" | "warning" | "danger"
+  active?: boolean
+  onClick?: () => void
+}) {
+  const colorStyles = {
+    primary: "from-primary/20 to-primary/5 text-primary",
+    success: "from-emerald-500/20 to-emerald-500/5 text-emerald-600 dark:text-emerald-400",
+    warning: "from-amber-500/20 to-amber-500/5 text-amber-600 dark:text-amber-400",
+    danger: "from-rose-500/20 to-rose-500/5 text-rose-600 dark:text-rose-400",
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      onClick={onClick}
+      className={`relative overflow-hidden rounded-xl border bg-card p-4 ${
+        onClick ? "cursor-pointer transition-all hover:scale-[1.02] hover:shadow-md" : ""
+      } ${active ? "ring-2 ring-primary ring-offset-2" : ""}`}
+    >
+      <div className={`absolute inset-0 bg-gradient-to-br opacity-50 ${colorStyles[color]}`} />
+      <div className="relative flex items-center gap-4">
+        <div
+          className={`flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${colorStyles[color]}`}
+        >
+          <Icon className="h-6 w-6" />
+        </div>
+        <div>
+          <p className="text-sm text-muted-foreground">{label}</p>
+          <p className="text-2xl font-bold">
+            {typeof value === "number" ? value.toLocaleString() : value}
+          </p>
+        </div>
+      </div>
+    </motion.div>
+  )
+}
 
 interface AdminUser {
   id: string
@@ -44,6 +96,7 @@ export function AdminUsersTable({ locale, dict }: AdminUsersTableProps) {
   const t = dict.admin
   const [users, setUsers] = useState<AdminUser[]>([])
   const [total, setTotal] = useState(0)
+  const [stats, setStats] = useState({ total: 0, admins: 0, active: 0, banned: 0 })
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(20)
   const [loading, setLoading] = useState(true)
@@ -51,6 +104,8 @@ export function AdminUsersTable({ locale, dict }: AdminUsersTableProps) {
   const [searchInput, setSearchInput] = useState("")
   const [sortBy, setSortBy] = useState("createdAt")
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc")
+  const [roleFilter, setRoleFilter] = useState("all")
+  const [statusFilter, setStatusFilter] = useState("all")
   const [error, setError] = useState("")
   const [busyId, setBusyId] = useState<string | null>(null)
   const [confirming, setConfirming] = useState(false)
@@ -85,6 +140,8 @@ export function AdminUsersTable({ locale, dict }: AdminUsersTableProps) {
         sortBy,
         sortOrder,
         ...(search && { search }),
+        ...(roleFilter !== "all" && { role: roleFilter }),
+        ...(statusFilter !== "all" && { status: statusFilter }),
       })
       const res = await fetch(`/api/admin/users?${params}`)
       if (!res.ok) {
@@ -93,6 +150,9 @@ export function AdminUsersTable({ locale, dict }: AdminUsersTableProps) {
       const data = await res.json()
       setUsers(data.users || [])
       setTotal(data.total || 0)
+      if (data.stats) {
+        setStats(data.stats)
+      }
     } catch (fetchError) {
       console.error("Admin users fetch error:", fetchError)
       setError(t.fetchFailed)
@@ -107,7 +167,7 @@ export function AdminUsersTable({ locale, dict }: AdminUsersTableProps) {
 
   useEffect(() => {
     fetchUsers()
-  }, [page, pageSize, search, sortBy, sortOrder])
+  }, [page, pageSize, search, sortBy, sortOrder, roleFilter, statusFilter])
 
   const handleSearch = () => {
     setSearch(searchInput)
@@ -349,7 +409,60 @@ export function AdminUsersTable({ locale, dict }: AdminUsersTableProps) {
   ]
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
+      {/* 统计卡片 */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard
+          icon={Users}
+          label={t.totalUsers || "总用户"}
+          value={stats.total}
+          color="primary"
+          active={roleFilter === "all" && statusFilter === "all"}
+          onClick={() => {
+            setRoleFilter("all")
+            setStatusFilter("all")
+            setPage(1)
+          }}
+        />
+        <StatCard
+          icon={Shield}
+          label={t.adminUsers || "管理员"}
+          value={stats.admins}
+          color="warning"
+          active={roleFilter === "ADMIN"}
+          onClick={() => {
+            setRoleFilter("ADMIN")
+            setStatusFilter("all")
+            setPage(1)
+          }}
+        />
+        <StatCard
+          icon={CheckCircle2}
+          label={t.activeUsers || "活跃用户"}
+          value={stats.active}
+          color="success"
+          active={statusFilter === "ACTIVE"}
+          onClick={() => {
+            setRoleFilter("all")
+            setStatusFilter("ACTIVE")
+            setPage(1)
+          }}
+        />
+        <StatCard
+          icon={Ban}
+          label={t.bannedUsers || "已禁用"}
+          value={stats.banned}
+          color="danger"
+          active={statusFilter === "BANNED"}
+          onClick={() => {
+            setRoleFilter("all")
+            setStatusFilter("BANNED")
+            setPage(1)
+          }}
+        />
+      </div>
+
+      {/* 搜索栏 */}
       <div className="flex items-center gap-2">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />

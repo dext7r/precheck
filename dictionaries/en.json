@@ -424,6 +424,12 @@
       "confirmPassword": "Confirm Password",
       "confirmPasswordPlaceholder": "Confirm your password",
       "terms": "I agree to the Terms of Service and Privacy Policy",
+      "termsAgreement": {
+        "prefix": "I agree to the ",
+        "terms": "Terms of Service",
+        "middle": " and ",
+        "privacy": "Privacy Policy"
+      },
       "submit": "Create account",
       "submitting": "Creating account...",
       "hasAccount": "Already have an account?",
@@ -886,6 +892,8 @@
     "analytics": "Analytics",
     "totalUsers": "Total Users",
     "activeUsers": "Active Users",
+    "adminUsers": "Admins",
+    "bannedUsers": "Banned",
     "newUsers": "New Users (30d)",
     "totalPosts": "Total Posts",
     "userManagement": "User Management",
@@ -1034,8 +1042,11 @@
     "inviteCodeImporting": "Importing...",
     "inviteCodeImportEmpty": "No valid invite codes found",
     "inviteCodeImportMatched": "Matched {count} codes",
+    "inviteCodeImportMatchedLabel": "Matched",
     "inviteCodeImportInvalid": "{count} invalid lines",
+    "inviteCodeImportInvalidLabel": "Invalid",
     "inviteCodeImportDuplicates": "{count} duplicates ignored",
+    "inviteCodeImportDuplicatesLabel": "Duplicates",
     "inviteCodeImportSuccess": "Imported {created}, skipped {skipped} existing",
     "inviteCodeSelectHint": "Only unassigned and unexpired invite codes are shown",
     "inviteCodeSelectNoExpiry": "No expiry",
@@ -1074,6 +1085,7 @@
     "queryTokenResult": "Query Link",
     "queryTokenSelectHint": "Users can click this link to view invite codes directly",
     "noPreApplications": "No pre-applications",
+    "noPreApplicationsHint": "No pre-application records found",
     "ban": "Ban",
     "role": "Role",
     "status": "Status",
@@ -1315,6 +1327,12 @@
     "emailLogSearchPlaceholder": "Search recipient/subject...",
     "emailLogEmpty": "No email logs",
     "emailLogContent": "Email Content",
+    "emailResend": "Resend",
+    "emailResendSelected": "Resend ({count})",
+    "emailResendSuccess": "Resent {count} email(s)",
+    "emailResendFailed": "Failed to resend emails",
+    "emailResendSummary": "Resend completed: {success} success, {failed} failed",
+    "fullscreen": "Fullscreen",
     "myReviewedCount": "My Reviews",
     "othersReviewedCount": "Other Admins",
     "totalReviewedCount": "Total Reviews",
@@ -1528,7 +1546,12 @@
       "title": "Ready to Join linux.do?",
       "subtitle": "Submit your pre-application now and start your open-source journey",
       "applyButton": "Apply Now",
-      "queryButton": "Check Status"
+      "queryButton": "Check Status",
+      "trustIndicators": {
+        "fastReview": "Fast Review",
+        "transparent": "Transparent Process",
+        "friendly": "Friendly Community"
+      }
     }
   }
 }

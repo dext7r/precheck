@@ -77,30 +77,76 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const [records, total] = await Promise.all([
-      db.inviteCode.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy: { createdAt: "desc" },
-        include: {
-          preApplication: {
-            select: {
-              id: true,
-              registerEmail: true,
-              user: { select: { id: true, name: true, email: true } },
-            },
-          },
-          assignedBy: { select: { id: true, name: true, email: true } },
-          usedBy: { select: { id: true, name: true, email: true } },
-          createdBy: { select: { id: true, name: true, email: true } },
-          issuedToUser: { select: { id: true, name: true, email: true } },
-        },
-      }),
-      db.inviteCode.count({ where }),
-    ])
+    // 计算2小时内过期的时间点
+    const twoHoursLater = new Date(now.getTime() + 2 * 60 * 60 * 1000)
 
-    return NextResponse.json({ records, total, page, limit })
+    const [records, total, unusedCount, usedCount, expiredCount, expiringSoonCount] =
+      await Promise.all([
+        db.inviteCode.findMany({
+          where,
+          skip,
+          take: limit,
+          orderBy: { createdAt: "desc" },
+          include: {
+            preApplication: {
+              select: {
+                id: true,
+                registerEmail: true,
+                user: { select: { id: true, name: true, email: true } },
+              },
+            },
+            assignedBy: { select: { id: true, name: true, email: true } },
+            usedBy: { select: { id: true, name: true, email: true } },
+            createdBy: { select: { id: true, name: true, email: true } },
+            issuedToUser: { select: { id: true, name: true, email: true } },
+          },
+        }),
+        db.inviteCode.count({ where }),
+        // 未使用且未过期
+        db.inviteCode.count({
+          where: {
+            deletedAt: null,
+            usedAt: null,
+            OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
+          },
+        }),
+        // 已使用
+        db.inviteCode.count({
+          where: {
+            deletedAt: null,
+            usedAt: { not: null },
+          },
+        }),
+        // 已过期（未使用）
+        db.inviteCode.count({
+          where: {
+            deletedAt: null,
+            usedAt: null,
+            expiresAt: { not: null, lte: now },
+          },
+        }),
+        // 即将过期（2小时内，未使用）
+        db.inviteCode.count({
+          where: {
+            deletedAt: null,
+            usedAt: null,
+            expiresAt: { gt: now, lte: twoHoursLater },
+          },
+        }),
+      ])
+
+    return NextResponse.json({
+      records,
+      total,
+      page,
+      limit,
+      stats: {
+        unused: unusedCount,
+        used: usedCount,
+        expired: expiredCount,
+        expiringSoon: expiringSoonCount,
+      },
+    })
   } catch (error) {
     console.error("Invite codes fetch error:", error)
     return createApiErrorResponse(request, ApiErrorKeys.admin.inviteCodes.failedToFetch, {

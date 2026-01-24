@@ -10,13 +10,5 @@ export default async function AdminInviteCodesPage({ params }: AdminInviteCodesP
   const { locale } = await params
   const dict = await getDictionary(locale)
 
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">{dict.admin.inviteCodes}</h1>
-        <p className="mt-1 text-muted-foreground">{dict.admin.inviteCodesDesc}</p>
-      </div>
-      <AdminInviteCodesManager locale={locale} dict={dict} />
-    </div>
-  )
+  return <AdminInviteCodesManager locale={locale} dict={dict} />
 }

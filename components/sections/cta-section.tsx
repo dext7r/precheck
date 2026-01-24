@@ -13,7 +13,7 @@ interface CTASectionProps {
 }
 
 export function CTASection({ dict, locale }: CTASectionProps) {
-  const { title, subtitle, applyButton, queryButton } = dict.homepage.cta
+  const { title, subtitle, applyButton, queryButton, trustIndicators } = dict.homepage.cta
 
   return (
     <section className="relative py-20 px-4 sm:px-6 lg:px-8 overflow-hidden">
@@ -70,15 +70,15 @@ export function CTASection({ dict, locale }: CTASectionProps) {
         >
           <div className="flex items-center gap-2">
             <div className="h-2 w-2 rounded-full bg-green-500" />
-            <span>快速审核</span>
+            <span>{trustIndicators.fastReview}</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="h-2 w-2 rounded-full bg-blue-500" />
-            <span>透明流程</span>
+            <span>{trustIndicators.transparent}</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="h-2 w-2 rounded-full bg-purple-500" />
-            <span>友好社区</span>
+            <span>{trustIndicators.friendly}</span>
           </div>
         </motion.div>
       </div>

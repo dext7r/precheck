@@ -1,11 +1,12 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
+import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { DataTable, type Column } from "@/components/ui/data-table"
 import { Input } from "@/components/ui/input"
-import { X } from "lucide-react"
+import { X, Shield, User, FileText, Key, Activity } from "lucide-react"
 import {
   Select,
   SelectContent,
@@ -91,6 +92,56 @@ const actionTypeOptions = [
   "SYSTEM_CONFIG_UPDATE",
 ]
 
+function StatCard({
+  icon: Icon,
+  label,
+  value,
+  color = "primary",
+  active = false,
+  onClick,
+}: {
+  icon: React.ElementType
+  label: string
+  value: string | number
+  color?: "primary" | "success" | "warning" | "danger" | "info"
+  active?: boolean
+  onClick?: () => void
+}) {
+  const colorStyles = {
+    primary: "from-primary/20 to-primary/5 text-primary",
+    success: "from-emerald-500/20 to-emerald-500/5 text-emerald-600 dark:text-emerald-400",
+    warning: "from-amber-500/20 to-amber-500/5 text-amber-600 dark:text-amber-400",
+    danger: "from-rose-500/20 to-rose-500/5 text-rose-600 dark:text-rose-400",
+    info: "from-blue-500/20 to-blue-500/5 text-blue-600 dark:text-blue-400",
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      onClick={onClick}
+      className={`relative overflow-hidden rounded-xl border bg-card p-4 ${
+        onClick ? "cursor-pointer transition-all hover:scale-[1.02] hover:shadow-md" : ""
+      } ${active ? "ring-2 ring-primary ring-offset-2" : ""}`}
+    >
+      <div className={`absolute inset-0 bg-gradient-to-br opacity-50 ${colorStyles[color]}`} />
+      <div className="relative flex items-center gap-4">
+        <div
+          className={`flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${colorStyles[color]}`}
+        >
+          <Icon className="h-6 w-6" />
+        </div>
+        <div>
+          <p className="text-sm text-muted-foreground">{label}</p>
+          <p className="text-2xl font-bold">
+            {typeof value === "number" ? value.toLocaleString() : value}
+          </p>
+        </div>
+      </div>
+    </motion.div>
+  )
+}
+
 export function AdminAuditLogsTable({ locale, dict }: AdminAuditLogsTableProps) {
   const t = dict.admin
   const [records, setRecords] = useState<AuditLogRecord[]>([])
@@ -104,6 +155,7 @@ export function AdminAuditLogsTable({ locale, dict }: AdminAuditLogsTableProps) 
   const [actionType, setActionType] = useState("ALL")
   const [selected, setSelected] = useState<AuditLogRecord | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [stats, setStats] = useState({ total: 0, auth: 0, user: 0, preApp: 0, invite: 0 })
 
   const fetchLogs = async () => {
     setLoading(true)
@@ -122,6 +174,9 @@ export function AdminAuditLogsTable({ locale, dict }: AdminAuditLogsTableProps) 
       const data = await res.json()
       setRecords(data.records || [])
       setTotal(data.total || 0)
+      if (data.stats) {
+        setStats(data.stats)
+      }
     } catch (error) {
       console.error("Audit logs fetch error:", error)
     } finally {
@@ -219,6 +274,54 @@ export function AdminAuditLogsTable({ locale, dict }: AdminAuditLogsTableProps) 
 
   return (
     <div className="space-y-4">
+      {/* 统计卡片 */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard
+          icon={Activity}
+          label="全部"
+          value={stats.total}
+          color="primary"
+          active={entityType === "ALL"}
+          onClick={() => {
+            setEntityType("ALL")
+            setPage(1)
+          }}
+        />
+        <StatCard
+          icon={Shield}
+          label="认证"
+          value={stats.auth}
+          color="info"
+          active={entityType === "AUTH"}
+          onClick={() => {
+            setEntityType("AUTH")
+            setPage(1)
+          }}
+        />
+        <StatCard
+          icon={User}
+          label="用户"
+          value={stats.user}
+          color="success"
+          active={entityType === "USER"}
+          onClick={() => {
+            setEntityType("USER")
+            setPage(1)
+          }}
+        />
+        <StatCard
+          icon={FileText}
+          label="预申请"
+          value={stats.preApp}
+          color="warning"
+          active={entityType === "PRE_APPLICATION"}
+          onClick={() => {
+            setEntityType("PRE_APPLICATION")
+            setPage(1)
+          }}
+        />
+      </div>
+
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div className="flex flex-1 flex-col gap-2 md:flex-row md:items-center">
           <div className="relative md:w-72">
@@ -310,46 +413,48 @@ export function AdminAuditLogsTable({ locale, dict }: AdminAuditLogsTableProps) 
         </div>
       </div>
 
-      <DataTable
-        columns={columns}
-        data={records}
-        total={total}
-        page={page}
-        pageSize={pageSize}
-        onPageChange={setPage}
-        onPageSizeChange={setPageSize}
-        loading={loading}
-        emptyMessage={t.auditEmpty}
-        loadingText={t.loading}
-        perPageText={t.perPage}
-        summaryFormatter={formatPageSummary}
-        mobileCardRender={(record) => (
-          <Card className="p-4">
-            <div className="space-y-2">
-              <p className="text-sm font-medium">{record.action}</p>
-              <p className="text-xs text-muted-foreground">
-                {record.entityType} · {record.entityId || "-"}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {record.actorName || record.actorEmail || "-"}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {new Date(record.createdAt).toLocaleString(locale)}
-              </p>
-            </div>
-            <Button
-              className="mt-3 w-full"
-              variant="outline"
-              onClick={() => {
-                setSelected(record)
-                setDrawerOpen(true)
-              }}
-            >
-              {t.auditView}
-            </Button>
-          </Card>
-        )}
-      />
+      <Card className="overflow-hidden">
+        <DataTable
+          columns={columns}
+          data={records}
+          total={total}
+          page={page}
+          pageSize={pageSize}
+          onPageChange={setPage}
+          onPageSizeChange={setPageSize}
+          loading={loading}
+          emptyMessage={t.auditEmpty}
+          loadingText={t.loading}
+          perPageText={t.perPage}
+          summaryFormatter={formatPageSummary}
+          mobileCardRender={(record) => (
+            <Card className="p-4">
+              <div className="space-y-2">
+                <p className="text-sm font-medium">{record.action}</p>
+                <p className="text-xs text-muted-foreground">
+                  {record.entityType} · {record.entityId || "-"}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {record.actorName || record.actorEmail || "-"}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {new Date(record.createdAt).toLocaleString(locale)}
+                </p>
+              </div>
+              <Button
+                className="mt-3 w-full"
+                variant="outline"
+                onClick={() => {
+                  setSelected(record)
+                  setDrawerOpen(true)
+                }}
+              >
+                {t.auditView}
+              </Button>
+            </Card>
+          )}
+        />
+      </Card>
 
       <Drawer open={drawerOpen} onOpenChange={setDrawerOpen} direction="right">
         <DrawerContent className="h-full data-[vaul-drawer-direction=right]:w-[92vw] data-[vaul-drawer-direction=right]:sm:max-w-3xl">

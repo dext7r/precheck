@@ -425,6 +425,12 @@
       "confirmPassword": "确认密码",
       "confirmPasswordPlaceholder": "确认您的密码",
       "terms": "我同意服务条款和隐私政策",
+      "termsAgreement": {
+        "prefix": "我同意",
+        "terms": "服务条款",
+        "middle": "和",
+        "privacy": "隐私政策"
+      },
       "submit": "创建账户",
       "submitting": "创建中...",
       "hasAccount": "已有账户？",
@@ -882,6 +888,8 @@
     "analytics": "分析",
     "totalUsers": "总用户数",
     "activeUsers": "活跃用户",
+    "adminUsers": "管理员",
+    "bannedUsers": "已禁用",
     "newUsers": "新用户 (30天)",
     "totalPosts": "总文章数",
     "userManagement": "用户管理",
@@ -1030,8 +1038,11 @@
     "inviteCodeImporting": "导入中...",
     "inviteCodeImportEmpty": "未识别到有效邀请码",
     "inviteCodeImportMatched": "已识别 {count} 个邀请码",
+    "inviteCodeImportMatchedLabel": "已识别",
     "inviteCodeImportInvalid": "{count} 行无法识别",
+    "inviteCodeImportInvalidLabel": "无效",
     "inviteCodeImportDuplicates": "{count} 个重复已忽略",
+    "inviteCodeImportDuplicatesLabel": "重复",
     "inviteCodeImportSuccess": "已导入 {created} 个，{skipped} 个已存在",
     "inviteCodeSelectHint": "仅展示未分配且未过期的邀请码",
     "inviteCodeSelectNoExpiry": "无有效期",
@@ -1070,6 +1081,7 @@
     "queryTokenResult": "查询链接",
     "queryTokenSelectHint": "用户可直接点击此链接查看邀请码",
     "noPreApplications": "暂无预申请",
+    "noPreApplicationsHint": "暂无预申请记录",
     "ban": "封禁",
     "role": "角色",
     "status": "状态",
@@ -1311,6 +1323,12 @@
     "emailLogSearchPlaceholder": "搜索收件人/主题...",
     "emailLogEmpty": "暂无邮件日志",
     "emailLogContent": "邮件正文",
+    "emailResend": "重发",
+    "emailResendSelected": "重发 ({count})",
+    "emailResendSuccess": "成功重发 {count} 封邮件",
+    "emailResendFailed": "邮件重发失败",
+    "emailResendSummary": "重发完成：{success} 成功，{failed} 失败",
+    "fullscreen": "全屏",
     "myReviewedCount": "我审核的数量",
     "othersReviewedCount": "其他管理员审核",
     "totalReviewedCount": "总审核数量",
@@ -1524,7 +1542,12 @@
       "title": "准备好加入 linux.do 了吗？",
       "subtitle": "立即提交预申请，开启你的开源技术之旅",
       "applyButton": "立即申请",
-      "queryButton": "查询进度"
+      "queryButton": "查询进度",
+      "trustIndicators": {
+        "fastReview": "快速审核",
+        "transparent": "透明流程",
+        "friendly": "友好社区"
+      }
     }
   }
 }

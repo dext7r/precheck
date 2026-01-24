@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
       ]
     }
 
-    const [records, total] = await Promise.all([
+    const [records, total, authCount, userCount, preAppCount, inviteCount] = await Promise.all([
       db.auditLog.findMany({
         where,
         skip,
@@ -55,9 +55,21 @@ export async function GET(request: NextRequest) {
         orderBy: { createdAt: "desc" },
       }),
       db.auditLog.count({ where }),
+      db.auditLog.count({ where: { entityType: "AUTH" } }),
+      db.auditLog.count({ where: { entityType: "USER" } }),
+      db.auditLog.count({ where: { entityType: "PRE_APPLICATION" } }),
+      db.auditLog.count({ where: { entityType: "INVITE_CODE" } }),
     ])
 
-    return NextResponse.json({ records, total, page, limit })
+    const stats = {
+      total: authCount + userCount + preAppCount + inviteCount,
+      auth: authCount,
+      user: userCount,
+      preApp: preAppCount,
+      invite: inviteCount,
+    }
+
+    return NextResponse.json({ records, total, page, limit, stats })
   } catch (error) {
     console.error("Audit logs fetch error:", error)
     return createApiErrorResponse(request, "apiErrors.admin.auditLogs.failed", { status: 500 })

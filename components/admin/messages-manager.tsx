@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { z } from "zod"
+import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -29,6 +30,21 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { toast } from "sonner"
 import { RichTextEditor } from "@/components/posts/rich-text-editor"
 import { PostContent } from "@/components/posts/post-content"
+import {
+  Mail,
+  Send,
+  Users,
+  Eye,
+  Search,
+  Plus,
+  Pencil,
+  Ban,
+  CheckCircle2,
+  XCircle,
+  Clock,
+  MailOpen,
+  Loader2,
+} from "lucide-react"
 import type { Dictionary } from "@/lib/i18n/get-dictionary"
 import type { Locale } from "@/lib/i18n/config"
 
@@ -65,6 +81,100 @@ const createMessageSchema = z.object({
   recipientUserIds: z.array(z.string()).optional(),
 })
 
+// 阅读率进度环组件
+function ReadRateRing({ rate, size = 36 }: { rate: number; size?: number }) {
+  const strokeWidth = 3
+  const radius = (size - strokeWidth) / 2
+  const circumference = radius * 2 * Math.PI
+  const offset = circumference - (rate / 100) * circumference
+
+  return (
+    <div className="relative" style={{ width: size, height: size }}>
+      <svg className="-rotate-90" width={size} height={size}>
+        <circle
+          className="text-muted/30"
+          strokeWidth={strokeWidth}
+          stroke="currentColor"
+          fill="transparent"
+          r={radius}
+          cx={size / 2}
+          cy={size / 2}
+        />
+        <motion.circle
+          className="text-primary"
+          strokeWidth={strokeWidth}
+          strokeLinecap="round"
+          stroke="currentColor"
+          fill="transparent"
+          r={radius}
+          cx={size / 2}
+          cy={size / 2}
+          initial={{ strokeDashoffset: circumference }}
+          animate={{ strokeDashoffset: offset }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          style={{
+            strokeDasharray: circumference,
+          }}
+        />
+      </svg>
+      <div className="absolute inset-0 flex items-center justify-center">
+        <span className="text-[10px] font-semibold text-muted-foreground">{rate}%</span>
+      </div>
+    </div>
+  )
+}
+
+// 统计卡片组件
+function StatCard({
+  icon: Icon,
+  label,
+  value,
+  trend,
+  color = "primary",
+  active = false,
+  onClick,
+}: {
+  icon: React.ElementType
+  label: string
+  value: string | number
+  trend?: string
+  color?: "primary" | "success" | "warning" | "info"
+  active?: boolean
+  onClick?: () => void
+}) {
+  const colorStyles = {
+    primary: "from-primary/20 to-primary/5 text-primary",
+    success: "from-emerald-500/20 to-emerald-500/5 text-emerald-600 dark:text-emerald-400",
+    warning: "from-amber-500/20 to-amber-500/5 text-amber-600 dark:text-amber-400",
+    info: "from-blue-500/20 to-blue-500/5 text-blue-600 dark:text-blue-400",
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      onClick={onClick}
+      className={`relative overflow-hidden rounded-xl border bg-card p-4 ${
+        onClick ? "cursor-pointer transition-all hover:scale-[1.02] hover:shadow-md" : ""
+      } ${active ? "ring-2 ring-primary ring-offset-2" : ""}`}
+    >
+      <div className={`absolute inset-0 bg-gradient-to-br opacity-50 ${colorStyles[color]}`} />
+      <div className="relative flex items-center gap-4">
+        <div
+          className={`flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${colorStyles[color]}`}
+        >
+          <Icon className="h-6 w-6" />
+        </div>
+        <div>
+          <p className="text-sm text-muted-foreground">{label}</p>
+          <p className="text-2xl font-bold">{value.toLocaleString()}</p>
+          {trend && <p className="text-xs text-muted-foreground">{trend}</p>}
+        </div>
+      </div>
+    </motion.div>
+  )
+}
+
 export function AdminMessagesManager({ locale, dict }: AdminMessagesManagerProps) {
   const t = dict.admin
   const [messages, setMessages] = useState<AdminMessageItem[]>([])
@@ -74,6 +184,7 @@ export function AdminMessagesManager({ locale, dict }: AdminMessagesManagerProps
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
   const [searchInput, setSearchInput] = useState("")
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "revoked">("all")
 
   const [formOpen, setFormOpen] = useState(false)
   const [previewOpen, setPreviewOpen] = useState(false)
@@ -106,6 +217,14 @@ export function AdminMessagesManager({ locale, dict }: AdminMessagesManagerProps
 
   const selectedUserIds = useMemo(() => new Set(formData.recipientUserIds), [formData])
 
+  // 使用 API 返回的全局统计数据
+  const [stats, setStats] = useState({
+    totalRecipients: 0,
+    totalReads: 0,
+    activeMessages: 0,
+    revokedMessages: 0,
+  })
+
   const resetForm = () => {
     setFormData({
       title: "",
@@ -132,12 +251,16 @@ export function AdminMessagesManager({ locale, dict }: AdminMessagesManagerProps
         page: page.toString(),
         limit: pageSize.toString(),
         ...(search && { search }),
+        ...(statusFilter !== "all" && { status: statusFilter }),
       })
       const res = await fetch(`/api/admin/messages?${params}`)
       if (!res.ok) throw new Error("Failed to fetch messages")
       const data = await res.json()
       setMessages(data.messages || [])
       setTotal(data.total || 0)
+      if (data.stats) {
+        setStats(data.stats)
+      }
     } catch (error) {
       console.error("Admin messages fetch error:", error)
     } finally {
@@ -170,7 +293,8 @@ export function AdminMessagesManager({ locale, dict }: AdminMessagesManagerProps
 
   useEffect(() => {
     fetchMessages()
-  }, [page, pageSize, search])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, pageSize, search, statusFilter])
 
   useEffect(() => {
     if (formOpen && formData.recipientMode === "users") {
@@ -178,6 +302,7 @@ export function AdminMessagesManager({ locale, dict }: AdminMessagesManagerProps
       setUserPage(1)
       fetchUsers({ reset: true })
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formOpen, formData.recipientMode])
 
   const handleSearch = () => {
@@ -316,77 +441,125 @@ export function AdminMessagesManager({ locale, dict }: AdminMessagesManagerProps
       key: "title",
       label: t.messageTitle,
       render: (item) => (
-        <div className="space-y-1">
-          <span className="font-medium line-clamp-1">{item.title}</span>
-          <span className="text-xs text-muted-foreground">
-            {item.createdBy.name || item.createdBy.email}
-          </span>
+        <div className="flex items-center gap-3">
+          <div
+            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${
+              item.revokedAt ? "bg-destructive/10 text-destructive" : "bg-primary/10 text-primary"
+            }`}
+          >
+            {item.revokedAt ? <XCircle className="h-5 w-5" /> : <Mail className="h-5 w-5" />}
+          </div>
+          <div className="min-w-0">
+            <p className="truncate font-medium">{item.title}</p>
+            <p className="truncate text-xs text-muted-foreground">
+              {item.createdBy.name || item.createdBy.email}
+            </p>
+          </div>
         </div>
       ),
     },
     {
       key: "recipients",
       label: t.recipients,
-      width: "12%",
+      width: "10%",
       render: (item) => (
-        <span className="text-muted-foreground">{item.recipientCount.toLocaleString()}</span>
+        <div className="flex items-center gap-2">
+          <Users className="h-4 w-4 text-muted-foreground" />
+          <span className="font-medium">{item.recipientCount.toLocaleString()}</span>
+        </div>
       ),
     },
     {
       key: "reads",
       label: t.readCount,
       width: "12%",
-      render: (item) => (
-        <span className="text-muted-foreground">{item.readCount.toLocaleString()}</span>
-      ),
+      render: (item) => {
+        const rate =
+          item.recipientCount > 0 ? Math.round((item.readCount / item.recipientCount) * 100) : 0
+        return (
+          <div className="flex items-center gap-3">
+            <ReadRateRing rate={rate} />
+            <div className="text-sm">
+              <span className="font-medium">{item.readCount.toLocaleString()}</span>
+              <span className="text-muted-foreground">/{item.recipientCount}</span>
+            </div>
+          </div>
+        )
+      },
     },
     {
       key: "status",
       label: t.status,
-      width: "12%",
+      width: "10%",
       render: (item) => (
-        <span
-          className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-            item.revokedAt ? "bg-destructive/10 text-destructive" : "bg-muted text-muted-foreground"
+        <div
+          className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${
+            item.revokedAt
+              ? "bg-destructive/10 text-destructive"
+              : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
           }`}
         >
-          {item.revokedAt ? t.revoked : t.active}
-        </span>
+          {item.revokedAt ? (
+            <>
+              <XCircle className="h-3 w-3" />
+              {t.revoked}
+            </>
+          ) : (
+            <>
+              <CheckCircle2 className="h-3 w-3" />
+              {t.active}
+            </>
+          )}
+        </div>
       ),
     },
     {
       key: "createdAt",
       label: t.createdAt,
-      width: "18%",
+      width: "14%",
       render: (item) => (
-        <span className="text-muted-foreground">
-          {new Date(item.createdAt).toLocaleDateString(locale)}
-        </span>
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <Clock className="h-4 w-4" />
+          <span className="text-sm">{new Date(item.createdAt).toLocaleDateString(locale)}</span>
+        </div>
       ),
     },
     {
       key: "actions",
       label: t.actions,
-      width: "18%",
+      width: "16%",
       render: (item) => (
-        <div className="flex flex-wrap gap-2">
-          <Button type="button" size="sm" variant="outline" onClick={() => openPreview(item.id)}>
-            {t.preview}
-          </Button>
-          <Button type="button" size="sm" variant="outline" onClick={() => openEdit(item.id)}>
-            {t.edit}
+        <div className="flex items-center gap-1">
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            className="h-8 w-8 p-0"
+            onClick={() => openPreview(item.id)}
+          >
+            <Eye className="h-4 w-4" />
           </Button>
           <Button
             type="button"
             size="sm"
-            variant="destructive"
+            variant="ghost"
+            className="h-8 w-8 p-0"
+            onClick={() => openEdit(item.id)}
+          >
+            <Pencil className="h-4 w-4" />
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10 hover:text-destructive"
             disabled={!!item.revokedAt}
             onClick={() => {
               setRevokeTargetId(item.id)
               setConfirmRevokeOpen(true)
             }}
           >
-            {t.revoke}
+            <Ban className="h-4 w-4" />
           </Button>
         </div>
       ),
@@ -401,29 +574,82 @@ export function AdminMessagesManager({ locale, dict }: AdminMessagesManagerProps
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-3xl font-bold">{t.messages}</h1>
-          <p className="mt-1 text-muted-foreground">{t.messagesDesc}</p>
+      {/* 页面头部 */}
+      <div className="relative overflow-hidden rounded-2xl border bg-gradient-to-br from-primary/5 via-background to-primary/10 p-6">
+        <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-primary/10 blur-3xl" />
+        <div className="absolute -bottom-20 -left-20 h-64 w-64 rounded-full bg-primary/5 blur-3xl" />
+        <div className="relative flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-lg shadow-primary/25">
+              <Mail className="h-7 w-7" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold md:text-3xl">{t.messages}</h1>
+              <p className="text-muted-foreground">{t.messagesDesc}</p>
+            </div>
+          </div>
+          <Button
+            type="button"
+            onClick={openCreate}
+            className="gap-2 shadow-lg shadow-primary/25 transition-all hover:shadow-xl hover:shadow-primary/30"
+          >
+            <Plus className="h-4 w-4" />
+            {t.sendMessage}
+          </Button>
         </div>
-        <Button type="button" onClick={openCreate}>
-          {t.sendMessage}
-        </Button>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
-        <Input
-          value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
-          placeholder={t.searchMessages}
-          className="w-64"
+      {/* 统计卡片 */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard
+          icon={Send}
+          label={t.messages}
+          value={total}
+          color="primary"
+          active={statusFilter === "all"}
+          onClick={() => {
+            setStatusFilter("all")
+            setPage(1)
+          }}
         />
-        <Button type="button" variant="outline" onClick={handleSearch}>
-          {t.searchAction}
-        </Button>
+        <StatCard icon={Users} label={t.recipients} value={stats.totalRecipients} color="info" />
+        <StatCard icon={MailOpen} label={t.readCount} value={stats.totalReads} color="success" />
+        <StatCard
+          icon={CheckCircle2}
+          label={t.active}
+          value={stats.activeMessages}
+          trend={stats.revokedMessages > 0 ? `${stats.revokedMessages} ${t.revoked}` : undefined}
+          color="warning"
+          active={statusFilter === "active"}
+          onClick={() => {
+            setStatusFilter("active")
+            setPage(1)
+          }}
+        />
       </div>
 
+      {/* 搜索栏 */}
       <Card className="p-4">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="relative flex-1 min-w-[200px] max-w-md">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+              placeholder={t.searchMessages}
+              className="pl-9"
+            />
+          </div>
+          <Button type="button" variant="outline" onClick={handleSearch} className="gap-2">
+            <Search className="h-4 w-4" />
+            {t.searchAction}
+          </Button>
+        </div>
+      </Card>
+
+      {/* 消息列表 */}
+      <Card className="overflow-hidden">
         <DataTable
           columns={columns}
           data={messages}
@@ -441,95 +667,153 @@ export function AdminMessagesManager({ locale, dict }: AdminMessagesManagerProps
           perPageText={t.perPage}
           summaryFormatter={formatSummary}
           enableVirtualScroll={false}
-          rowHeight={60}
-          mobileCardRender={(item) => (
-            <Card className="p-4">
-              <div className="space-y-2">
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <p className="font-medium">{item.title}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {item.createdBy.name || item.createdBy.email}
-                    </p>
-                  </div>
-                  <span
-                    className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
+          rowHeight={72}
+          mobileCardRender={(item) => {
+            const rate =
+              item.recipientCount > 0 ? Math.round((item.readCount / item.recipientCount) * 100) : 0
+            return (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="rounded-xl border bg-card p-4 shadow-sm"
+              >
+                <div className="flex items-start gap-3">
+                  <div
+                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${
                       item.revokedAt
                         ? "bg-destructive/10 text-destructive"
-                        : "bg-muted text-muted-foreground"
+                        : "bg-primary/10 text-primary"
                     }`}
                   >
-                    {item.revokedAt ? t.revoked : t.active}
-                  </span>
+                    {item.revokedAt ? (
+                      <XCircle className="h-5 w-5" />
+                    ) : (
+                      <Mail className="h-5 w-5" />
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="truncate font-medium">{item.title}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {item.createdBy.name || item.createdBy.email}
+                        </p>
+                      </div>
+                      <div
+                        className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${
+                          item.revokedAt
+                            ? "bg-destructive/10 text-destructive"
+                            : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                        }`}
+                      >
+                        {item.revokedAt ? t.revoked : t.active}
+                      </div>
+                    </div>
+
+                    <div className="mt-3 flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-1.5">
+                        <Users className="h-3.5 w-3.5" />
+                        <span>{item.recipientCount}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <ReadRateRing rate={rate} size={28} />
+                        <span>
+                          {item.readCount}/{item.recipientCount}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <Clock className="h-3.5 w-3.5" />
+                        <span>{new Date(item.createdAt).toLocaleDateString(locale)}</span>
+                      </div>
+                    </div>
+
+                    <div className="mt-3 flex items-center gap-1">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="h-8 gap-1.5"
+                        onClick={() => openPreview(item.id)}
+                      >
+                        <Eye className="h-3.5 w-3.5" />
+                        {t.preview}
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="h-8 gap-1.5"
+                        onClick={() => openEdit(item.id)}
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                        {t.edit}
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="h-8 gap-1.5 text-destructive hover:bg-destructive/10"
+                        disabled={!!item.revokedAt}
+                        onClick={() => {
+                          setRevokeTargetId(item.id)
+                          setConfirmRevokeOpen(true)
+                        }}
+                      >
+                        <Ban className="h-3.5 w-3.5" />
+                        {t.revoke}
+                      </Button>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-                  <span>
-                    {t.recipients}: {item.recipientCount}
-                  </span>
-                  <span>
-                    {t.readCount}: {item.readCount}
-                  </span>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    onClick={() => openPreview(item.id)}
-                  >
-                    {t.preview}
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    onClick={() => openEdit(item.id)}
-                  >
-                    {t.edit}
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="destructive"
-                    disabled={!!item.revokedAt}
-                    onClick={() => {
-                      setRevokeTargetId(item.id)
-                      setConfirmRevokeOpen(true)
-                    }}
-                  >
-                    {t.revoke}
-                  </Button>
-                </div>
-              </div>
-            </Card>
-          )}
+              </motion.div>
+            )
+          }}
         />
       </Card>
 
+      {/* 创建/编辑对话框 */}
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
         <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editingId ? t.editMessage : t.sendMessage}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-6">
-            {formError && (
-              <div className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
-                {formError}
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                {editingId ? <Pencil className="h-5 w-5" /> : <Send className="h-5 w-5" />}
               </div>
-            )}
+              <DialogTitle className="text-xl">
+                {editingId ? t.editMessage : t.sendMessage}
+              </DialogTitle>
+            </div>
+          </DialogHeader>
+
+          <div className="space-y-6 pt-2">
+            <AnimatePresence>
+              {formError && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="rounded-lg border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive"
+                >
+                  {formError}
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             <div className="space-y-2">
-              <Label htmlFor="message-title">{t.messageTitle}</Label>
+              <Label htmlFor="message-title" className="text-sm font-medium">
+                {t.messageTitle}
+              </Label>
               <Input
                 id="message-title"
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                 placeholder={t.messageTitlePlaceholder}
+                className="h-11"
               />
             </div>
 
             <div className="space-y-2">
-              <Label>{t.messageContent}</Label>
+              <Label className="text-sm font-medium">{t.messageContent}</Label>
               <RichTextEditor
                 value={formData.content}
                 onChange={(content) => setFormData({ ...formData, content })}
@@ -539,9 +823,9 @@ export function AdminMessagesManager({ locale, dict }: AdminMessagesManagerProps
             </div>
 
             {!editingId && (
-              <div className="space-y-4">
+              <div className="space-y-4 rounded-xl border bg-muted/30 p-4">
                 <div className="space-y-2">
-                  <Label>{t.recipientMode}</Label>
+                  <Label className="text-sm font-medium">{t.recipientMode}</Label>
                   <Select
                     value={formData.recipientMode}
                     onValueChange={(value: "all" | "role" | "status" | "users") =>
@@ -552,7 +836,7 @@ export function AdminMessagesManager({ locale, dict }: AdminMessagesManagerProps
                       }))
                     }
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="h-11">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -565,15 +849,19 @@ export function AdminMessagesManager({ locale, dict }: AdminMessagesManagerProps
                 </div>
 
                 {formData.recipientMode === "role" && (
-                  <div className="space-y-2">
-                    <Label>{t.selectRole}</Label>
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    className="space-y-2"
+                  >
+                    <Label className="text-sm font-medium">{t.selectRole}</Label>
                     <Select
                       value={formData.recipientRole}
                       onValueChange={(value: "ADMIN" | "USER") =>
                         setFormData((prev) => ({ ...prev, recipientRole: value }))
                       }
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className="h-11">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -581,19 +869,23 @@ export function AdminMessagesManager({ locale, dict }: AdminMessagesManagerProps
                         <SelectItem value="ADMIN">{t.roleAdmin}</SelectItem>
                       </SelectContent>
                     </Select>
-                  </div>
+                  </motion.div>
                 )}
 
                 {formData.recipientMode === "status" && (
-                  <div className="space-y-2">
-                    <Label>{t.selectStatus}</Label>
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    className="space-y-2"
+                  >
+                    <Label className="text-sm font-medium">{t.selectStatus}</Label>
                     <Select
                       value={formData.recipientStatus}
                       onValueChange={(value: "ACTIVE" | "INACTIVE" | "BANNED") =>
                         setFormData((prev) => ({ ...prev, recipientStatus: value }))
                       }
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className="h-11">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -602,18 +894,25 @@ export function AdminMessagesManager({ locale, dict }: AdminMessagesManagerProps
                         <SelectItem value="BANNED">{t.statusBanned}</SelectItem>
                       </SelectContent>
                     </Select>
-                  </div>
+                  </motion.div>
                 )}
 
                 {formData.recipientMode === "users" && (
-                  <div className="space-y-3">
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    className="space-y-3"
+                  >
                     <div className="flex flex-wrap items-center gap-2">
-                      <Input
-                        value={userSearch}
-                        onChange={(e) => setUserSearch(e.target.value)}
-                        placeholder={t.searchUsers}
-                        className="w-64"
-                      />
+                      <div className="relative flex-1 min-w-[200px]">
+                        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <Input
+                          value={userSearch}
+                          onChange={(e) => setUserSearch(e.target.value)}
+                          placeholder={t.searchUsers}
+                          className="pl-9"
+                        />
+                      </div>
                       <Button
                         type="button"
                         variant="outline"
@@ -626,23 +925,26 @@ export function AdminMessagesManager({ locale, dict }: AdminMessagesManagerProps
                       >
                         {t.searchAction}
                       </Button>
-                      <span className="text-sm text-muted-foreground">
+                      <div className="flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1.5 text-sm font-medium text-primary">
+                        <Users className="h-4 w-4" />
                         {t.selectedUsers.replace(
                           "{count}",
                           formData.recipientUserIds.length.toString(),
                         )}
-                      </span>
+                      </div>
                     </div>
 
-                    <div className="max-h-56 overflow-y-auto rounded-md border border-border p-3">
+                    <div className="max-h-56 overflow-y-auto rounded-lg border bg-background p-2">
                       {users.length === 0 && !loadingUsers && (
-                        <p className="text-sm text-muted-foreground">{t.noUsers}</p>
+                        <p className="p-4 text-center text-sm text-muted-foreground">{t.noUsers}</p>
                       )}
-                      <div className="space-y-2">
+                      <div className="space-y-1">
                         {users.map((user) => (
                           <label
                             key={user.id}
-                            className="flex items-center justify-between gap-3 rounded-md p-2 hover:bg-muted/50"
+                            className={`flex cursor-pointer items-center justify-between gap-3 rounded-lg p-3 transition-colors ${
+                              selectedUserIds.has(user.id) ? "bg-primary/10" : "hover:bg-muted/50"
+                            }`}
                           >
                             <div className="flex items-center gap-3">
                               <Checkbox
@@ -654,13 +956,20 @@ export function AdminMessagesManager({ locale, dict }: AdminMessagesManagerProps
                                 <p className="text-xs text-muted-foreground">{user.email}</p>
                               </div>
                             </div>
-                            <span className="text-xs text-muted-foreground">{user.role}</span>
+                            <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                              {user.role}
+                            </span>
                           </label>
                         ))}
                       </div>
+                      {loadingUsers && (
+                        <div className="flex items-center justify-center p-4">
+                          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                        </div>
+                      )}
                     </div>
 
-                    {users.length < userTotal && (
+                    {users.length < userTotal && !loadingUsers && (
                       <Button
                         type="button"
                         variant="outline"
@@ -669,25 +978,41 @@ export function AdminMessagesManager({ locale, dict }: AdminMessagesManagerProps
                           const nextPage = userPage + 1
                           fetchUsers({ page: nextPage })
                         }}
-                        disabled={loadingUsers}
+                        className="w-full"
                       >
                         {t.loadMore}
                       </Button>
                     )}
-                  </div>
+                  </motion.div>
                 )}
               </div>
             )}
 
             {editingId && (
-              <div className="rounded-md border border-border bg-muted/20 p-3 text-sm text-muted-foreground">
+              <div className="flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-600 dark:text-amber-400">
+                <Pencil className="h-4 w-4 shrink-0" />
                 {t.editHint}
               </div>
             )}
 
-            <div className="flex flex-wrap gap-3">
-              <Button type="button" onClick={handleSubmit} disabled={submitting}>
-                {submitting ? t.saving : editingId ? t.saveChanges : t.sendMessage}
+            <div className="flex flex-wrap gap-3 pt-2">
+              <Button
+                type="button"
+                onClick={handleSubmit}
+                disabled={submitting}
+                className="gap-2 shadow-lg shadow-primary/25"
+              >
+                {submitting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    {t.saving}
+                  </>
+                ) : (
+                  <>
+                    <Send className="h-4 w-4" />
+                    {editingId ? t.saveChanges : t.sendMessage}
+                  </>
+                )}
               </Button>
               <Button
                 type="button"
@@ -704,36 +1029,62 @@ export function AdminMessagesManager({ locale, dict }: AdminMessagesManagerProps
         </DialogContent>
       </Dialog>
 
+      {/* 预览对话框 */}
       <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
         <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{t.preview}</DialogTitle>
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                <Eye className="h-5 w-5" />
+              </div>
+              <DialogTitle className="text-xl">{t.preview}</DialogTitle>
+            </div>
           </DialogHeader>
           {previewMessage ? (
-            <div className="space-y-4">
-              <div>
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="space-y-4 pt-2"
+            >
+              <div className="rounded-xl border bg-muted/30 p-4">
                 <h2 className="text-xl font-semibold">{previewMessage.title}</h2>
-                <p className="text-sm text-muted-foreground">
+                <p className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
+                  <Clock className="h-4 w-4" />
                   {new Date(previewMessage.createdAt).toLocaleString(locale)}
                 </p>
               </div>
-              <PostContent content={previewMessage.content} emptyMessage={t.previewEmpty} />
-            </div>
+              <div className="rounded-xl border p-4">
+                <PostContent content={previewMessage.content} emptyMessage={t.previewEmpty} />
+              </div>
+            </motion.div>
           ) : (
-            <p className="text-sm text-muted-foreground">{t.loading}</p>
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
           )}
         </DialogContent>
       </Dialog>
 
+      {/* 撤回确认对话框 */}
       <AlertDialog open={confirmRevokeOpen} onOpenChange={setConfirmRevokeOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t.revokeTitle}</AlertDialogTitle>
-            <AlertDialogDescription>{t.revokeDesc}</AlertDialogDescription>
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-destructive/10 text-destructive">
+                <Ban className="h-5 w-5" />
+              </div>
+              <AlertDialogTitle>{t.revokeTitle}</AlertDialogTitle>
+            </div>
+            <AlertDialogDescription className="pt-2">{t.revokeDesc}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>{t.cancel}</AlertDialogCancel>
-            <AlertDialogAction onClick={handleRevoke}>{t.confirm}</AlertDialogAction>
+            <AlertDialogAction
+              onClick={handleRevoke}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {t.confirm}
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

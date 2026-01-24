@@ -33,42 +33,57 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = request.nextUrl
     const search = (searchParams.get("search") || "").trim()
+    const status = searchParams.get("status") || ""
     const page = Number.parseInt(searchParams.get("page") || "1")
     const limit = Number.parseInt(searchParams.get("limit") || "20")
     const skip = (page - 1) * limit
 
-    const where = search
-      ? {
-          OR: [
-            { title: { contains: search, mode: "insensitive" as const } },
-            { content: { contains: search, mode: "insensitive" as const } },
-          ],
-        }
-      : {}
+    const where: Record<string, unknown> = {}
+    if (search) {
+      where.OR = [
+        { title: { contains: search, mode: "insensitive" as const } },
+        { content: { contains: search, mode: "insensitive" as const } },
+      ]
+    }
+    if (status === "active") {
+      where.revokedAt = null
+    }
+    if (status === "revoked") {
+      where.revokedAt = { not: null }
+    }
 
-    const [messages, total] = await Promise.all([
-      db.message.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy: { createdAt: "desc" },
-        select: {
-          id: true,
-          title: true,
-          createdAt: true,
-          updatedAt: true,
-          revokedAt: true,
-          createdBy: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
+    const [messages, total, totalRecipients, totalReads, activeMessages, revokedMessages] =
+      await Promise.all([
+        db.message.findMany({
+          where,
+          skip,
+          take: limit,
+          orderBy: { createdAt: "desc" },
+          select: {
+            id: true,
+            title: true,
+            createdAt: true,
+            updatedAt: true,
+            revokedAt: true,
+            createdBy: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
             },
           },
-        },
-      }),
-      db.message.count({ where }),
-    ])
+        }),
+        db.message.count({ where }),
+        // 全局统计：总收件人数
+        db.messageRecipient.count(),
+        // 全局统计：总已读数
+        db.messageRecipient.count({ where: { readAt: { not: null } } }),
+        // 全局统计：活跃消息数
+        db.message.count({ where: { revokedAt: null } }),
+        // 全局统计：已撤回消息数
+        db.message.count({ where: { revokedAt: { not: null } } }),
+      ])
 
     const messageIds = messages.map((message) => message.id)
     const [recipientCounts, readCounts] =
@@ -98,7 +113,18 @@ export async function GET(request: NextRequest) {
       readCount: readCountMap.get(message.id) || 0,
     }))
 
-    return NextResponse.json({ messages: data, total, page, limit })
+    return NextResponse.json({
+      messages: data,
+      total,
+      page,
+      limit,
+      stats: {
+        totalRecipients,
+        totalReads,
+        activeMessages,
+        revokedMessages,
+      },
+    })
   } catch (error) {
     console.error("Admin messages API error:", error)
     return createApiErrorResponse(request, ApiErrorKeys.admin.messages.failedToFetch, {

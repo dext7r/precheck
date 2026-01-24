@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
       orderBy.createdAt = "desc"
     }
 
-    const [records, total] = await Promise.all([
+    const [records, total, pending, success, failed] = await Promise.all([
       db!.emailLog.findMany({
         where,
         orderBy,
@@ -55,9 +55,14 @@ export async function GET(request: NextRequest) {
         take: limit,
       }),
       db!.emailLog.count({ where }),
+      db!.emailLog.count({ where: { status: "PENDING" } }),
+      db!.emailLog.count({ where: { status: "SUCCESS" } }),
+      db!.emailLog.count({ where: { status: "FAILED" } }),
     ])
 
-    return NextResponse.json({ records, total })
+    const stats = { pending, success, failed, total: pending + success + failed }
+
+    return NextResponse.json({ records, total, stats })
   } catch (error) {
     console.error("Email logs fetch error:", error)
     return createApiErrorResponse(request, ApiErrorKeys.admin.emailLogs.failed, { status: 500 })

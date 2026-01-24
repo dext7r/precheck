@@ -2,7 +2,31 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
-import { X } from "lucide-react"
+import { motion, AnimatePresence } from "framer-motion"
+import {
+  X,
+  ClipboardList,
+  Search,
+  RotateCcw,
+  Clock,
+  CheckCircle2,
+  XCircle,
+  AlertTriangle,
+  User,
+  Mail,
+  FileText,
+  Eye,
+  Pencil,
+  Filter,
+  ChevronRight,
+  Loader2,
+  History,
+  Send,
+  Key,
+  Calendar,
+  Users,
+  Inbox,
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -82,6 +106,73 @@ interface AdminPreApplicationsTableProps {
   dict: Dictionary
 }
 
+// 统计卡片组件
+function StatCard({
+  icon: Icon,
+  label,
+  value,
+  trend,
+  color = "primary",
+  active = false,
+  onClick,
+}: {
+  icon: React.ElementType
+  label: string
+  value: string | number
+  trend?: string
+  color?: "primary" | "success" | "warning" | "danger" | "purple"
+  active?: boolean
+  onClick?: () => void
+}) {
+  const colorStyles = {
+    primary: "from-primary/20 to-primary/5 text-primary",
+    success: "from-emerald-500/20 to-emerald-500/5 text-emerald-600 dark:text-emerald-400",
+    warning: "from-amber-500/20 to-amber-500/5 text-amber-600 dark:text-amber-400",
+    danger: "from-rose-500/20 to-rose-500/5 text-rose-600 dark:text-rose-400",
+    purple: "from-purple-500/20 to-purple-500/5 text-purple-600 dark:text-purple-400",
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      onClick={onClick}
+      className={`relative overflow-hidden rounded-xl border bg-card p-4 ${
+        onClick ? "cursor-pointer transition-all hover:scale-[1.02] hover:shadow-md" : ""
+      } ${active ? "ring-2 ring-primary ring-offset-2" : ""}`}
+    >
+      <div className={`absolute inset-0 bg-gradient-to-br opacity-50 ${colorStyles[color]}`} />
+      <div className="relative flex items-center gap-4">
+        <div
+          className={`flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${colorStyles[color]}`}
+        >
+          <Icon className="h-6 w-6" />
+        </div>
+        <div>
+          <p className="text-sm text-muted-foreground">{label}</p>
+          <p className="text-2xl font-bold">
+            {typeof value === "number" ? value.toLocaleString() : value}
+          </p>
+          {trend && <p className="text-xs text-muted-foreground">{trend}</p>}
+        </div>
+      </div>
+    </motion.div>
+  )
+}
+
+// 格式化完整日期时间
+function formatDateTime(dateStr: string | null, locale: Locale): string {
+  if (!dateStr) return "-"
+  return new Date(dateStr).toLocaleString(locale, {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  })
+}
+
 const toDateTimeLocal = (value: string) => {
   const date = new Date(value)
   const pad = (num: number) => num.toString().padStart(2, "0")
@@ -94,18 +185,19 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
   const t = dict.admin
   const [records, setRecords] = useState<AdminPreApplication[]>([])
   const [total, setTotal] = useState(0)
+  const [stats, setStats] = useState({ pending: 0, approved: 0, rejected: 0, disputed: 0 })
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(20)
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
   const [searchInput, setSearchInput] = useState("")
-  const [statusFilter, setStatusFilter] = useState<string[]>(["PENDING", "DISPUTED"])
+  const [statusFilter, setStatusFilter] = useState<string[]>([])
   const [registerEmailFilter, setRegisterEmailFilter] = useState("")
   const [registerEmailInput, setRegisterEmailInput] = useState("")
   const [queryTokenFilter, setQueryTokenFilter] = useState("")
   const [queryTokenInput, setQueryTokenInput] = useState("")
   const [reviewRoundFilter, setReviewRoundFilter] = useState("ALL")
-  const [inviteStatusFilter, setInviteStatusFilter] = useState("none")
+  const [inviteStatusFilter, setInviteStatusFilter] = useState("ALL")
   const [sortBy, setSortBy] = useState("createdAt")
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc")
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -135,7 +227,6 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
   }, [reviewAction])
 
   useEffect(() => {
-    // PENDING 和 DISPUTED 状态切换审核动作时自动填充模板第一条
     if (selected?.status !== "PENDING" && selected?.status !== "DISPUTED") return
 
     const templates =
@@ -148,21 +239,19 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
   }, [reviewAction, selected?.status, selected?.id, reviewTemplates])
 
   useEffect(() => {
-    // PENDING 和 DISPUTED 状态审核通过或有争议时加载邀请码选项
     if (!dialogOpen || reviewAction === "REJECT") return
     if (selected?.status !== "PENDING" && selected?.status !== "DISPUTED") return
     loadInviteOptions()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dialogOpen, reviewAction, selected?.status])
 
   useEffect(() => {
-    // 加载审核模板
     loadReviewTemplates()
   }, [])
 
   const fetchRecords = async () => {
     setLoading(true)
     try {
-      // 映射前端排序字段到API字段
       const sortByMap: Record<string, string> = {
         reviewRound: "resubmitCount",
         inviteStatus: "inviteCodeId",
@@ -186,6 +275,9 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
       const data = await res.json()
       setRecords(data.records || [])
       setTotal(data.total || 0)
+      if (data.stats) {
+        setStats(data.stats)
+      }
     } catch (error) {
       console.error("Pre-application list error:", error)
       toast.error(t.fetchFailed)
@@ -196,6 +288,7 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
 
   useEffect(() => {
     fetchRecords()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     page,
     pageSize,
@@ -211,6 +304,14 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
 
   const handleSearch = () => {
     setSearch(searchInput)
+    setRegisterEmailFilter(registerEmailInput)
+    setQueryTokenFilter(queryTokenInput)
+    setPage(1)
+  }
+
+  const handleSort = (key: string, direction: "asc" | "desc") => {
+    setSortBy(key)
+    setSortOrder(direction)
     setPage(1)
   }
 
@@ -235,18 +336,41 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
     return (dict.preApplication.sources as Record<string, string>)[key] || value
   }
 
-  const statusBadge = (status: AdminPreApplication["status"]) => {
-    const map: Record<string, { label: string; className: string }> = {
-      PENDING: { label: t.pending, className: "bg-amber-100 text-amber-800 text-xs" },
-      APPROVED: { label: t.approved, className: "bg-emerald-100 text-emerald-700 text-xs" },
-      REJECTED: { label: t.rejected, className: "bg-rose-100 text-rose-700 text-xs" },
+  const getStatusConfig = (status: AdminPreApplication["status"]) => {
+    const map: Record<string, { label: string; className: string; icon: React.ElementType }> = {
+      PENDING: {
+        label: t.pending,
+        className: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+        icon: Clock,
+      },
+      APPROVED: {
+        label: t.approved,
+        className: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
+        icon: CheckCircle2,
+      },
+      REJECTED: {
+        label: t.rejected,
+        className: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400",
+        icon: XCircle,
+      },
       DISPUTED: {
         label: t.disputed || "有争议",
-        className: "bg-purple-100 text-purple-700 text-xs",
+        className: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
+        icon: AlertTriangle,
       },
     }
-    const config = map[status] || map.PENDING
-    return <Badge className={config.className}>{config.label}</Badge>
+    return map[status] || map.PENDING
+  }
+
+  const statusBadge = (status: AdminPreApplication["status"]) => {
+    const config = getStatusConfig(status)
+    const Icon = config.icon
+    return (
+      <Badge className={cn("gap-1 text-xs font-medium", config.className)}>
+        <Icon className="h-3 w-3" />
+        {config.label}
+      </Badge>
+    )
   }
 
   const loadHistory = async (recordId: string) => {
@@ -282,7 +406,6 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
       }
       const data = await res.json()
       const now = new Date()
-      // 过滤掉已过期的邀请码
       const available = (data.records || []).filter(
         (record: { expiresAt: string | null }) =>
           !record.expiresAt || new Date(record.expiresAt) > now,
@@ -321,7 +444,6 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
   const openDialog = (record: AdminPreApplication) => {
     setSelected(record)
     setHistoryRecords([])
-    // PENDING 和 DISPUTED 状态都可以审核
     if (record.status === "PENDING" || record.status === "DISPUTED") {
       setReviewAction("APPROVE")
       setGuidance(record.guidance || "")
@@ -390,23 +512,41 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
       {
         key: "user",
         label: t.preApplicationUser,
-        width: "28%",
+        width: "26%",
         render: (record) => (
-          <div className="space-y-0.5">
-            <p className="text-sm font-medium">{record.user.name || record.user.email}</p>
-            <p className="text-xs text-muted-foreground">{record.registerEmail}</p>
+          <div className="flex items-center gap-3">
+            <div
+              className={cn(
+                "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg",
+                record.status === "PENDING"
+                  ? "bg-amber-100 text-amber-600 dark:bg-amber-900/30"
+                  : record.status === "APPROVED"
+                    ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30"
+                    : record.status === "REJECTED"
+                      ? "bg-rose-100 text-rose-600 dark:bg-rose-900/30"
+                      : "bg-purple-100 text-purple-600 dark:bg-purple-900/30",
+              )}
+            >
+              <User className="h-4 w-4" />
+            </div>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-medium">
+                {record.user.name || record.user.email}
+              </p>
+              <p className="truncate text-xs text-muted-foreground">{record.registerEmail}</p>
+            </div>
           </div>
         ),
       },
       {
         key: "status",
         label: t.preApplicationStatus,
-        width: "20%",
+        width: "18%",
         sortable: true,
         render: (record) => (
-          <div className="flex flex-wrap items-center gap-1.5">
+          <div className="flex flex-col gap-1">
             {statusBadge(record.status)}
-            <Badge variant="outline" className="text-xs">
+            <Badge variant="outline" className="w-fit text-xs">
               {t.reviewRoundLabel?.replace("{n}", String(record.reviewRound ?? 1)) ??
                 `${record.reviewRound ?? 1}审`}
             </Badge>
@@ -421,10 +561,13 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
         render: (record) => (
           <Badge
             className={cn(
-              "text-xs",
-              record.inviteCode ? "bg-emerald-100 text-emerald-700" : "bg-gray-100 text-gray-600",
+              "gap-1 text-xs",
+              record.inviteCode
+                ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400",
             )}
           >
+            {record.inviteCode ? <Key className="h-3 w-3" /> : null}
             {record.inviteCode ? t.inviteStatusIssued : t.inviteStatusNone}
           </Badge>
         ),
@@ -432,371 +575,502 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
       {
         key: "createdAt",
         label: t.preApplicationCreatedAt,
-        width: "18%",
+        width: "20%",
         sortable: true,
         render: (record) => (
-          <span className="text-xs text-muted-foreground">
-            {new Date(record.createdAt).toLocaleString(locale, {
-              year: "numeric",
-              month: "2-digit",
-              day: "2-digit",
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
-          </span>
+          <div className="flex items-center gap-1.5">
+            <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+            <span className="text-xs text-muted-foreground">
+              {formatDateTime(record.createdAt, locale)}
+            </span>
+          </div>
         ),
       },
       {
         key: "actions",
         label: t.actions,
-        width: "12%",
+        width: "14%",
         render: (record) => (
           <Button
-            variant="ghost"
+            variant={
+              record.status === "PENDING" || record.status === "DISPUTED" ? "default" : "outline"
+            }
             size="sm"
-            className="h-7 text-xs"
+            className="h-8 gap-1.5 text-xs"
             onClick={() => openDialog(record)}
           >
-            {record.status === "PENDING" || record.status === "DISPUTED"
-              ? t.preApplicationReviewAction
-              : t.preApplicationView}
+            {record.status === "PENDING" || record.status === "DISPUTED" ? (
+              <>
+                <Pencil className="h-3.5 w-3.5" />
+                {t.preApplicationReviewAction}
+              </>
+            ) : (
+              <>
+                <Eye className="h-3.5 w-3.5" />
+                {t.preApplicationView}
+              </>
+            )}
           </Button>
         ),
       },
     ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [t, locale],
   )
 
   return (
-    <div className="space-y-3">
-      {/* 精简筛选栏 */}
-      <div className="flex flex-wrap items-center gap-1.5">
-        {/* 搜索输入框组 */}
-        <div className="relative">
-          <Input
-            value={searchInput}
-            onChange={(event) => setSearchInput(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") handleSearch()
-            }}
-            placeholder={t.searchUsers}
-            className="h-8 w-32 pr-6 text-xs"
-          />
-          {searchInput && (
-            <button
-              type="button"
+    <div className="space-y-6">
+      {/* 页面头部 */}
+      <div className="relative overflow-hidden rounded-2xl border bg-gradient-to-br from-primary/5 via-background to-primary/10 p-6">
+        <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-primary/10 blur-3xl" />
+        <div className="absolute -bottom-20 -left-20 h-64 w-64 rounded-full bg-primary/5 blur-3xl" />
+        <div className="relative flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-lg shadow-primary/25">
+              <ClipboardList className="h-7 w-7" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold md:text-3xl">{t.preApplications}</h1>
+              <p className="text-muted-foreground">{t.preApplicationsDesc || "审核用户预申请"}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 统计卡片 */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard
+          icon={Clock}
+          label={t.pending}
+          value={stats.pending}
+          color="warning"
+          active={statusFilter.length === 1 && statusFilter[0] === "PENDING"}
+          onClick={() => {
+            setStatusFilter(["PENDING"])
+            setPage(1)
+          }}
+        />
+        <StatCard
+          icon={CheckCircle2}
+          label={t.approved}
+          value={stats.approved}
+          color="success"
+          active={statusFilter.length === 1 && statusFilter[0] === "APPROVED"}
+          onClick={() => {
+            setStatusFilter(["APPROVED"])
+            setPage(1)
+          }}
+        />
+        <StatCard
+          icon={XCircle}
+          label={t.rejected}
+          value={stats.rejected}
+          color="danger"
+          active={statusFilter.length === 1 && statusFilter[0] === "REJECTED"}
+          onClick={() => {
+            setStatusFilter(["REJECTED"])
+            setPage(1)
+          }}
+        />
+        <StatCard
+          icon={AlertTriangle}
+          label={t.disputed || "有争议"}
+          value={stats.disputed}
+          color="purple"
+          active={statusFilter.length === 1 && statusFilter[0] === "DISPUTED"}
+          onClick={() => {
+            setStatusFilter(["DISPUTED"])
+            setPage(1)
+          }}
+        />
+      </div>
+
+      {/* 搜索和筛选 */}
+      <Card className="p-4">
+        <div className="flex flex-col gap-4">
+          {/* 搜索行 */}
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="relative flex-1 sm:max-w-xs">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={searchInput}
+                onChange={(event) => setSearchInput(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") handleSearch()
+                }}
+                placeholder={t.searchUsers}
+                className="pl-9 pr-8"
+              />
+              {searchInput && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-1 top-1/2 h-6 w-6 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  onClick={() => {
+                    setSearchInput("")
+                    setSearch("")
+                    setPage(1)
+                  }}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+            <div className="relative flex-1 sm:max-w-[180px]">
+              <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={registerEmailInput}
+                onChange={(event) => setRegisterEmailInput(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") handleSearch()
+                }}
+                placeholder={t.preApplicationRegisterEmail}
+                className="pl-9 pr-8"
+              />
+              {registerEmailInput && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-1 top-1/2 h-6 w-6 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  onClick={() => {
+                    setRegisterEmailInput("")
+                    setRegisterEmailFilter("")
+                    setPage(1)
+                  }}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+            <div className="relative flex-1 sm:max-w-[140px]">
+              <Key className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={queryTokenInput}
+                onChange={(event) => setQueryTokenInput(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") handleSearch()
+                }}
+                placeholder={t.preApplicationQueryToken}
+                className="pl-9 pr-8"
+              />
+              {queryTokenInput && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-1 top-1/2 h-6 w-6 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  onClick={() => {
+                    setQueryTokenInput("")
+                    setQueryTokenFilter("")
+                    setPage(1)
+                  }}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+            <Button variant="outline" onClick={handleSearch} className="shrink-0 gap-2">
+              <Search className="h-4 w-4" />
+              {t.searchAction}
+            </Button>
+          </div>
+
+          {/* 筛选行 */}
+          <div className="flex flex-wrap items-end gap-3">
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-xs text-muted-foreground">{t.preApplicationStatus}</Label>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-9 w-28 gap-1.5">
+                    <Filter className="h-3.5 w-3.5" />
+                    {statusFilter.length === 0
+                      ? t.statusAll
+                      : statusFilter.length === 4
+                        ? t.statusAll
+                        : `${statusFilter.length} 项`}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-36">
+                  {[
+                    { value: "PENDING", label: t.pending },
+                    { value: "DISPUTED", label: t.disputed || "有争议" },
+                    { value: "APPROVED", label: t.approved },
+                    { value: "REJECTED", label: t.rejected },
+                  ].map((item) => (
+                    <DropdownMenuCheckboxItem
+                      key={item.value}
+                      checked={statusFilter.includes(item.value)}
+                      onCheckedChange={(checked) => {
+                        setStatusFilter((prev) =>
+                          checked ? [...prev, item.value] : prev.filter((v) => v !== item.value),
+                        )
+                        setPage(1)
+                      }}
+                    >
+                      {item.label}
+                    </DropdownMenuCheckboxItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-xs text-muted-foreground">{t.reviewRound || "审核轮次"}</Label>
+              <Select
+                value={reviewRoundFilter}
+                onValueChange={(value) => {
+                  setReviewRoundFilter(value)
+                  setPage(1)
+                }}
+              >
+                <SelectTrigger className="h-9 w-24">
+                  <SelectValue placeholder={t.reviewRound} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">{t.statusAll}</SelectItem>
+                  <SelectItem value="1">
+                    {t.reviewRoundLabel?.replace("{n}", "1") ?? "1审"}
+                  </SelectItem>
+                  <SelectItem value="2">
+                    {t.reviewRoundLabel?.replace("{n}", "2") ?? "2审"}
+                  </SelectItem>
+                  <SelectItem value="3">
+                    {t.reviewRoundLabel?.replace("{n}", "3") ?? "3审"}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-xs text-muted-foreground">{t.inviteStatus}</Label>
+              <Select
+                value={inviteStatusFilter}
+                onValueChange={(value) => {
+                  setInviteStatusFilter(value)
+                  setPage(1)
+                }}
+              >
+                <SelectTrigger className="h-9 w-28">
+                  <SelectValue placeholder={t.inviteStatus} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">{t.statusAll}</SelectItem>
+                  <SelectItem value="issued">{t.inviteStatusIssued}</SelectItem>
+                  <SelectItem value="none">{t.inviteStatusNone}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-9 gap-1.5 text-muted-foreground hover:text-foreground"
               onClick={() => {
                 setSearchInput("")
                 setSearch("")
-                setPage(1)
-              }}
-              className="absolute right-1.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-            >
-              <X className="h-3 w-3" />
-            </button>
-          )}
-        </div>
-        <div className="relative">
-          <Input
-            value={registerEmailInput}
-            onChange={(event) => setRegisterEmailInput(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") {
-                setRegisterEmailFilter(registerEmailInput)
-                setPage(1)
-              }
-            }}
-            placeholder={t.preApplicationRegisterEmail}
-            className="h-8 w-36 pr-6 text-xs"
-          />
-          {registerEmailInput && (
-            <button
-              type="button"
-              onClick={() => {
                 setRegisterEmailInput("")
                 setRegisterEmailFilter("")
-                setPage(1)
-              }}
-              className="absolute right-1.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-            >
-              <X className="h-3 w-3" />
-            </button>
-          )}
-        </div>
-        <div className="relative">
-          <Input
-            value={queryTokenInput}
-            onChange={(event) => setQueryTokenInput(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") {
-                setQueryTokenFilter(queryTokenInput)
-                setPage(1)
-              }
-            }}
-            placeholder={t.preApplicationQueryToken}
-            className="h-8 w-28 pr-6 text-xs"
-          />
-          {queryTokenInput && (
-            <button
-              type="button"
-              onClick={() => {
                 setQueryTokenInput("")
                 setQueryTokenFilter("")
+                setStatusFilter([])
+                setReviewRoundFilter("ALL")
+                setInviteStatusFilter("ALL")
                 setPage(1)
               }}
-              className="absolute right-1.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
             >
-              <X className="h-3 w-3" />
-            </button>
-          )}
+              <RotateCcw className="h-3.5 w-3.5" />
+              {t.reset}
+            </Button>
+          </div>
         </div>
+      </Card>
 
-        <div className="h-4 w-px bg-border" />
-
-        {/* 状态多选下拉 */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="h-8 text-xs gap-1">
-              {statusFilter.length === 0
-                ? t.statusAll
-                : statusFilter.length === 4
-                  ? t.statusAll
-                  : `${statusFilter.length} 项`}
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-32">
-            {[
-              { value: "PENDING", label: t.pending },
-              { value: "DISPUTED", label: t.disputed || "有争议" },
-              { value: "APPROVED", label: t.approved },
-              { value: "REJECTED", label: t.rejected },
-            ].map((item) => (
-              <DropdownMenuCheckboxItem
-                key={item.value}
-                checked={statusFilter.includes(item.value)}
-                onCheckedChange={(checked) => {
-                  setStatusFilter((prev) =>
-                    checked ? [...prev, item.value] : prev.filter((v) => v !== item.value),
-                  )
-                  setPage(1)
-                }}
-                className="text-xs"
-              >
-                {item.label}
-              </DropdownMenuCheckboxItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-        <Select
-          value={reviewRoundFilter}
-          onValueChange={(value) => {
-            setReviewRoundFilter(value)
-            setPage(1)
-          }}
-        >
-          <SelectTrigger className="h-8 w-20 text-xs">
-            <SelectValue placeholder={t.reviewRound} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="ALL" className="text-xs">
-              {t.statusAll}
-            </SelectItem>
-            <SelectItem value="1" className="text-xs">
-              {t.reviewRoundLabel?.replace("{n}", "1") ?? "1审"}
-            </SelectItem>
-            <SelectItem value="2" className="text-xs">
-              {t.reviewRoundLabel?.replace("{n}", "2") ?? "2审"}
-            </SelectItem>
-            <SelectItem value="3" className="text-xs">
-              {t.reviewRoundLabel?.replace("{n}", "3") ?? "3审"}
-            </SelectItem>
-          </SelectContent>
-        </Select>
-        <Select
-          value={inviteStatusFilter}
-          onValueChange={(value) => {
-            setInviteStatusFilter(value)
-            setPage(1)
-          }}
-        >
-          <SelectTrigger className="h-8 w-24 text-xs">
-            <SelectValue placeholder={t.inviteStatus} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="ALL" className="text-xs">
-              {t.statusAll}
-            </SelectItem>
-            <SelectItem value="issued" className="text-xs">
-              {t.inviteStatusIssued}
-            </SelectItem>
-            <SelectItem value="none" className="text-xs">
-              {t.inviteStatusNone}
-            </SelectItem>
-          </SelectContent>
-        </Select>
-
-        <div className="h-4 w-px bg-border" />
-
-        {/* 操作按钮组 */}
-        <Button
-          variant="default"
-          size="sm"
-          className="h-8 px-3 text-xs"
-          onClick={() => {
-            setSearch(searchInput)
-            setRegisterEmailFilter(registerEmailInput)
-            setQueryTokenFilter(queryTokenInput)
-            setPage(1)
-          }}
-        >
-          {t.searchAction}
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground"
-          onClick={() => {
-            setSearchInput("")
-            setSearch("")
-            setRegisterEmailInput("")
-            setRegisterEmailFilter("")
-            setQueryTokenInput("")
-            setQueryTokenFilter("")
-            setStatusFilter(["PENDING", "DISPUTED"])
-            setReviewRoundFilter("ALL")
-            setInviteStatusFilter("none")
-            setPage(1)
-          }}
-        >
-          {t.reset}
-        </Button>
-      </div>
-
-      <DataTable
-        columns={columns}
-        data={records}
-        total={total}
-        page={page}
-        pageSize={pageSize}
-        onPageChange={setPage}
-        onPageSizeChange={setPageSize}
-        onSort={(key, direction) => {
-          setSortBy(key)
-          setSortOrder(direction)
-        }}
-        loading={loading}
-        emptyMessage={t.noPreApplications}
-        loadingText={t.loading}
-        perPageText={t.perPage}
-        summaryFormatter={formatPageSummary}
-        mobileCardRender={(record) => (
-          <Card className="p-3">
-            <div className="flex items-start justify-between gap-2">
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium truncate">
-                  {record.user.name || record.user.email}
-                </p>
-                <p className="text-xs text-muted-foreground truncate">{record.registerEmail}</p>
+      {/* 数据表格 */}
+      <Card className="overflow-hidden">
+        <DataTable
+          columns={columns}
+          data={records}
+          total={total}
+          page={page}
+          pageSize={pageSize}
+          onPageChange={setPage}
+          onPageSizeChange={setPageSize}
+          onSort={handleSort}
+          loading={loading}
+          emptyMessage={
+            <div className="flex flex-col items-center justify-center py-12">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+                <Inbox className="h-8 w-8 text-muted-foreground" />
               </div>
-              <div className="flex flex-col items-end gap-1">
-                {statusBadge(record.status)}
-                <Badge variant="outline" className="text-xs">
-                  {t.reviewRoundLabel?.replace("{n}", String(record.reviewRound ?? 1)) ??
-                    `${record.reviewRound ?? 1}审`}
-                </Badge>
-              </div>
+              <p className="mt-4 font-medium text-muted-foreground">{t.noPreApplications}</p>
+              <p className="mt-1 text-sm text-muted-foreground/70">
+                {t.noPreApplicationsHint || "暂无预申请记录"}
+              </p>
             </div>
-            <div className="mt-2 flex items-center justify-between">
-              <Badge
-                className={cn(
-                  "text-xs",
-                  record.inviteCode
-                    ? "bg-emerald-100 text-emerald-700"
-                    : "bg-gray-100 text-gray-600",
-                )}
+          }
+          loadingText={t.loading}
+          perPageText={t.perPage}
+          summaryFormatter={formatPageSummary}
+          mobileCardRender={(record) => {
+            const statusConfig = getStatusConfig(record.status)
+            const StatusIcon = statusConfig.icon
+            return (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="rounded-xl border bg-card p-4 shadow-sm"
               >
-                {record.inviteCode ? t.inviteStatusIssued : t.inviteStatusNone}
-              </Badge>
-              <span className="text-xs text-muted-foreground">
-                {new Date(record.createdAt).toLocaleString(locale, {
-                  month: "2-digit",
-                  day: "2-digit",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              </span>
-            </div>
-            <Button
-              className="mt-2 w-full h-8 text-xs"
-              variant="outline"
-              onClick={() => openDialog(record)}
-            >
-              {record.status === "PENDING" || record.status === "DISPUTED"
-                ? t.preApplicationReviewAction
-                : t.preApplicationView}
-            </Button>
-          </Card>
-        )}
-      />
+                <div className="flex items-start gap-3">
+                  <div
+                    className={cn(
+                      "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg",
+                      record.status === "PENDING"
+                        ? "bg-amber-100 text-amber-600 dark:bg-amber-900/30"
+                        : record.status === "APPROVED"
+                          ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30"
+                          : record.status === "REJECTED"
+                            ? "bg-rose-100 text-rose-600 dark:bg-rose-900/30"
+                            : "bg-purple-100 text-purple-600 dark:bg-purple-900/30",
+                    )}
+                  >
+                    <User className="h-5 w-5" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="truncate text-sm font-medium">
+                        {record.user.name || record.user.email}
+                      </p>
+                      <Badge className={cn("shrink-0 gap-1 text-xs", statusConfig.className)}>
+                        <StatusIcon className="h-3 w-3" />
+                        {statusConfig.label}
+                      </Badge>
+                    </div>
+                    <p className="truncate text-xs text-muted-foreground">{record.registerEmail}</p>
+                    <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                      <Badge variant="outline" className="text-xs">
+                        {t.reviewRoundLabel?.replace("{n}", String(record.reviewRound ?? 1)) ??
+                          `${record.reviewRound ?? 1}审`}
+                      </Badge>
+                      <Badge
+                        className={cn(
+                          "gap-1 text-xs",
+                          record.inviteCode
+                            ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30"
+                            : "bg-slate-100 text-slate-600 dark:bg-slate-800",
+                        )}
+                      >
+                        {record.inviteCode ? t.inviteStatusIssued : t.inviteStatusNone}
+                      </Badge>
+                      <span className="flex items-center gap-1">
+                        <Calendar className="h-3 w-3" />
+                        {formatDateTime(record.createdAt, locale)}
+                      </span>
+                    </div>
+                    <Button
+                      className="mt-3 w-full h-8 gap-1.5 text-xs"
+                      variant={
+                        record.status === "PENDING" || record.status === "DISPUTED"
+                          ? "default"
+                          : "outline"
+                      }
+                      onClick={() => openDialog(record)}
+                    >
+                      {record.status === "PENDING" || record.status === "DISPUTED" ? (
+                        <>
+                          <Pencil className="h-3.5 w-3.5" />
+                          {t.preApplicationReviewAction}
+                        </>
+                      ) : (
+                        <>
+                          <Eye className="h-3.5 w-3.5" />
+                          {t.preApplicationView}
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </motion.div>
+            )
+          }}
+        />
+      </Card>
 
+      {/* 审核抽屉 */}
       <Drawer open={dialogOpen} onOpenChange={setDialogOpen} direction="right">
-        <DrawerContent className="h-full data-[vaul-drawer-direction=right]:w-[88vw] data-[vaul-drawer-direction=right]:sm:max-w-xl">
-          <DrawerHeader className="sticky top-0 z-10 border-b bg-background px-4 py-3">
+        <DrawerContent className="h-full data-[vaul-drawer-direction=right]:w-[92vw] data-[vaul-drawer-direction=right]:sm:max-w-xl">
+          <DrawerHeader className="sticky top-0 z-10 border-b bg-background px-4 py-4">
             <div className="flex items-center justify-between">
-              <div>
-                <DrawerTitle className="text-base">{t.reviewApplication}</DrawerTitle>
-                <DrawerDescription className="text-xs">{t.reviewApplicationDesc}</DrawerDescription>
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                  <FileText className="h-5 w-5" />
+                </div>
+                <div>
+                  <DrawerTitle className="text-base">{t.reviewApplication}</DrawerTitle>
+                  <DrawerDescription className="text-xs">
+                    {t.reviewApplicationDesc}
+                  </DrawerDescription>
+                </div>
               </div>
               {selected && statusBadge(selected.status)}
             </div>
           </DrawerHeader>
 
           {selected && (
-            <div className="flex-1 space-y-3 overflow-y-auto px-4 py-3">
+            <div className="flex-1 space-y-4 overflow-y-auto px-4 py-4">
               {/* 申请人信息卡片 */}
-              <div className="rounded-lg border bg-muted/30 p-3">
-                <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
+              <div className="rounded-xl border bg-gradient-to-br from-muted/50 to-muted/20 p-4">
+                <div className="mb-3 flex items-center gap-2 text-sm font-medium">
+                  <User className="h-4 w-4 text-primary" />
+                  {t.preApplicationUser}
+                </div>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
                   <div>
-                    <span className="text-muted-foreground">{t.preApplicationUser}</span>
+                    <span className="text-xs text-muted-foreground">{t.preApplicationUser}</span>
                     <p className="font-medium truncate">
                       {selected.user.name || selected.user.email}
                     </p>
                   </div>
                   <div>
-                    <span className="text-muted-foreground">{t.preApplicationRegisterEmail}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {t.preApplicationRegisterEmail}
+                    </span>
                     <p className="font-medium truncate">{selected.registerEmail}</p>
                   </div>
                   <div>
-                    <span className="text-muted-foreground">{t.preApplicationGroup}</span>
+                    <span className="text-xs text-muted-foreground">{t.preApplicationGroup}</span>
                     <p className="font-medium">{getGroupLabel(selected.group)}</p>
                   </div>
                   <div>
-                    <span className="text-muted-foreground">{t.preApplicationSource}</span>
+                    <span className="text-xs text-muted-foreground">{t.preApplicationSource}</span>
                     <p className="font-medium">{getSourceLabel(selected.source)}</p>
                   </div>
                   {selected.sourceDetail && (
                     <div className="col-span-2">
-                      <span className="text-muted-foreground">{t.preApplicationSourceDetail}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {t.preApplicationSourceDetail}
+                      </span>
                       <p className="font-medium">{selected.sourceDetail}</p>
                     </div>
                   )}
-                  <div>
-                    <span className="text-muted-foreground">{t.preApplicationQueryToken}</span>
-                    <p className="font-medium font-mono text-[10px]">
-                      {selected.queryToken || "-"}
-                    </p>
+                  <div className="col-span-2">
+                    <span className="text-xs text-muted-foreground">
+                      {t.preApplicationQueryToken}
+                    </span>
+                    <p className="font-medium font-mono text-xs">{selected.queryToken || "-"}</p>
                   </div>
                 </div>
               </div>
 
               {/* 申请理由 */}
-              <Accordion type="multiple" defaultValue={["essay"]} className="rounded-lg border">
+              <Accordion type="multiple" defaultValue={["essay"]} className="rounded-xl border">
                 <AccordionItem value="essay" className="border-none">
-                  <AccordionTrigger className="px-3 py-2 text-xs font-medium hover:no-underline">
-                    {t.preApplicationEssay}
+                  <AccordionTrigger className="px-4 py-3 hover:no-underline">
+                    <div className="flex items-center gap-2 text-sm font-medium">
+                      <FileText className="h-4 w-4 text-primary" />
+                      {t.preApplicationEssay}
+                    </div>
                   </AccordionTrigger>
-                  <AccordionContent className="px-3 pb-3">
-                    <div className="rounded border bg-card p-3 text-sm">
+                  <AccordionContent className="px-4 pb-4">
+                    <div className="rounded-lg border bg-card p-4 text-sm">
                       <PostContent content={selected.essay} emptyMessage={t.preApplicationEssay} />
                     </div>
                   </AccordionContent>
@@ -804,58 +1078,64 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
               </Accordion>
 
               {/* 审核历史 */}
-              <div className="space-y-2">
-                <p className="text-xs font-medium text-muted-foreground">
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-sm font-medium">
+                  <History className="h-4 w-4 text-primary" />
                   {dict.preApplication.historyTitle}
-                </p>
-                {historyLoading && <p className="text-xs text-muted-foreground">{t.loading}</p>}
+                </div>
+                {historyLoading && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    {t.loading}
+                  </div>
+                )}
                 {!historyLoading && historyRecords.length === 0 && (
-                  <p className="text-xs text-muted-foreground italic">
+                  <p className="text-sm text-muted-foreground italic">
                     {dict.preApplication.historyEmpty}
                   </p>
                 )}
                 {!historyLoading && historyRecords.length > 0 && (
-                  <Accordion type="multiple" className="rounded-lg border">
+                  <Accordion type="multiple" className="rounded-xl border">
                     {historyRecords.map((item) => (
                       <AccordionItem
                         key={item.id}
                         value={item.id}
                         className="border-b last:border-none"
                       >
-                        <AccordionTrigger className="px-3 py-2 text-xs hover:no-underline">
+                        <AccordionTrigger className="px-4 py-3 hover:no-underline">
                           <div className="flex flex-1 items-center justify-between gap-2 pr-2">
-                            <span className="text-muted-foreground">
+                            <span className="text-sm text-muted-foreground">
                               {t.reviewRoundLabel?.replace("{n}", String(item.version)) ??
                                 `${item.version}审`}
                               {" · "}
-                              {new Date(item.createdAt).toLocaleDateString(locale)}
+                              {formatDateTime(item.createdAt, locale)}
                             </span>
                             {statusBadge(item.status)}
                           </div>
                         </AccordionTrigger>
-                        <AccordionContent className="space-y-2 px-3 pb-3">
-                          <div className="rounded border bg-muted/30 p-2 text-xs">
+                        <AccordionContent className="space-y-3 px-4 pb-4">
+                          <div className="rounded-lg border bg-muted/30 p-3 text-sm">
                             <PostContent
                               content={item.essay}
                               emptyMessage={t.preApplicationEssay}
                             />
                           </div>
                           {item.reviewedAt ? (
-                            <div className="space-y-0.5 text-[10px] text-muted-foreground">
+                            <div className="space-y-1 text-xs text-muted-foreground">
                               <p>
                                 {t.preApplicationReviewer}：
                                 {item.reviewedBy?.name || item.reviewedBy?.email || "-"}
                               </p>
                               <p>
                                 {dict.preApplication.review.reviewedAt}：
-                                {new Date(item.reviewedAt).toLocaleString(locale)}
+                                {formatDateTime(item.reviewedAt, locale)}
                               </p>
                               <p className="whitespace-pre-wrap">
                                 {dict.preApplication.review.guidance}：{item.guidance || "-"}
                               </p>
                             </div>
                           ) : (
-                            <p className="text-[10px] text-muted-foreground italic">
+                            <p className="text-xs text-muted-foreground italic">
                               {dict.preApplication.status.pending}
                             </p>
                           )}
@@ -868,7 +1148,8 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
 
               {/* 当前审核状态 */}
               {selected.reviewedBy && (
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Users className="h-4 w-4" />
                   <span>
                     {t.preApplicationReviewer}：
                     {selected.reviewedBy.name || selected.reviewedBy.email}
@@ -878,9 +1159,13 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
 
               {/* 审核操作表单 */}
               {selected.status === "PENDING" || selected.status === "DISPUTED" ? (
-                <div className="space-y-3 rounded-lg border bg-muted/20 p-3">
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="space-y-1">
+                <div className="space-y-4 rounded-xl border bg-gradient-to-br from-muted/30 to-muted/10 p-4">
+                  <div className="flex items-center gap-2 text-sm font-medium">
+                    <Send className="h-4 w-4 text-primary" />
+                    {t.reviewAction}
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
                       <Label className="text-xs">{t.reviewAction}</Label>
                       <Select
                         value={reviewAction}
@@ -888,31 +1173,25 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
                           setReviewAction(value as "APPROVE" | "REJECT" | "DISPUTE")
                         }
                       >
-                        <SelectTrigger className="h-8 text-xs">
+                        <SelectTrigger className="h-9">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="APPROVE" className="text-xs">
-                            {t.reviewApprove}
-                          </SelectItem>
-                          <SelectItem value="REJECT" className="text-xs">
-                            {t.reviewReject}
-                          </SelectItem>
-                          <SelectItem value="DISPUTE" className="text-xs">
-                            {t.reviewDispute || "标记有争议"}
-                          </SelectItem>
+                          <SelectItem value="APPROVE">{t.reviewApprove}</SelectItem>
+                          <SelectItem value="REJECT">{t.reviewReject}</SelectItem>
+                          <SelectItem value="DISPUTE">{t.reviewDispute || "标记有争议"}</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                     {reviewAction !== "REJECT" && (
-                      <div className="space-y-1">
+                      <div className="space-y-1.5">
                         <Label className="text-xs">{t.inviteCode}</Label>
                         <Select
                           value={inviteCode}
                           onValueChange={setInviteCode}
                           disabled={inviteOptionsLoading || inviteOptions.length === 0}
                         >
-                          <SelectTrigger className="h-8 text-xs">
+                          <SelectTrigger className="h-9">
                             <SelectValue
                               placeholder={
                                 inviteOptionsLoading
@@ -925,12 +1204,12 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
                           </SelectTrigger>
                           <SelectContent>
                             {inviteOptions.map((option) => (
-                              <SelectItem key={option.id} value={option.code} className="text-xs">
+                              <SelectItem key={option.id} value={option.code}>
                                 <div className="flex flex-col">
-                                  <span>{option.code}</span>
-                                  <span className="text-[10px] text-muted-foreground">
+                                  <span className="text-sm">{option.code}</span>
+                                  <span className="text-xs text-muted-foreground">
                                     {option.expiresAt
-                                      ? `${t.inviteExpiresAt} ${new Date(option.expiresAt).toLocaleDateString(locale)}`
+                                      ? `${t.inviteExpiresAt} ${formatDateTime(option.expiresAt, locale)}`
                                       : t.inviteCodeSelectNoExpiry}
                                   </span>
                                 </div>
@@ -942,22 +1221,22 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
                     )}
                   </div>
                   {reviewAction !== "REJECT" && (
-                    <div className="space-y-1">
+                    <div className="space-y-1.5">
                       <Label className="text-xs">{t.inviteExpiresAt}</Label>
                       <Input
                         type="datetime-local"
                         value={inviteExpiresAt}
                         onChange={(event) => setInviteExpiresAt(event.target.value)}
-                        className="h-8 text-xs"
+                        className="h-9"
                       />
                     </div>
                   )}
-                  <div className="space-y-1">
+                  <div className="space-y-1.5">
                     <div className="flex items-center justify-between">
                       <Label className="text-xs">{t.guidance}</Label>
                       {getCurrentTemplates().length > 0 && (
                         <Select onValueChange={(value) => setGuidance(value)}>
-                          <SelectTrigger className="h-6 w-32 text-[10px]">
+                          <SelectTrigger className="h-7 w-36 text-xs">
                             <SelectValue placeholder={t.reviewTemplateSelect} />
                           </SelectTrigger>
                           <SelectContent>
@@ -973,33 +1252,33 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
                     <Textarea
                       value={guidance}
                       onChange={(event) => setGuidance(event.target.value)}
-                      rows={3}
-                      className="text-xs resize-none"
+                      rows={4}
+                      className="resize-none"
                     />
                   </div>
                 </div>
               ) : (
-                <div className="rounded-lg border bg-muted/20 p-3">
-                  <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="rounded-xl border bg-gradient-to-br from-muted/30 to-muted/10 p-4">
+                  <div className="grid grid-cols-2 gap-3 text-sm">
                     {selected.inviteCode && (
                       <div>
-                        <span className="text-muted-foreground">{t.inviteCode}</span>
+                        <span className="text-xs text-muted-foreground">{t.inviteCode}</span>
                         <p className="font-mono font-medium">{selected.inviteCode.code}</p>
                       </div>
                     )}
                     {selected.inviteCode?.expiresAt && (
                       <div>
-                        <span className="text-muted-foreground">{t.inviteExpiresAt}</span>
+                        <span className="text-xs text-muted-foreground">{t.inviteExpiresAt}</span>
                         <p className="font-medium">
-                          {new Date(selected.inviteCode.expiresAt).toLocaleString(locale)}
+                          {formatDateTime(selected.inviteCode.expiresAt, locale)}
                         </p>
                       </div>
                     )}
                   </div>
                   {selected.guidance && (
-                    <div className="mt-2 text-xs">
-                      <span className="text-muted-foreground">{t.guidance}</span>
-                      <p className="mt-1 whitespace-pre-wrap rounded border bg-card p-2">
+                    <div className="mt-3 text-sm">
+                      <span className="text-xs text-muted-foreground">{t.guidance}</span>
+                      <p className="mt-1.5 whitespace-pre-wrap rounded-lg border bg-card p-3">
                         {selected.guidance}
                       </p>
                     </div>
@@ -1009,24 +1288,24 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
             </div>
           )}
 
-          <DrawerFooter className="sticky bottom-0 z-10 border-t bg-background px-4 py-2">
+          <DrawerFooter className="sticky bottom-0 z-10 border-t bg-background px-4 py-3">
             <div className="flex w-full justify-end gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 text-xs"
-                onClick={() => setDialogOpen(false)}
-              >
+              <Button variant="outline" onClick={() => setDialogOpen(false)}>
                 {t.reviewCancel}
               </Button>
               {(selected?.status === "PENDING" || selected?.status === "DISPUTED") && (
-                <Button
-                  size="sm"
-                  className="h-8 text-xs"
-                  onClick={handleReview}
-                  disabled={submitting}
-                >
-                  {submitting ? t.saving : t.reviewSubmit}
+                <Button onClick={handleReview} disabled={submitting} className="gap-2">
+                  {submitting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      {t.saving}
+                    </>
+                  ) : (
+                    <>
+                      <Send className="h-4 w-4" />
+                      {t.reviewSubmit}
+                    </>
+                  )}
                 </Button>
               )}
             </div>
