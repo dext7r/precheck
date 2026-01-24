@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer"
+import { db } from "@/lib/db"
 
 export type EmailPayload = {
   to: string
@@ -119,17 +120,56 @@ async function sendEmailViaSMTP(payload: EmailPayload): Promise<void> {
 }
 
 /**
- * 发送邮件（自动选择发送方式）
+ * 发送邮件（自动选择发送方式）并记录日志
  */
 export async function sendEmail(payload: EmailPayload): Promise<void> {
+  const provider = emailProvider === "api" ? "api" : "smtp"
+  let logId: string | undefined
+
   try {
+    // 创建待处理日志
+    if (db) {
+      const log = await db.emailLog.create({
+        data: {
+          to: payload.to,
+          subject: payload.subject,
+          status: "PENDING",
+          provider,
+          metadata: {
+            hasHtml: !!payload.html,
+            from: payload.from,
+            fromName: payload.fromName,
+          },
+        },
+      })
+      logId = log.id
+    }
+
     if (emailProvider === "api") {
       await sendEmailViaAPI(payload)
     } else {
       await sendEmailViaSMTP(payload)
     }
+
+    // 更新日志状态为成功
+    if (db && logId) {
+      await db.emailLog.update({
+        where: { id: logId },
+        data: { status: "SUCCESS" },
+      })
+    }
   } catch (error) {
     console.error("Email sending error:", error)
+    // 更新日志状态为失败
+    if (db && logId) {
+      await db.emailLog.update({
+        where: { id: logId },
+        data: {
+          status: "FAILED",
+          errorMessage: error instanceof Error ? error.message : String(error),
+        },
+      }).catch(() => {})
+    }
     throw error
   }
 }

@@ -12,6 +12,8 @@ export type PreApplicationSource = "TIEBA" | "BILIBILI" | "DOUYIN" | "XIAOHONGSH
 
 export type PreApplicationGroup = "GROUP_ONE" | "GROUP_TWO"
 
+export type EmailLogStatus = "PENDING" | "SUCCESS" | "FAILED"
+
 export interface User {
   id: string
   email: string
@@ -219,4 +221,15 @@ export interface SiteSettings {
   allowedEmailDomains: Prisma.JsonValue
   createdAt: Date
   updatedAt: Date
+}
+
+export interface EmailLog {
+  id: string
+  to: string
+  subject: string
+  status: EmailLogStatus
+  provider: string | null
+  errorMessage: string | null
+  metadata: Prisma.JsonValue | null
+  createdAt: Date
 }

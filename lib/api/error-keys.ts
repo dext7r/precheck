@@ -114,6 +114,9 @@ export const ApiErrorKeys = {
     stats: {
       failedToFetch: "apiErrors.admin.stats.failedToFetch",
     },
+    emailLogs: {
+      failed: "apiErrors.admin.emailLogs.failed",
+    },
   },
   dashboard: {
     password: {

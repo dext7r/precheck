@@ -310,3 +310,24 @@ model SiteSettings {
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 }
+
+model EmailLog {
+  id          String          @id @default(cuid())
+  to          String
+  subject     String
+  status      EmailLogStatus  @default(PENDING)
+  provider    String?
+  errorMessage String?
+  metadata    Json?
+  createdAt   DateTime        @default(now())
+
+  @@index([to])
+  @@index([status])
+  @@index([createdAt])
+}
+
+enum EmailLogStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}

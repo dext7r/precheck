@@ -17,6 +17,7 @@ import {
   ChevronRight,
   Home,
   Cog,
+  Send,
 } from "lucide-react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
@@ -44,13 +45,14 @@ export function AdminSidebar({ locale, dict, user }: AdminSidebarProps) {
     },
     { name: dict.admin.inviteCodes, href: `/${locale}/admin/invite-codes`, icon: Key },
     { name: dict.admin.messages, href: `/${locale}/admin/messages`, icon: Mail },
+    { name: dict.admin.emailLogs, href: `/${locale}/admin/email-logs`, icon: Send },
     { name: dict.admin.auditLogs, href: `/${locale}/admin/audit-logs`, icon: ScrollText },
     { name: dict.admin.settings, href: `/${locale}/admin/settings`, icon: Settings },
   ]
 
   if (user?.role === "SUPER_ADMIN") {
     navigation.push({
-      name: "系统配置",
+      name: dict.admin.systemConfig,
       href: `/${locale}/admin/system-config`,
       icon: Cog,
     })

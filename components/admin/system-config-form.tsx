@@ -9,13 +9,15 @@ import { Card } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
 import { X, Plus, Mail } from "lucide-react"
 import type { Locale } from "@/lib/i18n/config"
+import type { Dictionary } from "@/lib/i18n/get-dictionary"
 
 interface SystemConfigFormProps {
   locale: Locale
-  dict: Record<string, any>
+  dict: Dictionary
 }
 
 export function SystemConfigForm({ locale, dict }: SystemConfigFormProps) {
+  const t = dict.admin
   const [essayHint, setEssayHint] = useState("")
   const [emailDomains, setEmailDomains] = useState<string[]>([])
   const [auditLogEnabled, setAuditLogEnabled] = useState(false)
@@ -39,8 +41,8 @@ export function SystemConfigForm({ locale, dict }: SystemConfigFormProps) {
       setEssayHint(data.preApplicationEssayHint)
       setEmailDomains(data.allowedEmailDomains)
       setAuditLogEnabled(data.auditLogEnabled ?? false)
-    } catch (error) {
-      setMessage({ type: "error", text: "加载配置失败" })
+    } catch {
+      setMessage({ type: "error", text: t.systemConfigLoadFailed })
     } finally {
       setLoading(false)
     }
@@ -63,12 +65,12 @@ export function SystemConfigForm({ locale, dict }: SystemConfigFormProps) {
 
       if (!res.ok) {
         const error = await res.json()
-        throw new Error(error.error || "保存失败")
+        throw new Error(error.error || t.systemConfigSaveFailed)
       }
 
-      setMessage({ type: "success", text: "配置保存成功" })
+      setMessage({ type: "success", text: t.systemConfigSaveSuccess })
     } catch (error) {
-      setMessage({ type: "error", text: error instanceof Error ? error.message : "保存失败" })
+      setMessage({ type: "error", text: error instanceof Error ? error.message : t.systemConfigSaveFailed })
     } finally {
       setSaving(false)
     }
@@ -79,12 +81,12 @@ export function SystemConfigForm({ locale, dict }: SystemConfigFormProps) {
     if (!domain) return
 
     if (!/^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(domain)) {
-      setMessage({ type: "error", text: "邮箱域名格式无效" })
+      setMessage({ type: "error", text: t.systemConfigEmailDomainInvalid })
       return
     }
 
     if (emailDomains.includes(domain)) {
-      setMessage({ type: "error", text: "域名已存在" })
+      setMessage({ type: "error", text: t.systemConfigEmailDomainExists })
       return
     }
 
@@ -99,7 +101,7 @@ export function SystemConfigForm({ locale, dict }: SystemConfigFormProps) {
 
   async function handleTestEmail() {
     if (!testEmailAddress || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(testEmailAddress)) {
-      setMessage({ type: "error", text: "请输入有效的邮箱地址" })
+      setMessage({ type: "error", text: t.systemConfigTestEmailInvalid })
       return
     }
 
@@ -115,19 +117,21 @@ export function SystemConfigForm({ locale, dict }: SystemConfigFormProps) {
 
       if (!res.ok) {
         const error = await res.json()
-        throw new Error(error.error || "发送失败")
+        throw new Error(error.error || t.systemConfigTestEmailFailed)
       }
 
       const result = await res.json()
       setMessage({
         type: "success",
-        text: `测试邮件已发送到 ${testEmailAddress}，使用 ${result.provider} 发送`,
+        text: t.systemConfigTestEmailSuccess
+          .replace("{email}", testEmailAddress)
+          .replace("{provider}", result.provider),
       })
       setTestEmailAddress("")
     } catch (error) {
       setMessage({
         type: "error",
-        text: error instanceof Error ? error.message : "发送测试邮件失败",
+        text: error instanceof Error ? error.message : t.systemConfigTestEmailFailed,
       })
     } finally {
       setTestingEmail(false)
@@ -135,7 +139,7 @@ export function SystemConfigForm({ locale, dict }: SystemConfigFormProps) {
   }
 
   if (loading) {
-    return <div>加载中...</div>
+    return <div>{t.systemConfigLoading}</div>
   }
 
   return (
@@ -143,16 +147,16 @@ export function SystemConfigForm({ locale, dict }: SystemConfigFormProps) {
       <Card className="p-6">
         <div className="space-y-4">
           <div>
-            <Label htmlFor="essayHint">预申请小作文提示文本</Label>
+            <Label htmlFor="essayHint">{t.systemConfigEssayHint}</Label>
             <p className="text-sm text-muted-foreground mb-2">
-              显示在预申请表单中,指导用户如何填写申请理由
+              {t.systemConfigEssayHintDesc}
             </p>
             <Textarea
               id="essayHint"
               value={essayHint}
               onChange={(e) => setEssayHint(e.target.value)}
               rows={3}
-              placeholder="建议 100 字左右..."
+              placeholder={t.systemConfigEssayHintPlaceholder}
             />
           </div>
         </div>
@@ -162,9 +166,9 @@ export function SystemConfigForm({ locale, dict }: SystemConfigFormProps) {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="space-y-1">
-              <Label htmlFor="auditLog">启用审计日志</Label>
+              <Label htmlFor="auditLog">{t.systemConfigAuditLog}</Label>
               <p className="text-sm text-muted-foreground">
-                记录所有管理操作到审计日志（默认关闭以提升性能）
+                {t.systemConfigAuditLogDesc}
               </p>
             </div>
             <Switch id="auditLog" checked={auditLogEnabled} onCheckedChange={setAuditLogEnabled} />
@@ -175,9 +179,9 @@ export function SystemConfigForm({ locale, dict }: SystemConfigFormProps) {
       <Card className="p-6">
         <div className="space-y-4">
           <div>
-            <Label>允许的邮箱域名</Label>
+            <Label>{t.systemConfigEmailDomains}</Label>
             <p className="text-sm text-muted-foreground mb-2">
-              只有使用这些域名的邮箱才能提交预申请
+              {t.systemConfigEmailDomainsDesc}
             </p>
           </div>
 
@@ -185,7 +189,7 @@ export function SystemConfigForm({ locale, dict }: SystemConfigFormProps) {
             <Input
               value={newDomain}
               onChange={(e) => setNewDomain(e.target.value)}
-              placeholder="例如: gmail.com"
+              placeholder={t.systemConfigEmailDomainPlaceholder}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   e.preventDefault()
@@ -195,7 +199,7 @@ export function SystemConfigForm({ locale, dict }: SystemConfigFormProps) {
             />
             <Button onClick={handleAddDomain} type="button">
               <Plus className="h-4 w-4 mr-1" />
-              添加
+              {t.systemConfigEmailDomainAdd}
             </Button>
           </div>
 
@@ -219,7 +223,7 @@ export function SystemConfigForm({ locale, dict }: SystemConfigFormProps) {
           </div>
 
           {emailDomains.length === 0 && (
-            <p className="text-sm text-muted-foreground">暂无域名,请添加至少一个</p>
+            <p className="text-sm text-muted-foreground">{t.systemConfigEmailDomainEmpty}</p>
           )}
         </div>
       </Card>
@@ -227,9 +231,9 @@ export function SystemConfigForm({ locale, dict }: SystemConfigFormProps) {
       <Card className="p-6">
         <div className="space-y-4">
           <div>
-            <Label htmlFor="testEmail">测试邮件发送</Label>
+            <Label htmlFor="testEmail">{t.systemConfigTestEmail}</Label>
             <p className="text-sm text-muted-foreground mb-2">
-              发送测试邮件以验证邮件服务配置是否正确
+              {t.systemConfigTestEmailDesc}
             </p>
           </div>
 
@@ -239,7 +243,7 @@ export function SystemConfigForm({ locale, dict }: SystemConfigFormProps) {
               type="email"
               value={testEmailAddress}
               onChange={(e) => setTestEmailAddress(e.target.value)}
-              placeholder="输入接收测试邮件的邮箱地址"
+              placeholder={t.systemConfigTestEmailPlaceholder}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   e.preventDefault()
@@ -249,13 +253,13 @@ export function SystemConfigForm({ locale, dict }: SystemConfigFormProps) {
             />
             <Button onClick={handleTestEmail} type="button" disabled={testingEmail}>
               <Mail className="h-4 w-4 mr-1" />
-              {testingEmail ? "发送中..." : "发送测试"}
+              {testingEmail ? t.systemConfigTestEmailSending : t.systemConfigTestEmailSend}
             </Button>
           </div>
 
           <p className="text-xs text-muted-foreground">
-            当前邮件发送方式：
-            <strong className="ml-1">{process.env.NEXT_PUBLIC_EMAIL_PROVIDER || "未配置"}</strong>
+            {t.systemConfigEmailProvider}:
+            <strong className="ml-1">{process.env.NEXT_PUBLIC_EMAIL_PROVIDER || t.systemConfigEmailProviderNotConfigured}</strong>
           </p>
         </div>
       </Card>
@@ -263,7 +267,7 @@ export function SystemConfigForm({ locale, dict }: SystemConfigFormProps) {
       {message && (
         <div
           className={`p-4 rounded-md ${
-            message.type === "success" ? "bg-green-50 text-green-800" : "bg-red-50 text-red-800"
+            message.type === "success" ? "bg-green-50 text-green-800 dark:bg-green-900/20 dark:text-green-400" : "bg-red-50 text-red-800 dark:bg-red-900/20 dark:text-red-400"
           }`}
         >
           {message.text}
@@ -272,7 +276,7 @@ export function SystemConfigForm({ locale, dict }: SystemConfigFormProps) {
 
       <div className="flex justify-end">
         <Button onClick={handleSave} disabled={saving || emailDomains.length === 0}>
-          {saving ? "保存中..." : "保存配置"}
+          {saving ? t.systemConfigSaving : t.systemConfigSave}
         </Button>
       </div>
     </div>

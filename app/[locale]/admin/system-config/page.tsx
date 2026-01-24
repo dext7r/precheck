@@ -24,8 +24,8 @@ export default async function SystemConfigPage({ params }: SystemConfigPageProps
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">系统配置</h1>
-        <p className="mt-2 text-muted-foreground">管理预申请表单和邮箱域名白名单</p>
+        <h1 className="text-3xl font-bold">{dict.admin.systemConfig}</h1>
+        <p className="mt-2 text-muted-foreground">{dict.admin.systemConfigDesc}</p>
       </div>
 
       <SystemConfigForm locale={locale} dict={dict} />
