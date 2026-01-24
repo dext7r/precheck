@@ -159,7 +159,7 @@ export function RegisterForm({ locale, dict, oauthProviders }: RegisterFormProps
       const res = await fetch("/api/auth/send-verification-code", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: formData.email, purpose: "register" }),
+        body: JSON.stringify({ email: formData.email, purpose: "register", locale }),
       })
 
       const data = await res.json()
