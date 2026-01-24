@@ -458,9 +458,9 @@ export function AdminDashboard({ locale, dict }: AdminDashboardProps) {
           <CardContent>
             <ChartContainer
               config={{
-                submitted: { label: t.preApplicationSubmitted, color: "hsl(var(--chart-1))" },
-                approved: { label: t.preApplicationApproved, color: "hsl(var(--chart-2))" },
-                rejected: { label: t.preApplicationRejected, color: "hsl(var(--chart-3))" },
+                submitted: { label: t.preApplicationSubmitted, color: "var(--chart-1)" },
+                approved: { label: t.preApplicationApproved, color: "var(--chart-2)" },
+                rejected: { label: t.preApplicationRejected, color: "var(--chart-3)" },
               }}
               className="h-[260px]"
             >
@@ -545,9 +545,9 @@ export function AdminDashboard({ locale, dict }: AdminDashboardProps) {
           <CardContent>
             <ChartContainer
               config={{
-                assigned: { label: t.inviteAssigned, color: "hsl(var(--chart-2))" },
-                used: { label: t.inviteUsed, color: "hsl(var(--chart-4))" },
-                expired: { label: t.inviteExpired, color: "hsl(var(--chart-5))" },
+                assigned: { label: t.inviteAssigned, color: "var(--chart-2)" },
+                used: { label: t.inviteUsed, color: "var(--chart-4)" },
+                expired: { label: t.inviteExpired, color: "var(--chart-5)" },
               }}
               className="h-[260px]"
             >
@@ -577,7 +577,7 @@ export function AdminDashboard({ locale, dict }: AdminDashboardProps) {
           <CardContent>
             <ChartContainer
               config={{
-                users: { label: t.userRegistrations, color: "hsl(var(--chart-1))" },
+                users: { label: t.userRegistrations, color: "var(--chart-1)" },
               }}
               className="h-[260px]"
             >
