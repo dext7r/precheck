@@ -438,14 +438,14 @@ export function AdminSettingsForm({ locale, dict }: AdminSettingsFormProps) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* 页面标题和保存按钮 */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold">{t.settings}</h1>
-          <p className="mt-1 text-muted-foreground">{t.configureSystemSettings}</p>
+          <h1 className="text-2xl sm:text-3xl font-bold">{t.settings}</h1>
+          <p className="mt-1 text-sm sm:text-base text-muted-foreground">{t.configureSystemSettings}</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <AnimatePresence>
             {hasChanges && (
               <motion.div
@@ -453,7 +453,7 @@ export function AdminSettingsForm({ locale, dict }: AdminSettingsFormProps) {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 10 }}
               >
-                <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800">
+                <Badge variant="outline" className="text-xs sm:text-sm bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800">
                   {t.unsavedChanges || "有未保存的修改"}
                 </Badge>
               </motion.div>
@@ -465,7 +465,8 @@ export function AdminSettingsForm({ locale, dict }: AdminSettingsFormProps) {
             ) : (
               <Save className="h-4 w-4" />
             )}
-            {saving ? t.saving : t.saveAll || "保存所有修改"}
+            <span className="hidden sm:inline">{saving ? t.saving : t.saveAll || "保存所有修改"}</span>
+            <span className="sm:hidden">{saving ? t.saving : t.save}</span>
           </Button>
         </div>
       </div>
@@ -476,10 +477,36 @@ export function AdminSettingsForm({ locale, dict }: AdminSettingsFormProps) {
         </Alert>
       )}
 
+      {/* 移动端横向标签导航 */}
+      <nav className="lg:hidden overflow-x-auto -mx-4 px-4 scrollbar-none">
+        <div className="flex gap-1.5 min-w-max pb-1">
+          {tabs.map((tab) => {
+            const Icon = tab.icon
+            const isActive = activeTab === tab.id
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={cn(
+                  "flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-all duration-200",
+                  isActive
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground",
+                  tab.color && !isActive && tab.color,
+                )}
+              >
+                <Icon className="h-3.5 w-3.5" />
+                {tab.label}
+              </button>
+            )
+          })}
+        </div>
+      </nav>
+
       {/* 主内容区：侧边导航 + 内容面板 */}
       <div className="flex gap-6">
-        {/* 侧边导航 */}
-        <nav className="w-48 shrink-0">
+        {/* PC端侧边导航 */}
+        <nav className="hidden lg:block w-48 shrink-0">
           <div className="sticky top-6 space-y-1">
             {tabs.map((tab) => {
               const Icon = tab.icon
