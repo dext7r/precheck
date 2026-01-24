@@ -143,7 +143,7 @@ export async function checkRateLimit(
  */
 export async function sendVerificationEmail(
   email: string,
-  purpose: "register" | "reset-password" | "change-email" = "register",
+  purpose: "register" | "reset-password" | "change-email" | "login" = "register",
   locale: Locale = "zh",
 ): Promise<{ success: boolean; error?: string; waitSeconds?: number }> {
   // 检查发送频率

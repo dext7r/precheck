@@ -2,11 +2,11 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { ArrowLeft, CheckCircle2, Eye, EyeOff, Loader2 } from "lucide-react"
+import { ArrowLeft, CheckCircle2, Eye, EyeOff, Loader2, Mail, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -19,21 +19,56 @@ interface ResetPasswordFormProps {
   dict: Dictionary
 }
 
+interface UserInfo {
+  email: string
+  name: string | null
+}
+
 export function ResetPasswordForm({ locale, dict }: ResetPasswordFormProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const token = searchParams.get("token")
 
   const [isLoading, setIsLoading] = useState(false)
+  const [isValidating, setIsValidating] = useState(true)
   const [isSuccess, setIsSuccess] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState("")
+  const [tokenError, setTokenError] = useState("")
+  const [userInfo, setUserInfo] = useState<UserInfo | null>(null)
   const [formData, setFormData] = useState({
     password: "",
     confirmPassword: "",
   })
 
   const t = dict.auth.resetPassword
+
+  // 验证 token 并获取用户信息
+  useEffect(() => {
+    if (!token) {
+      setIsValidating(false)
+      return
+    }
+
+    const validateToken = async () => {
+      try {
+        const res = await fetch(`/api/auth/reset-password?token=${encodeURIComponent(token)}`)
+        const data = await res.json()
+
+        if (!res.ok) {
+          setTokenError(resolveErrorMessage(data?.error))
+        } else if (data.user) {
+          setUserInfo(data.user)
+        }
+      } catch {
+        setTokenError(t.invalidToken)
+      } finally {
+        setIsValidating(false)
+      }
+    }
+
+    validateToken()
+  }, [token, t.invalidToken])
 
   const resolveErrorMessage = (payload?: string | { code?: string; message?: string }) => {
     if (!payload) {
@@ -87,9 +122,10 @@ export function ResetPasswordForm({ locale, dict }: ResetPasswordFormProps) {
       }
 
       setIsSuccess(true)
+      // 跳转到后台
       setTimeout(() => {
-        router.push(`/${locale}/login`)
-      }, 2000)
+        window.location.href = `/${locale}/dashboard`
+      }, 1500)
     } catch {
       setError(t.invalidToken)
     } finally {
@@ -97,7 +133,22 @@ export function ResetPasswordForm({ locale, dict }: ResetPasswordFormProps) {
     }
   }
 
-  if (!token) {
+  // 验证中
+  if (isValidating) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="w-full max-w-md space-y-8 rounded-2xl border border-border/40 bg-card/50 p-8 text-center shadow-2xl backdrop-blur-xl"
+      >
+        <Loader2 className="mx-auto h-8 w-8 animate-spin text-muted-foreground" />
+        <p className="text-muted-foreground">{t.submitting}</p>
+      </motion.div>
+    )
+  }
+
+  // Token 无效或已过期
+  if (!token || tokenError) {
     return (
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -105,7 +156,7 @@ export function ResetPasswordForm({ locale, dict }: ResetPasswordFormProps) {
         className="w-full max-w-md space-y-8 rounded-2xl border border-border/40 bg-card/50 p-8 text-center shadow-2xl backdrop-blur-xl"
       >
         <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-6">
-          <p className="text-destructive">{t.invalidToken}</p>
+          <p className="text-destructive">{tokenError || t.invalidToken}</p>
         </div>
         <Link href={`/${locale}/login`}>
           <Button variant="outline">
@@ -153,6 +204,28 @@ export function ResetPasswordForm({ locale, dict }: ResetPasswordFormProps) {
             >
               {error}
             </motion.div>
+          )}
+
+          {/* 用户信息展示（只读） */}
+          {userInfo && (
+            <div className="space-y-3 rounded-lg border border-border bg-muted/30 p-4">
+              <div className="flex items-center gap-3">
+                <Mail className="h-4 w-4 text-muted-foreground" />
+                <div className="flex-1">
+                  <p className="text-xs text-muted-foreground">{dict.auth.login.email}</p>
+                  <p className="text-sm font-medium">{userInfo.email}</p>
+                </div>
+              </div>
+              {userInfo.name && (
+                <div className="flex items-center gap-3">
+                  <User className="h-4 w-4 text-muted-foreground" />
+                  <div className="flex-1">
+                    <p className="text-xs text-muted-foreground">{dict.auth.register.name}</p>
+                    <p className="text-sm font-medium">{userInfo.name}</p>
+                  </div>
+                </div>
+              )}
+            </div>
           )}
 
           <div className="space-y-4">

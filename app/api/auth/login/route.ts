@@ -5,14 +5,29 @@ import { createSession, setSessionCookie } from "@/lib/auth/session"
 import { features } from "@/lib/features"
 import { writeAuditLog } from "@/lib/audit"
 import { verifyTurnstileToken } from "@/lib/turnstile"
+import { verifyCode } from "@/lib/verification-code"
+import { isRedisAvailable } from "@/lib/redis"
 import { z } from "zod"
 import { createApiErrorResponse } from "@/lib/api/error-response"
 
-const loginSchema = z.object({
+// 密码登录 schema
+const passwordLoginSchema = z.object({
   email: z.string().email("Invalid email address"),
   password: z.string().min(1, "Password is required"),
   turnstileToken: z.string().optional(),
+  loginType: z.literal("password").optional(),
 })
+
+// 验证码登录 schema
+const codeLoginSchema = z.object({
+  email: z.string().email("Invalid email address"),
+  verificationCode: z.string().length(6, "Verification code must be 6 digits"),
+  turnstileToken: z.string().optional(),
+  loginType: z.literal("code"),
+})
+
+// 合并 schema
+const loginSchema = z.union([passwordLoginSchema, codeLoginSchema])
 
 function getLoginValidationErrorCode(error: z.ZodError) {
   const issue = error.errors[0]
@@ -24,6 +39,10 @@ function getLoginValidationErrorCode(error: z.ZodError) {
 
   if (field === "password") {
     return "apiErrors.auth.login.passwordRequired"
+  }
+
+  if (field === "verificationCode") {
+    return "apiErrors.auth.login.invalidVerificationCode"
   }
 
   return "apiErrors.auth.login.validationFailed"
@@ -38,7 +57,8 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json()
-    const { email, password, turnstileToken } = loginSchema.parse(body)
+    const data = loginSchema.parse(body)
+    const { email, turnstileToken } = data
 
     // 验证 Turnstile (如果提供)
     if (turnstileToken) {
@@ -59,18 +79,43 @@ export async function POST(request: NextRequest) {
       where: { email },
     })
 
-    if (!user || !user.password) {
+    if (!user) {
       return createApiErrorResponse(request, "apiErrors.auth.login.invalidCredentials", {
         status: 401,
       })
     }
 
-    // 验证密码
-    const isValid = await verifyPassword(password, user.password)
-    if (!isValid) {
-      return createApiErrorResponse(request, "apiErrors.auth.login.invalidCredentials", {
-        status: 401,
-      })
+    // 验证码登录
+    if ("loginType" in data && data.loginType === "code") {
+      // 检查 Redis 是否可用
+      if (!(await isRedisAvailable())) {
+        return createApiErrorResponse(request, "apiErrors.auth.login.serviceUnavailable", {
+          status: 503,
+        })
+      }
+
+      const codeVerification = await verifyCode(email, data.verificationCode)
+      if (!codeVerification.valid) {
+        return createApiErrorResponse(request, "apiErrors.auth.login.invalidVerificationCode", {
+          status: 401,
+          meta: { reason: codeVerification.error },
+        })
+      }
+    } else {
+      // 密码登录
+      if (!user.password) {
+        return createApiErrorResponse(request, "apiErrors.auth.login.invalidCredentials", {
+          status: 401,
+        })
+      }
+
+      const password = "password" in data ? data.password : ""
+      const isValid = await verifyPassword(password, user.password)
+      if (!isValid) {
+        return createApiErrorResponse(request, "apiErrors.auth.login.invalidCredentials", {
+          status: 401,
+        })
+      }
     }
 
     // 创建 Session
@@ -94,7 +139,7 @@ export async function POST(request: NextRequest) {
       entityType: "AUTH",
       entityId: user.id,
       actor: user,
-      metadata: { email },
+      metadata: { email, loginType: "loginType" in data ? data.loginType : "password" },
       request,
     })
 

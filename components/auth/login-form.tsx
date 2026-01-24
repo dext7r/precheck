@@ -2,11 +2,10 @@
 
 import type React from "react"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { Eye, EyeOff, Loader2 } from "lucide-react"
+import { Eye, EyeOff, Loader2, Mail, KeyRound } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -27,15 +26,20 @@ interface LoginFormProps {
   oauthProviders: Array<{ id: string; name: string }>
 }
 
+type LoginType = "password" | "code"
+
 export function LoginForm({ locale, dict, oauthProviders }: LoginFormProps) {
-  const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState("")
   const [turnstileToken, setTurnstileToken] = useState("")
+  const [loginType, setLoginType] = useState<LoginType>("password")
+  const [sendingCode, setSendingCode] = useState(false)
+  const [countdown, setCountdown] = useState(0)
   const [formData, setFormData] = useState({
     email: "",
     password: "",
+    verificationCode: "",
     rememberMe: false,
   })
 
@@ -47,6 +51,14 @@ export function LoginForm({ locale, dict, oauthProviders }: LoginFormProps) {
     "Password is required": t.errors.passwordRequired,
     "Login failed": t.errors.failed,
   }
+
+  // 倒计时
+  useEffect(() => {
+    if (countdown > 0) {
+      const timer = setTimeout(() => setCountdown(countdown - 1), 1000)
+      return () => clearTimeout(timer)
+    }
+  }, [countdown])
 
   const resolveErrorMessage = (payload?: string | { code?: string; message?: string }) => {
     if (!payload) {
@@ -71,6 +83,40 @@ export function LoginForm({ locale, dict, oauthProviders }: LoginFormProps) {
     return t.errors.failed
   }
 
+  // 发送验证码
+  const handleSendCode = async () => {
+    if (!formData.email || countdown > 0) return
+
+    setSendingCode(true)
+    setError("")
+
+    try {
+      const res = await fetch("/api/auth/send-verification-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: formData.email, purpose: "login", locale }),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        if (res.status === 429 && data.waitSeconds) {
+          setCountdown(data.waitSeconds)
+        } else {
+          setError(resolveErrorMessage(data?.error))
+        }
+        return
+      }
+
+      setCountdown(60)
+      toast.success(t.codeSent)
+    } catch {
+      setError(t.errors.failed)
+    } finally {
+      setSendingCode(false)
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -83,14 +129,24 @@ export function LoginForm({ locale, dict, oauthProviders }: LoginFormProps) {
     setError("")
 
     try {
+      const payload =
+        loginType === "code"
+          ? {
+              email: formData.email,
+              verificationCode: formData.verificationCode,
+              loginType: "code" as const,
+              turnstileToken: TURNSTILE_ENABLED ? turnstileToken : undefined,
+            }
+          : {
+              email: formData.email,
+              password: formData.password,
+              turnstileToken: TURNSTILE_ENABLED ? turnstileToken : undefined,
+            }
+
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: formData.email,
-          password: formData.password,
-          turnstileToken: TURNSTILE_ENABLED ? turnstileToken : undefined,
-        }),
+        body: JSON.stringify(payload),
       })
 
       const data = await res.json()
@@ -101,7 +157,6 @@ export function LoginForm({ locale, dict, oauthProviders }: LoginFormProps) {
         return
       }
 
-      // 登录成功，显示提示并跳转
       toast.success(t.success)
       setTimeout(() => {
         window.location.href = `/${locale}/dashboard`
@@ -135,6 +190,34 @@ export function LoginForm({ locale, dict, oauthProviders }: LoginFormProps) {
         <p className="mt-2 text-muted-foreground">{t.description}</p>
       </div>
 
+      {/* 登录方式切换 */}
+      <div className="flex rounded-lg border border-border bg-muted/30 p-1">
+        <button
+          type="button"
+          onClick={() => setLoginType("password")}
+          className={`flex-1 flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+            loginType === "password"
+              ? "bg-background text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <KeyRound className="h-4 w-4" />
+          {t.passwordLogin}
+        </button>
+        <button
+          type="button"
+          onClick={() => setLoginType("code")}
+          className={`flex-1 flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+            loginType === "code"
+              ? "bg-background text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <Mail className="h-4 w-4" />
+          {t.codeLogin}
+        </button>
+      </div>
+
       <form onSubmit={handleSubmit} className="space-y-6">
         {error && (
           <motion.div
@@ -147,6 +230,7 @@ export function LoginForm({ locale, dict, oauthProviders }: LoginFormProps) {
         )}
 
         <div className="space-y-4">
+          {/* 邮箱输入 */}
           <div className="relative">
             <Input
               id="email"
@@ -166,33 +250,82 @@ export function LoginForm({ locale, dict, oauthProviders }: LoginFormProps) {
             </Label>
           </div>
 
-          <div className="relative">
-            <Input
-              id="password"
-              type={showPassword ? "text" : "password"}
-              placeholder=" "
-              value={formData.password}
-              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              required
-              disabled={isLoading}
-              className="peer pt-6 pb-2 pr-10 focus:border-primary focus:ring-2 focus:ring-primary/20"
-            />
-            <Label
-              htmlFor="password"
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-all duration-300 peer-focus:top-2 peer-focus:text-xs peer-focus:text-primary peer-[:not(:placeholder-shown)]:top-2 peer-[:not(:placeholder-shown)]:text-xs"
-            >
-              {t.password}
-            </Label>
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-            >
-              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-            </button>
-          </div>
+          {/* 密码输入（密码登录模式） */}
+          {loginType === "password" && (
+            <div className="relative">
+              <Input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                placeholder=" "
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                required
+                disabled={isLoading}
+                className="peer pt-6 pb-2 pr-10 focus:border-primary focus:ring-2 focus:ring-primary/20"
+              />
+              <Label
+                htmlFor="password"
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-all duration-300 peer-focus:top-2 peer-focus:text-xs peer-focus:text-primary peer-[:not(:placeholder-shown)]:top-2 peer-[:not(:placeholder-shown)]:text-xs"
+              >
+                {t.password}
+              </Label>
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
+          )}
+
+          {/* 验证码输入（验证码登录模式） */}
+          {loginType === "code" && (
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <Input
+                  id="verificationCode"
+                  type="text"
+                  placeholder=" "
+                  value={formData.verificationCode}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      verificationCode: e.target.value.replace(/\D/g, "").slice(0, 6),
+                    })
+                  }
+                  required
+                  disabled={isLoading}
+                  maxLength={6}
+                  className="peer pt-6 pb-2 focus:border-primary focus:ring-2 focus:ring-primary/20"
+                />
+                <Label
+                  htmlFor="verificationCode"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-all duration-300 peer-focus:top-2 peer-focus:text-xs peer-focus:text-primary peer-[:not(:placeholder-shown)]:top-2 peer-[:not(:placeholder-shown)]:text-xs"
+                >
+                  {t.verificationCode}
+                </Label>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleSendCode}
+                disabled={!formData.email || countdown > 0 || sendingCode || isLoading}
+                className="shrink-0 min-w-[100px]"
+              >
+                {sendingCode ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : countdown > 0 ? (
+                  `${countdown}s`
+                ) : (
+                  t.sendCode
+                )}
+              </Button>
+            </div>
+          )}
         </div>
 
+        {/* 记住我和忘记密码 */}
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <Checkbox

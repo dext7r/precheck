@@ -33,7 +33,7 @@ type VerificationCodeEmailOptions = {
   appName: string
   dictionary: Dictionary
   code: string
-  purpose: "register" | "reset-password" | "change-email"
+  purpose: "register" | "reset-password" | "change-email" | "login"
   expiryMinutes?: number
   locale?: string
 }

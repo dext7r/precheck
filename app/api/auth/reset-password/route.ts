@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { hashPassword, validatePassword } from "@/lib/auth/password"
+import { createSession, setSessionCookie } from "@/lib/auth/session"
 import { features } from "@/lib/features"
 import { writeAuditLog } from "@/lib/audit"
 import { z } from "zod"
@@ -11,6 +12,54 @@ const resetPasswordSchema = z.object({
   token: z.string().min(1, "Token is required"),
   password: z.string().min(8, "Password must be at least 8 characters"),
 })
+
+// GET: 验证 token 并返回用户信息
+export async function GET(request: NextRequest) {
+  if (!features.database || !db) {
+    return createApiErrorResponse(request, "apiErrors.auth.resetPassword.serviceUnavailable", {
+      status: 503,
+    })
+  }
+
+  const token = request.nextUrl.searchParams.get("token")
+
+  if (!token) {
+    return createApiErrorResponse(request, "apiErrors.auth.resetPassword.tokenRequired", {
+      status: 400,
+    })
+  }
+
+  try {
+    const user = await db.user.findFirst({
+      where: {
+        resetToken: token,
+        resetTokenExpiry: { gt: new Date() },
+      },
+      select: {
+        email: true,
+        name: true,
+      },
+    })
+
+    if (!user) {
+      return createApiErrorResponse(request, "apiErrors.auth.resetPassword.invalidToken", {
+        status: 400,
+      })
+    }
+
+    return NextResponse.json({
+      success: true,
+      user: {
+        email: user.email,
+        name: user.name,
+      },
+    })
+  } catch {
+    return createApiErrorResponse(request, "apiErrors.auth.resetPassword.resetFailed", {
+      status: 500,
+    })
+  }
+}
 
 function getResetValidationErrorCode(error: z.ZodError) {
   const field = error.errors[0]?.path[0]
@@ -88,10 +137,15 @@ export async function POST(request: NextRequest) {
       request,
     })
 
-    return NextResponse.json({
+    // 创建 Session 实现自动登录
+    const { token: sessionToken, expires } = await createSession(user.id)
+    const response = NextResponse.json({
       success: true,
       message: successMessage,
     })
+    setSessionCookie(response, sessionToken, expires)
+
+    return response
   } catch (error) {
     if (error instanceof z.ZodError) {
       return createApiErrorResponse(request, getResetValidationErrorCode(error), { status: 400 })

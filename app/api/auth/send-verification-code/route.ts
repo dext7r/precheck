@@ -5,11 +5,12 @@ import { isEmailConfigured } from "@/lib/email/mailer"
 import { isRedisAvailable } from "@/lib/redis"
 import { createApiErrorResponse } from "@/lib/api/error-response"
 import { ApiErrorKeys } from "@/lib/api/error-keys"
+import { db } from "@/lib/db"
 import type { Locale } from "@/lib/i18n/config"
 
 const sendCodeSchema = z.object({
   email: z.string().email("Invalid email address"),
-  purpose: z.enum(["register", "reset-password", "change-email"]).default("register"),
+  purpose: z.enum(["register", "reset-password", "change-email", "login"]).default("register"),
   locale: z.enum(["zh", "en"]).optional(),
 })
 
@@ -37,6 +38,28 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
     const data = sendCodeSchema.parse(body)
+
+    // 登录验证码：检查邮箱是否存在
+    if (data.purpose === "login" && db) {
+      const user = await db.user.findUnique({ where: { email: data.email } })
+      if (!user) {
+        // 安全考虑：不透露邮箱是否存在，但不发送邮件
+        return NextResponse.json({
+          success: true,
+          message: "Verification code sent successfully",
+        })
+      }
+    }
+
+    // 注册验证码：检查邮箱是否已存在
+    if (data.purpose === "register" && db) {
+      const existingUser = await db.user.findUnique({ where: { email: data.email } })
+      if (existingUser) {
+        return createApiErrorResponse(request, "apiErrors.auth.register.emailExists", {
+          status: 400,
+        })
+      }
+    }
 
     // 从请求获取 locale，回退到 Accept-Language 头
     const acceptLang = request.headers.get("Accept-Language") || ""

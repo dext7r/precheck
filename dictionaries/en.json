@@ -398,6 +398,11 @@
       "register": "Sign up",
       "orContinueWith": "Or continue with",
       "success": "Login successful",
+      "passwordLogin": "Password",
+      "codeLogin": "Code Login",
+      "verificationCode": "Verification Code",
+      "sendCode": "Send Code",
+      "codeSent": "Code sent",
       "errors": {
         "invalid": "Invalid email or password",
         "required": "Email and password are required",
@@ -498,7 +503,8 @@
       "purposes": {
         "register": "registering an account",
         "reset-password": "resetting your password",
-        "change-email": "changing your email"
+        "change-email": "changing your email",
+        "login": "logging in"
       }
     }
   },
