@@ -94,7 +94,7 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
   const [searchInput, setSearchInput] = useState("")
-  const [statusFilter, setStatusFilter] = useState("PENDING")
+  const [statusFilter, setStatusFilter] = useState("ALL")
   const [registerEmailFilter, setRegisterEmailFilter] = useState("")
   const [registerEmailInput, setRegisterEmailInput] = useState("")
   const [queryTokenFilter, setQueryTokenFilter] = useState("")
