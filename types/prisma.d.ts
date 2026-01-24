@@ -219,6 +219,9 @@ export interface SiteSettings {
   auditLogEnabled: boolean
   preApplicationEssayHint: string
   allowedEmailDomains: Prisma.JsonValue
+  reviewTemplatesApprove: Prisma.JsonValue
+  reviewTemplatesReject: Prisma.JsonValue
+  reviewTemplatesDispute: Prisma.JsonValue
   createdAt: Date
   updatedAt: Date
 }

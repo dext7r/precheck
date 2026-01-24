@@ -307,6 +307,9 @@ model SiteSettings {
   auditLogEnabled   Boolean  @default(false)
   preApplicationEssayHint String @default("建议 100 字左右,避免夸赞社区与版主,只说明你的目的与需求。")
   allowedEmailDomains     Json   @default("[]")
+  reviewTemplatesApprove  Json   @default("[]")  // 审核通过消息模板
+  reviewTemplatesReject   Json   @default("[]")  // 审核驳回消息模板
+  reviewTemplatesDispute  Json   @default("[]")  // 标记争议消息模板
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 }

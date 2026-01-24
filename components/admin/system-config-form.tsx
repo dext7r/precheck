@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
-import { X, Plus, Mail } from "lucide-react"
+import { X, Plus, Mail, CheckCircle, XCircle, AlertTriangle } from "lucide-react"
 import type { Locale } from "@/lib/i18n/config"
 import type { Dictionary } from "@/lib/i18n/get-dictionary"
 
@@ -21,7 +21,13 @@ export function SystemConfigForm({ locale, dict }: SystemConfigFormProps) {
   const [essayHint, setEssayHint] = useState("")
   const [emailDomains, setEmailDomains] = useState<string[]>([])
   const [auditLogEnabled, setAuditLogEnabled] = useState(false)
+  const [reviewTemplatesApprove, setReviewTemplatesApprove] = useState<string[]>([])
+  const [reviewTemplatesReject, setReviewTemplatesReject] = useState<string[]>([])
+  const [reviewTemplatesDispute, setReviewTemplatesDispute] = useState<string[]>([])
   const [newDomain, setNewDomain] = useState("")
+  const [newTemplateApprove, setNewTemplateApprove] = useState("")
+  const [newTemplateReject, setNewTemplateReject] = useState("")
+  const [newTemplateDispute, setNewTemplateDispute] = useState("")
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [testingEmail, setTestingEmail] = useState(false)
@@ -41,6 +47,9 @@ export function SystemConfigForm({ locale, dict }: SystemConfigFormProps) {
       setEssayHint(data.preApplicationEssayHint)
       setEmailDomains(data.allowedEmailDomains)
       setAuditLogEnabled(data.auditLogEnabled ?? false)
+      setReviewTemplatesApprove(data.reviewTemplatesApprove ?? [])
+      setReviewTemplatesReject(data.reviewTemplatesReject ?? [])
+      setReviewTemplatesDispute(data.reviewTemplatesDispute ?? [])
     } catch {
       setMessage({ type: "error", text: t.systemConfigLoadFailed })
     } finally {
@@ -60,6 +69,9 @@ export function SystemConfigForm({ locale, dict }: SystemConfigFormProps) {
           preApplicationEssayHint: essayHint,
           allowedEmailDomains: emailDomains,
           auditLogEnabled,
+          reviewTemplatesApprove,
+          reviewTemplatesReject,
+          reviewTemplatesDispute,
         }),
       })
 
@@ -100,6 +112,38 @@ export function SystemConfigForm({ locale, dict }: SystemConfigFormProps) {
 
   function handleRemoveDomain(domain: string) {
     setEmailDomains(emailDomains.filter((d) => d !== domain))
+  }
+
+  function handleAddTemplate(
+    type: "approve" | "reject" | "dispute",
+    value: string,
+    setValue: (v: string) => void,
+  ) {
+    const text = value.trim()
+    if (!text) return
+
+    if (type === "approve") {
+      if (reviewTemplatesApprove.includes(text)) return
+      setReviewTemplatesApprove([...reviewTemplatesApprove, text])
+    } else if (type === "reject") {
+      if (reviewTemplatesReject.includes(text)) return
+      setReviewTemplatesReject([...reviewTemplatesReject, text])
+    } else {
+      if (reviewTemplatesDispute.includes(text)) return
+      setReviewTemplatesDispute([...reviewTemplatesDispute, text])
+    }
+    setValue("")
+    setMessage(null)
+  }
+
+  function handleRemoveTemplate(type: "approve" | "reject" | "dispute", text: string) {
+    if (type === "approve") {
+      setReviewTemplatesApprove(reviewTemplatesApprove.filter((t) => t !== text))
+    } else if (type === "reject") {
+      setReviewTemplatesReject(reviewTemplatesReject.filter((t) => t !== text))
+    } else {
+      setReviewTemplatesDispute(reviewTemplatesDispute.filter((t) => t !== text))
+    }
   }
 
   async function handleTestEmail() {
@@ -222,6 +266,169 @@ export function SystemConfigForm({ locale, dict }: SystemConfigFormProps) {
           {emailDomains.length === 0 && (
             <p className="text-sm text-muted-foreground">{t.systemConfigEmailDomainEmpty}</p>
           )}
+        </div>
+      </Card>
+
+      {/* 审核通过模板 */}
+      <Card className="p-6">
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <CheckCircle className="h-5 w-5 text-emerald-500" />
+            <div>
+              <Label>{t.reviewTemplatesApprove}</Label>
+              <p className="text-sm text-muted-foreground">{t.reviewTemplatesApproveDesc}</p>
+            </div>
+          </div>
+
+          <div className="flex gap-2">
+            <Textarea
+              value={newTemplateApprove}
+              onChange={(e) => setNewTemplateApprove(e.target.value)}
+              placeholder={t.reviewTemplatePlaceholder}
+              rows={2}
+              className="flex-1"
+            />
+            <Button
+              onClick={() =>
+                handleAddTemplate("approve", newTemplateApprove, setNewTemplateApprove)
+              }
+              type="button"
+              className="shrink-0"
+            >
+              <Plus className="h-4 w-4 mr-1" />
+              {t.reviewTemplateAdd}
+            </Button>
+          </div>
+
+          <div className="space-y-2">
+            {reviewTemplatesApprove.map((text, index) => (
+              <div
+                key={index}
+                className="flex items-start justify-between gap-2 px-3 py-2 bg-emerald-50 dark:bg-emerald-900/20 rounded-md"
+              >
+                <span className="text-sm flex-1">{text}</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleRemoveTemplate("approve", text)}
+                  className="h-6 w-6 p-0 shrink-0"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            ))}
+            {reviewTemplatesApprove.length === 0 && (
+              <p className="text-sm text-muted-foreground">{t.reviewTemplatesEmpty}</p>
+            )}
+          </div>
+        </div>
+      </Card>
+
+      {/* 审核驳回模板 */}
+      <Card className="p-6">
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <XCircle className="h-5 w-5 text-red-500" />
+            <div>
+              <Label>{t.reviewTemplatesReject}</Label>
+              <p className="text-sm text-muted-foreground">{t.reviewTemplatesRejectDesc}</p>
+            </div>
+          </div>
+
+          <div className="flex gap-2">
+            <Textarea
+              value={newTemplateReject}
+              onChange={(e) => setNewTemplateReject(e.target.value)}
+              placeholder={t.reviewTemplatePlaceholder}
+              rows={2}
+              className="flex-1"
+            />
+            <Button
+              onClick={() => handleAddTemplate("reject", newTemplateReject, setNewTemplateReject)}
+              type="button"
+              className="shrink-0"
+            >
+              <Plus className="h-4 w-4 mr-1" />
+              {t.reviewTemplateAdd}
+            </Button>
+          </div>
+
+          <div className="space-y-2">
+            {reviewTemplatesReject.map((text, index) => (
+              <div
+                key={index}
+                className="flex items-start justify-between gap-2 px-3 py-2 bg-red-50 dark:bg-red-900/20 rounded-md"
+              >
+                <span className="text-sm flex-1">{text}</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleRemoveTemplate("reject", text)}
+                  className="h-6 w-6 p-0 shrink-0"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            ))}
+            {reviewTemplatesReject.length === 0 && (
+              <p className="text-sm text-muted-foreground">{t.reviewTemplatesEmpty}</p>
+            )}
+          </div>
+        </div>
+      </Card>
+
+      {/* 标记争议模板 */}
+      <Card className="p-6">
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5 text-amber-500" />
+            <div>
+              <Label>{t.reviewTemplatesDispute}</Label>
+              <p className="text-sm text-muted-foreground">{t.reviewTemplatesDisputeDesc}</p>
+            </div>
+          </div>
+
+          <div className="flex gap-2">
+            <Textarea
+              value={newTemplateDispute}
+              onChange={(e) => setNewTemplateDispute(e.target.value)}
+              placeholder={t.reviewTemplatePlaceholder}
+              rows={2}
+              className="flex-1"
+            />
+            <Button
+              onClick={() =>
+                handleAddTemplate("dispute", newTemplateDispute, setNewTemplateDispute)
+              }
+              type="button"
+              className="shrink-0"
+            >
+              <Plus className="h-4 w-4 mr-1" />
+              {t.reviewTemplateAdd}
+            </Button>
+          </div>
+
+          <div className="space-y-2">
+            {reviewTemplatesDispute.map((text, index) => (
+              <div
+                key={index}
+                className="flex items-start justify-between gap-2 px-3 py-2 bg-amber-50 dark:bg-amber-900/20 rounded-md"
+              >
+                <span className="text-sm flex-1">{text}</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleRemoveTemplate("dispute", text)}
+                  className="h-6 w-6 p-0 shrink-0"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            ))}
+            {reviewTemplatesDispute.length === 0 && (
+              <p className="text-sm text-muted-foreground">{t.reviewTemplatesEmpty}</p>
+            )}
+          </div>
         </div>
       </Card>
 

@@ -116,6 +116,11 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
     Array<{ id: string; code: string; expiresAt: string | null; usedAt: string | null }>
   >([])
   const [inviteOptionsLoading, setInviteOptionsLoading] = useState(false)
+  const [reviewTemplates, setReviewTemplates] = useState<{
+    approve: string[]
+    reject: string[]
+    dispute: string[]
+  }>({ approve: [], reject: [], dispute: [] })
 
   const getRandomApproveGuidance = useCallback(() => {
     const suggestions = Array.isArray(t.preApplicationGuidanceApproveSuggestions)
@@ -167,6 +172,11 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
     if (selected?.status !== "PENDING" && selected?.status !== "DISPUTED") return
     loadInviteOptions()
   }, [dialogOpen, reviewAction, selected?.status])
+
+  useEffect(() => {
+    // 加载审核模板
+    loadReviewTemplates()
+  }, [])
 
   const fetchRecords = async () => {
     setLoading(true)
@@ -304,6 +314,27 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
     } finally {
       setInviteOptionsLoading(false)
     }
+  }
+
+  const loadReviewTemplates = async () => {
+    try {
+      const res = await fetch("/api/admin/system-config")
+      if (!res.ok) return
+      const data = await res.json()
+      setReviewTemplates({
+        approve: data.reviewTemplatesApprove ?? [],
+        reject: data.reviewTemplatesReject ?? [],
+        dispute: data.reviewTemplatesDispute ?? [],
+      })
+    } catch (error) {
+      console.error("Review templates fetch error:", error)
+    }
+  }
+
+  const getCurrentTemplates = () => {
+    if (reviewAction === "APPROVE") return reviewTemplates.approve
+    if (reviewAction === "REJECT") return reviewTemplates.reject
+    return reviewTemplates.dispute
   }
 
   const openDialog = (record: AdminPreApplication) => {
@@ -912,7 +943,24 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="guidance">{t.guidance}</Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="guidance">{t.guidance}</Label>
+                  {(selected.status === "PENDING" || selected.status === "DISPUTED") &&
+                    getCurrentTemplates().length > 0 && (
+                      <Select onValueChange={(value) => setGuidance(value)}>
+                        <SelectTrigger className="w-48 h-8 text-xs">
+                          <SelectValue placeholder={t.reviewTemplateSelect} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {getCurrentTemplates().map((template, index) => (
+                            <SelectItem key={index} value={template} className="text-xs">
+                              <span className="line-clamp-1">{template}</span>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                </div>
                 <Textarea
                   id="guidance"
                   value={guidance}

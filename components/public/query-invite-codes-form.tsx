@@ -2,14 +2,24 @@
 
 import { useState, useEffect } from "react"
 import { useSearchParams } from "next/navigation"
-import { motion } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
 import { toast } from "sonner"
 import Link from "next/link"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Label } from "@/components/ui/label"
-import { Copy, Check, Search, Loader2 } from "lucide-react"
+import {
+  Copy,
+  Check,
+  Search,
+  Loader2,
+  Clock,
+  CheckCircle2,
+  XCircle,
+  Ticket,
+  SearchX,
+} from "lucide-react"
 import { getDictionaryEntry } from "@/lib/i18n/get-dictionary-entry"
 import type { Dictionary } from "@/lib/i18n/get-dictionary"
 import type { Locale } from "@/lib/i18n/config"
@@ -147,22 +157,51 @@ export function QueryInviteCodesForm({ locale, dict }: QueryInviteCodesFormProps
   }
 
   const getStatusBadge = (status: string) => {
-    const config: Record<string, { label: string; className: string }> = {
+    const config: Record<
+      string,
+      { label: string; className: string; icon: React.ReactNode }
+    > = {
       PENDING: {
         label: t.statusPending,
-        className: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400",
+        className:
+          "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200 dark:border-amber-800/50",
+        icon: (
+          <motion.span
+            animate={{ rotate: 360 }}
+            transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+          >
+            <Clock className="h-3.5 w-3.5" />
+          </motion.span>
+        ),
       },
       APPROVED: {
         label: t.statusApproved,
-        className: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
+        className:
+          "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/50",
+        icon: (
+          <motion.span
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: "spring", stiffness: 400, damping: 10 }}
+          >
+            <CheckCircle2 className="h-3.5 w-3.5" />
+          </motion.span>
+        ),
       },
       REJECTED: {
         label: t.statusRejected,
-        className: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400",
+        className:
+          "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 border-rose-200 dark:border-rose-800/50",
+        icon: <XCircle className="h-3.5 w-3.5" />,
       },
     }
     const item = config[status] || config.PENDING
-    return <Badge className={item.className}>{item.label}</Badge>
+    return (
+      <Badge variant="outline" className={`gap-1.5 ${item.className}`}>
+        {item.icon}
+        {item.label}
+      </Badge>
+    )
   }
 
   const formatDate = (value?: string | null) =>
@@ -172,11 +211,14 @@ export function QueryInviteCodesForm({ locale, dict }: QueryInviteCodesFormProps
     if (data.inviteCodes.length === 0) {
       return (
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="py-8 text-center text-muted-foreground"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex flex-col items-center py-8 text-center"
         >
-          {t.noInviteCodes}
+          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted/50">
+            <SearchX className="h-8 w-8 text-muted-foreground/50" />
+          </div>
+          <p className="text-muted-foreground">{t.noInviteCodes}</p>
         </motion.div>
       )
     }
@@ -187,46 +229,84 @@ export function QueryInviteCodesForm({ locale, dict }: QueryInviteCodesFormProps
         animate={{ opacity: 1, y: 0 }}
         className="space-y-3"
       >
-        <h3 className="text-sm font-medium text-muted-foreground">{t.result}</h3>
-        {data.inviteCodes.map((item, index) => (
-          <motion.div
-            key={index}
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: index * 0.1 }}
-            className={`flex items-center justify-between rounded-xl border border-border/60 bg-muted/30 p-4 ${
-              isExpired(item.expiresAt) ? "opacity-50" : ""
-            }`}
-          >
-            <div className="min-w-0 flex-1 space-y-2">
-              <p className="truncate font-mono text-sm font-medium">{getFullUrl(item.code)}</p>
-              <Badge
-                variant={isExpired(item.expiresAt) ? "destructive" : "secondary"}
-                className="text-xs"
-              >
-                {getExpiryText(item.expiresAt)}
-              </Badge>
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="ml-3 shrink-0 hover:bg-primary/10"
-              onClick={() => handleCopy(item.code, index)}
-              disabled={isExpired(item.expiresAt)}
+        <div className="flex items-center gap-2">
+          <Ticket className="h-4 w-4 text-primary" />
+          <h3 className="text-sm font-medium text-muted-foreground">{t.result}</h3>
+        </div>
+        {data.inviteCodes.map((item, index) => {
+          const expired = isExpired(item.expiresAt)
+          return (
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: index * 0.08 }}
+              className="group relative"
             >
-              {copiedIndex === index ? (
-                <Check className="h-4 w-4 text-emerald-500" />
-              ) : (
-                <Copy className="h-4 w-4" />
-              )}
-            </Button>
-          </motion.div>
-        ))}
+              <div
+                className={`absolute -inset-0.5 rounded-xl bg-gradient-to-r from-primary/20 via-primary/10 to-primary/20 opacity-0 blur transition-opacity duration-300 ${
+                  !expired ? "group-hover:opacity-100" : ""
+                }`}
+              />
+              <div
+                className={`relative flex items-center justify-between rounded-xl border bg-card/80 p-4 backdrop-blur-sm transition-all duration-200 ${
+                  expired
+                    ? "border-border/40 opacity-50"
+                    : "border-border/60 group-hover:border-primary/30"
+                }`}
+              >
+                <div className="min-w-0 flex-1 space-y-2">
+                  <p className="truncate font-mono text-sm font-medium">
+                    {getFullUrl(item.code)}
+                  </p>
+                  <Badge
+                    variant={expired ? "destructive" : "secondary"}
+                    className="text-xs"
+                  >
+                    {getExpiryText(item.expiresAt)}
+                  </Badge>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={`ml-3 shrink-0 transition-all duration-200 ${
+                    !expired
+                      ? "hover:bg-primary/10 hover:text-primary active:scale-95"
+                      : ""
+                  }`}
+                  onClick={() => handleCopy(item.code, index)}
+                  disabled={expired}
+                >
+                  <AnimatePresence mode="wait">
+                    {copiedIndex === index ? (
+                      <motion.span
+                        key="check"
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        exit={{ scale: 0 }}
+                        transition={{ type: "spring", stiffness: 400, damping: 15 }}
+                      >
+                        <Check className="h-4 w-4 text-emerald-500" />
+                      </motion.span>
+                    ) : (
+                      <motion.span key="copy" initial={{ scale: 1 }} exit={{ scale: 0 }}>
+                        <Copy className="h-4 w-4" />
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
+                </Button>
+              </div>
+            </motion.div>
+          )
+        })}
       </motion.div>
     )
   }
 
   const renderPreApplicationResult = (data: PreApplicationQueryResult) => {
+    const codeDisabled =
+      data.inviteCode && (data.inviteCode.used || isExpired(data.inviteCode.expiresAt))
+
     return (
       <motion.div
         initial={{ opacity: 0, y: 10 }}
@@ -235,7 +315,7 @@ export function QueryInviteCodesForm({ locale, dict }: QueryInviteCodesFormProps
       >
         <h3 className="text-sm font-medium text-muted-foreground">{t.applicationStatus}</h3>
 
-        <div className="rounded-xl border border-border/60 bg-muted/30 p-4 space-y-4">
+        <div className="rounded-xl border border-border/60 bg-card/80 p-4 space-y-4 backdrop-blur-sm">
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">{t.statusLabel}</span>
             {getStatusBadge(data.status)}
@@ -243,20 +323,20 @@ export function QueryInviteCodesForm({ locale, dict }: QueryInviteCodesFormProps
 
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">{t.submittedAt}</span>
-            <span className="text-sm">{formatDate(data.createdAt)}</span>
+            <span className="text-sm font-medium">{formatDate(data.createdAt)}</span>
           </div>
 
           {data.reviewedAt && (
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">{t.reviewedAt}</span>
-              <span className="text-sm">{formatDate(data.reviewedAt)}</span>
+              <span className="text-sm font-medium">{formatDate(data.reviewedAt)}</span>
             </div>
           )}
 
           {data.guidance && (
             <div className="pt-3 border-t border-border/60">
               <p className="text-sm text-muted-foreground mb-2">{t.guidance}</p>
-              <p className="text-sm whitespace-pre-wrap bg-background/50 rounded-lg p-3">
+              <p className="text-sm whitespace-pre-wrap rounded-lg bg-muted/50 p-3 leading-relaxed">
                 {data.guidance}
               </p>
             </div>
@@ -270,49 +350,86 @@ export function QueryInviteCodesForm({ locale, dict }: QueryInviteCodesFormProps
             transition={{ delay: 0.2 }}
             className="space-y-3"
           >
-            <h3 className="text-sm font-medium text-muted-foreground">{t.inviteCodeTitle}</h3>
-            <div
-              className={`flex items-center justify-between rounded-xl border border-border/60 bg-muted/30 p-4 ${
-                data.inviteCode.used || isExpired(data.inviteCode.expiresAt) ? "opacity-50" : ""
-              }`}
-            >
-              <div className="min-w-0 flex-1 space-y-2">
-                <p className="truncate font-mono text-sm font-medium">
-                  {getFullUrl(data.inviteCode.code)}
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  <Badge
-                    variant={isExpired(data.inviteCode.expiresAt) ? "destructive" : "secondary"}
-                    className="text-xs"
-                  >
-                    {getExpiryText(data.inviteCode.expiresAt)}
-                  </Badge>
-                  {data.inviteCode.used && (
-                    <Badge variant="outline" className="text-xs">
-                      {t.used}
-                    </Badge>
-                  )}
-                </div>
-              </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="ml-3 shrink-0 hover:bg-primary/10"
-                onClick={() => handleCopy(data.inviteCode!.code, 0)}
-                disabled={data.inviteCode.used || isExpired(data.inviteCode.expiresAt)}
+            <div className="flex items-center gap-2">
+              <Ticket className="h-4 w-4 text-primary" />
+              <h3 className="text-sm font-medium text-muted-foreground">{t.inviteCodeTitle}</h3>
+            </div>
+            <div className="group relative">
+              <div
+                className={`absolute -inset-0.5 rounded-xl bg-gradient-to-r from-emerald-500/20 via-primary/10 to-emerald-500/20 opacity-0 blur transition-opacity duration-300 ${
+                  !codeDisabled ? "group-hover:opacity-100" : ""
+                }`}
+              />
+              <div
+                className={`relative flex items-center justify-between rounded-xl border bg-card/80 p-4 backdrop-blur-sm transition-all duration-200 ${
+                  codeDisabled
+                    ? "border-border/40 opacity-50"
+                    : "border-border/60 group-hover:border-emerald-500/30"
+                }`}
               >
-                {copiedIndex === 0 ? (
-                  <Check className="h-4 w-4 text-emerald-500" />
-                ) : (
-                  <Copy className="h-4 w-4" />
-                )}
-              </Button>
+                <div className="min-w-0 flex-1 space-y-2">
+                  <p className="truncate font-mono text-sm font-medium">
+                    {getFullUrl(data.inviteCode.code)}
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    <Badge
+                      variant={isExpired(data.inviteCode.expiresAt) ? "destructive" : "secondary"}
+                      className="text-xs"
+                    >
+                      {getExpiryText(data.inviteCode.expiresAt)}
+                    </Badge>
+                    {data.inviteCode.used && (
+                      <Badge variant="outline" className="text-xs">
+                        {t.used}
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={`ml-3 shrink-0 transition-all duration-200 ${
+                    !codeDisabled
+                      ? "hover:bg-emerald-500/10 hover:text-emerald-600 active:scale-95"
+                      : ""
+                  }`}
+                  onClick={() => handleCopy(data.inviteCode!.code, 0)}
+                  disabled={!!codeDisabled}
+                >
+                  <AnimatePresence mode="wait">
+                    {copiedIndex === 0 ? (
+                      <motion.span
+                        key="check"
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        exit={{ scale: 0 }}
+                        transition={{ type: "spring", stiffness: 400, damping: 15 }}
+                      >
+                        <Check className="h-4 w-4 text-emerald-500" />
+                      </motion.span>
+                    ) : (
+                      <motion.span key="copy" initial={{ scale: 1 }} exit={{ scale: 0 }}>
+                        <Copy className="h-4 w-4" />
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
+                </Button>
+              </div>
             </div>
           </motion.div>
         )}
 
         {data.status === "APPROVED" && !data.inviteCode && (
-          <div className="py-4 text-center text-muted-foreground">{t.noInviteCode}</div>
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex flex-col items-center py-6 text-center"
+          >
+            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-muted/50">
+              <Ticket className="h-6 w-6 text-muted-foreground/50" />
+            </div>
+            <p className="text-sm text-muted-foreground">{t.noInviteCode}</p>
+          </motion.div>
         )}
       </motion.div>
     )
@@ -326,9 +443,10 @@ export function QueryInviteCodesForm({ locale, dict }: QueryInviteCodesFormProps
       className="w-full max-w-md space-y-8 rounded-2xl border border-border/40 bg-card/50 p-8 shadow-2xl backdrop-blur-xl"
     >
       <div className="text-center">
-        <Link href={`/${locale}`} className="inline-flex items-center gap-2 mb-8">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary">
-            <Search className="h-5 w-5 text-primary-foreground" />
+        <Link href={`/${locale}`} className="group inline-flex items-center gap-2 mb-8">
+          <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-primary transition-transform duration-200 group-hover:scale-105">
+            <div className="absolute inset-0 rounded-xl bg-primary/50 blur-md opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
+            <Search className="relative h-5 w-5 text-primary-foreground" />
           </div>
         </Link>
         <h1 className="text-2xl font-bold tracking-tight">{t.title}</h1>
@@ -336,15 +454,18 @@ export function QueryInviteCodesForm({ locale, dict }: QueryInviteCodesFormProps
       </div>
 
       <div className="space-y-6">
-        {error && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive"
-          >
-            {error}
-          </motion.div>
-        )}
+        <AnimatePresence mode="wait">
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, height: 0 }}
+              animate={{ opacity: 1, scale: 1, height: "auto" }}
+              exit={{ opacity: 0, scale: 0.95, height: 0 }}
+              className="overflow-hidden rounded-lg bg-destructive/10 p-3 text-sm text-destructive"
+            >
+              {error}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <div className="space-y-4">
           <div className="relative">
@@ -372,7 +493,7 @@ export function QueryInviteCodesForm({ locale, dict }: QueryInviteCodesFormProps
 
         <Button
           onClick={() => handleQuery()}
-          className="group relative w-full overflow-hidden"
+          className="group relative w-full overflow-hidden transition-transform duration-150 active:scale-[0.98]"
           disabled={loading}
         >
           <motion.div
@@ -389,25 +510,31 @@ export function QueryInviteCodesForm({ locale, dict }: QueryInviteCodesFormProps
               </>
             ) : (
               <>
-                <Search className="mr-2 h-4 w-4" />
+                <Search className="mr-2 h-4 w-4 transition-transform duration-200 group-hover:scale-110" />
                 {t.submit}
               </>
             )}
           </span>
         </Button>
 
-        {queried && !result && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="py-6 text-center text-muted-foreground"
-          >
-            {t.notFound}
-          </motion.div>
-        )}
+        <AnimatePresence mode="wait">
+          {queried && !result && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="flex flex-col items-center py-8 text-center"
+            >
+              <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted/50">
+                <SearchX className="h-8 w-8 text-muted-foreground/50" />
+              </div>
+              <p className="text-muted-foreground">{t.notFound}</p>
+            </motion.div>
+          )}
 
-        {result?.type === "invite_codes" && renderInviteCodesResult(result)}
-        {result?.type === "pre_application" && renderPreApplicationResult(result)}
+          {result?.type === "invite_codes" && renderInviteCodesResult(result)}
+          {result?.type === "pre_application" && renderPreApplicationResult(result)}
+        </AnimatePresence>
       </div>
     </motion.div>
   )
