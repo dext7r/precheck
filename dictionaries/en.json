@@ -484,6 +484,19 @@
       "success": "Password reset successfully. You can now login.",
       "invalidToken": "Invalid or expired reset token",
       "backToLogin": "Back to login"
+    },
+    "verificationCodeEmail": {
+      "subject": "【{appName}】Verification Code - {purpose}",
+      "title": "Email Verification",
+      "intro": "You are {purpose}, your verification code is:",
+      "expires": "This code will expire in {minutes} minutes",
+      "warning": "If you did not request this, please ignore this email",
+      "footer": "This email was sent automatically, please do not reply.",
+      "purposes": {
+        "register": "registering an account",
+        "reset-password": "resetting your password",
+        "change-email": "changing your email"
+      }
     }
   },
   "errors": {

@@ -484,6 +484,19 @@
       "success": "密码重置成功，您现在可以登录了。",
       "invalidToken": "无效或已过期的重置链接",
       "backToLogin": "返回登录"
+    },
+    "verificationCodeEmail": {
+      "subject": "【{appName}】邮箱验证码 - {purpose}",
+      "title": "邮箱验证",
+      "intro": "您正在{purpose}，您的验证码是：",
+      "expires": "此验证码将在 {minutes} 分钟后失效",
+      "warning": "如果这不是您的操作，请忽略此邮件",
+      "footer": "此邮件由系统自动发送，请勿回复。",
+      "purposes": {
+        "register": "注册账户",
+        "reset-password": "重置密码",
+        "change-email": "更换邮箱"
+      }
     }
   },
   "errors": {

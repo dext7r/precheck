@@ -5,10 +5,12 @@ import { isEmailConfigured } from "@/lib/email/mailer"
 import { isRedisAvailable } from "@/lib/redis"
 import { createApiErrorResponse } from "@/lib/api/error-response"
 import { ApiErrorKeys } from "@/lib/api/error-keys"
+import type { Locale } from "@/lib/i18n/config"
 
 const sendCodeSchema = z.object({
   email: z.string().email("Invalid email address"),
   purpose: z.enum(["register", "reset-password", "change-email"]).default("register"),
+  locale: z.enum(["zh", "en"]).optional(),
 })
 
 /**
@@ -36,8 +38,12 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const data = sendCodeSchema.parse(body)
 
+    // 从请求获取 locale，回退到 Accept-Language 头
+    const acceptLang = request.headers.get("Accept-Language") || ""
+    const locale: Locale = data.locale || (acceptLang.startsWith("zh") ? "zh" : "en")
+
     // 发送验证码
-    const result = await sendVerificationEmail(data.email, data.purpose)
+    const result = await sendVerificationEmail(data.email, data.purpose, locale)
 
     if (!result.success) {
       if (result.waitSeconds) {

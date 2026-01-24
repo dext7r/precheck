@@ -1,6 +1,8 @@
 import { getRedisClient } from "./redis"
 import { sendEmail } from "./email/mailer"
 import { buildVerificationCodeEmail } from "./email/templates"
+import { getDictionary } from "./i18n/get-dictionary"
+import type { Locale } from "./i18n/config"
 
 /**
  * 验证码配置
@@ -142,6 +144,7 @@ export async function checkRateLimit(
 export async function sendVerificationEmail(
   email: string,
   purpose: "register" | "reset-password" | "change-email" = "register",
+  locale: Locale = "zh",
 ): Promise<{ success: boolean; error?: string; waitSeconds?: number }> {
   // 检查发送频率
   const rateLimit = await checkRateLimit(email)
@@ -164,12 +167,14 @@ export async function sendVerificationEmail(
 
   // 发送邮件
   try {
-    // 使用邮件模板
+    const dictionary = await getDictionary(locale)
+    const appName = dictionary.metadata.title
     const emailContent = buildVerificationCodeEmail({
+      appName,
+      dictionary,
       code,
       purpose,
       expiryMinutes: VERIFICATION_CODE_CONFIG.expiryMinutes,
-      locale: "zh",
     })
 
     await sendEmail({
