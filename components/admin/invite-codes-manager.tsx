@@ -37,6 +37,7 @@ import {
   Check,
   X,
   Trash2,
+  Ticket,
 } from "lucide-react"
 import {
   DropdownMenu,
@@ -832,110 +833,129 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
         </div>
       </Card>
 
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div className="flex flex-1 flex-col gap-2 md:flex-row md:items-center">
-          <div className="relative md:w-72">
-            <Input
-              value={searchInput}
-              onChange={(event) => setSearchInput(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") handleSearch()
-              }}
-              placeholder={t.inviteCodeSearchPlaceholder}
-              className="pr-8"
-            />
-            {searchInput && (
+      <div className="space-y-4">
+        {/* 搜索和筛选区域 */}
+        <Card className="p-4">
+          <div className="flex flex-col gap-4">
+            {/* 搜索行 */}
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <div className="relative flex-1 sm:max-w-xs">
+                <Input
+                  value={searchInput}
+                  onChange={(event) => setSearchInput(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") handleSearch()
+                  }}
+                  placeholder={t.inviteCodeSearchPlaceholder}
+                  className="pr-8"
+                />
+                {searchInput && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-1 top-1/2 h-6 w-6 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    onClick={() => {
+                      setSearchInput("")
+                      setSearch("")
+                      setPage(1)
+                    }}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+              <Button variant="secondary" onClick={handleSearch} className="shrink-0">
+                {t.searchAction}
+              </Button>
+            </div>
+
+            {/* 筛选行 */}
+            <div className="flex flex-wrap items-end gap-3">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium text-muted-foreground">
+                  {t.inviteCodeUsageStatus || "使用状态"}
+                </label>
+                <Select
+                  value={statusFilter}
+                  onValueChange={(value) => {
+                    setStatusFilter(value)
+                    setPage(1)
+                  }}
+                >
+                  <SelectTrigger className="w-32">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t.inviteCodeStatusAll}</SelectItem>
+                    <SelectItem value="unused">{t.inviteCodeStatusUnused}</SelectItem>
+                    <SelectItem value="used">{t.inviteCodeStatusUsed}</SelectItem>
+                    <SelectItem value="expired">{t.inviteCodeStatusExpired}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium text-muted-foreground">
+                  {t.inviteCodeAssignmentStatus || "分配状态"}
+                </label>
+                <Select
+                  value={assignmentFilter}
+                  onValueChange={(value) => {
+                    setAssignmentFilter(value)
+                    setPage(1)
+                  }}
+                >
+                  <SelectTrigger className="w-32">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t.inviteCodeStatusAll}</SelectItem>
+                    <SelectItem value="unassigned">{t.inviteCodeStatusUnassigned}</SelectItem>
+                    <SelectItem value="assigned">{t.inviteCodeStatusAssigned}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium text-muted-foreground">
+                  {t.inviteCodeExpiringLabel || "即将过期"}
+                </label>
+                <Select
+                  value={expiringWithin}
+                  onValueChange={(value) => {
+                    setExpiringWithin(value)
+                    setPage(1)
+                  }}
+                >
+                  <SelectTrigger className="w-32">
+                    <SelectValue placeholder={t.inviteCodeExpiringAll} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t.inviteCodeExpiringAll}</SelectItem>
+                    <SelectItem value="2">{t.inviteCodeExpiring2h}</SelectItem>
+                    <SelectItem value="1">{t.inviteCodeExpiring1h}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
               <Button
                 variant="ghost"
-                size="icon"
-                className="absolute right-1 top-1/2 h-6 w-6 -translate-y-1/2"
+                size="sm"
+                className="text-muted-foreground hover:text-foreground"
                 onClick={() => {
                   setSearchInput("")
                   setSearch("")
+                  setStatusFilter("unused")
+                  setAssignmentFilter("unassigned")
+                  setExpiringWithin("all")
                   setPage(1)
                 }}
               >
-                <X className="h-4 w-4" />
+                {t.reset || "重置"}
               </Button>
-            )}
+            </div>
           </div>
-          <Button variant="outline" onClick={handleSearch}>
-            {t.searchAction}
-          </Button>
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium text-muted-foreground">
-              {t.inviteCodeUsageStatus || "使用状态"}
-            </label>
-            <Select
-              value={statusFilter}
-              onValueChange={(value) => {
-                setStatusFilter(value)
-                setPage(1)
-              }}
-            >
-              <SelectTrigger className="md:w-44">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t.inviteCodeStatusAll}</SelectItem>
-                <SelectItem value="unused">{t.inviteCodeStatusUnused}</SelectItem>
-                <SelectItem value="used">{t.inviteCodeStatusUsed}</SelectItem>
-                <SelectItem value="expired">{t.inviteCodeStatusExpired}</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium text-muted-foreground">
-              {t.inviteCodeAssignmentStatus || "分配状态"}
-            </label>
-            <Select
-              value={assignmentFilter}
-              onValueChange={(value) => {
-                setAssignmentFilter(value)
-                setPage(1)
-              }}
-            >
-              <SelectTrigger className="md:w-44">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t.inviteCodeStatusAll}</SelectItem>
-                <SelectItem value="unassigned">{t.inviteCodeStatusUnassigned}</SelectItem>
-                <SelectItem value="assigned">{t.inviteCodeStatusAssigned}</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <Select
-            value={expiringWithin}
-            onValueChange={(value) => {
-              setExpiringWithin(value)
-              setPage(1)
-            }}
-          >
-            <SelectTrigger className="md:w-44">
-              <SelectValue placeholder={t.inviteCodeExpiringAll} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t.inviteCodeExpiringAll}</SelectItem>
-              <SelectItem value="2">{t.inviteCodeExpiring2h}</SelectItem>
-              <SelectItem value="1">{t.inviteCodeExpiring1h}</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              setSearchInput("")
-              setSearch("")
-              setStatusFilter("unused")
-              setAssignmentFilter("unassigned")
-              setExpiringWithin("all")
-              setPage(1)
-            }}
-          >
-            {t.reset || "重置"}
-          </Button>
-        </div>
+        </Card>
       </div>
 
       {selectedIds.size > 0 && (
@@ -978,7 +998,17 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
         onPageChange={setPage}
         onPageSizeChange={setPageSize}
         loading={loading}
-        emptyMessage={t.inviteCodeNoRecords}
+        emptyMessage={
+          <div className="flex flex-col items-center justify-center py-8">
+            <div className="rounded-full bg-muted p-4 mb-4">
+              <Ticket className="h-8 w-8 text-muted-foreground" />
+            </div>
+            <p className="text-muted-foreground font-medium">{t.inviteCodeNoRecords}</p>
+            <p className="text-sm text-muted-foreground/70 mt-1">
+              {t.inviteCodeNoRecordsHint || "尝试调整筛选条件或导入新的邀请码"}
+            </p>
+          </div>
+        }
         loadingText={t.loading}
         perPageText={t.perPage}
         summaryFormatter={formatPageSummary}

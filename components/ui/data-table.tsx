@@ -31,7 +31,7 @@ export interface DataTableProps<T> {
   onPageSizeChange: (pageSize: number) => void
   onSort?: (key: string, direction: "asc" | "desc") => void
   loading?: boolean
-  emptyMessage?: string
+  emptyMessage?: React.ReactNode
   rowHeight?: number
   enableVirtualScroll?: boolean
   mobileCardRender?: (item: T) => React.ReactNode

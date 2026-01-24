@@ -1018,6 +1018,8 @@
     "inviteCodeMarkUsed": "标记已用",
     "inviteCodeMarkUnused": "标记未用",
     "inviteCodeNoRecords": "暂无邀请码",
+    "inviteCodeNoRecordsHint": "尝试调整筛选条件或导入新的邀请码",
+    "inviteCodeExpiringLabel": "即将过期",
     "queryTokenGenerate": "生成查询链接",
     "queryTokenGenerateDesc": "已选择 {count} 个邀请码",
     "queryTokenGenerateSuccess": "查询链接已生成，请复制并发送给用户",

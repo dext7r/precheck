@@ -1022,6 +1022,8 @@
     "inviteCodeMarkUsed": "Mark Used",
     "inviteCodeMarkUnused": "Mark Unused",
     "inviteCodeNoRecords": "No invite codes",
+    "inviteCodeNoRecordsHint": "Try adjusting filters or import new invite codes",
+    "inviteCodeExpiringLabel": "Expiring soon",
     "queryTokenGenerate": "Generate Query Link",
     "queryTokenGenerateDesc": "{count} invite codes selected",
     "queryTokenGenerateSuccess": "Query link generated. Copy and send to the user.",
