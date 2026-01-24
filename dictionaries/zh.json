@@ -1226,6 +1226,7 @@
     "auditAction_MESSAGE_REVOKE": "撤回站内信",
     "auditAction_MESSAGE_READ": "阅读站内信",
     "auditAction_SYSTEM_CONFIG_UPDATE": "更新系统配置",
+    "auditAction_SETTINGS_UPDATE": "更新设置",
     "auditEntity_AUTH": "认证",
     "auditEntity_USER": "用户",
     "auditEntity_ACCOUNT": "账户",

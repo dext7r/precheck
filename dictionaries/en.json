@@ -1230,6 +1230,7 @@
     "auditAction_MESSAGE_REVOKE": "Revoke message",
     "auditAction_MESSAGE_READ": "Read message",
     "auditAction_SYSTEM_CONFIG_UPDATE": "Update system config",
+    "auditAction_SETTINGS_UPDATE": "Update settings",
     "auditEntity_AUTH": "Auth",
     "auditEntity_USER": "User",
     "auditEntity_ACCOUNT": "Account",
