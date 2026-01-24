@@ -25,6 +25,7 @@ export async function GET(request: NextRequest) {
     const search = (searchParams.get("search") || "").trim()
     const status = searchParams.get("status") || ""
     const registerEmail = (searchParams.get("registerEmail") || "").trim()
+    const queryToken = (searchParams.get("queryToken") || "").trim()
     const reviewRound = searchParams.get("reviewRound") || ""
     const inviteStatus = searchParams.get("inviteStatus") || ""
     const sortByParam = searchParams.get("sortBy") || "createdAt"
@@ -46,6 +47,7 @@ export async function GET(request: NextRequest) {
     const where: {
       status?: PreApplicationStatus
       registerEmail?: { contains: string; mode: "insensitive" }
+      queryToken?: { contains: string; mode: "insensitive" }
       resubmitCount?: number
       inviteCodeId?: { not: null } | null
       OR?: Array<Record<string, unknown>>
@@ -57,6 +59,10 @@ export async function GET(request: NextRequest) {
 
     if (registerEmail) {
       where.registerEmail = { contains: registerEmail, mode: "insensitive" }
+    }
+
+    if (queryToken) {
+      where.queryToken = { contains: queryToken, mode: "insensitive" }
     }
 
     if (reviewRound) {

@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useState, useCallback } from "react"
 import { toast } from "sonner"
 import { Bar, BarChart, CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -13,6 +13,16 @@ import {
 } from "@/components/ui/select"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerFooter,
+} from "@/components/ui/drawer"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { DataTable, type Column } from "@/components/ui/data-table"
+import {
   Clock,
   CheckCircle,
   XCircle,
@@ -24,10 +34,39 @@ import {
   UserCheck,
   Users,
   TrendingUp,
+  Loader2,
 } from "lucide-react"
 import type { Dictionary } from "@/lib/i18n/get-dictionary"
 import type { Locale } from "@/lib/i18n/config"
 import { preApplicationSources } from "@/lib/pre-application/constants"
+
+type CardDetailType =
+  | "preApplicationPending"
+  | "preApplicationApproved"
+  | "preApplicationRejected"
+  | "preApplicationSubmitted"
+  | "inviteTotal"
+  | "inviteAssigned"
+  | "inviteExpired"
+  | "inviteAvailableUnassigned"
+  | "inviteAvailableUnused"
+
+type PreApplicationRecord = {
+  id: string
+  registerEmail: string
+  status: "PENDING" | "APPROVED" | "REJECTED" | "DISPUTED"
+  createdAt: string
+  user: { name: string | null; email: string }
+}
+
+type InviteCodeRecord = {
+  id: string
+  code: string
+  assignedAt: string | null
+  usedAt: string | null
+  expiresAt: string | null
+  assignedTo: { name: string | null; email: string } | null
+}
 
 type DashboardData = {
   range: number
@@ -94,6 +133,17 @@ export function AdminDashboard({ locale, dict }: AdminDashboardProps) {
   const [loading, setLoading] = useState(true)
   const [data, setData] = useState<DashboardData | null>(null)
 
+  const [drawerOpen, setDrawerOpen] = useState(false)
+  const [selectedCard, setSelectedCard] = useState<{
+    type: CardDetailType
+    title: string
+  } | null>(null)
+  const [detailLoading, setDetailLoading] = useState(false)
+  const [detailData, setDetailData] = useState<PreApplicationRecord[] | InviteCodeRecord[]>([])
+  const [detailTotal, setDetailTotal] = useState(0)
+  const [detailPage, setDetailPage] = useState(1)
+  const detailPageSize = 10
+
   const t = dict.admin
 
   const fetchData = async () => {
@@ -115,6 +165,66 @@ export function AdminDashboard({ locale, dict }: AdminDashboardProps) {
   useEffect(() => {
     fetchData()
   }, [range, granularity])
+
+  const fetchDetailData = useCallback(
+    async (type: CardDetailType, page: number) => {
+      setDetailLoading(true)
+      try {
+        let url = ""
+        const params = new URLSearchParams({ page: page.toString(), limit: detailPageSize.toString() })
+
+        if (type.startsWith("preApplication")) {
+          const statusMap: Record<string, string> = {
+            preApplicationPending: "PENDING",
+            preApplicationApproved: "APPROVED",
+            preApplicationRejected: "REJECTED",
+          }
+          if (statusMap[type]) {
+            params.set("status", statusMap[type])
+          }
+          url = `/api/admin/pre-applications?${params}`
+        } else {
+          const filterMap: Record<string, { status?: string; assignment?: string; expiringWithin?: string }> = {
+            inviteTotal: {},
+            inviteAssigned: { assignment: "assigned" },
+            inviteExpired: { status: "expired" },
+            inviteAvailableUnassigned: { assignment: "unassigned", status: "available" },
+            inviteAvailableUnused: { status: "available" },
+          }
+          const filters = filterMap[type] || {}
+          Object.entries(filters).forEach(([key, value]) => {
+            if (value) params.set(key, value)
+          })
+          url = `/api/admin/invite-codes?${params}`
+        }
+
+        const res = await fetch(url)
+        if (!res.ok) throw new Error("Fetch failed")
+        const result = await res.json()
+        setDetailData(result.records || [])
+        setDetailTotal(result.total || 0)
+      } catch {
+        toast.error(t.fetchFailed)
+      } finally {
+        setDetailLoading(false)
+      }
+    },
+    [t.fetchFailed, detailPageSize]
+  )
+
+  const handleCardClick = (type: CardDetailType, title: string) => {
+    setSelectedCard({ type, title })
+    setDetailPage(1)
+    setDetailData([])
+    setDrawerOpen(true)
+    fetchDetailData(type, 1)
+  }
+
+  useEffect(() => {
+    if (selectedCard && detailPage > 1) {
+      fetchDetailData(selectedCard.type, detailPage)
+    }
+  }, [detailPage, selectedCard, fetchDetailData])
 
   const sourceLabelMap = useMemo(() => {
     const map = new Map<string, string>()
@@ -151,6 +261,7 @@ export function AdminDashboard({ locale, dict }: AdminDashboardProps) {
           icon: Clock,
           color: "text-amber-500",
           bg: "bg-amber-500/10",
+          detailType: "preApplicationPending" as CardDetailType,
         },
         {
           title: t.preApplicationApproved,
@@ -158,6 +269,7 @@ export function AdminDashboard({ locale, dict }: AdminDashboardProps) {
           icon: CheckCircle,
           color: "text-emerald-500",
           bg: "bg-emerald-500/10",
+          detailType: "preApplicationApproved" as CardDetailType,
         },
         {
           title: t.preApplicationRejected,
@@ -165,6 +277,7 @@ export function AdminDashboard({ locale, dict }: AdminDashboardProps) {
           icon: XCircle,
           color: "text-red-500",
           bg: "bg-red-500/10",
+          detailType: "preApplicationRejected" as CardDetailType,
         },
         {
           title: t.preApplicationSubmitted,
@@ -172,6 +285,7 @@ export function AdminDashboard({ locale, dict }: AdminDashboardProps) {
           icon: FileText,
           color: "text-blue-500",
           bg: "bg-blue-500/10",
+          detailType: "preApplicationSubmitted" as CardDetailType,
         },
         {
           title: t.inviteTotal,
@@ -179,6 +293,7 @@ export function AdminDashboard({ locale, dict }: AdminDashboardProps) {
           icon: Ticket,
           color: "text-violet-500",
           bg: "bg-violet-500/10",
+          detailType: "inviteTotal" as CardDetailType,
         },
         {
           title: t.inviteAssigned,
@@ -186,6 +301,7 @@ export function AdminDashboard({ locale, dict }: AdminDashboardProps) {
           icon: Send,
           color: "text-cyan-500",
           bg: "bg-cyan-500/10",
+          detailType: "inviteAssigned" as CardDetailType,
         },
         {
           title: t.inviteExpired,
@@ -193,6 +309,7 @@ export function AdminDashboard({ locale, dict }: AdminDashboardProps) {
           icon: AlertTriangle,
           color: "text-orange-500",
           bg: "bg-orange-500/10",
+          detailType: "inviteExpired" as CardDetailType,
         },
         {
           title: t.inviteAvailableUnassigned,
@@ -200,6 +317,7 @@ export function AdminDashboard({ locale, dict }: AdminDashboardProps) {
           icon: Package,
           color: "text-teal-500",
           bg: "bg-teal-500/10",
+          detailType: "inviteAvailableUnassigned" as CardDetailType,
         },
         {
           title: t.inviteAvailableUnused,
@@ -207,6 +325,7 @@ export function AdminDashboard({ locale, dict }: AdminDashboardProps) {
           icon: Ticket,
           color: "text-indigo-500",
           bg: "bg-indigo-500/10",
+          detailType: "inviteAvailableUnused" as CardDetailType,
         },
       ]
     : []
@@ -255,7 +374,11 @@ export function AdminDashboard({ locale, dict }: AdminDashboardProps) {
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {cards.map((card) => (
-          <Card key={card.title} className="overflow-hidden">
+          <Card
+            key={card.title}
+            className="overflow-hidden cursor-pointer transition-colors hover:bg-muted/50"
+            onClick={() => handleCardClick(card.detailType, card.title)}
+          >
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
@@ -528,6 +651,227 @@ export function AdminDashboard({ locale, dict }: AdminDashboardProps) {
           </CardContent>
         </Card>
       </div>
+
+      <Drawer open={drawerOpen} onOpenChange={setDrawerOpen} direction="right">
+        <DrawerContent className="h-full data-[vaul-drawer-direction=right]:w-[95vw] data-[vaul-drawer-direction=right]:sm:max-w-3xl">
+          <DrawerHeader className="border-b">
+            <DrawerTitle>{selectedCard?.title}</DrawerTitle>
+          </DrawerHeader>
+
+          <div className="flex-1 overflow-y-auto p-4">
+            {detailLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : selectedCard?.type.startsWith("preApplication") ? (
+              <PreApplicationDetailTable
+                data={detailData as PreApplicationRecord[]}
+                total={detailTotal}
+                page={detailPage}
+                pageSize={detailPageSize}
+                onPageChange={setDetailPage}
+                locale={locale}
+                dict={dict}
+              />
+            ) : (
+              <InviteCodeDetailTable
+                data={detailData as InviteCodeRecord[]}
+                total={detailTotal}
+                page={detailPage}
+                pageSize={detailPageSize}
+                onPageChange={setDetailPage}
+                locale={locale}
+                dict={dict}
+              />
+            )}
+          </div>
+
+          <DrawerFooter className="border-t">
+            <Button variant="outline" onClick={() => setDrawerOpen(false)}>
+              {t.confirm}
+            </Button>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
     </div>
+  )
+}
+
+function PreApplicationDetailTable({
+  data,
+  total,
+  page,
+  pageSize,
+  onPageChange,
+  locale,
+  dict,
+}: {
+  data: PreApplicationRecord[]
+  total: number
+  page: number
+  pageSize: number
+  onPageChange: (page: number) => void
+  locale: Locale
+  dict: Dictionary
+}) {
+  const t = dict.admin
+
+  const statusBadge = (status: PreApplicationRecord["status"]) => {
+    const map = {
+      PENDING: { label: t.pending, variant: "secondary" as const },
+      APPROVED: { label: t.approved, variant: "default" as const },
+      REJECTED: { label: t.rejected, variant: "destructive" as const },
+      DISPUTED: { label: t.disputed || "申诉中", variant: "outline" as const },
+    }
+    const config = map[status] || map.PENDING
+    return <Badge variant={config.variant}>{config.label}</Badge>
+  }
+
+  const columns: Column<PreApplicationRecord>[] = [
+    {
+      key: "user",
+      label: t.preApplicationUser,
+      width: "35%",
+      render: (record) => (
+        <div className="space-y-0.5">
+          <p className="text-sm font-medium truncate">{record.user.name || record.user.email}</p>
+          <p className="text-xs text-muted-foreground truncate">{record.registerEmail}</p>
+        </div>
+      ),
+    },
+    {
+      key: "status",
+      label: t.preApplicationStatus,
+      width: "25%",
+      render: (record) => statusBadge(record.status),
+    },
+    {
+      key: "createdAt",
+      label: t.preApplicationCreatedAt,
+      width: "40%",
+      render: (record) => (
+        <span className="text-sm text-muted-foreground">
+          {new Date(record.createdAt).toLocaleString(locale)}
+        </span>
+      ),
+    },
+  ]
+
+  const formatPageSummary = (summary: { total: number; page: number; totalPages: number }) =>
+    t.pageSummary
+      .replace("{total}", summary.total.toString())
+      .replace("{page}", summary.page.toString())
+      .replace("{totalPages}", summary.totalPages.toString())
+
+  return (
+    <DataTable
+      columns={columns}
+      data={data}
+      total={total}
+      page={page}
+      pageSize={pageSize}
+      onPageChange={onPageChange}
+      onPageSizeChange={() => {}}
+      emptyMessage={t.noPreApplications}
+      loadingText={t.loading}
+      perPageText={t.perPage}
+      summaryFormatter={formatPageSummary}
+    />
+  )
+}
+
+function InviteCodeDetailTable({
+  data,
+  total,
+  page,
+  pageSize,
+  onPageChange,
+  locale,
+  dict,
+}: {
+  data: InviteCodeRecord[]
+  total: number
+  page: number
+  pageSize: number
+  onPageChange: (page: number) => void
+  locale: Locale
+  dict: Dictionary
+}) {
+  const t = dict.admin
+
+  const getStatusBadge = (record: InviteCodeRecord) => {
+    const now = new Date()
+    const isExpired = record.expiresAt && new Date(record.expiresAt) < now
+    if (record.usedAt) {
+      return <Badge variant="default">{t.inviteCodeStatusUsed}</Badge>
+    }
+    if (isExpired) {
+      return <Badge variant="destructive">{t.inviteCodeStatusExpired}</Badge>
+    }
+    if (record.assignedAt) {
+      return <Badge variant="secondary">{t.inviteCodeStatusAssigned}</Badge>
+    }
+    return <Badge variant="outline">{t.inviteCodeStatusUnused}</Badge>
+  }
+
+  const columns: Column<InviteCodeRecord>[] = [
+    {
+      key: "code",
+      label: t.inviteCode,
+      width: "30%",
+      render: (record) => (
+        <span className="font-mono text-sm truncate block max-w-[180px]" title={record.code}>
+          {record.code}
+        </span>
+      ),
+    },
+    {
+      key: "status",
+      label: t.inviteCodeStatus,
+      width: "20%",
+      render: (record) => getStatusBadge(record),
+    },
+    {
+      key: "assignedTo",
+      label: t.inviteCodeAssignedTo,
+      width: "25%",
+      render: (record) => (
+        <span className="text-sm text-muted-foreground truncate block">
+          {record.assignedTo?.name || record.assignedTo?.email || "-"}
+        </span>
+      ),
+    },
+    {
+      key: "expiresAt",
+      label: t.inviteExpiresAt,
+      width: "25%",
+      render: (record) => (
+        <span className="text-sm text-muted-foreground">
+          {record.expiresAt ? new Date(record.expiresAt).toLocaleDateString(locale) : "-"}
+        </span>
+      ),
+    },
+  ]
+
+  const formatPageSummary = (summary: { total: number; page: number; totalPages: number }) =>
+    t.pageSummary
+      .replace("{total}", summary.total.toString())
+      .replace("{page}", summary.page.toString())
+      .replace("{totalPages}", summary.totalPages.toString())
+
+  return (
+    <DataTable
+      columns={columns}
+      data={data}
+      total={total}
+      page={page}
+      pageSize={pageSize}
+      onPageChange={onPageChange}
+      onPageSizeChange={() => {}}
+      emptyMessage={t.inviteCodeNoRecords}
+      loadingText={t.loading}
+      perPageText={t.perPage}
+      summaryFormatter={formatPageSummary}
+    />
   )
 }

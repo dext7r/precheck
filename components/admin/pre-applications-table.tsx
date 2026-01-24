@@ -97,6 +97,8 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
   const [statusFilter, setStatusFilter] = useState("PENDING")
   const [registerEmailFilter, setRegisterEmailFilter] = useState("")
   const [registerEmailInput, setRegisterEmailInput] = useState("")
+  const [queryTokenFilter, setQueryTokenFilter] = useState("")
+  const [queryTokenInput, setQueryTokenInput] = useState("")
   const [reviewRoundFilter, setReviewRoundFilter] = useState("ALL")
   const [inviteStatusFilter, setInviteStatusFilter] = useState("none")
   const [sortBy, setSortBy] = useState("createdAt")
@@ -182,6 +184,7 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
         ...(search && { search }),
         ...(statusFilter !== "ALL" && { status: statusFilter }),
         ...(registerEmailFilter && { registerEmail: registerEmailFilter }),
+        ...(queryTokenFilter && { queryToken: queryTokenFilter }),
         ...(reviewRoundFilter !== "ALL" && { reviewRound: reviewRoundFilter }),
         ...(inviteStatusFilter !== "ALL" && { inviteStatus: inviteStatusFilter }),
       })
@@ -208,6 +211,7 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
     search,
     statusFilter,
     registerEmailFilter,
+    queryTokenFilter,
     reviewRoundFilter,
     inviteStatusFilter,
     sortBy,
@@ -508,11 +512,40 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
               </button>
             )}
           </div>
+          {/* 查询标志 */}
+          <div className="relative">
+            <Input
+              value={queryTokenInput}
+              onChange={(event) => setQueryTokenInput(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  setQueryTokenFilter(queryTokenInput)
+                  setPage(1)
+                }
+              }}
+              placeholder={t.preApplicationQueryToken}
+              className="w-48 pr-8"
+            />
+            {queryTokenInput && (
+              <button
+                type="button"
+                onClick={() => {
+                  setQueryTokenInput("")
+                  setQueryTokenFilter("")
+                  setPage(1)
+                }}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
           <Button
             variant="outline"
             onClick={() => {
               setSearch(searchInput)
               setRegisterEmailFilter(registerEmailInput)
+              setQueryTokenFilter(queryTokenInput)
               setPage(1)
             }}
           >
@@ -587,6 +620,8 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
               setSearch("")
               setRegisterEmailInput("")
               setRegisterEmailFilter("")
+              setQueryTokenInput("")
+              setQueryTokenFilter("")
               setStatusFilter("PENDING")
               setReviewRoundFilter("ALL")
               setInviteStatusFilter("none")
