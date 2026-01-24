@@ -868,6 +868,8 @@
     "userManagementDesc": "管理所有用户账号",
     "user": "用户",
     "makeAdmin": "设为管理员",
+    "removeAdmin": "取消管理员",
+    "confirmRemoveAdmin": "确定要取消该用户的管理员权限吗？",
     "banned": "已禁用",
     "postManagement": "文章管理",
     "postManagementDesc": "审核和管理所有文章",

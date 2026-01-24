@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Search, MoreHorizontal, Shield, Ban, CheckCircle2, Trash2, X } from "lucide-react"
+import { Search, MoreHorizontal, Shield, ShieldOff, Ban, CheckCircle2, Trash2, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -52,6 +52,19 @@ export function AdminUsersTable({ locale, dict }: AdminUsersTableProps) {
     destructive?: boolean
     onConfirm: () => Promise<void>
   } | null>(null)
+  const [currentUserRole, setCurrentUserRole] = useState<string | null>(null)
+
+  const fetchCurrentUser = async () => {
+    try {
+      const res = await fetch("/api/auth/me")
+      if (res.ok) {
+        const data = await res.json()
+        setCurrentUserRole(data.user?.role || null)
+      }
+    } catch {
+      // ignore
+    }
+  }
 
   const fetchUsers = async () => {
     setLoading(true)
@@ -78,6 +91,10 @@ export function AdminUsersTable({ locale, dict }: AdminUsersTableProps) {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    fetchCurrentUser()
+  }, [])
 
   useEffect(() => {
     fetchUsers()
@@ -140,15 +157,18 @@ export function AdminUsersTable({ locale, dict }: AdminUsersTableProps) {
     }
   }
 
-  const renderRoleBadge = (role: string) => (
-    <span
-      className={`rounded-full px-2 py-1 text-xs font-medium ${
-        role === "ADMIN" ? "bg-destructive/10 text-destructive" : "bg-muted text-muted-foreground"
-      }`}
-    >
-      {role}
-    </span>
-  )
+  const renderRoleBadge = (role: string) => {
+    const roleStyles: Record<string, string> = {
+      SUPER_ADMIN: "bg-purple-500/10 text-purple-600 dark:text-purple-400",
+      ADMIN: "bg-destructive/10 text-destructive",
+      USER: "bg-muted text-muted-foreground",
+    }
+    return (
+      <span className={`rounded-full px-2 py-1 text-xs font-medium ${roleStyles[role] || roleStyles.USER}`}>
+        {role}
+      </span>
+    )
+  }
 
   const renderStatusBadge = (status: string) => {
     const statusMap: Record<string, string> = {
@@ -169,7 +189,9 @@ export function AdminUsersTable({ locale, dict }: AdminUsersTableProps) {
 
   const renderActions = (user: AdminUser) => {
     const isBusy = busyId === user.id
-    const canPromote = user.role !== "ADMIN"
+    const isSuperAdmin = currentUserRole === "SUPER_ADMIN"
+    const canPromote = user.role === "USER" && isSuperAdmin
+    const canDemote = user.role === "ADMIN" && isSuperAdmin
     const shouldActivate = user.status !== "ACTIVE"
     const statusLabel = shouldActivate ? t.activate : t.ban
 
@@ -181,22 +203,46 @@ export function AdminUsersTable({ locale, dict }: AdminUsersTableProps) {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem
-            disabled={!canPromote || isBusy}
-            onClick={() => {
-              setConfirmState({
-                title: t.confirmTitle,
-                description: t.confirmMakeAdmin,
-                confirmLabel: t.makeAdmin,
-                onConfirm: async () => {
-                  await updateUser(user.id, { role: "ADMIN" })
-                },
-              })
-            }}
-          >
-            <Shield className="mr-2 h-4 w-4" />
-            {t.makeAdmin}
-          </DropdownMenuItem>
+          {isSuperAdmin && user.role !== "SUPER_ADMIN" && (
+            <>
+              {canPromote && (
+                <DropdownMenuItem
+                  disabled={isBusy}
+                  onClick={() => {
+                    setConfirmState({
+                      title: t.confirmTitle,
+                      description: t.confirmMakeAdmin,
+                      confirmLabel: t.makeAdmin,
+                      onConfirm: async () => {
+                        await updateUser(user.id, { role: "ADMIN" })
+                      },
+                    })
+                  }}
+                >
+                  <Shield className="mr-2 h-4 w-4" />
+                  {t.makeAdmin}
+                </DropdownMenuItem>
+              )}
+              {canDemote && (
+                <DropdownMenuItem
+                  disabled={isBusy}
+                  onClick={() => {
+                    setConfirmState({
+                      title: t.confirmTitle,
+                      description: t.confirmRemoveAdmin,
+                      confirmLabel: t.removeAdmin,
+                      onConfirm: async () => {
+                        await updateUser(user.id, { role: "USER" })
+                      },
+                    })
+                  }}
+                >
+                  <ShieldOff className="mr-2 h-4 w-4" />
+                  {t.removeAdmin}
+                </DropdownMenuItem>
+              )}
+            </>
+          )}
           <DropdownMenuItem
             disabled={isBusy}
             onClick={() => {

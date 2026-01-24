@@ -872,6 +872,8 @@
     "userManagementDesc": "Manage all user accounts",
     "user": "User",
     "makeAdmin": "Make Admin",
+    "removeAdmin": "Remove Admin",
+    "confirmRemoveAdmin": "Are you sure you want to remove admin privileges from this user?",
     "banned": "Banned",
     "postManagement": "Post Management",
     "postManagementDesc": "Review and manage all posts",
