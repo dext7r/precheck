@@ -279,7 +279,7 @@ export function AdminUsersTable({ locale, dict }: AdminUsersTableProps) {
       sortable: true,
       render: (user) => (
         <span className="text-muted-foreground">
-          {new Date(user.createdAt).toLocaleDateString(locale)}
+          {new Date(user.createdAt).toLocaleString(locale)}
         </span>
       ),
     },
@@ -368,7 +368,7 @@ export function AdminUsersTable({ locale, dict }: AdminUsersTableProps) {
                   {renderRoleBadge(user.role)}
                   {renderStatusBadge(user.status)}
                   <span className="text-muted-foreground">
-                    {new Date(user.createdAt).toLocaleDateString(locale)}
+                    {new Date(user.createdAt).toLocaleString(locale)}
                   </span>
                 </div>
               </div>
