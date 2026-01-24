@@ -561,7 +561,7 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
                 ? t.statusAll
                 : statusFilter.length === 4
                   ? t.statusAll
-                  : `${statusFilter.length} ${t.selected || "项"}`}
+                  : `${statusFilter.length} 项`}
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-32">

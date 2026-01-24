@@ -297,7 +297,6 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
           entityType: "INVITE_CODE",
           entityId: inviteCode.id,
           actor: user,
-          before: existing,
           after: inviteCode,
           metadata: { preApplicationId: record.id },
           request,
