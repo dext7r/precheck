@@ -462,7 +462,7 @@ export function AdminDashboard({ locale, dict }: AdminDashboardProps) {
                 approved: { label: t.preApplicationApproved, color: "var(--chart-2)" },
                 rejected: { label: t.preApplicationRejected, color: "var(--chart-3)" },
               }}
-              className="h-[260px]"
+              className="aspect-2/1 min-h-[200px]"
             >
               <LineChart data={data?.series.preApplications || []} margin={{ left: 8, right: 8 }}>
                 <CartesianGrid vertical={false} />
@@ -549,7 +549,7 @@ export function AdminDashboard({ locale, dict }: AdminDashboardProps) {
                 used: { label: t.inviteUsed, color: "var(--chart-4)" },
                 expired: { label: t.inviteExpired, color: "var(--chart-5)" },
               }}
-              className="h-[260px]"
+              className="aspect-2/1 min-h-[200px]"
             >
               <BarChart data={data?.series.invites || []} margin={{ left: 8, right: 8 }}>
                 <CartesianGrid vertical={false} />
@@ -579,7 +579,7 @@ export function AdminDashboard({ locale, dict }: AdminDashboardProps) {
               config={{
                 users: { label: t.userRegistrations, color: "var(--chart-1)" },
               }}
-              className="h-[260px]"
+              className="aspect-2/1 min-h-[200px]"
             >
               <LineChart data={data?.series.users || []} margin={{ left: 8, right: 8 }}>
                 <CartesianGrid vertical={false} />
