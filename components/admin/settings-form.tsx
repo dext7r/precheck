@@ -30,6 +30,7 @@ import {
   MessageSquare,
   Trash2,
   RefreshCw,
+  ChevronDown,
 } from "lucide-react"
 import type { Locale } from "@/lib/i18n/config"
 import type { Dictionary } from "@/lib/i18n/get-dictionary"
@@ -72,6 +73,7 @@ interface TabItem {
 export function AdminSettingsForm({ locale, dict }: AdminSettingsFormProps) {
   const router = useRouter()
   const [activeTab, setActiveTab] = useState<TabId>("general")
+  const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const [settings, setSettings] = useState<SiteSettings | null>(null)
   const [systemConfig, setSystemConfig] = useState<SystemConfig | null>(null)
   const [initialSettings, setInitialSettings] = useState<SiteSettings | null>(null)
@@ -477,31 +479,71 @@ export function AdminSettingsForm({ locale, dict }: AdminSettingsFormProps) {
         </Alert>
       )}
 
-      {/* 移动端横向标签导航 */}
-      <nav className="lg:hidden overflow-x-auto -mx-4 px-4 scrollbar-none">
-        <div className="flex gap-1.5 min-w-max pb-1">
-          {tabs.map((tab) => {
-            const Icon = tab.icon
-            const isActive = activeTab === tab.id
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={cn(
-                  "flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-all duration-200",
-                  isActive
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground",
-                  tab.color && !isActive && tab.color,
-                )}
-              >
-                <Icon className="h-3.5 w-3.5" />
-                {tab.label}
-              </button>
-            )
-          })}
-        </div>
-      </nav>
+      {/* 移动端可折叠导航 */}
+      <div className="lg:hidden">
+        <button
+          onClick={() => setMobileNavOpen(!mobileNavOpen)}
+          className="w-full flex items-center justify-between px-4 py-3 bg-muted/50 rounded-lg border border-border/50"
+        >
+          <div className="flex items-center gap-2">
+            {(() => {
+              const currentTab = tabs.find((t) => t.id === activeTab)
+              const Icon = currentTab?.icon || Settings
+              return (
+                <>
+                  <Icon className={cn("h-4 w-4", currentTab?.color)} />
+                  <span className={cn("text-sm font-medium", currentTab?.color)}>
+                    {currentTab?.label}
+                  </span>
+                </>
+              )
+            })()}
+          </div>
+          <ChevronDown
+            className={cn(
+              "h-4 w-4 text-muted-foreground transition-transform duration-200",
+              mobileNavOpen && "rotate-180"
+            )}
+          />
+        </button>
+        <AnimatePresence>
+          {mobileNavOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.2 }}
+              className="overflow-hidden"
+            >
+              <div className="mt-2 p-2 bg-muted/30 rounded-lg border border-border/50 space-y-1">
+                {tabs.map((tab) => {
+                  const Icon = tab.icon
+                  const isActive = activeTab === tab.id
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => {
+                        setActiveTab(tab.id)
+                        setMobileNavOpen(false)
+                      }}
+                      className={cn(
+                        "w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
+                        isActive
+                          ? "bg-primary text-primary-foreground shadow-sm"
+                          : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                        tab.color && !isActive && tab.color,
+                      )}
+                    >
+                      <Icon className="h-4 w-4" />
+                      {tab.label}
+                    </button>
+                  )
+                })}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
 
       {/* 主内容区：侧边导航 + 内容面板 */}
       <div className="flex gap-6">
