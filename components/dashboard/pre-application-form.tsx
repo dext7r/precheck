@@ -500,7 +500,9 @@ export function PreApplicationForm({
                         size="icon"
                         className="h-6 w-6"
                         onClick={() => {
-                          router.push(`/${locale}/query-invite-codes?queryCode=${latest.queryToken}`)
+                          router.push(
+                            `/${locale}/query-invite-codes?queryCode=${latest.queryToken}`,
+                          )
                         }}
                       >
                         <ExternalLink className="h-3 w-3" />

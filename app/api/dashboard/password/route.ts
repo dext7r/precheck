@@ -4,6 +4,8 @@ import { db } from "@/lib/db"
 import { getCurrentUser } from "@/lib/auth/session"
 import { hashPassword, validatePassword, verifyPassword } from "@/lib/auth/password"
 import { writeAuditLog } from "@/lib/audit"
+import { createApiErrorResponse } from "@/lib/api/error-response"
+import { ApiErrorKeys } from "@/lib/api/error-keys"
 
 const passwordSchema = z.object({
   currentPassword: z.string().optional(),
@@ -14,10 +16,10 @@ const passwordSchema = z.object({
 export async function PUT(request: NextRequest) {
   const user = await getCurrentUser()
   if (!user) {
-    return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
+    return createApiErrorResponse(request, ApiErrorKeys.notAuthenticated, { status: 401 })
   }
   if (!db) {
-    return NextResponse.json({ error: "Database not configured" }, { status: 503 })
+    return createApiErrorResponse(request, ApiErrorKeys.databaseNotConfigured, { status: 503 })
   }
 
   try {
@@ -25,22 +27,35 @@ export async function PUT(request: NextRequest) {
     const { currentPassword, newPassword, confirmPassword } = passwordSchema.parse(body)
 
     if (newPassword !== confirmPassword) {
-      return NextResponse.json({ error: "Passwords do not match" }, { status: 400 })
+      return createApiErrorResponse(request, ApiErrorKeys.dashboard.password.passwordsDoNotMatch, {
+        status: 400,
+      })
     }
 
     if (user.password) {
       if (!currentPassword) {
-        return NextResponse.json({ error: "Current password is required" }, { status: 400 })
+        return createApiErrorResponse(
+          request,
+          ApiErrorKeys.dashboard.password.currentPasswordRequired,
+          { status: 400 },
+        )
       }
       const isValid = await verifyPassword(currentPassword, user.password)
       if (!isValid) {
-        return NextResponse.json({ error: "Invalid current password" }, { status: 400 })
+        return createApiErrorResponse(
+          request,
+          ApiErrorKeys.dashboard.password.invalidCurrentPassword,
+          { status: 400 },
+        )
       }
     }
 
     const passwordValidation = validatePassword(newPassword)
     if (!passwordValidation.valid) {
-      return NextResponse.json({ error: passwordValidation.errors[0] }, { status: 400 })
+      return createApiErrorResponse(request, ApiErrorKeys.general.invalid, {
+        status: 400,
+        meta: { detail: passwordValidation.errors[0] },
+      })
     }
 
     const before = await db.user.findUnique({ where: { id: user.id } })
@@ -66,9 +81,14 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ success: true })
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: error.errors[0].message }, { status: 400 })
+      return createApiErrorResponse(request, ApiErrorKeys.general.invalid, {
+        status: 400,
+        meta: { detail: error.errors[0].message },
+      })
     }
     console.error("Update password API error:", error)
-    return NextResponse.json({ error: "Failed to update password" }, { status: 500 })
+    return createApiErrorResponse(request, ApiErrorKeys.dashboard.password.failedToUpdate, {
+      status: 500,
+    })
   }
 }

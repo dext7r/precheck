@@ -23,6 +23,208 @@
       "tokenExpired": "Token expired",
       "tokenNotFound": "Token not found",
       "queryFailed": "Failed to query invite codes"
+    },
+    "general": {
+      "forbidden": "Forbidden",
+      "failed": "Request failed",
+      "invalid": "Invalid request",
+      "notFound": "Not found"
+    },
+    "auth": {
+      "login": {
+        "serviceUnavailable": "Authentication service not configured",
+        "verificationFailed": "Verification failed",
+        "invalidCredentials": "Invalid email or password",
+        "invalidEmail": "Invalid email address",
+        "passwordRequired": "Password is required",
+        "validationFailed": "Invalid login data",
+        "loginFailed": "Login failed"
+      },
+      "register": {
+        "serviceUnavailable": "Registration service not configured",
+        "registrationDisabled": "Registration is disabled",
+        "verificationFailed": "Verification failed",
+        "invalidVerificationCode": "Invalid verification code",
+        "weakPassword": "Password does not meet requirements",
+        "emailExists": "Email already registered",
+        "validationFailed": "Invalid registration data",
+        "registrationFailed": "Registration failed"
+      },
+      "forgotPassword": {
+        "serviceUnavailable": "Authentication service not configured",
+        "invalidEmail": "Invalid email address",
+        "invalidVerificationCode": "Invalid verification code",
+        "validationFailed": "Invalid request",
+        "failed": "Failed to process request"
+      },
+      "resetPassword": {
+        "serviceUnavailable": "Authentication service not configured",
+        "tokenRequired": "Reset token is required",
+        "weakPassword": "Password does not meet requirements",
+        "invalidToken": "Invalid or expired reset token",
+        "validationFailed": "Invalid reset data",
+        "resetFailed": "Failed to reset password"
+      },
+      "oauth": {
+        "disabled": "OAuth login is disabled",
+        "failedToGenerateUrl": "Failed to generate auth URL",
+        "githubNotConfigured": "GitHub OAuth not configured",
+        "googleNotConfigured": "Google OAuth not configured"
+      },
+      "logout": {
+        "failed": "Logout failed"
+      },
+      "verificationCode": {
+        "emailServiceNotConfigured": "Email service not configured",
+        "sendFailed": "Failed to send verification code"
+      },
+      "me": {
+        "failedToGetUser": "Failed to get user"
+      }
+    },
+    "admin": {
+      "analytics": {
+        "failed": "Failed to fetch analytics"
+      },
+      "auditLogs": {
+        "failed": "Failed to fetch audit logs"
+      },
+      "clearCache": {
+        "failed": "Failed to clear cache"
+      },
+      "dashboard": {
+        "invalidQuery": "Invalid query",
+        "failed": "Failed to load dashboard stats"
+      },
+      "users": {
+        "failedToFetch": "Failed to fetch users",
+        "userNotFound": "User not found",
+        "noFieldsToUpdate": "No fields to update",
+        "onlySuperAdminCanModifyRoles": "Only SUPER_ADMIN can modify user roles",
+        "adminCannotModifyOtherAdmins": "ADMIN cannot modify other admins",
+        "failedToUpdate": "Failed to update user",
+        "cannotDeleteSelf": "Cannot delete yourself",
+        "failedToDelete": "Failed to delete user"
+      },
+      "messages": {
+        "messageNotFound": "Message not found",
+        "alreadyRevoked": "Message already revoked",
+        "failedToFetch": "Failed to fetch messages",
+        "failedToFetchSingle": "Failed to fetch message",
+        "roleRequired": "Role is required",
+        "statusRequired": "Status is required",
+        "recipientsRequired": "Recipients are required",
+        "noRecipientsFound": "No recipients found",
+        "failedToCreate": "Failed to create message",
+        "failedToUpdate": "Failed to update message",
+        "failedToRevoke": "Failed to revoke message"
+      },
+      "inviteCodes": {
+        "failedToFetch": "Failed to fetch invite codes",
+        "invalidExpiry": "Invalid expiry",
+        "expiryMustBeInFuture": "Expiry must be in the future",
+        "noValid": "No valid invite codes",
+        "failedToImport": "Failed to import invite codes",
+        "failedToCreate": "Failed to create invite code",
+        "queryTokenFailed": "Failed to create query token",
+        "noValidFound": "No valid invite codes found",
+        "notFound": "Invite code not found",
+        "alreadyUsed": "Invite code already used",
+        "alreadyExpired": "Invite code expired",
+        "alreadyAssigned": "Invite code already assigned",
+        "alreadyIssued": "Invite code already issued",
+        "failedToInvalidate": "Failed to invalidate invite code",
+        "failedToUpdateUsage": "Failed to update invite code usage",
+        "failedToIssue": "Failed to issue invite code",
+        "userIdRequired": "User id required",
+        "emailRequired": "Email required",
+        "emailNotificationsDisabled": "Email notifications disabled",
+        "assign": {
+          "notFound": "Invite code not found",
+          "alreadyUsed": "Invite code already used",
+          "expired": "Invite code expired",
+          "alreadyAssigned": "Invite code already assigned",
+          "alreadyIssued": "Invite code already issued",
+          "userIdRequired": "User id required",
+          "emailRequired": "Email is required",
+          "userNotFound": "User not found",
+          "notificationsDisabled": "Email notifications disabled"
+        }
+      },
+      "preApplications": {
+        "failedToFetch": "Failed to fetch pre-applications",
+        "historyFetchFailed": "Failed to fetch history",
+        "failedToReview": "Failed to review pre-application",
+        "inviteCodeRequired": "Invite code required",
+        "invalidInviteExpiry": "Invalid invite expiry",
+        "expiryMustBeInFuture": "Invite expiry must be in the future",
+        "alreadyReviewed": "Already reviewed"
+      },
+      "posts": {
+        "failedToFetch": "Failed to fetch posts",
+        "postNotFound": "Post not found",
+        "failedToFetchSingle": "Failed to fetch post",
+        "failedToUpdate": "Failed to update post",
+        "failedToDelete": "Failed to delete post",
+        "failedToCreate": "Failed to create post"
+      },
+      "settings": {
+        "failedToLoad": "Failed to load settings",
+        "failedToUpdate": "Failed to update settings"
+      },
+      "systemConfig": {
+        "failedToFetch": "Failed to fetch system config",
+        "failedToUpdate": "Failed to update system config"
+      },
+      "resetDatabase": {
+        "failed": "Failed to reset database"
+      },
+      "stats": {
+        "failedToFetch": "Failed to fetch stats"
+      }
+    },
+    "dashboard": {
+      "password": {
+        "passwordsDoNotMatch": "Passwords do not match",
+        "currentPasswordRequired": "Current password is required",
+        "invalidCurrentPassword": "Invalid current password",
+        "failedToUpdate": "Failed to update password"
+      },
+      "messages": {
+        "failedToFetch": "Failed to fetch messages",
+        "failedToFetchSingle": "Failed to fetch message",
+        "failedToMarkAsRead": "Failed to mark message as read",
+        "summary": {
+          "failedToFetch": "Failed to fetch summary"
+        }
+      },
+      "posts": {
+        "failedToFetch": "Failed to fetch posts",
+        "failedToFetchSingle": "Failed to fetch post",
+        "failedToCreate": "Failed to create post",
+        "failedToUpdate": "Failed to update post",
+        "postNotFound": "Post not found",
+        "failedToDelete": "Failed to delete post"
+      },
+      "profile": {
+        "failedToUpdate": "Failed to update profile"
+      },
+      "account": {
+        "failedToDelete": "Failed to delete account"
+      }
+    },
+    "preApplication": {
+      "failedToFetch": "Failed to fetch pre-application",
+      "failedToSubmit": "Failed to submit pre-application",
+      "alreadySubmitted": "Already submitted",
+      "alreadyApproved": "Already approved",
+      "essayTooShort": "Essay is too short",
+      "invalidEmailDomain": "Invalid email domain",
+      "sourceDetailRequired": "Source detail required",
+      "noPreApplicationFound": "No pre-application found",
+      "failedToUpdate": "Failed to update pre-application",
+      "versionConflict": "Record has been modified; please refresh and try again",
+      "resubmitLimitExceeded": "Maximum resubmit attempts reached"
     }
   },
   "hero": {
@@ -278,6 +480,7 @@
   "errors": {
     "backHome": "Back to Home",
     "tryAgain": "Try Again",
+    "turnstileRequired": "Please complete the verification challenge before continuing.",
     "400": {
       "title": "Bad Request",
       "description": "The server could not understand the request due to invalid syntax.",

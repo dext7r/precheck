@@ -4,6 +4,8 @@ import { getCurrentUser } from "@/lib/auth/session"
 import { getSiteSettings } from "@/lib/site-settings"
 import { writeAuditLog } from "@/lib/audit"
 import { z } from "zod"
+import { createApiErrorResponse } from "@/lib/api/error-response"
+import { ApiErrorKeys } from "@/lib/api/error-keys"
 
 const createPostSchema = z.object({
   title: z.string().min(1, "Title is required").max(200),
@@ -16,11 +18,11 @@ export async function GET(request: NextRequest) {
     const user = await getCurrentUser()
 
     if (!user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
+      return createApiErrorResponse(request, ApiErrorKeys.notAuthenticated, { status: 401 })
     }
 
     if (!db) {
-      return NextResponse.json({ error: "Database not configured" }, { status: 503 })
+      return createApiErrorResponse(request, ApiErrorKeys.databaseNotConfigured, { status: 503 })
     }
 
     const { searchParams } = request.nextUrl
@@ -73,7 +75,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ posts, total, page, pageSize })
   } catch (error) {
     console.error("Get posts API error:", error)
-    return NextResponse.json({ error: "Failed to fetch posts" }, { status: 500 })
+    return createApiErrorResponse(request, ApiErrorKeys.dashboard.posts.failedToFetch, {
+      status: 500,
+    })
   }
 }
 
@@ -82,11 +86,11 @@ export async function POST(request: NextRequest) {
     const user = await getCurrentUser()
 
     if (!user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
+      return createApiErrorResponse(request, ApiErrorKeys.notAuthenticated, { status: 401 })
     }
 
     if (!db) {
-      return NextResponse.json({ error: "Database not configured" }, { status: 503 })
+      return createApiErrorResponse(request, ApiErrorKeys.databaseNotConfigured, { status: 503 })
     }
 
     const body = await request.json()
@@ -129,9 +133,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(post, { status: 201 })
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: error.errors[0].message }, { status: 400 })
+      return createApiErrorResponse(request, ApiErrorKeys.general.invalid, {
+        status: 400,
+        meta: { detail: error.errors[0].message },
+      })
     }
     console.error("Create post API error:", error)
-    return NextResponse.json({ error: "Failed to create post" }, { status: 500 })
+    return createApiErrorResponse(request, ApiErrorKeys.dashboard.posts.failedToCreate, {
+      status: 500,
+    })
   }
 }

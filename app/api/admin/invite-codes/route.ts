@@ -3,6 +3,8 @@ import { z } from "zod"
 import { db } from "@/lib/db"
 import { getCurrentUser } from "@/lib/auth/session"
 import { writeAuditLog } from "@/lib/audit"
+import { createApiErrorResponse } from "@/lib/api/error-response"
+import { ApiErrorKeys } from "@/lib/api/error-keys"
 
 const createInviteCodeSchema = z.object({
   code: z.string().min(4).max(128), // 增加长度限制以支持完整 URL 格式
@@ -14,15 +16,15 @@ export async function GET(request: NextRequest) {
     const user = await getCurrentUser()
 
     if (!user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
+      return createApiErrorResponse(request, ApiErrorKeys.notAuthenticated, { status: 401 })
     }
 
     if (user.role !== "ADMIN" && user.role !== "SUPER_ADMIN") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+      return createApiErrorResponse(request, ApiErrorKeys.general.forbidden, { status: 403 })
     }
 
     if (!db) {
-      return NextResponse.json({ error: "Database not configured" }, { status: 503 })
+      return createApiErrorResponse(request, ApiErrorKeys.databaseNotConfigured, { status: 503 })
     }
 
     const { searchParams } = request.nextUrl
@@ -99,7 +101,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ records, total, page, limit })
   } catch (error) {
     console.error("Invite codes fetch error:", error)
-    return NextResponse.json({ error: "Failed to fetch invite codes" }, { status: 500 })
+    return createApiErrorResponse(request, ApiErrorKeys.admin.inviteCodes.failedToFetch, {
+      status: 500,
+    })
   }
 }
 
@@ -108,15 +112,15 @@ export async function POST(request: NextRequest) {
     const user = await getCurrentUser()
 
     if (!user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
+      return createApiErrorResponse(request, ApiErrorKeys.notAuthenticated, { status: 401 })
     }
 
     if (user.role !== "ADMIN" && user.role !== "SUPER_ADMIN") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+      return createApiErrorResponse(request, ApiErrorKeys.general.forbidden, { status: 403 })
     }
 
     if (!db) {
-      return NextResponse.json({ error: "Database not configured" }, { status: 503 })
+      return createApiErrorResponse(request, ApiErrorKeys.databaseNotConfigured, { status: 503 })
     }
 
     const body = await request.json()
@@ -124,10 +128,14 @@ export async function POST(request: NextRequest) {
     const expiresAt = data.expiresAt ? new Date(data.expiresAt) : null
 
     if (expiresAt && Number.isNaN(expiresAt.getTime())) {
-      return NextResponse.json({ error: "Invalid expiry" }, { status: 400 })
+      return createApiErrorResponse(request, ApiErrorKeys.admin.inviteCodes.invalidExpiry, {
+        status: 400,
+      })
     }
     if (expiresAt && expiresAt.getTime() <= Date.now()) {
-      return NextResponse.json({ error: "Expiry must be in the future" }, { status: 400 })
+      return createApiErrorResponse(request, ApiErrorKeys.admin.inviteCodes.expiryMustBeInFuture, {
+        status: 400,
+      })
     }
 
     const record = await db.inviteCode.create({
@@ -151,9 +159,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ record })
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: error.errors[0].message }, { status: 400 })
+      return createApiErrorResponse(request, ApiErrorKeys.general.invalid, {
+        status: 400,
+        meta: { detail: error.errors[0].message },
+      })
     }
     console.error("Invite codes create error:", error)
-    return NextResponse.json({ error: "Failed to create invite code" }, { status: 500 })
+    return createApiErrorResponse(request, ApiErrorKeys.admin.inviteCodes.failedToCreate, {
+      status: 500,
+    })
   }
 }

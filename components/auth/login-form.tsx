@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Turnstile } from "@/components/ui/turnstile"
 import { OAuthButtons } from "./oauth-buttons"
+import { getDictionaryEntry } from "@/lib/i18n/get-dictionary-entry"
 import type { Dictionary } from "@/lib/i18n/get-dictionary"
 import type { Locale } from "@/lib/i18n/config"
 
@@ -47,18 +48,34 @@ export function LoginForm({ locale, dict, oauthProviders }: LoginFormProps) {
     "Login failed": t.errors.failed,
   }
 
-  const resolveErrorMessage = (message?: string) => {
-    if (!message) {
+  const resolveErrorMessage = (payload?: string | { code?: string; message?: string }) => {
+    if (!payload) {
       return t.errors.failed
     }
-    return errorMap[message] || t.errors.failed
+
+    if (typeof payload === "string") {
+      return errorMap[payload] || t.errors.failed
+    }
+
+    if (typeof payload.code === "string") {
+      const dictValue = getDictionaryEntry(dict, payload.code)
+      if (dictValue) {
+        return dictValue
+      }
+    }
+
+    if (typeof payload.message === "string" && payload.message.trim()) {
+      return payload.message
+    }
+
+    return t.errors.failed
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
     if (TURNSTILE_ENABLED && !turnstileToken) {
-      setError(dict.auth.errors?.turnstileRequired || "Please complete the verification")
+      setError(dict.errors?.turnstileRequired || "Please complete the verification")
       return
     }
 

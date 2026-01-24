@@ -2,6 +2,8 @@ import { type NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { getCurrentUser } from "@/lib/auth/session"
 import { sendEmail, isEmailConfigured } from "@/lib/email/mailer"
+import { createApiErrorResponse } from "@/lib/api/error-response"
+import { ApiErrorKeys } from "@/lib/api/error-keys"
 
 const testEmailSchema = z.object({
   to: z.string().email("Invalid email address"),
@@ -15,12 +17,13 @@ export async function POST(request: NextRequest) {
     const user = await getCurrentUser()
 
     if (!user || (user.role !== "ADMIN" && user.role !== "SUPER_ADMIN")) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+      return createApiErrorResponse(request, ApiErrorKeys.general.forbidden, { status: 403 })
     }
 
     if (!isEmailConfigured()) {
-      return NextResponse.json(
-        { error: "Email service not configured. Please check environment variables." },
+      return createApiErrorResponse(
+        request,
+        ApiErrorKeys.auth.verificationCode.emailServiceNotConfigured,
         { status: 503 },
       )
     }
@@ -70,15 +73,13 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: error.errors[0].message }, { status: 400 })
+      return createApiErrorResponse(request, ApiErrorKeys.general.invalid, {
+        status: 400,
+        meta: { detail: error.errors[0].message },
+      })
     }
 
     console.error("Test email error:", error)
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : "Failed to send test email",
-      },
-      { status: 500 },
-    )
+    return createApiErrorResponse(request, ApiErrorKeys.general.failed, { status: 500 })
   }
 }

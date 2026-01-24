@@ -10,6 +10,7 @@ import { verifyCode } from "@/lib/verification-code"
 import { isRedisAvailable } from "@/lib/redis"
 import { verifyTurnstileToken } from "@/lib/turnstile"
 import { z } from "zod"
+import { createApiErrorResponse } from "@/lib/api/error-response"
 
 const registerSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -19,15 +20,34 @@ const registerSchema = z.object({
   turnstileToken: z.string().optional(),
 })
 
+function getRegisterValidationErrorCode(error: z.ZodError) {
+  const issue = error.errors[0]
+  const field = issue.path[0]
+
+  if (field === "email") {
+    return "apiErrors.auth.register.invalidEmail"
+  }
+
+  if (field === "password") {
+    return "apiErrors.auth.register.weakPassword"
+  }
+
+  return "apiErrors.auth.register.validationFailed"
+}
+
 export async function POST(request: NextRequest) {
   if (!features.database || !db) {
-    return NextResponse.json({ error: "Registration service not configured" }, { status: 503 })
+    return createApiErrorResponse(request, "apiErrors.auth.register.serviceUnavailable", {
+      status: 503,
+    })
   }
 
   try {
     const settings = await getSiteSettings()
     if (!settings.userRegistration) {
-      return NextResponse.json({ error: "User registration is disabled" }, { status: 403 })
+      return createApiErrorResponse(request, "apiErrors.auth.register.registrationDisabled", {
+        status: 403,
+      })
     }
 
     const body = await request.json()
@@ -41,7 +61,9 @@ export async function POST(request: NextRequest) {
         undefined
       const isValid = await verifyTurnstileToken(turnstileToken, clientIp)
       if (!isValid) {
-        return NextResponse.json({ error: "Verification failed" }, { status: 400 })
+        return createApiErrorResponse(request, "apiErrors.auth.register.verificationFailed", {
+          status: 400,
+        })
       }
     }
 
@@ -49,17 +71,20 @@ export async function POST(request: NextRequest) {
     if (verificationCode && (await isRedisAvailable())) {
       const codeVerification = await verifyCode(email, verificationCode)
       if (!codeVerification.valid) {
-        return NextResponse.json(
-          { error: codeVerification.error || "Invalid verification code" },
-          { status: 400 },
-        )
+        return createApiErrorResponse(request, "apiErrors.auth.register.invalidVerificationCode", {
+          status: 400,
+          meta: { reason: codeVerification.error },
+        })
       }
     }
 
     // 验证密码强度
     const passwordValidation = validatePassword(password)
     if (!passwordValidation.valid) {
-      return NextResponse.json({ error: passwordValidation.errors[0] }, { status: 400 })
+      return createApiErrorResponse(request, "apiErrors.auth.register.weakPassword", {
+        status: 400,
+        meta: { failures: passwordValidation.errors },
+      })
     }
 
     // 检查邮箱是否已存在
@@ -68,7 +93,7 @@ export async function POST(request: NextRequest) {
     })
 
     if (existingUser) {
-      return NextResponse.json({ error: "Email already registered" }, { status: 400 })
+      return createApiErrorResponse(request, "apiErrors.auth.register.emailExists", { status: 400 })
     }
 
     // 创建用户
@@ -125,8 +150,10 @@ export async function POST(request: NextRequest) {
     return response
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: error.errors[0].message }, { status: 400 })
+      return createApiErrorResponse(request, getRegisterValidationErrorCode(error), { status: 400 })
     }
-    return NextResponse.json({ error: "Registration failed" }, { status: 500 })
+    return createApiErrorResponse(request, "apiErrors.auth.register.registrationFailed", {
+      status: 500,
+    })
   }
 }

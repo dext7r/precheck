@@ -26,7 +26,7 @@ function toSupportedLocale(locale?: string | null): Locale | null {
   return null
 }
 
-function detectLocale(request: NextRequest | undefined): Locale {
+export function resolveLocaleForRequest(request: NextRequest | undefined): Locale {
   if (!request) {
     return defaultLocale
   }
@@ -50,6 +50,13 @@ function detectLocale(request: NextRequest | undefined): Locale {
     }
   }
 
+  const referer = request.headers.get("referer") ?? ""
+  for (const locale of locales) {
+    if (referer.includes(`/${locale}/`)) {
+      return locale
+    }
+  }
+
   return defaultLocale
 }
 
@@ -58,10 +65,9 @@ export async function createApiErrorResponse(
   dictKey: string,
   options?: ErrorResponseOptions,
 ) {
-  const locale = detectLocale(request)
+  const locale = resolveLocaleForRequest(request)
   const dict = await getDictionary(locale)
-  const message =
-    getDictionaryEntry(dict, dictKey) ?? dictKey
+  const message = getDictionaryEntry(dict, dictKey) ?? dictKey
 
   return NextResponse.json(
     {

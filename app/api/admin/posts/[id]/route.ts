@@ -3,25 +3,27 @@ import { db } from "@/lib/db"
 import { getCurrentUser } from "@/lib/auth/session"
 import { z } from "zod"
 import { writeAuditLog } from "@/lib/audit"
+import { createApiErrorResponse } from "@/lib/api/error-response"
+import { ApiErrorKeys } from "@/lib/api/error-keys"
 
 const updatePostSchema = z.object({
   status: z.enum(["DRAFT", "PUBLISHED", "PENDING", "REJECTED"]),
 })
 
-export async function GET(_request: NextRequest, context: { params: Promise<{ id: string }> }) {
+export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
     const user = await getCurrentUser()
 
     if (!user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
+      return createApiErrorResponse(request, ApiErrorKeys.notAuthenticated, { status: 401 })
     }
 
     if (user.role !== "ADMIN" && user.role !== "SUPER_ADMIN") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+      return createApiErrorResponse(request, ApiErrorKeys.general.forbidden, { status: 403 })
     }
 
     if (!db) {
-      return NextResponse.json({ error: "Database not configured" }, { status: 503 })
+      return createApiErrorResponse(request, ApiErrorKeys.databaseNotConfigured, { status: 503 })
     }
 
     const { id } = await context.params
@@ -46,13 +48,13 @@ export async function GET(_request: NextRequest, context: { params: Promise<{ id
     })
 
     if (!post) {
-      return NextResponse.json({ error: "Post not found" }, { status: 404 })
+      return createApiErrorResponse(request, ApiErrorKeys.admin.posts.postNotFound, { status: 404 })
     }
 
     return NextResponse.json(post)
   } catch (error) {
     console.error("Get post API error:", error)
-    return NextResponse.json({ error: "Failed to fetch post" }, { status: 500 })
+    return createApiErrorResponse(request, ApiErrorKeys.admin.posts.failedToFetch, { status: 500 })
   }
 }
 
@@ -61,15 +63,15 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     const user = await getCurrentUser()
 
     if (!user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
+      return createApiErrorResponse(request, ApiErrorKeys.notAuthenticated, { status: 401 })
     }
 
     if (user.role !== "ADMIN" && user.role !== "SUPER_ADMIN") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+      return createApiErrorResponse(request, ApiErrorKeys.general.forbidden, { status: 403 })
     }
 
     if (!db) {
-      return NextResponse.json({ error: "Database not configured" }, { status: 503 })
+      return createApiErrorResponse(request, ApiErrorKeys.databaseNotConfigured, { status: 503 })
     }
 
     const { id } = await context.params
@@ -112,27 +114,30 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     return NextResponse.json(updatedPost)
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: error.errors[0].message }, { status: 400 })
+      return createApiErrorResponse(request, ApiErrorKeys.general.invalid, {
+        status: 400,
+        meta: { detail: error.errors[0].message },
+      })
     }
     console.error("Update post API error:", error)
-    return NextResponse.json({ error: "Failed to update post" }, { status: 500 })
+    return createApiErrorResponse(request, ApiErrorKeys.admin.posts.failedToUpdate, { status: 500 })
   }
 }
 
-export async function DELETE(_request: NextRequest, context: { params: Promise<{ id: string }> }) {
+export async function DELETE(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
     const user = await getCurrentUser()
 
     if (!user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
+      return createApiErrorResponse(request, ApiErrorKeys.notAuthenticated, { status: 401 })
     }
 
     if (user.role !== "ADMIN" && user.role !== "SUPER_ADMIN") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+      return createApiErrorResponse(request, ApiErrorKeys.general.forbidden, { status: 403 })
     }
 
     if (!db) {
-      return NextResponse.json({ error: "Database not configured" }, { status: 503 })
+      return createApiErrorResponse(request, ApiErrorKeys.databaseNotConfigured, { status: 503 })
     }
 
     const { id } = await context.params
@@ -148,12 +153,12 @@ export async function DELETE(_request: NextRequest, context: { params: Promise<{
       actor: user,
       before,
       after: null,
-      request: _request,
+      request,
     })
 
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error("Delete post API error:", error)
-    return NextResponse.json({ error: "Failed to delete post" }, { status: 500 })
+    return createApiErrorResponse(request, ApiErrorKeys.admin.posts.failedToDelete, { status: 500 })
   }
 }

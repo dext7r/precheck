@@ -2,14 +2,16 @@ import { type NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { deleteSession, getCurrentUser } from "@/lib/auth/session"
 import { writeAuditLog } from "@/lib/audit"
+import { createApiErrorResponse } from "@/lib/api/error-response"
+import { ApiErrorKeys } from "@/lib/api/error-keys"
 
 export async function DELETE(request: NextRequest) {
   const user = await getCurrentUser()
   if (!user) {
-    return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
+    return createApiErrorResponse(request, ApiErrorKeys.notAuthenticated, { status: 401 })
   }
   if (!db) {
-    return NextResponse.json({ error: "Database not configured" }, { status: 503 })
+    return createApiErrorResponse(request, ApiErrorKeys.databaseNotConfigured, { status: 503 })
   }
 
   try {
@@ -33,6 +35,8 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error("Delete account API error:", error)
-    return NextResponse.json({ error: "Failed to delete account" }, { status: 500 })
+    return createApiErrorResponse(request, ApiErrorKeys.dashboard.account.failedToDelete, {
+      status: 500,
+    })
   }
 }

@@ -4,14 +4,15 @@ import { getCurrentUser } from "@/lib/auth/session"
 import { locales } from "@/lib/i18n/config"
 import { writeAuditLog } from "@/lib/audit"
 import { db } from "@/lib/db"
+import { createApiErrorResponse } from "@/lib/api/error-response"
 
 export async function POST(request: NextRequest) {
   const user = await getCurrentUser()
   if (!user) {
-    return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
+    return createApiErrorResponse(request, "apiErrors.general.notAuthenticated", { status: 401 })
   }
   if (user.role !== "ADMIN" && user.role !== "SUPER_ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    return createApiErrorResponse(request, "apiErrors.general.forbidden", { status: 403 })
   }
 
   try {
@@ -35,6 +36,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error("Failed to clear cache:", error)
-    return NextResponse.json({ error: "Failed to clear cache" }, { status: 500 })
+    return createApiErrorResponse(request, "apiErrors.admin.clearCache.failed", {
+      status: 500,
+    })
   }
 }

@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Turnstile } from "@/components/ui/turnstile"
 import { OAuthButtons } from "./oauth-buttons"
+import { getDictionaryEntry } from "@/lib/i18n/get-dictionary-entry"
 import type { Dictionary } from "@/lib/i18n/get-dictionary"
 import type { Locale } from "@/lib/i18n/config"
 
@@ -53,23 +54,42 @@ export function RegisterForm({ locale, dict, oauthProviders }: RegisterFormProps
     "Registration failed": t.errors.failed,
   }
 
-  const resolveErrorMessage = (message?: string) => {
-    if (!message) {
+  const resolveErrorMessage = (payload?: string | { code?: string; message?: string }) => {
+    if (!payload) {
       return t.errors.failed
     }
-    if (errorMap[message]) {
-      return errorMap[message]
+
+    if (typeof payload !== "string") {
+      if (typeof payload.code === "string") {
+        const dictValue = getDictionaryEntry(dict, payload.code)
+        if (dictValue) {
+          return dictValue
+        }
+      }
+      if (typeof payload.message === "string") {
+        payload = payload.message
+      } else {
+        payload = undefined
+      }
     }
-    if (message.startsWith("Password must be at least")) {
+
+    if (!payload) {
+      return t.errors.failed
+    }
+
+    if (errorMap[payload]) {
+      return errorMap[payload]
+    }
+    if (payload.startsWith("Password must be at least")) {
       return t.errors.passwordTooShort
     }
-    if (message.includes("uppercase")) {
+    if (payload.includes("uppercase")) {
       return t.errors.passwordUppercase
     }
-    if (message.includes("lowercase")) {
+    if (payload.includes("lowercase")) {
       return t.errors.passwordLowercase
     }
-    if (message.includes("number")) {
+    if (payload.includes("number")) {
       return t.errors.passwordNumber
     }
     return t.errors.failed
@@ -113,11 +133,12 @@ export function RegisterForm({ locale, dict, oauthProviders }: RegisterFormProps
       const data = await res.json()
 
       if (!res.ok) {
-        // 如果是服务不可用（Redis未配置），隐藏验证码功能
+        const errorText = typeof data.error === "string" ? data.error : data.error?.message
+
         if (
           res.status === 503 ||
-          data.error?.includes("not available") ||
-          data.error?.includes("not configured")
+          errorText?.includes("not available") ||
+          errorText?.includes("not configured")
         ) {
           setVerificationAvailable(false)
           setError(t.verificationServiceUnavailable)
@@ -125,7 +146,7 @@ export function RegisterForm({ locale, dict, oauthProviders }: RegisterFormProps
           setCountdown(data.waitSeconds)
           setError(`请等待 ${data.waitSeconds} 秒后再次发送`)
         } else {
-          setError(data.error || t.sendCodeFailed)
+          setError(errorText || t.sendCodeFailed)
         }
         return
       }
@@ -143,7 +164,7 @@ export function RegisterForm({ locale, dict, oauthProviders }: RegisterFormProps
     e.preventDefault()
 
     if (TURNSTILE_ENABLED && !turnstileToken) {
-      setError(dict.auth.errors?.turnstileRequired || "Please complete the verification")
+      setError(dict.errors?.turnstileRequired || "Please complete the verification")
       return
     }
 

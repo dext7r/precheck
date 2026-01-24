@@ -2,21 +2,23 @@ import { type NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { getCurrentUser } from "@/lib/auth/session"
 import { PostStatus } from "@prisma/client"
+import { createApiErrorResponse } from "@/lib/api/error-response"
+import { ApiErrorKeys } from "@/lib/api/error-keys"
 
 export async function GET(request: NextRequest) {
   try {
     const user = await getCurrentUser()
 
     if (!user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
+      return createApiErrorResponse(request, ApiErrorKeys.notAuthenticated, { status: 401 })
     }
 
     if (user.role !== "ADMIN" && user.role !== "SUPER_ADMIN") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+      return createApiErrorResponse(request, ApiErrorKeys.general.forbidden, { status: 403 })
     }
 
     if (!db) {
-      return NextResponse.json({ error: "Database not configured" }, { status: 503 })
+      return createApiErrorResponse(request, ApiErrorKeys.databaseNotConfigured, { status: 503 })
     }
 
     const { searchParams } = request.nextUrl
@@ -71,6 +73,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ posts, total, page, limit })
   } catch (error) {
     console.error("Posts API error:", error)
-    return NextResponse.json({ error: "Failed to fetch posts" }, { status: 500 })
+    return createApiErrorResponse(request, ApiErrorKeys.admin.posts.failedToFetch, {
+      status: 500,
+    })
   }
 }

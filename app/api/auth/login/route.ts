@@ -6,6 +6,7 @@ import { features } from "@/lib/features"
 import { writeAuditLog } from "@/lib/audit"
 import { verifyTurnstileToken } from "@/lib/turnstile"
 import { z } from "zod"
+import { createApiErrorResponse } from "@/lib/api/error-response"
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -13,9 +14,26 @@ const loginSchema = z.object({
   turnstileToken: z.string().optional(),
 })
 
+function getLoginValidationErrorCode(error: z.ZodError) {
+  const issue = error.errors[0]
+  const field = issue.path[0]
+
+  if (field === "email") {
+    return "apiErrors.auth.login.invalidEmail"
+  }
+
+  if (field === "password") {
+    return "apiErrors.auth.login.passwordRequired"
+  }
+
+  return "apiErrors.auth.login.validationFailed"
+}
+
 export async function POST(request: NextRequest) {
   if (!features.database || !db) {
-    return NextResponse.json({ error: "Authentication service not configured" }, { status: 503 })
+    return createApiErrorResponse(request, "apiErrors.auth.login.serviceUnavailable", {
+      status: 503,
+    })
   }
 
   try {
@@ -30,7 +48,9 @@ export async function POST(request: NextRequest) {
         undefined
       const isValid = await verifyTurnstileToken(turnstileToken, clientIp)
       if (!isValid) {
-        return NextResponse.json({ error: "Verification failed" }, { status: 400 })
+        return createApiErrorResponse(request, "apiErrors.auth.login.verificationFailed", {
+          status: 400,
+        })
       }
     }
 
@@ -40,13 +60,17 @@ export async function POST(request: NextRequest) {
     })
 
     if (!user || !user.password) {
-      return NextResponse.json({ error: "Invalid email or password" }, { status: 401 })
+      return createApiErrorResponse(request, "apiErrors.auth.login.invalidCredentials", {
+        status: 401,
+      })
     }
 
     // 验证密码
     const isValid = await verifyPassword(password, user.password)
     if (!isValid) {
-      return NextResponse.json({ error: "Invalid email or password" }, { status: 401 })
+      return createApiErrorResponse(request, "apiErrors.auth.login.invalidCredentials", {
+        status: 401,
+      })
     }
 
     // 创建 Session
@@ -88,8 +112,8 @@ export async function POST(request: NextRequest) {
     return response
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: error.errors[0].message }, { status: 400 })
+      return createApiErrorResponse(request, getLoginValidationErrorCode(error), { status: 400 })
     }
-    return NextResponse.json({ error: "Login failed" }, { status: 500 })
+    return createApiErrorResponse(request, "apiErrors.auth.login.loginFailed", { status: 500 })
   }
 }

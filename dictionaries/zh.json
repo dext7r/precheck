@@ -23,6 +23,208 @@
       "tokenExpired": "查询码已过期",
       "tokenNotFound": "未找到查询码",
       "queryFailed": "查询失败"
+    },
+    "general": {
+      "forbidden": "权限不足",
+      "failed": "请求失败",
+      "invalid": "请求不合法",
+      "notFound": "未找到"
+    },
+    "auth": {
+      "login": {
+        "serviceUnavailable": "认证服务未配置",
+        "verificationFailed": "验证失败",
+        "invalidCredentials": "邮箱或密码错误",
+        "invalidEmail": "无效的邮箱地址",
+        "passwordRequired": "密码为必填项",
+        "validationFailed": "登录信息不合法",
+        "loginFailed": "登录失败"
+      },
+      "register": {
+        "serviceUnavailable": "注册服务未配置",
+        "registrationDisabled": "当前禁止注册",
+        "verificationFailed": "验证失败",
+        "invalidVerificationCode": "验证码无效",
+        "weakPassword": "密码不符合要求",
+        "emailExists": "邮箱已被注册",
+        "validationFailed": "注册信息不合法",
+        "registrationFailed": "注册失败"
+      },
+      "forgotPassword": {
+        "serviceUnavailable": "认证服务未配置",
+        "invalidEmail": "请输入有效邮箱",
+        "invalidVerificationCode": "验证码无效",
+        "validationFailed": "请求参数不合法",
+        "failed": "处理失败"
+      },
+      "resetPassword": {
+        "serviceUnavailable": "认证服务未配置",
+        "tokenRequired": "重置令牌为必填项",
+        "weakPassword": "密码不符合要求",
+        "invalidToken": "重置令牌无效或已过期",
+        "validationFailed": "重置信息不合法",
+        "resetFailed": "重置失败"
+      },
+      "oauth": {
+        "disabled": "OAuth 登录已禁用",
+        "failedToGenerateUrl": "生成认证地址失败",
+        "githubNotConfigured": "未配置 GitHub OAuth",
+        "googleNotConfigured": "未配置 Google OAuth"
+      },
+      "logout": {
+        "failed": "登出失败"
+      },
+      "verificationCode": {
+        "emailServiceNotConfigured": "邮件服务未配置",
+        "sendFailed": "发送验证码失败"
+      },
+      "me": {
+        "failedToGetUser": "获取用户信息失败"
+      }
+    },
+    "admin": {
+      "analytics": {
+        "failed": "获取分析失败"
+      },
+      "auditLogs": {
+        "failed": "获取审计日志失败"
+      },
+      "clearCache": {
+        "failed": "清理缓存失败"
+      },
+      "dashboard": {
+        "invalidQuery": "查询参数无效",
+        "failed": "加载仪表盘失败"
+      },
+      "users": {
+        "failedToFetch": "获取用户列表失败",
+        "userNotFound": "未找到用户",
+        "noFieldsToUpdate": "没有要更新的字段",
+        "onlySuperAdminCanModifyRoles": "只有 SUPER_ADMIN 可以修改用户角色",
+        "adminCannotModifyOtherAdmins": "ADMIN 无法修改其他管理员",
+        "failedToUpdate": "更新用户失败",
+        "cannotDeleteSelf": "不能删除自己",
+        "failedToDelete": "删除用户失败"
+      },
+      "messages": {
+        "messageNotFound": "未找到消息",
+        "alreadyRevoked": "消息已撤回",
+        "failedToFetch": "获取消息失败",
+        "failedToFetchSingle": "获取消息详情失败",
+        "roleRequired": "角色为必填项",
+        "statusRequired": "状态为必填项",
+        "recipientsRequired": "收件人为必填项",
+        "noRecipientsFound": "未找到收件人",
+        "failedToCreate": "创建消息失败",
+        "failedToUpdate": "更新消息失败",
+        "failedToRevoke": "撤回消息失败"
+      },
+      "inviteCodes": {
+        "failedToFetch": "获取邀请码失败",
+        "invalidExpiry": "过期时间无效",
+        "expiryMustBeInFuture": "过期时间必须晚于当前时间",
+        "noValid": "没有有效的邀请码",
+        "failedToImport": "导入邀请码失败",
+        "failedToCreate": "创建邀请码失败",
+        "queryTokenFailed": "创建查询令牌失败",
+        "noValidFound": "未找到有效的邀请码",
+        "notFound": "未找到邀请码",
+        "alreadyUsed": "邀请码已被使用",
+        "alreadyExpired": "邀请码已过期",
+        "alreadyAssigned": "邀请码已分配",
+        "alreadyIssued": "邀请码已发放",
+        "failedToInvalidate": "使邀请码失效失败",
+        "failedToUpdateUsage": "更新邀请码使用情况失败",
+        "failedToIssue": "发放邀请码失败",
+        "userIdRequired": "用户 ID 为必填项",
+        "emailRequired": "邮箱为必填项",
+        "emailNotificationsDisabled": "邮件通知已禁用",
+        "assign": {
+          "notFound": "未找到邀请码",
+          "alreadyUsed": "邀请码已被使用",
+          "expired": "邀请码已过期",
+          "alreadyAssigned": "邀请码已分配",
+          "alreadyIssued": "邀请码已发放",
+          "userIdRequired": "用户 ID 为必填项",
+          "emailRequired": "邮箱为必填项",
+          "userNotFound": "未找到用户",
+          "notificationsDisabled": "邮件通知已禁用"
+        }
+      },
+      "preApplications": {
+        "failedToFetch": "获取预申请失败",
+        "historyFetchFailed": "获取历史记录失败",
+        "failedToReview": "审核预申请失败",
+        "inviteCodeRequired": "邀请码为必填项",
+        "invalidInviteExpiry": "邀请码过期时间无效",
+        "expiryMustBeInFuture": "邀请码过期时间必须晚于当前时间",
+        "alreadyReviewed": "已审核"
+      },
+      "posts": {
+        "failedToFetch": "获取帖子失败",
+        "postNotFound": "未找到帖子",
+        "failedToFetchSingle": "获取帖子详情失败",
+        "failedToUpdate": "更新帖子失败",
+        "failedToDelete": "删除帖子失败",
+        "failedToCreate": "创建帖子失败"
+      },
+      "settings": {
+        "failedToLoad": "加载设置失败",
+        "failedToUpdate": "更新设置失败"
+      },
+      "systemConfig": {
+        "failedToFetch": "获取系统配置失败",
+        "failedToUpdate": "更新系统配置失败"
+      },
+      "resetDatabase": {
+        "failed": "重置数据库失败"
+      },
+      "stats": {
+        "failedToFetch": "获取统计数据失败"
+      }
+    },
+    "dashboard": {
+      "password": {
+        "passwordsDoNotMatch": "两次输入的密码不一致",
+        "currentPasswordRequired": "当前密码为必填项",
+        "invalidCurrentPassword": "当前密码错误",
+        "failedToUpdate": "更新密码失败"
+      },
+      "messages": {
+        "failedToFetch": "获取消息失败",
+        "failedToFetchSingle": "获取消息详情失败",
+        "failedToMarkAsRead": "标记消息为已读失败",
+        "summary": {
+          "failedToFetch": "获取摘要失败"
+        }
+      },
+      "posts": {
+        "failedToFetch": "获取帖子失败",
+        "failedToFetchSingle": "获取帖子详情失败",
+        "failedToCreate": "创建帖子失败",
+        "failedToUpdate": "更新帖子失败",
+        "postNotFound": "未找到帖子",
+        "failedToDelete": "删除帖子失败"
+      },
+      "profile": {
+        "failedToUpdate": "更新个人信息失败"
+      },
+      "account": {
+        "failedToDelete": "删除账户失败"
+      }
+    },
+    "preApplication": {
+      "failedToFetch": "获取预申请失败",
+      "failedToSubmit": "提交预申请失败",
+      "alreadySubmitted": "已提交",
+      "alreadyApproved": "已通过",
+      "essayTooShort": "文章太短",
+      "invalidEmailDomain": "邮箱域名无效",
+      "sourceDetailRequired": "来源说明为必填项",
+      "noPreApplicationFound": "未找到预申请",
+      "failedToUpdate": "更新预申请失败",
+      "versionConflict": "数据已被修改，请刷新后重试",
+      "resubmitLimitExceeded": "已达到最大重新提交次数限制"
     }
   },
   "hero": {
@@ -278,6 +480,7 @@
   "errors": {
     "backHome": "返回首页",
     "tryAgain": "重试",
+    "turnstileRequired": "请完成人机验证后再继续",
     "400": {
       "title": "请求错误",
       "description": "服务器无法理解该请求，请求语法可能存在错误。",

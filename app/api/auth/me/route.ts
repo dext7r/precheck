@@ -1,12 +1,14 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { getCurrentUser } from "@/lib/auth/session"
+import { createApiErrorResponse } from "@/lib/api/error-response"
+import { ApiErrorKeys } from "@/lib/api/error-keys"
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const user = await getCurrentUser()
 
     if (!user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
+      return createApiErrorResponse(request, ApiErrorKeys.notAuthenticated, { status: 401 })
     }
 
     return NextResponse.json({
@@ -19,6 +21,6 @@ export async function GET() {
       },
     })
   } catch {
-    return NextResponse.json({ error: "Failed to get user" }, { status: 500 })
+    return createApiErrorResponse(request, ApiErrorKeys.auth.me.failedToGetUser, { status: 500 })
   }
 }

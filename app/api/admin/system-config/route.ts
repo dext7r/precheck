@@ -4,6 +4,8 @@ import { db } from "@/lib/db"
 import { getCurrentUser } from "@/lib/auth/session"
 import { writeAuditLog } from "@/lib/audit"
 import { allowedEmailDomains as defaultEmailDomains } from "@/lib/pre-application/constants"
+import { createApiErrorResponse } from "@/lib/api/error-response"
+import { ApiErrorKeys } from "@/lib/api/error-keys"
 
 const systemConfigSchema = z.object({
   preApplicationEssayHint: z.string().min(10).max(500),
@@ -11,16 +13,16 @@ const systemConfigSchema = z.object({
   auditLogEnabled: z.boolean().optional(),
 })
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const user = await getCurrentUser()
 
     if (!user || (user.role !== "ADMIN" && user.role !== "SUPER_ADMIN")) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+      return createApiErrorResponse(request, ApiErrorKeys.general.forbidden, { status: 403 })
     }
 
     if (!db) {
-      return NextResponse.json({ error: "Database not configured" }, { status: 503 })
+      return createApiErrorResponse(request, ApiErrorKeys.databaseNotConfigured, { status: 503 })
     }
 
     const settings = await db.siteSettings.findUnique({
@@ -49,7 +51,9 @@ export async function GET() {
     })
   } catch (error) {
     console.error("System config fetch error:", error)
-    return NextResponse.json({ error: "Failed to fetch system config" }, { status: 500 })
+    return createApiErrorResponse(request, ApiErrorKeys.admin.systemConfig.failedToFetch, {
+      status: 500,
+    })
   }
 }
 
@@ -58,11 +62,11 @@ export async function PUT(request: NextRequest) {
     const user = await getCurrentUser()
 
     if (!user || (user.role !== "ADMIN" && user.role !== "SUPER_ADMIN")) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+      return createApiErrorResponse(request, ApiErrorKeys.general.forbidden, { status: 403 })
     }
 
     if (!db) {
-      return NextResponse.json({ error: "Database not configured" }, { status: 503 })
+      return createApiErrorResponse(request, ApiErrorKeys.databaseNotConfigured, { status: 503 })
     }
 
     const body = await request.json()
@@ -108,9 +112,14 @@ export async function PUT(request: NextRequest) {
     })
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: error.errors[0].message }, { status: 400 })
+      return createApiErrorResponse(request, ApiErrorKeys.general.invalid, {
+        status: 400,
+        meta: { detail: error.errors[0].message },
+      })
     }
     console.error("System config update error:", error)
-    return NextResponse.json({ error: "Failed to update system config" }, { status: 500 })
+    return createApiErrorResponse(request, ApiErrorKeys.admin.systemConfig.failedToUpdate, {
+      status: 500,
+    })
   }
 }

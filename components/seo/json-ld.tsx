@@ -149,4 +149,3 @@ export function FAQJsonLd({ faqs }: { faqs: { question: string; answer: string }
     />
   )
 }
-

@@ -4,6 +4,8 @@ import { getCurrentUser } from "@/lib/auth/session"
 import { getSiteSettings, updateSiteSettings } from "@/lib/site-settings"
 import { db } from "@/lib/db"
 import { writeAuditLog } from "@/lib/audit"
+import { createApiErrorResponse } from "@/lib/api/error-response"
+import { ApiErrorKeys } from "@/lib/api/error-keys"
 
 const settingsSchema = z
   .object({
@@ -18,13 +20,13 @@ const settingsSchema = z
   })
   .partial()
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   const user = await getCurrentUser()
   if (!user) {
-    return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
+    return createApiErrorResponse(request, ApiErrorKeys.notAuthenticated, { status: 401 })
   }
   if (user.role !== "ADMIN" && user.role !== "SUPER_ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    return createApiErrorResponse(request, ApiErrorKeys.general.forbidden, { status: 403 })
   }
 
   try {
@@ -32,17 +34,19 @@ export async function GET() {
     return NextResponse.json(settings)
   } catch (error) {
     console.error("Failed to load site settings:", error)
-    return NextResponse.json({ error: "Failed to load settings" }, { status: 500 })
+    return createApiErrorResponse(request, ApiErrorKeys.admin.settings.failedToLoad, {
+      status: 500,
+    })
   }
 }
 
 export async function PUT(request: NextRequest) {
   const user = await getCurrentUser()
   if (!user) {
-    return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
+    return createApiErrorResponse(request, ApiErrorKeys.notAuthenticated, { status: 401 })
   }
   if (user.role !== "ADMIN" && user.role !== "SUPER_ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    return createApiErrorResponse(request, ApiErrorKeys.general.forbidden, { status: 403 })
   }
 
   try {
@@ -66,9 +70,14 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json(settings)
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: error.errors[0].message }, { status: 400 })
+      return createApiErrorResponse(request, ApiErrorKeys.general.invalid, {
+        status: 400,
+        meta: { detail: error.errors[0].message },
+      })
     }
     console.error("Failed to update site settings:", error)
-    return NextResponse.json({ error: "Failed to update settings" }, { status: 500 })
+    return createApiErrorResponse(request, ApiErrorKeys.admin.settings.failedToUpdate, {
+      status: 500,
+    })
   }
 }

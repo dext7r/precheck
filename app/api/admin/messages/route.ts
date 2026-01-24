@@ -3,6 +3,8 @@ import { z } from "zod"
 import { db } from "@/lib/db"
 import { getCurrentUser } from "@/lib/auth/session"
 import { writeAuditLog } from "@/lib/audit"
+import { createApiErrorResponse } from "@/lib/api/error-response"
+import { ApiErrorKeys } from "@/lib/api/error-keys"
 
 const createMessageSchema = z.object({
   title: z.string().min(1).max(200),
@@ -18,15 +20,15 @@ export async function GET(request: NextRequest) {
     const user = await getCurrentUser()
 
     if (!user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
+      return createApiErrorResponse(request, ApiErrorKeys.notAuthenticated, { status: 401 })
     }
 
     if (user.role !== "ADMIN" && user.role !== "SUPER_ADMIN") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+      return createApiErrorResponse(request, ApiErrorKeys.general.forbidden, { status: 403 })
     }
 
     if (!db) {
-      return NextResponse.json({ error: "Database not configured" }, { status: 503 })
+      return createApiErrorResponse(request, ApiErrorKeys.databaseNotConfigured, { status: 503 })
     }
 
     const { searchParams } = request.nextUrl
@@ -99,7 +101,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ messages: data, total, page, limit })
   } catch (error) {
     console.error("Admin messages API error:", error)
-    return NextResponse.json({ error: "Failed to fetch messages" }, { status: 500 })
+    return createApiErrorResponse(request, ApiErrorKeys.admin.messages.failedToFetch, {
+      status: 500,
+    })
   }
 }
 
@@ -108,15 +112,15 @@ export async function POST(request: NextRequest) {
     const user = await getCurrentUser()
 
     if (!user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
+      return createApiErrorResponse(request, ApiErrorKeys.notAuthenticated, { status: 401 })
     }
 
     if (user.role !== "ADMIN" && user.role !== "SUPER_ADMIN") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+      return createApiErrorResponse(request, ApiErrorKeys.general.forbidden, { status: 403 })
     }
 
     if (!db) {
-      return NextResponse.json({ error: "Database not configured" }, { status: 503 })
+      return createApiErrorResponse(request, ApiErrorKeys.databaseNotConfigured, { status: 503 })
     }
 
     const body = await request.json()
@@ -125,19 +129,25 @@ export async function POST(request: NextRequest) {
     let where: Record<string, unknown> = {}
     if (data.recipientMode === "role") {
       if (!data.recipientRole) {
-        return NextResponse.json({ error: "Role is required" }, { status: 400 })
+        return createApiErrorResponse(request, ApiErrorKeys.admin.messages.roleRequired, {
+          status: 400,
+        })
       }
       where = { role: data.recipientRole }
     }
     if (data.recipientMode === "status") {
       if (!data.recipientStatus) {
-        return NextResponse.json({ error: "Status is required" }, { status: 400 })
+        return createApiErrorResponse(request, ApiErrorKeys.admin.messages.statusRequired, {
+          status: 400,
+        })
       }
       where = { status: data.recipientStatus }
     }
     if (data.recipientMode === "users") {
       if (!data.recipientUserIds || data.recipientUserIds.length === 0) {
-        return NextResponse.json({ error: "Recipients are required" }, { status: 400 })
+        return createApiErrorResponse(request, ApiErrorKeys.admin.messages.recipientsRequired, {
+          status: 400,
+        })
       }
       where = { id: { in: data.recipientUserIds } }
     }
@@ -148,7 +158,9 @@ export async function POST(request: NextRequest) {
     })
 
     if (recipients.length === 0) {
-      return NextResponse.json({ error: "No recipients found" }, { status: 400 })
+      return createApiErrorResponse(request, ApiErrorKeys.admin.messages.noRecipientsFound, {
+        status: 400,
+      })
     }
 
     const message = await db.message.create({
@@ -186,9 +198,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(message)
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: error.errors[0].message }, { status: 400 })
+      return createApiErrorResponse(request, ApiErrorKeys.general.invalid, {
+        status: 400,
+        meta: { detail: error.errors[0].message },
+      })
     }
     console.error("Create message API error:", error)
-    return NextResponse.json({ error: "Failed to create message" }, { status: 500 })
+    return createApiErrorResponse(request, ApiErrorKeys.admin.messages.failedToCreate, {
+      status: 500,
+    })
   }
 }

@@ -18,7 +18,13 @@ export function Turnstile({ siteKey, onVerify, onError, onExpire, className }: T
   const turnstileRef = useRef<TurnstileInstance>(null)
 
   useEffect(() => {
-    setMounted(true)
+    const frame = requestAnimationFrame(() => {
+      setMounted(true)
+    })
+
+    return () => {
+      cancelAnimationFrame(frame)
+    }
   }, [])
 
   // 主题变化时重置 Turnstile

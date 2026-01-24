@@ -25,37 +25,19 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "Googlebot",
         allow: ["/"],
-        disallow: [
-          "/api/",
-          "/admin/",
-          "/dashboard/",
-          "/*/admin/",
-          "/*/dashboard/",
-        ],
+        disallow: ["/api/", "/admin/", "/dashboard/", "/*/admin/", "/*/dashboard/"],
         crawlDelay: 0.5, // Google爬虫可以更快
       },
       {
         userAgent: "Bingbot",
         allow: ["/"],
-        disallow: [
-          "/api/",
-          "/admin/",
-          "/dashboard/",
-          "/*/admin/",
-          "/*/dashboard/",
-        ],
+        disallow: ["/api/", "/admin/", "/dashboard/", "/*/admin/", "/*/dashboard/"],
         crawlDelay: 1,
       },
       {
         userAgent: "Baiduspider",
         allow: ["/"],
-        disallow: [
-          "/api/",
-          "/admin/",
-          "/dashboard/",
-          "/*/admin/",
-          "/*/dashboard/",
-        ],
+        disallow: ["/api/", "/admin/", "/dashboard/", "/*/admin/", "/*/dashboard/"],
         crawlDelay: 2, // 百度爬虫稍慢一些
       },
       {

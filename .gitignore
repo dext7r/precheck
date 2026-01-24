@@ -32,3 +32,5 @@ lib/build-info.json
 *.tsbuildinfo
 next-env.d.ts
 logs/
+scripts/*.js
+scripts/*.txt

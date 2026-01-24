@@ -6,6 +6,8 @@ import { writeAuditLog } from "@/lib/audit"
 import { isAllowedEmailDomainAsync, normalizeEmail } from "@/lib/pre-application/validation"
 import { PreApplicationGroup, PreApplicationSource } from "@prisma/client"
 import { randomBytes } from "crypto"
+import { createApiErrorResponse } from "@/lib/api/error-response"
+import { ApiErrorKeys } from "@/lib/api/error-keys"
 
 // 最大重新提交次数
 const MAX_RESUBMIT_COUNT = 3
@@ -29,16 +31,16 @@ const preApplicationSchema = z.object({
   version: z.number().optional(), // 乐观锁版本号
 })
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const user = await getCurrentUser()
 
     if (!user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
+      return createApiErrorResponse(request, ApiErrorKeys.notAuthenticated, { status: 401 })
     }
 
     if (!db) {
-      return NextResponse.json({ error: "Database not configured" }, { status: 503 })
+      return createApiErrorResponse(request, ApiErrorKeys.databaseNotConfigured, { status: 503 })
     }
 
     const records = await db.preApplication.findMany({
@@ -63,7 +65,9 @@ export async function GET() {
     })
   } catch (error) {
     console.error("Pre-application fetch error:", error)
-    return NextResponse.json({ error: "Failed to fetch pre-application" }, { status: 500 })
+    return createApiErrorResponse(request, ApiErrorKeys.preApplication.failedToFetch, {
+      status: 500,
+    })
   }
 }
 
@@ -72,11 +76,11 @@ export async function POST(request: NextRequest) {
     const user = await getCurrentUser()
 
     if (!user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
+      return createApiErrorResponse(request, ApiErrorKeys.notAuthenticated, { status: 401 })
     }
 
     if (!db) {
-      return NextResponse.json({ error: "Database not configured" }, { status: 503 })
+      return createApiErrorResponse(request, ApiErrorKeys.databaseNotConfigured, { status: 503 })
     }
 
     const body = await request.json()
@@ -85,15 +89,21 @@ export async function POST(request: NextRequest) {
     const essay = data.essay.trim()
 
     if (essay.length < 50) {
-      return NextResponse.json({ error: "ESSAY_TOO_SHORT" }, { status: 400 })
+      return createApiErrorResponse(request, ApiErrorKeys.preApplication.essayTooShort, {
+        status: 400,
+      })
     }
 
     if (!(await isAllowedEmailDomainAsync(registerEmail))) {
-      return NextResponse.json({ error: "Invalid email domain" }, { status: 400 })
+      return createApiErrorResponse(request, ApiErrorKeys.preApplication.invalidEmailDomain, {
+        status: 400,
+      })
     }
 
     if (data.source === "OTHER" && !data.sourceDetail?.trim()) {
-      return NextResponse.json({ error: "Source detail required" }, { status: 400 })
+      return createApiErrorResponse(request, ApiErrorKeys.preApplication.sourceDetailRequired, {
+        status: 400,
+      })
     }
 
     const existingCount = await db.preApplication.count({
@@ -101,7 +111,9 @@ export async function POST(request: NextRequest) {
     })
 
     if (existingCount > 0) {
-      return NextResponse.json({ error: "Already submitted" }, { status: 409 })
+      return createApiErrorResponse(request, ApiErrorKeys.preApplication.alreadySubmitted, {
+        status: 409,
+      })
     }
 
     // 使用事务创建预申请和版本记录
@@ -156,10 +168,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ record, maxResubmitCount: MAX_RESUBMIT_COUNT })
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: error.errors[0].message }, { status: 400 })
+      return createApiErrorResponse(request, ApiErrorKeys.general.invalid, {
+        status: 400,
+        meta: { detail: error.errors[0].message },
+      })
     }
     console.error("Pre-application submit error:", error)
-    return NextResponse.json({ error: "Failed to submit pre-application" }, { status: 500 })
+    return createApiErrorResponse(request, ApiErrorKeys.preApplication.failedToSubmit, {
+      status: 500,
+    })
   }
 }
 
@@ -168,11 +185,11 @@ export async function PUT(request: NextRequest) {
     const user = await getCurrentUser()
 
     if (!user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
+      return createApiErrorResponse(request, ApiErrorKeys.notAuthenticated, { status: 401 })
     }
 
     if (!db) {
-      return NextResponse.json({ error: "Database not configured" }, { status: 503 })
+      return createApiErrorResponse(request, ApiErrorKeys.databaseNotConfigured, { status: 503 })
     }
 
     const body = await request.json()
@@ -181,15 +198,21 @@ export async function PUT(request: NextRequest) {
     const essay = data.essay.trim()
 
     if (essay.length < 50) {
-      return NextResponse.json({ error: "ESSAY_TOO_SHORT" }, { status: 400 })
+      return createApiErrorResponse(request, ApiErrorKeys.preApplication.essayTooShort, {
+        status: 400,
+      })
     }
 
     if (!(await isAllowedEmailDomainAsync(registerEmail))) {
-      return NextResponse.json({ error: "Invalid email domain" }, { status: 400 })
+      return createApiErrorResponse(request, ApiErrorKeys.preApplication.invalidEmailDomain, {
+        status: 400,
+      })
     }
 
     if (data.source === "OTHER" && !data.sourceDetail?.trim()) {
-      return NextResponse.json({ error: "Source detail required" }, { status: 400 })
+      return createApiErrorResponse(request, ApiErrorKeys.preApplication.sourceDetailRequired, {
+        status: 400,
+      })
     }
 
     const latest = await db.preApplication.findFirst({
@@ -199,31 +222,34 @@ export async function PUT(request: NextRequest) {
     })
 
     if (!latest) {
-      return NextResponse.json({ error: "No pre-application found" }, { status: 404 })
+      return createApiErrorResponse(request, ApiErrorKeys.preApplication.noPreApplicationFound, {
+        status: 404,
+      })
     }
 
     if (latest.status === "APPROVED") {
-      return NextResponse.json({ error: "Already approved" }, { status: 400 })
+      return createApiErrorResponse(request, ApiErrorKeys.preApplication.alreadyApproved, {
+        status: 400,
+      })
     }
 
     // 乐观锁检查
     if (data.version !== undefined && data.version !== latest.version) {
-      return NextResponse.json(
-        { error: "VERSION_CONFLICT", message: "数据已被修改，请刷新后重试" },
-        { status: 409 },
-      )
+      return createApiErrorResponse(request, ApiErrorKeys.preApplication.versionConflict, {
+        status: 409,
+        meta: { detail: "数据已被修改，请刷新后重试" },
+      })
     }
 
     // 驳回后重新提交次数检查
     const isResubmit = latest.status === "REJECTED"
     if (isResubmit && latest.resubmitCount >= MAX_RESUBMIT_COUNT) {
-      return NextResponse.json(
-        {
-          error: "MAX_RESUBMIT_EXCEEDED",
-          message: `已达到最大重新提交次数限制 (${MAX_RESUBMIT_COUNT} 次)`,
+      return createApiErrorResponse(request, ApiErrorKeys.preApplication.resubmitLimitExceeded, {
+        status: 400,
+        meta: {
+          detail: `已达到最大重新提交次数限制 (${MAX_RESUBMIT_COUNT} 次)`,
         },
-        { status: 400 },
-      )
+      })
     }
 
     const newVersion = latest.version + 1
@@ -309,9 +335,14 @@ export async function PUT(request: NextRequest) {
     })
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: error.errors[0].message }, { status: 400 })
+      return createApiErrorResponse(request, ApiErrorKeys.general.invalid, {
+        status: 400,
+        meta: { detail: error.errors[0].message },
+      })
     }
     console.error("Pre-application update error:", error)
-    return NextResponse.json({ error: "Failed to update pre-application" }, { status: 500 })
+    return createApiErrorResponse(request, ApiErrorKeys.preApplication.failedToUpdate, {
+      status: 500,
+    })
   }
 }

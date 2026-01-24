@@ -312,9 +312,7 @@ export function QueryInviteCodesForm({ locale, dict }: QueryInviteCodesFormProps
         )}
 
         {data.status === "APPROVED" && !data.inviteCode && (
-          <div className="py-4 text-center text-muted-foreground">
-            {t.noInviteCode}
-          </div>
+          <div className="py-4 text-center text-muted-foreground">{t.noInviteCode}</div>
         )}
       </motion.div>
     )

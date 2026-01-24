@@ -2,17 +2,19 @@ import { type NextRequest, NextResponse } from "next/server"
 import { getCurrentUser } from "@/lib/auth/session"
 import { db } from "@/lib/db"
 import { writeAuditLog } from "@/lib/audit"
+import { createApiErrorResponse } from "@/lib/api/error-response"
+import { ApiErrorKeys } from "@/lib/api/error-keys"
 
 export async function POST(request: NextRequest) {
   const user = await getCurrentUser()
   if (!user) {
-    return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
+    return createApiErrorResponse(request, ApiErrorKeys.notAuthenticated, { status: 401 })
   }
   if (user.role !== "ADMIN" && user.role !== "SUPER_ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    return createApiErrorResponse(request, ApiErrorKeys.general.forbidden, { status: 403 })
   }
   if (!db) {
-    return NextResponse.json({ error: "Database not configured" }, { status: 503 })
+    return createApiErrorResponse(request, ApiErrorKeys.databaseNotConfigured, { status: 503 })
   }
 
   try {
@@ -52,6 +54,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error("Failed to reset database:", error)
-    return NextResponse.json({ error: "Failed to reset database" }, { status: 500 })
+    return createApiErrorResponse(request, ApiErrorKeys.admin.resetDatabase.failed, {
+      status: 500,
+    })
   }
 }

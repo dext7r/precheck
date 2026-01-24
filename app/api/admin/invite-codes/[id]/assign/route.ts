@@ -10,6 +10,8 @@ import { getDictionary } from "@/lib/i18n/get-dictionary"
 import { defaultLocale, locales, type Locale } from "@/lib/i18n/config"
 import { features } from "@/lib/features"
 import { getSiteSettings } from "@/lib/site-settings"
+import { createApiErrorResponse } from "@/lib/api/error-response"
+import { ApiErrorKeys } from "@/lib/api/error-keys"
 
 const assignSchema = z.object({
   recipientType: z.enum(["email", "user"]),
@@ -24,15 +26,15 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
     const user = await getCurrentUser()
 
     if (!user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
+      return createApiErrorResponse(request, ApiErrorKeys.notAuthenticated, { status: 401 })
     }
 
     if (user.role !== "ADMIN" && user.role !== "SUPER_ADMIN") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+      return createApiErrorResponse(request, ApiErrorKeys.general.forbidden, { status: 403 })
     }
 
     if (!db) {
-      return NextResponse.json({ error: "Database not configured" }, { status: 503 })
+      return createApiErrorResponse(request, ApiErrorKeys.databaseNotConfigured, { status: 503 })
     }
 
     const { id } = await context.params
@@ -54,23 +56,35 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
     })
 
     if (!record) {
-      return NextResponse.json({ error: "Invite code not found" }, { status: 404 })
+      return createApiErrorResponse(request, ApiErrorKeys.admin.inviteCodes.assign.notFound, {
+        status: 404,
+      })
     }
 
     if (record.usedAt) {
-      return NextResponse.json({ error: "Invite code already used" }, { status: 400 })
+      return createApiErrorResponse(request, ApiErrorKeys.admin.inviteCodes.assign.alreadyUsed, {
+        status: 400,
+      })
     }
 
     if (record.expiresAt && record.expiresAt.getTime() <= Date.now()) {
-      return NextResponse.json({ error: "Invite code expired" }, { status: 400 })
+      return createApiErrorResponse(request, ApiErrorKeys.admin.inviteCodes.assign.expired, {
+        status: 400,
+      })
     }
 
     if (record.preApplication) {
-      return NextResponse.json({ error: "Invite code already assigned" }, { status: 400 })
+      return createApiErrorResponse(
+        request,
+        ApiErrorKeys.admin.inviteCodes.assign.alreadyAssigned,
+        { status: 400 },
+      )
     }
 
     if (record.issuedToEmail || record.issuedToUserId) {
-      return NextResponse.json({ error: "Invite code already issued" }, { status: 400 })
+      return createApiErrorResponse(request, ApiErrorKeys.admin.inviteCodes.assign.alreadyIssued, {
+        status: 400,
+      })
     }
 
     let recipientEmail = ""
@@ -78,20 +92,30 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
 
     if (data.recipientType === "user") {
       if (!data.userId) {
-        return NextResponse.json({ error: "User id required" }, { status: 400 })
+        return createApiErrorResponse(
+          request,
+          ApiErrorKeys.admin.inviteCodes.assign.userIdRequired,
+          { status: 400 },
+        )
       }
       const found = await db.user.findUnique({
         where: { id: data.userId },
         select: { id: true, name: true, email: true },
       })
       if (!found) {
-        return NextResponse.json({ error: "User not found" }, { status: 404 })
+        return createApiErrorResponse(request, ApiErrorKeys.admin.inviteCodes.assign.userNotFound, {
+          status: 404,
+        })
       }
       recipientUser = found
       recipientEmail = found.email
     } else {
       if (!data.email) {
-        return NextResponse.json({ error: "Email required" }, { status: 400 })
+        return createApiErrorResponse(
+          request,
+          ApiErrorKeys.admin.inviteCodes.assign.emailRequired,
+          { status: 400 },
+        )
       }
       const email = data.email.trim()
       const found = await db.user.findUnique({
@@ -106,7 +130,11 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
     const shouldSendEmail = features.email && settings.emailNotifications
 
     if (!recipientUser && !shouldSendEmail) {
-      return NextResponse.json({ error: "Email notifications disabled" }, { status: 400 })
+      return createApiErrorResponse(
+        request,
+        ApiErrorKeys.admin.inviteCodes.assign.notificationsDisabled,
+        { status: 400 },
+      )
     }
 
     const note = data.note?.trim() || null
@@ -203,9 +231,14 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
     return NextResponse.json({ record: result })
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: error.errors[0].message }, { status: 400 })
+      return createApiErrorResponse(request, ApiErrorKeys.general.invalid, {
+        status: 400,
+        meta: { detail: error.errors[0].message },
+      })
     }
     console.error("Invite code assign error:", error)
-    return NextResponse.json({ error: "Failed to issue invite code" }, { status: 500 })
+    return createApiErrorResponse(request, ApiErrorKeys.admin.inviteCodes.failedToIssue, {
+      status: 500,
+    })
   }
 }

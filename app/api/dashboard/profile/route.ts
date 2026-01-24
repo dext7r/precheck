@@ -3,6 +3,8 @@ import { z } from "zod"
 import { db } from "@/lib/db"
 import { getCurrentUser } from "@/lib/auth/session"
 import { writeAuditLog } from "@/lib/audit"
+import { createApiErrorResponse } from "@/lib/api/error-response"
+import { ApiErrorKeys } from "@/lib/api/error-keys"
 
 const profileSchema = z.object({
   name: z.string().max(80, "Name is too long").optional(),
@@ -12,10 +14,10 @@ const profileSchema = z.object({
 export async function PUT(request: NextRequest) {
   const user = await getCurrentUser()
   if (!user) {
-    return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
+    return createApiErrorResponse(request, ApiErrorKeys.notAuthenticated, { status: 401 })
   }
   if (!db) {
-    return NextResponse.json({ error: "Database not configured" }, { status: 503 })
+    return createApiErrorResponse(request, ApiErrorKeys.databaseNotConfigured, { status: 503 })
   }
 
   try {
@@ -53,9 +55,14 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json(updated)
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: error.errors[0].message }, { status: 400 })
+      return createApiErrorResponse(request, ApiErrorKeys.general.invalid, {
+        status: 400,
+        meta: { detail: error.errors[0].message },
+      })
     }
     console.error("Update profile API error:", error)
-    return NextResponse.json({ error: "Failed to update profile" }, { status: 500 })
+    return createApiErrorResponse(request, ApiErrorKeys.dashboard.profile.failedToUpdate, {
+      status: 500,
+    })
   }
 }

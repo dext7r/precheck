@@ -3,6 +3,7 @@ import { z } from "zod"
 import { Prisma } from "@prisma/client"
 import { db } from "@/lib/db"
 import { getCurrentUser } from "@/lib/auth/session"
+import { createApiErrorResponse } from "@/lib/api/error-response"
 
 const querySchema = z.object({
   range: z.coerce
@@ -61,15 +62,17 @@ export async function GET(request: NextRequest) {
     const user = await getCurrentUser()
 
     if (!user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
+      return createApiErrorResponse(request, "apiErrors.general.notAuthenticated", { status: 401 })
     }
 
     if (user.role !== "ADMIN" && user.role !== "SUPER_ADMIN") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+      return createApiErrorResponse(request, "apiErrors.general.forbidden", { status: 403 })
     }
 
     if (!db) {
-      return NextResponse.json({ error: "Database not configured" }, { status: 503 })
+      return createApiErrorResponse(request, "apiErrors.general.databaseNotConfigured", {
+        status: 503,
+      })
     }
 
     const searchParams = request.nextUrl.searchParams
@@ -79,7 +82,9 @@ export async function GET(request: NextRequest) {
     })
 
     if (!parsed.success) {
-      return NextResponse.json({ error: "Invalid query" }, { status: 400 })
+      return createApiErrorResponse(request, "apiErrors.admin.dashboard.invalidQuery", {
+        status: 400,
+      })
     }
 
     const rangeDays = parsed.data.range
@@ -333,6 +338,6 @@ export async function GET(request: NextRequest) {
     })
   } catch (error) {
     console.error("Admin dashboard stats error:", error)
-    return NextResponse.json({ error: "Failed to load dashboard stats" }, { status: 500 })
+    return createApiErrorResponse(request, "apiErrors.admin.dashboard.failed", { status: 500 })
   }
 }

@@ -1,21 +1,24 @@
-import { NextResponse } from "next/server"
+import { type NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { getCurrentUser } from "@/lib/auth/session"
+import { createApiErrorResponse } from "@/lib/api/error-response"
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const user = await getCurrentUser()
 
     if (!user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
+      return createApiErrorResponse(request, "apiErrors.general.notAuthenticated", { status: 401 })
     }
 
     if (user.role !== "ADMIN" && user.role !== "SUPER_ADMIN") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+      return createApiErrorResponse(request, "apiErrors.general.forbidden", { status: 403 })
     }
 
     if (!db) {
-      return NextResponse.json({ error: "Database not configured" }, { status: 503 })
+      return createApiErrorResponse(request, "apiErrors.general.databaseNotConfigured", {
+        status: 503,
+      })
     }
 
     const now = new Date()
@@ -103,6 +106,6 @@ export async function GET() {
     })
   } catch (error) {
     console.error("Analytics API error:", error)
-    return NextResponse.json({ error: "Failed to fetch analytics" }, { status: 500 })
+    return createApiErrorResponse(request, "apiErrors.admin.analytics.failed", { status: 500 })
   }
 }

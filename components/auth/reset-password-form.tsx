@@ -10,6 +10,7 @@ import { ArrowLeft, CheckCircle2, Eye, EyeOff, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { getDictionaryEntry } from "@/lib/i18n/get-dictionary-entry"
 import type { Dictionary } from "@/lib/i18n/get-dictionary"
 import type { Locale } from "@/lib/i18n/config"
 
@@ -33,6 +34,29 @@ export function ResetPasswordForm({ locale, dict }: ResetPasswordFormProps) {
   })
 
   const t = dict.auth.resetPassword
+
+  const resolveErrorMessage = (payload?: string | { code?: string; message?: string }) => {
+    if (!payload) {
+      return t.invalidToken
+    }
+
+    if (typeof payload === "string") {
+      return payload
+    }
+
+    if (typeof payload.code === "string") {
+      const dictValue = getDictionaryEntry(dict, payload.code)
+      if (dictValue) {
+        return dictValue
+      }
+    }
+
+    if (typeof payload.message === "string" && payload.message.trim()) {
+      return payload.message
+    }
+
+    return t.invalidToken
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -58,7 +82,7 @@ export function ResetPasswordForm({ locale, dict }: ResetPasswordFormProps) {
       const data = await res.json()
 
       if (!res.ok) {
-        setError(data.error || t.invalidToken)
+        setError(resolveErrorMessage(data?.error))
         return
       }
 

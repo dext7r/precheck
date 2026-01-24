@@ -3,26 +3,28 @@ import { db } from "@/lib/db"
 import { getCurrentUser } from "@/lib/auth/session"
 import { z } from "zod"
 import { writeAuditLog } from "@/lib/audit"
+import { createApiErrorResponse } from "@/lib/api/error-response"
+import { ApiErrorKeys } from "@/lib/api/error-keys"
 
 const updateUserSchema = z.object({
   role: z.enum(["USER", "ADMIN", "SUPER_ADMIN"]).optional(),
   status: z.enum(["ACTIVE", "INACTIVE", "BANNED"]).optional(),
 })
 
-export async function GET(_request: NextRequest, context: { params: Promise<{ id: string }> }) {
+export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
     const user = await getCurrentUser()
 
     if (!user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
+      return createApiErrorResponse(request, ApiErrorKeys.notAuthenticated, { status: 401 })
     }
 
     if (user.role !== "ADMIN" && user.role !== "SUPER_ADMIN") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+      return createApiErrorResponse(request, ApiErrorKeys.general.forbidden, { status: 403 })
     }
 
     if (!db) {
-      return NextResponse.json({ error: "Database not configured" }, { status: 503 })
+      return createApiErrorResponse(request, ApiErrorKeys.databaseNotConfigured, { status: 503 })
     }
 
     const { id } = await context.params
@@ -41,13 +43,13 @@ export async function GET(_request: NextRequest, context: { params: Promise<{ id
     })
 
     if (!targetUser) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 })
+      return createApiErrorResponse(request, ApiErrorKeys.admin.users.userNotFound, { status: 404 })
     }
 
     return NextResponse.json(targetUser)
   } catch (error) {
     console.error("Get user API error:", error)
-    return NextResponse.json({ error: "Failed to fetch user" }, { status: 500 })
+    return createApiErrorResponse(request, ApiErrorKeys.admin.users.failedToFetch, { status: 500 })
   }
 }
 
@@ -56,15 +58,15 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     const user = await getCurrentUser()
 
     if (!user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
+      return createApiErrorResponse(request, ApiErrorKeys.notAuthenticated, { status: 401 })
     }
 
     if (user.role !== "ADMIN" && user.role !== "SUPER_ADMIN") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+      return createApiErrorResponse(request, ApiErrorKeys.general.forbidden, { status: 403 })
     }
 
     if (!db) {
-      return NextResponse.json({ error: "Database not configured" }, { status: 503 })
+      return createApiErrorResponse(request, ApiErrorKeys.databaseNotConfigured, { status: 503 })
     }
 
     const { id } = await context.params
@@ -72,23 +74,33 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     const data = updateUserSchema.parse(body)
 
     if (Object.keys(data).length === 0) {
-      return NextResponse.json({ error: "No fields to update" }, { status: 400 })
+      return createApiErrorResponse(request, ApiErrorKeys.admin.users.noFieldsToUpdate, {
+        status: 400,
+      })
     }
 
     if (data.role && user.role !== "SUPER_ADMIN") {
-      return NextResponse.json({ error: "Only SUPER_ADMIN can modify user roles" }, { status: 403 })
+      return createApiErrorResponse(
+        request,
+        ApiErrorKeys.admin.users.onlySuperAdminCanModifyRoles,
+        { status: 403 },
+      )
     }
 
     const targetUser = await db.user.findUnique({ where: { id } })
     if (!targetUser) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 })
+      return createApiErrorResponse(request, ApiErrorKeys.admin.users.userNotFound, { status: 404 })
     }
 
     if (
       user.role === "ADMIN" &&
       (targetUser.role === "ADMIN" || targetUser.role === "SUPER_ADMIN")
     ) {
-      return NextResponse.json({ error: "ADMIN cannot modify other admins" }, { status: 403 })
+      return createApiErrorResponse(
+        request,
+        ApiErrorKeys.admin.users.adminCannotModifyOtherAdmins,
+        { status: 403 },
+      )
     }
 
     const before = await db.user.findUnique({ where: { id } })
@@ -121,10 +133,13 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     return NextResponse.json(updatedUser)
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: error.errors[0].message }, { status: 400 })
+      return createApiErrorResponse(request, ApiErrorKeys.general.invalid, {
+        status: 400,
+        meta: { detail: error.errors[0].message },
+      })
     }
     console.error("Update user API error:", error)
-    return NextResponse.json({ error: "Failed to update user" }, { status: 500 })
+    return createApiErrorResponse(request, ApiErrorKeys.admin.users.failedToUpdate, { status: 500 })
   }
 }
 
@@ -133,33 +148,39 @@ export async function DELETE(request: NextRequest, context: { params: Promise<{ 
     const user = await getCurrentUser()
 
     if (!user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
+      return createApiErrorResponse(request, ApiErrorKeys.notAuthenticated, { status: 401 })
     }
 
     if (user.role !== "ADMIN" && user.role !== "SUPER_ADMIN") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+      return createApiErrorResponse(request, ApiErrorKeys.general.forbidden, { status: 403 })
     }
 
     if (!db) {
-      return NextResponse.json({ error: "Database not configured" }, { status: 503 })
+      return createApiErrorResponse(request, ApiErrorKeys.databaseNotConfigured, { status: 503 })
     }
 
     const { id } = await context.params
 
     if (id === user.id) {
-      return NextResponse.json({ error: "Cannot delete yourself" }, { status: 400 })
+      return createApiErrorResponse(request, ApiErrorKeys.admin.users.cannotDeleteSelf, {
+        status: 400,
+      })
     }
 
     const targetUser = await db.user.findUnique({ where: { id } })
     if (!targetUser) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 })
+      return createApiErrorResponse(request, ApiErrorKeys.admin.users.userNotFound, { status: 404 })
     }
 
     if (
       user.role === "ADMIN" &&
       (targetUser.role === "ADMIN" || targetUser.role === "SUPER_ADMIN")
     ) {
-      return NextResponse.json({ error: "ADMIN cannot delete other admins" }, { status: 403 })
+      return createApiErrorResponse(
+        request,
+        ApiErrorKeys.admin.users.adminCannotModifyOtherAdmins,
+        { status: 403 },
+      )
     }
 
     const before = await db.user.findUnique({ where: { id } })
@@ -179,6 +200,6 @@ export async function DELETE(request: NextRequest, context: { params: Promise<{ 
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error("Delete user API error:", error)
-    return NextResponse.json({ error: "Failed to delete user" }, { status: 500 })
+    return createApiErrorResponse(request, ApiErrorKeys.admin.users.failedToDelete, { status: 500 })
   }
 }

@@ -4,16 +4,38 @@ import { hashPassword, validatePassword } from "@/lib/auth/password"
 import { features } from "@/lib/features"
 import { writeAuditLog } from "@/lib/audit"
 import { z } from "zod"
+import { getDictionary } from "@/lib/i18n/get-dictionary"
+import { createApiErrorResponse, resolveLocaleForRequest } from "@/lib/api/error-response"
 
 const resetPasswordSchema = z.object({
   token: z.string().min(1, "Token is required"),
   password: z.string().min(8, "Password must be at least 8 characters"),
 })
 
+function getResetValidationErrorCode(error: z.ZodError) {
+  const field = error.errors[0]?.path[0]
+
+  if (field === "token") {
+    return "apiErrors.auth.resetPassword.tokenRequired"
+  }
+
+  if (field === "password") {
+    return "apiErrors.auth.resetPassword.weakPassword"
+  }
+
+  return "apiErrors.auth.resetPassword.validationFailed"
+}
+
 export async function POST(request: NextRequest) {
   if (!features.database || !db) {
-    return NextResponse.json({ error: "Authentication service not configured" }, { status: 503 })
+    return createApiErrorResponse(request, "apiErrors.auth.resetPassword.serviceUnavailable", {
+      status: 503,
+    })
   }
+
+  const locale = resolveLocaleForRequest(request)
+  const dict = await getDictionary(locale)
+  const successMessage = dict.auth?.resetPassword?.success || "Password reset successfully"
 
   try {
     const prisma = db
@@ -23,7 +45,10 @@ export async function POST(request: NextRequest) {
     // 验证密码强度
     const passwordValidation = validatePassword(password)
     if (!passwordValidation.valid) {
-      return NextResponse.json({ error: passwordValidation.errors[0] }, { status: 400 })
+      return createApiErrorResponse(request, "apiErrors.auth.resetPassword.weakPassword", {
+        status: 400,
+        meta: { failures: passwordValidation.errors },
+      })
     }
 
     // 查找用户
@@ -35,7 +60,9 @@ export async function POST(request: NextRequest) {
     })
 
     if (!user) {
-      return NextResponse.json({ error: "Invalid or expired reset token" }, { status: 400 })
+      return createApiErrorResponse(request, "apiErrors.auth.resetPassword.invalidToken", {
+        status: 400,
+      })
     }
 
     // 更新密码
@@ -63,12 +90,14 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: "Password reset successfully",
+      message: successMessage,
     })
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: error.errors[0].message }, { status: 400 })
+      return createApiErrorResponse(request, getResetValidationErrorCode(error), { status: 400 })
     }
-    return NextResponse.json({ error: "Failed to reset password" }, { status: 500 })
+    return createApiErrorResponse(request, "apiErrors.auth.resetPassword.resetFailed", {
+      status: 500,
+    })
   }
 }

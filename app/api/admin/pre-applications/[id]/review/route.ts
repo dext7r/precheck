@@ -11,6 +11,8 @@ import { getSiteSettings } from "@/lib/site-settings"
 import { buildPreApplicationMessage } from "@/lib/pre-application/notifications"
 import { PreApplicationStatus } from "@prisma/client"
 import { writeAuditLog } from "@/lib/audit"
+import { createApiErrorResponse } from "@/lib/api/error-response"
+import { ApiErrorKeys } from "@/lib/api/error-keys"
 
 const reviewSchema = z.object({
   action: z.enum(["APPROVE", "REJECT"]),
@@ -25,15 +27,15 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
     const user = await getCurrentUser()
 
     if (!user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
+      return createApiErrorResponse(request, ApiErrorKeys.notAuthenticated, { status: 401 })
     }
 
     if (user.role !== "ADMIN" && user.role !== "SUPER_ADMIN") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+      return createApiErrorResponse(request, ApiErrorKeys.general.forbidden, { status: 403 })
     }
 
     if (!db) {
-      return NextResponse.json({ error: "Database not configured" }, { status: 503 })
+      return createApiErrorResponse(request, ApiErrorKeys.databaseNotConfigured, { status: 503 })
     }
 
     const { id } = await context.params
@@ -63,11 +65,13 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
     })
 
     if (!record) {
-      return NextResponse.json({ error: "Not found" }, { status: 404 })
+      return createApiErrorResponse(request, ApiErrorKeys.general.notFound, { status: 404 })
     }
 
     if (record.status !== PreApplicationStatus.PENDING) {
-      return NextResponse.json({ error: "Already reviewed" }, { status: 400 })
+      return createApiErrorResponse(request, ApiErrorKeys.admin.preApplications.alreadyReviewed, {
+        status: 400,
+      })
     }
 
     const localeParam = data.locale
@@ -89,15 +93,33 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
     if (isApproved) {
       const code = data.inviteCode?.trim()
       if (!code) {
-        return NextResponse.json({ error: "Invite code required" }, { status: 400 })
+        return createApiErrorResponse(
+          request,
+          ApiErrorKeys.admin.preApplications.inviteCodeRequired,
+          {
+            status: 400,
+          },
+        )
       }
 
       const expiresAt = data.inviteExpiresAt ? new Date(data.inviteExpiresAt) : null
       if (expiresAt && Number.isNaN(expiresAt.getTime())) {
-        return NextResponse.json({ error: "Invalid invite expiry" }, { status: 400 })
+        return createApiErrorResponse(
+          request,
+          ApiErrorKeys.admin.preApplications.invalidInviteExpiry,
+          {
+            status: 400,
+          },
+        )
       }
       if (expiresAt && expiresAt.getTime() <= Date.now()) {
-        return NextResponse.json({ error: "Invite expiry must be in the future" }, { status: 400 })
+        return createApiErrorResponse(
+          request,
+          ApiErrorKeys.admin.preApplications.expiryMustBeInFuture,
+          {
+            status: 400,
+          },
+        )
       }
 
       const existing = await db.inviteCode.findUnique({
@@ -106,19 +128,27 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
       })
 
       if (!existing) {
-        return NextResponse.json({ error: "Invite code not found" }, { status: 400 })
+        return createApiErrorResponse(request, ApiErrorKeys.admin.inviteCodes.notFound, {
+          status: 400,
+        })
       }
 
       if (existing.usedAt) {
-        return NextResponse.json({ error: "Invite code already used" }, { status: 400 })
+        return createApiErrorResponse(request, ApiErrorKeys.admin.inviteCodes.alreadyUsed, {
+          status: 400,
+        })
       }
 
       if (existing.expiresAt && existing.expiresAt.getTime() <= Date.now()) {
-        return NextResponse.json({ error: "Invite code expired" }, { status: 400 })
+        return createApiErrorResponse(request, ApiErrorKeys.admin.inviteCodes.alreadyExpired, {
+          status: 400,
+        })
       }
 
       if (existing.preApplication && existing.preApplication.id !== record.id) {
-        return NextResponse.json({ error: "Invite code already assigned" }, { status: 400 })
+        return createApiErrorResponse(request, ApiErrorKeys.admin.inviteCodes.alreadyAssigned, {
+          status: 400,
+        })
       }
 
       inviteCodeRecord = await db.$transaction(async (tx) => {
@@ -345,9 +375,14 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
     return NextResponse.json({ success: true })
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: error.errors[0].message }, { status: 400 })
+      return createApiErrorResponse(request, ApiErrorKeys.general.invalid, {
+        status: 400,
+        meta: { detail: error.errors[0].message },
+      })
     }
     console.error("Pre-application review error:", error)
-    return NextResponse.json({ error: "Failed to review pre-application" }, { status: 500 })
+    return createApiErrorResponse(request, ApiErrorKeys.admin.preApplications.failedToReview, {
+      status: 500,
+    })
   }
 }

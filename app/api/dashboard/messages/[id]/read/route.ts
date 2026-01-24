@@ -2,17 +2,19 @@ import { type NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { getCurrentUser } from "@/lib/auth/session"
 import { writeAuditLog } from "@/lib/audit"
+import { createApiErrorResponse } from "@/lib/api/error-response"
+import { ApiErrorKeys } from "@/lib/api/error-keys"
 
-export async function POST(_request: NextRequest, context: { params: Promise<{ id: string }> }) {
+export async function POST(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
     const user = await getCurrentUser()
 
     if (!user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
+      return createApiErrorResponse(request, ApiErrorKeys.notAuthenticated, { status: 401 })
     }
 
     if (!db) {
-      return NextResponse.json({ error: "Database not configured" }, { status: 503 })
+      return createApiErrorResponse(request, ApiErrorKeys.databaseNotConfigured, { status: 503 })
     }
 
     const { id } = await context.params
@@ -30,7 +32,9 @@ export async function POST(_request: NextRequest, context: { params: Promise<{ i
     })
 
     if (!record || record.message.revokedAt) {
-      return NextResponse.json({ error: "Message not found" }, { status: 404 })
+      return createApiErrorResponse(request, ApiErrorKeys.dashboard.messages.failedToFetchSingle, {
+        status: 404,
+      })
     }
 
     if (!record.readAt) {
@@ -52,13 +56,15 @@ export async function POST(_request: NextRequest, context: { params: Promise<{ i
         actor: user,
         before: record,
         after: { ...record, readAt },
-        request: _request,
+        request,
       })
     }
 
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error("Read message API error:", error)
-    return NextResponse.json({ error: "Failed to mark message as read" }, { status: 500 })
+    return createApiErrorResponse(request, ApiErrorKeys.dashboard.messages.failedToMarkAsRead, {
+      status: 500,
+    })
   }
 }

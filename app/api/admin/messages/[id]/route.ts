@@ -3,26 +3,28 @@ import { z } from "zod"
 import { db } from "@/lib/db"
 import { getCurrentUser } from "@/lib/auth/session"
 import { writeAuditLog } from "@/lib/audit"
+import { createApiErrorResponse } from "@/lib/api/error-response"
+import { ApiErrorKeys } from "@/lib/api/error-keys"
 
 const updateMessageSchema = z.object({
   title: z.string().min(1).max(200).optional(),
   content: z.string().min(1).optional(),
 })
 
-export async function GET(_request: NextRequest, context: { params: Promise<{ id: string }> }) {
+export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
     const user = await getCurrentUser()
 
     if (!user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
+      return createApiErrorResponse(request, ApiErrorKeys.notAuthenticated, { status: 401 })
     }
 
     if (user.role !== "ADMIN" && user.role !== "SUPER_ADMIN") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+      return createApiErrorResponse(request, ApiErrorKeys.general.forbidden, { status: 403 })
     }
 
     if (!db) {
-      return NextResponse.json({ error: "Database not configured" }, { status: 503 })
+      return createApiErrorResponse(request, ApiErrorKeys.databaseNotConfigured, { status: 503 })
     }
 
     const { id } = await context.params
@@ -39,13 +41,17 @@ export async function GET(_request: NextRequest, context: { params: Promise<{ id
     })
 
     if (!message) {
-      return NextResponse.json({ error: "Message not found" }, { status: 404 })
+      return createApiErrorResponse(request, ApiErrorKeys.admin.messages.messageNotFound, {
+        status: 404,
+      })
     }
 
     return NextResponse.json(message)
   } catch (error) {
     console.error("Get message API error:", error)
-    return NextResponse.json({ error: "Failed to fetch message" }, { status: 500 })
+    return createApiErrorResponse(request, ApiErrorKeys.admin.messages.failedToFetchSingle, {
+      status: 500,
+    })
   }
 }
 
@@ -54,15 +60,15 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     const user = await getCurrentUser()
 
     if (!user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
+      return createApiErrorResponse(request, ApiErrorKeys.notAuthenticated, { status: 401 })
     }
 
     if (user.role !== "ADMIN" && user.role !== "SUPER_ADMIN") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+      return createApiErrorResponse(request, ApiErrorKeys.general.forbidden, { status: 403 })
     }
 
     if (!db) {
-      return NextResponse.json({ error: "Database not configured" }, { status: 503 })
+      return createApiErrorResponse(request, ApiErrorKeys.databaseNotConfigured, { status: 503 })
     }
 
     const { id } = await context.params
@@ -74,11 +80,15 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     })
 
     if (!existing) {
-      return NextResponse.json({ error: "Message not found" }, { status: 404 })
+      return createApiErrorResponse(request, ApiErrorKeys.admin.messages.messageNotFound, {
+        status: 404,
+      })
     }
 
     if (existing.revokedAt) {
-      return NextResponse.json({ error: "Message already revoked" }, { status: 400 })
+      return createApiErrorResponse(request, ApiErrorKeys.admin.messages.alreadyRevoked, {
+        status: 400,
+      })
     }
 
     const updated = await db.message.update({
@@ -106,9 +116,14 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     return NextResponse.json(updated)
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: error.errors[0].message }, { status: 400 })
+      return createApiErrorResponse(request, ApiErrorKeys.general.invalid, {
+        status: 400,
+        meta: { detail: error.errors[0].message },
+      })
     }
     console.error("Update message API error:", error)
-    return NextResponse.json({ error: "Failed to update message" }, { status: 500 })
+    return createApiErrorResponse(request, ApiErrorKeys.admin.messages.failedToUpdate, {
+      status: 500,
+    })
   }
 }

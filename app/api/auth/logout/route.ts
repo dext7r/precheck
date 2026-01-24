@@ -3,6 +3,8 @@ import { clearSessionCookie, deleteSession, getCurrentUser, getSession } from "@
 import { db } from "@/lib/db"
 import { defaultLocale, locales } from "@/lib/i18n/config"
 import { writeAuditLog } from "@/lib/audit"
+import { createApiErrorResponse } from "@/lib/api/error-response"
+import { ApiErrorKeys } from "@/lib/api/error-keys"
 
 export async function POST(request: NextRequest) {
   try {
@@ -49,6 +51,6 @@ export async function POST(request: NextRequest) {
 
     return response
   } catch {
-    return NextResponse.json({ error: "Logout failed" }, { status: 500 })
+    return createApiErrorResponse(request, ApiErrorKeys.auth.logout.failed, { status: 500 })
   }
 }
