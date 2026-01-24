@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
 import { X } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -25,6 +25,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import type { Dictionary } from "@/lib/i18n/get-dictionary"
 import type { Locale } from "@/lib/i18n/config"
 import { preApplicationGroups, preApplicationSources } from "@/lib/pre-application/constants"
@@ -93,7 +99,7 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
   const [searchInput, setSearchInput] = useState("")
-  const [statusFilter, setStatusFilter] = useState("ALL")
+  const [statusFilter, setStatusFilter] = useState<string[]>(["PENDING", "DISPUTED"])
   const [registerEmailFilter, setRegisterEmailFilter] = useState("")
   const [registerEmailInput, setRegisterEmailInput] = useState("")
   const [queryTokenFilter, setQueryTokenFilter] = useState("")
@@ -121,24 +127,6 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
     dispute: string[]
   }>({ approve: [], reject: [], dispute: [] })
 
-  const getRandomApproveGuidance = useCallback(() => {
-    const suggestions = Array.isArray(t.preApplicationGuidanceApproveSuggestions)
-      ? t.preApplicationGuidanceApproveSuggestions
-      : []
-    if (suggestions.length === 0) return ""
-    const index = Math.floor(Math.random() * suggestions.length)
-    return suggestions[index] ?? ""
-  }, [t])
-
-  const getRandomRejectGuidance = useCallback(() => {
-    const suggestions = Array.isArray(t.preApplicationGuidanceRejectSuggestions)
-      ? t.preApplicationGuidanceRejectSuggestions
-      : []
-    if (suggestions.length === 0) return ""
-    const index = Math.floor(Math.random() * suggestions.length)
-    return suggestions[index] ?? ""
-  }, [t])
-
   useEffect(() => {
     if (reviewAction === "REJECT") {
       setInviteCode("")
@@ -147,27 +135,21 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
   }, [reviewAction])
 
   useEffect(() => {
-    // PENDING 和 DISPUTED 状态都可以自动填充审核意见
+    // PENDING 和 DISPUTED 状态切换审核动作时自动填充模板第一条
     if (selected?.status !== "PENDING" && selected?.status !== "DISPUTED") return
-    if (guidance.trim()) return
 
-    if (reviewAction === "APPROVE") {
-      setGuidance(getRandomApproveGuidance())
-    } else if (reviewAction === "REJECT") {
-      setGuidance(getRandomRejectGuidance())
-    }
-  }, [
-    reviewAction,
-    selected?.status,
-    selected?.id,
-    guidance,
-    getRandomApproveGuidance,
-    getRandomRejectGuidance,
-  ])
+    const templates =
+      reviewAction === "APPROVE"
+        ? reviewTemplates.approve
+        : reviewAction === "REJECT"
+          ? reviewTemplates.reject
+          : reviewTemplates.dispute
+    setGuidance(templates[0] || "")
+  }, [reviewAction, selected?.status, selected?.id, reviewTemplates])
 
   useEffect(() => {
-    // PENDING 和 DISPUTED 状态审核通过时加载邀请码选项
-    if (!dialogOpen || reviewAction !== "APPROVE") return
+    // PENDING 和 DISPUTED 状态审核通过或有争议时加载邀请码选项
+    if (!dialogOpen || reviewAction === "REJECT") return
     if (selected?.status !== "PENDING" && selected?.status !== "DISPUTED") return
     loadInviteOptions()
   }, [dialogOpen, reviewAction, selected?.status])
@@ -191,7 +173,7 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
         sortBy: sortByMap[sortBy] || sortBy,
         sortOrder,
         ...(search && { search }),
-        ...(statusFilter !== "ALL" && { status: statusFilter }),
+        ...(statusFilter.length > 0 && { status: statusFilter.join(",") }),
         ...(registerEmailFilter && { registerEmail: registerEmailFilter }),
         ...(queryTokenFilter && { queryToken: queryTokenFilter }),
         ...(reviewRoundFilter !== "ALL" && { reviewRound: reviewRoundFilter }),
@@ -571,25 +553,40 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
 
         <div className="h-4 w-px bg-border" />
 
-        {/* 筛选下拉组 */}
-        <Select
-          value={statusFilter}
-          onValueChange={(value) => {
-            setStatusFilter(value)
-            setPage(1)
-          }}
-        >
-          <SelectTrigger className="h-8 w-24 text-xs">
-            <SelectValue placeholder={t.statusAll} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="ALL" className="text-xs">{t.statusAll}</SelectItem>
-            <SelectItem value="PENDING" className="text-xs">{t.pending}</SelectItem>
-            <SelectItem value="DISPUTED" className="text-xs">{t.disputed || "有争议"}</SelectItem>
-            <SelectItem value="APPROVED" className="text-xs">{t.approved}</SelectItem>
-            <SelectItem value="REJECTED" className="text-xs">{t.rejected}</SelectItem>
-          </SelectContent>
-        </Select>
+        {/* 状态多选下拉 */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" className="h-8 text-xs gap-1">
+              {statusFilter.length === 0
+                ? t.statusAll
+                : statusFilter.length === 4
+                  ? t.statusAll
+                  : `${statusFilter.length} ${t.selected || "项"}`}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-32">
+            {[
+              { value: "PENDING", label: t.pending },
+              { value: "DISPUTED", label: t.disputed || "有争议" },
+              { value: "APPROVED", label: t.approved },
+              { value: "REJECTED", label: t.rejected },
+            ].map((item) => (
+              <DropdownMenuCheckboxItem
+                key={item.value}
+                checked={statusFilter.includes(item.value)}
+                onCheckedChange={(checked) => {
+                  setStatusFilter((prev) =>
+                    checked ? [...prev, item.value] : prev.filter((v) => v !== item.value),
+                  )
+                  setPage(1)
+                }}
+                className="text-xs"
+              >
+                {item.label}
+              </DropdownMenuCheckboxItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
         <Select
           value={reviewRoundFilter}
           onValueChange={(value) => {
@@ -601,10 +598,18 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
             <SelectValue placeholder={t.reviewRound} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="ALL" className="text-xs">{t.statusAll}</SelectItem>
-            <SelectItem value="1" className="text-xs">{t.reviewRoundLabel?.replace("{n}", "1") ?? "1审"}</SelectItem>
-            <SelectItem value="2" className="text-xs">{t.reviewRoundLabel?.replace("{n}", "2") ?? "2审"}</SelectItem>
-            <SelectItem value="3" className="text-xs">{t.reviewRoundLabel?.replace("{n}", "3") ?? "3审"}</SelectItem>
+            <SelectItem value="ALL" className="text-xs">
+              {t.statusAll}
+            </SelectItem>
+            <SelectItem value="1" className="text-xs">
+              {t.reviewRoundLabel?.replace("{n}", "1") ?? "1审"}
+            </SelectItem>
+            <SelectItem value="2" className="text-xs">
+              {t.reviewRoundLabel?.replace("{n}", "2") ?? "2审"}
+            </SelectItem>
+            <SelectItem value="3" className="text-xs">
+              {t.reviewRoundLabel?.replace("{n}", "3") ?? "3审"}
+            </SelectItem>
           </SelectContent>
         </Select>
         <Select
@@ -618,9 +623,15 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
             <SelectValue placeholder={t.inviteStatus} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="ALL" className="text-xs">{t.statusAll}</SelectItem>
-            <SelectItem value="issued" className="text-xs">{t.inviteStatusIssued}</SelectItem>
-            <SelectItem value="none" className="text-xs">{t.inviteStatusNone}</SelectItem>
+            <SelectItem value="ALL" className="text-xs">
+              {t.statusAll}
+            </SelectItem>
+            <SelectItem value="issued" className="text-xs">
+              {t.inviteStatusIssued}
+            </SelectItem>
+            <SelectItem value="none" className="text-xs">
+              {t.inviteStatusNone}
+            </SelectItem>
           </SelectContent>
         </Select>
 
@@ -651,7 +662,7 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
             setRegisterEmailFilter("")
             setQueryTokenInput("")
             setQueryTokenFilter("")
-            setStatusFilter("PENDING")
+            setStatusFilter(["PENDING", "DISPUTED"])
             setReviewRoundFilter("ALL")
             setInviteStatusFilter("none")
             setPage(1)
@@ -747,7 +758,9 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
                 <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
                   <div>
                     <span className="text-muted-foreground">{t.preApplicationUser}</span>
-                    <p className="font-medium truncate">{selected.user.name || selected.user.email}</p>
+                    <p className="font-medium truncate">
+                      {selected.user.name || selected.user.email}
+                    </p>
                   </div>
                   <div>
                     <span className="text-muted-foreground">{t.preApplicationRegisterEmail}</span>
@@ -769,7 +782,9 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
                   )}
                   <div>
                     <span className="text-muted-foreground">{t.preApplicationQueryToken}</span>
-                    <p className="font-medium font-mono text-[10px]">{selected.queryToken || "-"}</p>
+                    <p className="font-medium font-mono text-[10px]">
+                      {selected.queryToken || "-"}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -790,19 +805,28 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
 
               {/* 审核历史 */}
               <div className="space-y-2">
-                <p className="text-xs font-medium text-muted-foreground">{dict.preApplication.historyTitle}</p>
+                <p className="text-xs font-medium text-muted-foreground">
+                  {dict.preApplication.historyTitle}
+                </p>
                 {historyLoading && <p className="text-xs text-muted-foreground">{t.loading}</p>}
                 {!historyLoading && historyRecords.length === 0 && (
-                  <p className="text-xs text-muted-foreground italic">{dict.preApplication.historyEmpty}</p>
+                  <p className="text-xs text-muted-foreground italic">
+                    {dict.preApplication.historyEmpty}
+                  </p>
                 )}
                 {!historyLoading && historyRecords.length > 0 && (
                   <Accordion type="multiple" className="rounded-lg border">
                     {historyRecords.map((item) => (
-                      <AccordionItem key={item.id} value={item.id} className="border-b last:border-none">
+                      <AccordionItem
+                        key={item.id}
+                        value={item.id}
+                        className="border-b last:border-none"
+                      >
                         <AccordionTrigger className="px-3 py-2 text-xs hover:no-underline">
                           <div className="flex flex-1 items-center justify-between gap-2 pr-2">
                             <span className="text-muted-foreground">
-                              {t.reviewRoundLabel?.replace("{n}", String(item.version)) ?? `${item.version}审`}
+                              {t.reviewRoundLabel?.replace("{n}", String(item.version)) ??
+                                `${item.version}审`}
                               {" · "}
                               {new Date(item.createdAt).toLocaleDateString(locale)}
                             </span>
@@ -811,16 +835,29 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
                         </AccordionTrigger>
                         <AccordionContent className="space-y-2 px-3 pb-3">
                           <div className="rounded border bg-muted/30 p-2 text-xs">
-                            <PostContent content={item.essay} emptyMessage={t.preApplicationEssay} />
+                            <PostContent
+                              content={item.essay}
+                              emptyMessage={t.preApplicationEssay}
+                            />
                           </div>
                           {item.reviewedAt ? (
                             <div className="space-y-0.5 text-[10px] text-muted-foreground">
-                              <p>{t.preApplicationReviewer}：{item.reviewedBy?.name || item.reviewedBy?.email || "-"}</p>
-                              <p>{dict.preApplication.review.reviewedAt}：{new Date(item.reviewedAt).toLocaleString(locale)}</p>
-                              <p className="whitespace-pre-wrap">{dict.preApplication.review.guidance}：{item.guidance || "-"}</p>
+                              <p>
+                                {t.preApplicationReviewer}：
+                                {item.reviewedBy?.name || item.reviewedBy?.email || "-"}
+                              </p>
+                              <p>
+                                {dict.preApplication.review.reviewedAt}：
+                                {new Date(item.reviewedAt).toLocaleString(locale)}
+                              </p>
+                              <p className="whitespace-pre-wrap">
+                                {dict.preApplication.review.guidance}：{item.guidance || "-"}
+                              </p>
                             </div>
                           ) : (
-                            <p className="text-[10px] text-muted-foreground italic">{dict.preApplication.status.pending}</p>
+                            <p className="text-[10px] text-muted-foreground italic">
+                              {dict.preApplication.status.pending}
+                            </p>
                           )}
                         </AccordionContent>
                       </AccordionItem>
@@ -832,7 +869,10 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
               {/* 当前审核状态 */}
               {selected.reviewedBy && (
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <span>{t.preApplicationReviewer}：{selected.reviewedBy.name || selected.reviewedBy.email}</span>
+                  <span>
+                    {t.preApplicationReviewer}：
+                    {selected.reviewedBy.name || selected.reviewedBy.email}
+                  </span>
                 </div>
               )}
 
@@ -844,19 +884,27 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
                       <Label className="text-xs">{t.reviewAction}</Label>
                       <Select
                         value={reviewAction}
-                        onValueChange={(value) => setReviewAction(value as "APPROVE" | "REJECT" | "DISPUTE")}
+                        onValueChange={(value) =>
+                          setReviewAction(value as "APPROVE" | "REJECT" | "DISPUTE")
+                        }
                       >
                         <SelectTrigger className="h-8 text-xs">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="APPROVE" className="text-xs">{t.reviewApprove}</SelectItem>
-                          <SelectItem value="REJECT" className="text-xs">{t.reviewReject}</SelectItem>
-                          <SelectItem value="DISPUTE" className="text-xs">{t.reviewDispute || "标记有争议"}</SelectItem>
+                          <SelectItem value="APPROVE" className="text-xs">
+                            {t.reviewApprove}
+                          </SelectItem>
+                          <SelectItem value="REJECT" className="text-xs">
+                            {t.reviewReject}
+                          </SelectItem>
+                          <SelectItem value="DISPUTE" className="text-xs">
+                            {t.reviewDispute || "标记有争议"}
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
-                    {reviewAction === "APPROVE" && (
+                    {reviewAction !== "REJECT" && (
                       <div className="space-y-1">
                         <Label className="text-xs">{t.inviteCode}</Label>
                         <Select
@@ -867,9 +915,11 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
                           <SelectTrigger className="h-8 text-xs">
                             <SelectValue
                               placeholder={
-                                inviteOptionsLoading ? t.loading
-                                  : inviteOptions.length === 0 ? t.inviteCodeNoRecords
-                                  : t.inviteCodePlaceholder
+                                inviteOptionsLoading
+                                  ? t.loading
+                                  : inviteOptions.length === 0
+                                    ? t.inviteCodeNoRecords
+                                    : t.inviteCodePlaceholder
                               }
                             />
                           </SelectTrigger>
@@ -891,7 +941,7 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
                       </div>
                     )}
                   </div>
-                  {reviewAction === "APPROVE" && (
+                  {reviewAction !== "REJECT" && (
                     <div className="space-y-1">
                       <Label className="text-xs">{t.inviteExpiresAt}</Label>
                       <Input
@@ -940,14 +990,18 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
                     {selected.inviteCode?.expiresAt && (
                       <div>
                         <span className="text-muted-foreground">{t.inviteExpiresAt}</span>
-                        <p className="font-medium">{new Date(selected.inviteCode.expiresAt).toLocaleString(locale)}</p>
+                        <p className="font-medium">
+                          {new Date(selected.inviteCode.expiresAt).toLocaleString(locale)}
+                        </p>
                       </div>
                     )}
                   </div>
                   {selected.guidance && (
                     <div className="mt-2 text-xs">
                       <span className="text-muted-foreground">{t.guidance}</span>
-                      <p className="mt-1 whitespace-pre-wrap rounded border bg-card p-2">{selected.guidance}</p>
+                      <p className="mt-1 whitespace-pre-wrap rounded border bg-card p-2">
+                        {selected.guidance}
+                      </p>
                     </div>
                   )}
                 </div>
@@ -957,11 +1011,21 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
 
           <DrawerFooter className="sticky bottom-0 z-10 border-t bg-background px-4 py-2">
             <div className="flex w-full justify-end gap-2">
-              <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => setDialogOpen(false)}>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 text-xs"
+                onClick={() => setDialogOpen(false)}
+              >
                 {t.reviewCancel}
               </Button>
               {(selected?.status === "PENDING" || selected?.status === "DISPUTED") && (
-                <Button size="sm" className="h-8 text-xs" onClick={handleReview} disabled={submitting}>
+                <Button
+                  size="sm"
+                  className="h-8 text-xs"
+                  onClick={handleReview}
+                  disabled={submitting}
+                >
                   {submitting ? t.saving : t.reviewSubmit}
                 </Button>
               )}

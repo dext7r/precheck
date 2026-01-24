@@ -1,11 +1,25 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
+import { Checkbox } from "@/components/ui/checkbox"
 import { DataTable, type Column } from "@/components/ui/data-table"
 import { Input } from "@/components/ui/input"
-import { X, CheckCircle, XCircle, Clock, Mail } from "lucide-react"
+import {
+  X,
+  CheckCircle,
+  XCircle,
+  Clock,
+  Mail,
+  ZoomIn,
+  ZoomOut,
+  RotateCcw,
+  Maximize2,
+  RefreshCw,
+  Loader2,
+} from "lucide-react"
 import {
   Select,
   SelectContent,
@@ -58,6 +72,11 @@ export function AdminEmailLogsTable({ locale, dict }: AdminEmailLogsTableProps) 
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc")
   const [selected, setSelected] = useState<EmailLogRecord | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [fullscreen, setFullscreen] = useState(false)
+  const [contentScale, setContentScale] = useState(100)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [resending, setResending] = useState(false)
+  const [resendingId, setResendingId] = useState<string | null>(null)
 
   const fetchLogs = async () => {
     setLoading(true)
@@ -88,10 +107,82 @@ export function AdminEmailLogsTable({ locale, dict }: AdminEmailLogsTableProps) 
     fetchLogs()
   }, [page, pageSize, search, statusFilter, sortKey, sortDir])
 
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && fullscreen) setFullscreen(false)
+    }
+    window.addEventListener("keydown", handleEsc)
+    return () => window.removeEventListener("keydown", handleEsc)
+  }, [fullscreen])
+
   const handleSort = (key: string, direction: "asc" | "desc") => {
     setSortKey(key)
     setSortDir(direction)
     setPage(1)
+  }
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) {
+        next.delete(id)
+      } else {
+        next.add(id)
+      }
+      return next
+    })
+  }
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === records.length) {
+      setSelectedIds(new Set())
+    } else {
+      setSelectedIds(new Set(records.map((r) => r.id)))
+    }
+  }
+
+  const handleResend = async (ids: string[]) => {
+    if (ids.length === 0) return
+
+    const isSingle = ids.length === 1
+    if (isSingle) {
+      setResendingId(ids[0])
+    } else {
+      setResending(true)
+    }
+
+    try {
+      const res = await fetch("/api/admin/email-logs/resend", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids }),
+      })
+
+      if (!res.ok) {
+        throw new Error("Resend failed")
+      }
+
+      const data = await res.json()
+      const { summary } = data
+
+      if (summary.failed === 0) {
+        toast.success(
+          ((t as Record<string, unknown>).emailResendSuccess as string) ||
+            `成功重发 ${summary.success} 封邮件`,
+        )
+      } else {
+        toast.warning(`重发完成: ${summary.success} 成功, ${summary.failed} 失败`)
+      }
+
+      setSelectedIds(new Set())
+      await fetchLogs()
+    } catch (error) {
+      console.error("Email resend error:", error)
+      toast.error(((t as Record<string, unknown>).emailResendFailed as string) || "重发失败")
+    } finally {
+      setResending(false)
+      setResendingId(null)
+    }
   }
 
   const formatPageSummary = (summary: { total: number; page: number; totalPages: number }) =>
@@ -130,9 +221,26 @@ export function AdminEmailLogsTable({ locale, dict }: AdminEmailLogsTableProps) 
   const columns: Column<EmailLogRecord>[] = useMemo(
     () => [
       {
+        key: "select",
+        label: (
+          <Checkbox
+            checked={records.length > 0 && selectedIds.size === records.length}
+            onCheckedChange={toggleSelectAll}
+          />
+        ) as unknown as string,
+        width: "5%",
+        render: (record) => (
+          <Checkbox
+            checked={selectedIds.has(record.id)}
+            onCheckedChange={() => toggleSelect(record.id)}
+            onClick={(e) => e.stopPropagation()}
+          />
+        ),
+      },
+      {
         key: "createdAt",
         label: t.emailLogTime,
-        width: "18%",
+        width: "16%",
         sortable: true,
         render: (record) => (
           <span className="text-sm text-muted-foreground">
@@ -143,7 +251,7 @@ export function AdminEmailLogsTable({ locale, dict }: AdminEmailLogsTableProps) 
       {
         key: "to",
         label: t.emailLogTo,
-        width: "20%",
+        width: "18%",
         sortable: true,
         render: (record) => (
           <span className="text-sm font-medium truncate max-w-[200px] block" title={record.to}>
@@ -154,7 +262,7 @@ export function AdminEmailLogsTable({ locale, dict }: AdminEmailLogsTableProps) 
       {
         key: "subject",
         label: t.emailLogSubject,
-        width: "28%",
+        width: "24%",
         sortable: true,
         render: (record) => (
           <span className="text-sm truncate max-w-[280px] block" title={record.subject}>
@@ -165,14 +273,14 @@ export function AdminEmailLogsTable({ locale, dict }: AdminEmailLogsTableProps) 
       {
         key: "status",
         label: t.emailLogStatus,
-        width: "12%",
+        width: "10%",
         sortable: true,
         render: (record) => getStatusBadge(record.status),
       },
       {
         key: "provider",
         label: t.emailLogProvider,
-        width: "10%",
+        width: "9%",
         render: (record) => (
           <span className="text-sm text-muted-foreground uppercase">{record.provider || "-"}</span>
         ),
@@ -180,36 +288,39 @@ export function AdminEmailLogsTable({ locale, dict }: AdminEmailLogsTableProps) 
       {
         key: "actions",
         label: t.actions,
-        width: "12%",
+        width: "18%",
         render: (record) => (
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => {
-              setSelected(record)
-              setDrawerOpen(true)
-            }}
-          >
-            {t.emailLogView}
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 px-2 text-xs"
+              onClick={() => {
+                setSelected(record)
+                setDrawerOpen(true)
+              }}
+            >
+              {t.emailLogView}
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-7 px-2 text-xs"
+              onClick={() => handleResend([record.id])}
+              disabled={resendingId === record.id}
+            >
+              {resendingId === record.id ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <RefreshCw className="h-3.5 w-3.5" />
+              )}
+            </Button>
+          </div>
         ),
       },
     ],
-    [locale, t],
+    [locale, t, records, selectedIds, resendingId],
   )
-
-  const formatJson = (value: unknown) => {
-    if (!value) return "-"
-    try {
-      const filtered = { ...(value as Record<string, unknown>) }
-      delete filtered.html
-      delete filtered.text
-      if (Object.keys(filtered).length === 0) return "-"
-      return JSON.stringify(filtered, null, 2)
-    } catch {
-      return "-"
-    }
-  }
 
   return (
     <div className="space-y-4">
@@ -290,6 +401,23 @@ export function AdminEmailLogsTable({ locale, dict }: AdminEmailLogsTableProps) 
           >
             {t.reset}
           </Button>
+          {selectedIds.size > 0 && (
+            <Button
+              variant="default"
+              size="sm"
+              onClick={() => handleResend(Array.from(selectedIds))}
+              disabled={resending}
+              className="gap-1"
+            >
+              {resending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <RefreshCw className="h-4 w-4" />
+              )}
+              {((t as Record<string, unknown>).emailResendSelected as string) ||
+                `重发 (${selectedIds.size})`}
+            </Button>
+          )}
         </div>
       </div>
 
@@ -373,11 +501,27 @@ export function AdminEmailLogsTable({ locale, dict }: AdminEmailLogsTableProps) 
               if (!html || typeof html !== "string") return null
               return (
                 <div className="space-y-2">
-                  <p className="text-xs text-muted-foreground">
-                    {(t as Record<string, unknown>).emailLogContent as string}
-                  </p>
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs text-muted-foreground">
+                      {(t as Record<string, unknown>).emailLogContent as string}
+                    </p>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 gap-1 px-2"
+                      onClick={() => {
+                        setContentScale(100)
+                        setFullscreen(true)
+                      }}
+                    >
+                      <Maximize2 className="h-3.5 w-3.5" />
+                      <span className="text-xs">
+                        {((t as Record<string, unknown>).fullscreen as string) || "全屏"}
+                      </span>
+                    </Button>
+                  </div>
                   <div
-                    className="max-h-80 overflow-auto rounded-lg border border-border bg-white p-4 text-sm dark:bg-zinc-900"
+                    className="max-h-60 overflow-auto rounded-lg border border-border bg-white p-4 text-sm dark:bg-zinc-900"
                     dangerouslySetInnerHTML={{ __html: html }}
                   />
                 </div>
@@ -392,22 +536,101 @@ export function AdminEmailLogsTable({ locale, dict }: AdminEmailLogsTableProps) 
                 </pre>
               </div>
             )}
-
-            <div className="space-y-2">
-              <p className="text-xs text-muted-foreground">{t.emailLogMetadata}</p>
-              <pre className="max-h-64 overflow-auto rounded-lg border border-border bg-muted p-3 text-xs">
-                {formatJson(selected?.metadata)}
-              </pre>
-            </div>
           </div>
 
           <DrawerFooter className="sticky bottom-0 border-t bg-background">
-            <Button variant="outline" onClick={() => setDrawerOpen(false)}>
-              {t.confirm}
-            </Button>
+            <div className="flex w-full gap-2">
+              <Button
+                variant="default"
+                className="flex-1 gap-1"
+                onClick={() => selected && handleResend([selected.id])}
+                disabled={resendingId === selected?.id}
+              >
+                {resendingId === selected?.id ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-4 w-4" />
+                )}
+                {((t as Record<string, unknown>).emailResend as string) || "重发"}
+              </Button>
+              <Button variant="outline" onClick={() => setDrawerOpen(false)}>
+                {t.confirm}
+              </Button>
+            </div>
           </DrawerFooter>
         </DrawerContent>
       </Drawer>
+
+      {fullscreen &&
+        (() => {
+          const html = (selected?.metadata as Record<string, unknown> | null)?.html
+          if (!html || typeof html !== "string") return null
+          return (
+            <div
+              className="fixed inset-0 z-50 flex flex-col bg-background"
+              onClick={(e) => e.target === e.currentTarget && setFullscreen(false)}
+            >
+              <div className="flex items-center justify-between border-b px-4 py-3">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{selected?.subject}</p>
+                  <p className="text-xs text-muted-foreground truncate">{selected?.to}</p>
+                </div>
+                <div className="flex items-center gap-1 ml-4">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => setContentScale((s) => Math.max(50, s - 10))}
+                    disabled={contentScale <= 50}
+                  >
+                    <ZoomOut className="h-4 w-4" />
+                  </Button>
+                  <span className="w-12 text-center text-xs text-muted-foreground">
+                    {contentScale}%
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => setContentScale((s) => Math.min(200, s + 10))}
+                    disabled={contentScale >= 200}
+                  >
+                    <ZoomIn className="h-4 w-4" />
+                  </Button>
+                  {contentScale !== 100 && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => setContentScale(100)}
+                    >
+                      <RotateCcw className="h-4 w-4" />
+                    </Button>
+                  )}
+                  <div className="w-px h-5 bg-border mx-2" />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => setFullscreen(false)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+              <div className="flex-1 overflow-auto bg-white dark:bg-zinc-900">
+                <div
+                  className="p-6 text-sm origin-top-left transition-transform duration-150"
+                  style={{
+                    transform: `scale(${contentScale / 100})`,
+                    width: `${10000 / contentScale}%`,
+                  }}
+                  dangerouslySetInnerHTML={{ __html: html }}
+                />
+              </div>
+            </div>
+          )
+        })()}
     </div>
   )
 }

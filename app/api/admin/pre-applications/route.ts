@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
     const sortOrder = sortOrderParam === "asc" ? "asc" : "desc"
 
     const where: {
-      status?: PreApplicationStatus
+      status?: PreApplicationStatus | { in: PreApplicationStatus[] }
       registerEmail?: { contains: string; mode: "insensitive" }
       queryToken?: { contains: string; mode: "insensitive" }
       resubmitCount?: number
@@ -53,8 +53,17 @@ export async function GET(request: NextRequest) {
       OR?: Array<Record<string, unknown>>
     } = {}
 
-    if (status && Object.values(PreApplicationStatus).includes(status as PreApplicationStatus)) {
-      where.status = status as PreApplicationStatus
+    if (status) {
+      const statuses = status
+        .split(",")
+        .filter((s) =>
+          Object.values(PreApplicationStatus).includes(s as PreApplicationStatus),
+        ) as PreApplicationStatus[]
+      if (statuses.length === 1) {
+        where.status = statuses[0]
+      } else if (statuses.length > 1) {
+        where.status = { in: statuses }
+      }
     }
 
     if (registerEmail) {

@@ -94,10 +94,83 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
     const guidance = data.guidance.trim()
     const isApproved = data.action === "APPROVE"
     const isDisputed = data.action === "DISPUTE"
+    const code = data.inviteCode?.trim()
+
+    // 处理邀请码（通过和有争议都可以发码）
+    let inviteCodeData: { id: string; code: string; expiresAt: Date | null } | null = null
+    if ((isApproved || isDisputed) && code) {
+      const expiresAt = data.inviteExpiresAt ? new Date(data.inviteExpiresAt) : null
+      if (expiresAt && Number.isNaN(expiresAt.getTime())) {
+        return createApiErrorResponse(
+          request,
+          ApiErrorKeys.admin.preApplications.invalidInviteExpiry,
+          { status: 400 },
+        )
+      }
+      if (expiresAt && expiresAt.getTime() <= Date.now()) {
+        return createApiErrorResponse(
+          request,
+          ApiErrorKeys.admin.preApplications.expiryMustBeInFuture,
+          { status: 400 },
+        )
+      }
+
+      const existing = await db.inviteCode.findUnique({
+        where: { code },
+        include: { preApplication: { select: { id: true } } },
+      })
+
+      if (!existing || existing.deletedAt) {
+        return createApiErrorResponse(request, ApiErrorKeys.admin.inviteCodes.notFound, {
+          status: 400,
+        })
+      }
+      if (existing.usedAt) {
+        return createApiErrorResponse(request, ApiErrorKeys.admin.inviteCodes.alreadyUsed, {
+          status: 400,
+        })
+      }
+      if (existing.expiresAt && existing.expiresAt.getTime() <= Date.now()) {
+        return createApiErrorResponse(request, ApiErrorKeys.admin.inviteCodes.alreadyExpired, {
+          status: 400,
+        })
+      }
+      if (existing.preApplication && existing.preApplication.id !== record.id) {
+        return createApiErrorResponse(request, ApiErrorKeys.admin.inviteCodes.alreadyAssigned, {
+          status: 400,
+        })
+      }
+
+      inviteCodeData = {
+        id: existing.id,
+        code: existing.code,
+        expiresAt: expiresAt ?? existing.expiresAt,
+      }
+    }
+
+    // 通过必须有邀请码
+    if (isApproved && !inviteCodeData) {
+      return createApiErrorResponse(
+        request,
+        ApiErrorKeys.admin.preApplications.inviteCodeRequired,
+        { status: 400 },
+      )
+    }
 
     if (isDisputed) {
-      // 标记为有争议，不发送通知给用户
+      // 标记为有争议，可选发码，不发送通知给用户
       await db.$transaction(async (tx) => {
+        if (inviteCodeData) {
+          await tx.inviteCode.update({
+            where: { id: inviteCodeData.id },
+            data: {
+              expiresAt: inviteCodeData.expiresAt,
+              assignedAt: new Date(),
+              assignedById: user.id,
+            },
+          })
+        }
+
         const updated = await tx.preApplication.update({
           where: { id: record.id },
           data: {
@@ -105,6 +178,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
             guidance,
             reviewedAt: new Date(),
             reviewedBy: { connect: { id: user.id } },
+            ...(inviteCodeData && { inviteCode: { connect: { id: inviteCodeData.id } } }),
           },
         })
 
@@ -125,80 +199,31 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
           actor: user,
           before: record,
           after: updated,
-          metadata: { guidance },
+          metadata: { guidance, inviteCode: inviteCodeData?.code },
           request,
         })
+
+        if (inviteCodeData) {
+          await writeAuditLog(tx, {
+            action: "INVITE_CODE_ASSIGN",
+            entityType: "INVITE_CODE",
+            entityId: inviteCodeData.id,
+            actor: user,
+            metadata: { preApplicationId: record.id },
+            request,
+          })
+        }
       })
 
       return NextResponse.json({ success: true })
     }
 
     if (isApproved) {
-      const code = data.inviteCode?.trim()
-      if (!code) {
-        return createApiErrorResponse(
-          request,
-          ApiErrorKeys.admin.preApplications.inviteCodeRequired,
-          {
-            status: 400,
-          },
-        )
-      }
-
-      const expiresAt = data.inviteExpiresAt ? new Date(data.inviteExpiresAt) : null
-      if (expiresAt && Number.isNaN(expiresAt.getTime())) {
-        return createApiErrorResponse(
-          request,
-          ApiErrorKeys.admin.preApplications.invalidInviteExpiry,
-          {
-            status: 400,
-          },
-        )
-      }
-      if (expiresAt && expiresAt.getTime() <= Date.now()) {
-        return createApiErrorResponse(
-          request,
-          ApiErrorKeys.admin.preApplications.expiryMustBeInFuture,
-          {
-            status: 400,
-          },
-        )
-      }
-
-      const existing = await db.inviteCode.findUnique({
-        where: { code },
-        include: { preApplication: { select: { id: true } } },
-      })
-
-      if (!existing || existing.deletedAt) {
-        return createApiErrorResponse(request, ApiErrorKeys.admin.inviteCodes.notFound, {
-          status: 400,
-        })
-      }
-
-      if (existing.usedAt) {
-        return createApiErrorResponse(request, ApiErrorKeys.admin.inviteCodes.alreadyUsed, {
-          status: 400,
-        })
-      }
-
-      if (existing.expiresAt && existing.expiresAt.getTime() <= Date.now()) {
-        return createApiErrorResponse(request, ApiErrorKeys.admin.inviteCodes.alreadyExpired, {
-          status: 400,
-        })
-      }
-
-      if (existing.preApplication && existing.preApplication.id !== record.id) {
-        return createApiErrorResponse(request, ApiErrorKeys.admin.inviteCodes.alreadyAssigned, {
-          status: 400,
-        })
-      }
-
       inviteCodeRecord = await db.$transaction(async (tx) => {
         const inviteCode = await tx.inviteCode.update({
-          where: { id: existing.id },
+          where: { id: inviteCodeData!.id },
           data: {
-            expiresAt: expiresAt ?? existing.expiresAt,
+            expiresAt: inviteCodeData!.expiresAt,
             assignedAt: new Date(),
             assignedById: user.id,
           },
