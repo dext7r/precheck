@@ -1,16 +1,17 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
+import { motion, AnimatePresence } from "framer-motion"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
-import { Separator } from "@/components/ui/separator"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Badge } from "@/components/ui/badge"
 import { ConfirmDialog } from "@/components/admin/confirm-dialog"
 import {
   X,
@@ -22,10 +23,17 @@ import {
   Settings,
   Shield,
   FileText,
-  Sparkles,
+  Loader2,
+  Save,
+  Globe,
+  ToggleLeft,
+  MessageSquare,
+  Trash2,
+  RefreshCw,
 } from "lucide-react"
 import type { Locale } from "@/lib/i18n/config"
 import type { Dictionary } from "@/lib/i18n/get-dictionary"
+import { cn } from "@/lib/utils"
 
 type SiteSettings = {
   siteName: string
@@ -52,20 +60,29 @@ interface AdminSettingsFormProps {
   dict: Dictionary
 }
 
+type TabId = "general" | "security" | "email" | "templates" | "danger"
+
+interface TabItem {
+  id: TabId
+  label: string
+  icon: React.ElementType
+  color?: string
+}
+
 export function AdminSettingsForm({ locale, dict }: AdminSettingsFormProps) {
   const router = useRouter()
+  const [activeTab, setActiveTab] = useState<TabId>("general")
   const [settings, setSettings] = useState<SiteSettings | null>(null)
   const [systemConfig, setSystemConfig] = useState<SystemConfig | null>(null)
+  const [initialSettings, setInitialSettings] = useState<SiteSettings | null>(null)
+  const [initialSystemConfig, setInitialSystemConfig] = useState<SystemConfig | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
-  const [savingSite, setSavingSite] = useState(false)
-  const [savingToggles, setSavingToggles] = useState(false)
-  const [savingSystemConfig, setSavingSystemConfig] = useState(false)
+  const [saving, setSaving] = useState(false)
   const [clearOpen, setClearOpen] = useState(false)
   const [resetOpen, setResetOpen] = useState(false)
   const [dangerLoading, setDangerLoading] = useState(false)
 
-  // System config states
   const [newDomain, setNewDomain] = useState("")
   const [newTemplateApprove, setNewTemplateApprove] = useState("")
   const [newTemplateReject, setNewTemplateReject] = useState("")
@@ -74,6 +91,24 @@ export function AdminSettingsForm({ locale, dict }: AdminSettingsFormProps) {
   const [testEmailAddress, setTestEmailAddress] = useState("")
 
   const t = dict.admin
+
+  const tabs: TabItem[] = [
+    { id: "general", label: t.tabGeneral || "基础设置", icon: Globe },
+    { id: "security", label: t.tabSecurity || "功能开关", icon: ToggleLeft },
+    { id: "email", label: t.tabEmail || "邮件配置", icon: Mail },
+    { id: "templates", label: t.tabTemplates || "审核模板", icon: MessageSquare },
+    { id: "danger", label: t.tabDanger || "危险操作", icon: AlertTriangle, color: "text-destructive" },
+  ]
+
+  const hasChanges = useMemo(() => {
+    if (!settings || !initialSettings) return false
+    if (!systemConfig || !initialSystemConfig) return false
+
+    const settingsChanged = JSON.stringify(settings) !== JSON.stringify(initialSettings)
+    const configChanged = JSON.stringify(systemConfig) !== JSON.stringify(initialSystemConfig)
+
+    return settingsChanged || configChanged
+  }, [settings, initialSettings, systemConfig, initialSystemConfig])
 
   useEffect(() => {
     let active = true
@@ -94,12 +129,14 @@ export function AdminSettingsForm({ locale, dict }: AdminSettingsFormProps) {
         const settingsData = await settingsRes.json()
         if (active) {
           setSettings(settingsData)
+          setInitialSettings(settingsData)
         }
 
         if (configRes.ok) {
           const configData = await configRes.json()
           if (active) {
             setSystemConfig(configData)
+            setInitialSystemConfig(configData)
           }
         }
       } catch (err) {
@@ -118,62 +155,47 @@ export function AdminSettingsForm({ locale, dict }: AdminSettingsFormProps) {
     }
   }, [t.settingsLoadFailed])
 
-  const updateSettings = async (payload: Partial<SiteSettings>) => {
-    const res = await fetch("/api/admin/settings", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    })
-
-    if (!res.ok) {
-      const data = await res.json().catch(() => ({}))
-      throw new Error(data?.error || t.settingsSaveFailed)
-    }
-
-    return (await res.json()) as SiteSettings
-  }
-
-  const handleSiteSave = async () => {
-    if (!settings) return
-    setSavingSite(true)
+  const handleSaveAll = async () => {
+    if (!settings || !systemConfig) return
+    setSaving(true)
     setError("")
+
     try {
-      const updated = await updateSettings({
-        siteName: settings.siteName,
-        siteDescription: settings.siteDescription,
-        contactEmail: settings.contactEmail,
-      })
-      setSettings(updated)
+      const [settingsRes, configRes] = await Promise.all([
+        fetch("/api/admin/settings", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(settings),
+        }),
+        fetch("/api/admin/system-config", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(systemConfig),
+        }),
+      ])
+
+      if (!settingsRes.ok) {
+        const data = await settingsRes.json().catch(() => ({}))
+        throw new Error(data?.error || t.settingsSaveFailed)
+      }
+
+      if (!configRes.ok) {
+        const data = await configRes.json().catch(() => ({}))
+        throw new Error(data?.error || t.systemConfigSaveFailed)
+      }
+
+      const updatedSettings = await settingsRes.json()
+      setSettings(updatedSettings)
+      setInitialSettings(updatedSettings)
+      setInitialSystemConfig({ ...systemConfig })
+
       toast.success(t.settingsSaved)
     } catch (err) {
       const message = err instanceof Error ? err.message : t.settingsSaveFailed
       setError(message)
       toast.error(message)
     } finally {
-      setSavingSite(false)
-    }
-  }
-
-  const handleToggleSave = async () => {
-    if (!settings) return
-    setSavingToggles(true)
-    setError("")
-    try {
-      const updated = await updateSettings({
-        userRegistration: settings.userRegistration,
-        oauthLogin: settings.oauthLogin,
-        emailNotifications: settings.emailNotifications,
-        postModeration: settings.postModeration,
-        maintenanceMode: settings.maintenanceMode,
-      })
-      setSettings(updated)
-      toast.success(t.settingsSaved)
-    } catch (err) {
-      const message = err instanceof Error ? err.message : t.settingsSaveFailed
-      setError(message)
-      toast.error(message)
-    } finally {
-      setSavingToggles(false)
+      setSaving(false)
     }
   }
 
@@ -211,30 +233,6 @@ export function AdminSettingsForm({ locale, dict }: AdminSettingsFormProps) {
     } finally {
       setDangerLoading(false)
       setResetOpen(false)
-    }
-  }
-
-  const handleSystemConfigSave = async () => {
-    if (!systemConfig) return
-    setSavingSystemConfig(true)
-    setError("")
-    try {
-      const res = await fetch("/api/admin/system-config", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(systemConfig),
-      })
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}))
-        throw new Error(data?.error || t.systemConfigSaveFailed)
-      }
-      toast.success(t.systemConfigSaveSuccess)
-    } catch (err) {
-      const message = err instanceof Error ? err.message : t.systemConfigSaveFailed
-      setError(message)
-      toast.error(message)
-    } finally {
-      setSavingSystemConfig(false)
     }
   }
 
@@ -346,8 +344,89 @@ export function AdminSettingsForm({ locale, dict }: AdminSettingsFormProps) {
     }
   }
 
+  // 功能开关项组件
+  const ToggleItem = ({
+    title,
+    description,
+    checked,
+    onCheckedChange,
+    icon: Icon,
+  }: {
+    title: string
+    description: string
+    checked: boolean
+    onCheckedChange: (v: boolean) => void
+    icon?: React.ElementType
+  }) => (
+    <div className="flex items-center justify-between py-4 first:pt-0 last:pb-0">
+      <div className="flex items-start gap-3">
+        {Icon && (
+          <div
+            className={cn(
+              "mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors",
+              checked ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground",
+            )}
+          >
+            <Icon className="h-4 w-4" />
+          </div>
+        )}
+        <div>
+          <p className="font-medium">{title}</p>
+          <p className="text-sm text-muted-foreground">{description}</p>
+        </div>
+      </div>
+      <Switch checked={checked} onCheckedChange={onCheckedChange} />
+    </div>
+  )
+
+  // 模板列表组件
+  const TemplateList = ({
+    items,
+    onRemove,
+    emptyText,
+    colorClass,
+  }: {
+    items: string[]
+    onRemove: (text: string) => void
+    emptyText: string
+    colorClass: string
+  }) => (
+    <div className="space-y-2">
+      <AnimatePresence mode="popLayout">
+        {items.map((text, index) => (
+          <motion.div
+            key={text}
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, x: -10 }}
+            transition={{ duration: 0.2 }}
+            className={cn(
+              "flex items-start justify-between gap-2 rounded-lg px-3 py-2.5",
+              colorClass,
+            )}
+          >
+            <span className="text-sm flex-1 leading-relaxed">{text}</span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onRemove(text)}
+              className="h-6 w-6 p-0 shrink-0 opacity-60 hover:opacity-100"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </motion.div>
+        ))}
+      </AnimatePresence>
+      {items.length === 0 && <p className="text-sm text-muted-foreground py-2">{emptyText}</p>}
+    </div>
+  )
+
   if (loading) {
-    return <p className="text-sm text-muted-foreground">{t.loading}</p>
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    )
   }
 
   if (!settings) {
@@ -360,9 +439,35 @@ export function AdminSettingsForm({ locale, dict }: AdminSettingsFormProps) {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">{t.settings}</h1>
-        <p className="mt-1 text-muted-foreground">{t.configureSystemSettings}</p>
+      {/* 页面标题和保存按钮 */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">{t.settings}</h1>
+          <p className="mt-1 text-muted-foreground">{t.configureSystemSettings}</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <AnimatePresence>
+            {hasChanges && (
+              <motion.div
+                initial={{ opacity: 0, x: 10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 10 }}
+              >
+                <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800">
+                  {t.unsavedChanges || "有未保存的修改"}
+                </Badge>
+              </motion.div>
+            )}
+          </AnimatePresence>
+          <Button onClick={handleSaveAll} disabled={saving || !hasChanges} className="gap-2">
+            {saving ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Save className="h-4 w-4" />
+            )}
+            {saving ? t.saving : t.saveAll || "保存所有修改"}
+          </Button>
+        </div>
       </div>
 
       {error && (
@@ -371,446 +476,453 @@ export function AdminSettingsForm({ locale, dict }: AdminSettingsFormProps) {
         </Alert>
       )}
 
-      <div className="grid gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>{t.siteSettings}</CardTitle>
-            <CardDescription>{t.siteSettingsDesc}</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-2">
-              <Label htmlFor="siteName">{t.siteName}</Label>
-              <Input
-                id="siteName"
-                value={settings.siteName}
-                onChange={(event) => setSettings({ ...settings, siteName: event.target.value })}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="siteDescription">{t.siteDescription}</Label>
-              <Input
-                id="siteDescription"
-                value={settings.siteDescription}
-                onChange={(event) =>
-                  setSettings({ ...settings, siteDescription: event.target.value })
-                }
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="contactEmail">{t.contactEmail}</Label>
-              <Input
-                id="contactEmail"
-                type="email"
-                value={settings.contactEmail}
-                onChange={(event) => setSettings({ ...settings, contactEmail: event.target.value })}
-              />
-            </div>
-            <Button onClick={handleSiteSave} disabled={savingSite}>
-              {savingSite ? t.saving : t.save}
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>{t.featureToggles}</CardTitle>
-            <CardDescription>{t.featureTogglesDesc}</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium">{t.userRegistration}</p>
-                <p className="text-sm text-muted-foreground">{t.userRegistrationDesc}</p>
-              </div>
-              <Switch
-                checked={settings.userRegistration}
-                onCheckedChange={(value) => setSettings({ ...settings, userRegistration: value })}
-              />
-            </div>
-            <Separator />
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium">{t.oauthLogin}</p>
-                <p className="text-sm text-muted-foreground">{t.oauthLoginDesc}</p>
-              </div>
-              <Switch
-                checked={settings.oauthLogin}
-                onCheckedChange={(value) => setSettings({ ...settings, oauthLogin: value })}
-              />
-            </div>
-            <Separator />
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium">{t.emailNotifications}</p>
-                <p className="text-sm text-muted-foreground">{t.emailNotificationsDesc}</p>
-              </div>
-              <Switch
-                checked={settings.emailNotifications}
-                onCheckedChange={(value) => setSettings({ ...settings, emailNotifications: value })}
-              />
-            </div>
-            <Separator />
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium">{t.postModeration}</p>
-                <p className="text-sm text-muted-foreground">{t.postModerationDesc}</p>
-              </div>
-              <Switch
-                checked={settings.postModeration}
-                onCheckedChange={(value) => setSettings({ ...settings, postModeration: value })}
-              />
-            </div>
-            <Separator />
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium">{t.maintenanceMode}</p>
-                <p className="text-sm text-muted-foreground">{t.maintenanceModeDescription}</p>
-              </div>
-              <Switch
-                checked={settings.maintenanceMode}
-                onCheckedChange={(value) => setSettings({ ...settings, maintenanceMode: value })}
-              />
-            </div>
-            <Button onClick={handleToggleSave} disabled={savingToggles}>
-              {savingToggles ? t.saving : t.save}
-            </Button>
-          </CardContent>
-        </Card>
-
-        {systemConfig && (
-          <>
-            <Card>
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  <FileText className="h-5 w-5" />
-                  <div>
-                    <CardTitle>{t.systemConfigEssayHint}</CardTitle>
-                    <CardDescription>{t.systemConfigEssayHintDesc}</CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <Textarea
-                  value={systemConfig.preApplicationEssayHint}
-                  onChange={(e) =>
-                    setSystemConfig({ ...systemConfig, preApplicationEssayHint: e.target.value })
-                  }
-                  rows={3}
-                  placeholder={t.systemConfigEssayHintPlaceholder}
-                />
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  <Shield className="h-5 w-5" />
-                  <div>
-                    <CardTitle>{t.systemConfigAuditLog}</CardTitle>
-                    <CardDescription>{t.systemConfigAuditLogDesc}</CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <Switch
-                  id="auditLog"
-                  checked={systemConfig.auditLogEnabled}
-                  onCheckedChange={(value) =>
-                    setSystemConfig({ ...systemConfig, auditLogEnabled: value })
-                  }
-                />
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>{t.systemConfigEmailDomains}</CardTitle>
-                <CardDescription>{t.systemConfigEmailDomainsDesc}</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex gap-2">
-                  <Input
-                    value={newDomain}
-                    onChange={(e) => setNewDomain(e.target.value)}
-                    placeholder={t.systemConfigEmailDomainPlaceholder}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault()
-                        handleAddDomain()
-                      }
-                    }}
-                  />
-                  <Button onClick={handleAddDomain} type="button">
-                    <Plus className="h-4 w-4 mr-1" />
-                    {t.systemConfigEmailDomainAdd}
-                  </Button>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                  {systemConfig.allowedEmailDomains.map((domain) => (
-                    <div
-                      key={domain}
-                      className="flex items-center justify-between px-3 py-2 bg-muted rounded-md"
-                    >
-                      <span className="text-sm">{domain}</span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleRemoveDomain(domain)}
-                        className="h-6 w-6 p-0"
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-                {systemConfig.allowedEmailDomains.length === 0 && (
-                  <p className="text-sm text-muted-foreground">{t.systemConfigEmailDomainEmpty}</p>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="h-5 w-5 text-emerald-500" />
-                  <div>
-                    <CardTitle>{t.reviewTemplatesApprove}</CardTitle>
-                    <CardDescription>{t.reviewTemplatesApproveDesc}</CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex gap-2">
-                  <Textarea
-                    value={newTemplateApprove}
-                    onChange={(e) => setNewTemplateApprove(e.target.value)}
-                    placeholder={t.reviewTemplatePlaceholder}
-                    rows={2}
-                    className="flex-1"
-                  />
-                  <Button
-                    onClick={() =>
-                      handleAddTemplate("approve", newTemplateApprove, setNewTemplateApprove)
-                    }
-                    type="button"
-                    className="shrink-0"
-                  >
-                    <Plus className="h-4 w-4 mr-1" />
-                    {t.reviewTemplateAdd}
-                  </Button>
-                </div>
-                <div className="space-y-2">
-                  {systemConfig.reviewTemplatesApprove.map((text, index) => (
-                    <div
-                      key={index}
-                      className="flex items-start justify-between gap-2 px-3 py-2 bg-emerald-50 dark:bg-emerald-900/20 rounded-md"
-                    >
-                      <span className="text-sm flex-1">{text}</span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleRemoveTemplate("approve", text)}
-                        className="h-6 w-6 p-0 shrink-0"
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
-                  {systemConfig.reviewTemplatesApprove.length === 0 && (
-                    <p className="text-sm text-muted-foreground">{t.reviewTemplatesEmpty}</p>
+      {/* 主内容区：侧边导航 + 内容面板 */}
+      <div className="flex gap-6">
+        {/* 侧边导航 */}
+        <nav className="w-48 shrink-0">
+          <div className="sticky top-6 space-y-1">
+            {tabs.map((tab) => {
+              const Icon = tab.icon
+              const isActive = activeTab === tab.id
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={cn(
+                    "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
+                    isActive
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                    tab.color && !isActive && tab.color,
                   )}
-                </div>
-              </CardContent>
-            </Card>
+                >
+                  <Icon className="h-4 w-4" />
+                  {tab.label}
+                </button>
+              )
+            })}
+          </div>
+        </nav>
 
-            <Card>
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  <XCircle className="h-5 w-5 text-red-500" />
-                  <div>
-                    <CardTitle>{t.reviewTemplatesReject}</CardTitle>
-                    <CardDescription>{t.reviewTemplatesRejectDesc}</CardDescription>
-                  </div>
+        {/* 内容面板 */}
+        <div className="flex-1 min-w-0">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+            >
+              {/* 基础设置 */}
+              {activeTab === "general" && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Globe className="h-5 w-5" />
+                      {t.siteSettings}
+                    </CardTitle>
+                    <CardDescription>{t.siteSettingsDesc}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="grid gap-4">
+                      <div className="grid gap-2">
+                        <Label htmlFor="siteName">{t.siteName}</Label>
+                        <Input
+                          id="siteName"
+                          value={settings.siteName}
+                          onChange={(e) => setSettings({ ...settings, siteName: e.target.value })}
+                        />
+                      </div>
+                      <div className="grid gap-2">
+                        <Label htmlFor="siteDescription">{t.siteDescription}</Label>
+                        <Input
+                          id="siteDescription"
+                          value={settings.siteDescription}
+                          onChange={(e) =>
+                            setSettings({ ...settings, siteDescription: e.target.value })
+                          }
+                        />
+                      </div>
+                      <div className="grid gap-2">
+                        <Label htmlFor="contactEmail">{t.contactEmail}</Label>
+                        <Input
+                          id="contactEmail"
+                          type="email"
+                          value={settings.contactEmail}
+                          onChange={(e) =>
+                            setSettings({ ...settings, contactEmail: e.target.value })
+                          }
+                        />
+                      </div>
+                    </div>
+
+                    {systemConfig && (
+                      <div className="pt-6 border-t">
+                        <div className="flex items-center gap-2 mb-3">
+                          <FileText className="h-4 w-4 text-muted-foreground" />
+                          <Label>{t.systemConfigEssayHint}</Label>
+                        </div>
+                        <Textarea
+                          value={systemConfig.preApplicationEssayHint}
+                          onChange={(e) =>
+                            setSystemConfig({
+                              ...systemConfig,
+                              preApplicationEssayHint: e.target.value,
+                            })
+                          }
+                          rows={3}
+                          placeholder={t.systemConfigEssayHintPlaceholder}
+                        />
+                        <p className="mt-1.5 text-xs text-muted-foreground">
+                          {t.systemConfigEssayHintDesc}
+                        </p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* 功能开关 */}
+              {activeTab === "security" && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <ToggleLeft className="h-5 w-5" />
+                      {t.featureToggles}
+                    </CardTitle>
+                    <CardDescription>{t.featureTogglesDesc}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="divide-y">
+                    <ToggleItem
+                      title={t.userRegistration}
+                      description={t.userRegistrationDesc}
+                      checked={settings.userRegistration}
+                      onCheckedChange={(v) => setSettings({ ...settings, userRegistration: v })}
+                    />
+                    <ToggleItem
+                      title={t.oauthLogin}
+                      description={t.oauthLoginDesc}
+                      checked={settings.oauthLogin}
+                      onCheckedChange={(v) => setSettings({ ...settings, oauthLogin: v })}
+                    />
+                    <ToggleItem
+                      title={t.emailNotifications}
+                      description={t.emailNotificationsDesc}
+                      checked={settings.emailNotifications}
+                      onCheckedChange={(v) => setSettings({ ...settings, emailNotifications: v })}
+                    />
+                    <ToggleItem
+                      title={t.postModeration}
+                      description={t.postModerationDesc}
+                      checked={settings.postModeration}
+                      onCheckedChange={(v) => setSettings({ ...settings, postModeration: v })}
+                    />
+                    <ToggleItem
+                      title={t.maintenanceMode}
+                      description={t.maintenanceModeDescription}
+                      checked={settings.maintenanceMode}
+                      onCheckedChange={(v) => setSettings({ ...settings, maintenanceMode: v })}
+                    />
+                    {systemConfig && (
+                      <ToggleItem
+                        icon={Shield}
+                        title={t.systemConfigAuditLog}
+                        description={t.systemConfigAuditLogDesc}
+                        checked={systemConfig.auditLogEnabled}
+                        onCheckedChange={(v) =>
+                          setSystemConfig({ ...systemConfig, auditLogEnabled: v })
+                        }
+                      />
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* 邮件配置 */}
+              {activeTab === "email" && systemConfig && (
+                <div className="space-y-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Mail className="h-5 w-5" />
+                        {t.systemConfigEmailDomains}
+                      </CardTitle>
+                      <CardDescription>{t.systemConfigEmailDomainsDesc}</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="flex gap-2">
+                        <Input
+                          value={newDomain}
+                          onChange={(e) => setNewDomain(e.target.value)}
+                          placeholder={t.systemConfigEmailDomainPlaceholder}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault()
+                              handleAddDomain()
+                            }
+                          }}
+                        />
+                        <Button onClick={handleAddDomain} type="button" className="shrink-0">
+                          <Plus className="h-4 w-4 mr-1" />
+                          {t.systemConfigEmailDomainAdd}
+                        </Button>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        <AnimatePresence mode="popLayout">
+                          {systemConfig.allowedEmailDomains.map((domain) => (
+                            <motion.div
+                              key={domain}
+                              initial={{ opacity: 0, scale: 0.8 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              exit={{ opacity: 0, scale: 0.8 }}
+                              className="group flex items-center gap-1.5 pl-3 pr-1.5 py-1.5 bg-primary/5 border border-primary/20 rounded-full"
+                            >
+                              <span className="text-sm">{domain}</span>
+                              <button
+                                onClick={() => handleRemoveDomain(domain)}
+                                className="p-0.5 rounded-full hover:bg-primary/10 transition-colors"
+                              >
+                                <X className="h-3.5 w-3.5 text-muted-foreground" />
+                              </button>
+                            </motion.div>
+                          ))}
+                        </AnimatePresence>
+                      </div>
+                      {systemConfig.allowedEmailDomains.length === 0 && (
+                        <p className="text-sm text-muted-foreground">
+                          {t.systemConfigEmailDomainEmpty}
+                        </p>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Mail className="h-5 w-5" />
+                        {t.systemConfigTestEmail}
+                      </CardTitle>
+                      <CardDescription>{t.systemConfigTestEmailDesc}</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="flex gap-2">
+                        <Input
+                          type="email"
+                          value={testEmailAddress}
+                          onChange={(e) => setTestEmailAddress(e.target.value)}
+                          placeholder={t.systemConfigTestEmailPlaceholder}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault()
+                              handleTestEmail()
+                            }
+                          }}
+                        />
+                        <Button
+                          onClick={handleTestEmail}
+                          type="button"
+                          disabled={testingEmail}
+                          variant="outline"
+                          className="shrink-0"
+                        >
+                          {testingEmail ? (
+                            <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                          ) : (
+                            <Mail className="h-4 w-4 mr-1" />
+                          )}
+                          {testingEmail
+                            ? t.systemConfigTestEmailSending
+                            : t.systemConfigTestEmailSend}
+                        </Button>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {t.systemConfigEmailProvider}:
+                        <Badge variant="secondary" className="ml-2">
+                          {process.env.NEXT_PUBLIC_EMAIL_PROVIDER ||
+                            t.systemConfigEmailProviderNotConfigured}
+                        </Badge>
+                      </p>
+                    </CardContent>
+                  </Card>
                 </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex gap-2">
-                  <Textarea
-                    value={newTemplateReject}
-                    onChange={(e) => setNewTemplateReject(e.target.value)}
-                    placeholder={t.reviewTemplatePlaceholder}
-                    rows={2}
-                    className="flex-1"
-                  />
-                  <Button
-                    onClick={() =>
-                      handleAddTemplate("reject", newTemplateReject, setNewTemplateReject)
-                    }
-                    type="button"
-                    className="shrink-0"
-                  >
-                    <Plus className="h-4 w-4 mr-1" />
-                    {t.reviewTemplateAdd}
-                  </Button>
+              )}
+
+              {/* 审核模板 */}
+              {activeTab === "templates" && systemConfig && (
+                <div className="space-y-6">
+                  {/* 通过模板 */}
+                  <Card className="border-emerald-200/50 dark:border-emerald-800/30">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/40">
+                          <CheckCircle className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                        </div>
+                        {t.reviewTemplatesApprove}
+                      </CardTitle>
+                      <CardDescription>{t.reviewTemplatesApproveDesc}</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="flex gap-2">
+                        <Textarea
+                          value={newTemplateApprove}
+                          onChange={(e) => setNewTemplateApprove(e.target.value)}
+                          placeholder={t.reviewTemplatePlaceholder}
+                          rows={2}
+                          className="flex-1"
+                        />
+                        <Button
+                          onClick={() =>
+                            handleAddTemplate("approve", newTemplateApprove, setNewTemplateApprove)
+                          }
+                          type="button"
+                          className="shrink-0 self-end"
+                        >
+                          <Plus className="h-4 w-4 mr-1" />
+                          {t.reviewTemplateAdd}
+                        </Button>
+                      </div>
+                      <TemplateList
+                        items={systemConfig.reviewTemplatesApprove}
+                        onRemove={(text) => handleRemoveTemplate("approve", text)}
+                        emptyText={t.reviewTemplatesEmpty}
+                        colorClass="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200/50 dark:border-emerald-800/30"
+                      />
+                    </CardContent>
+                  </Card>
+
+                  {/* 拒绝模板 */}
+                  <Card className="border-rose-200/50 dark:border-rose-800/30">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-rose-100 dark:bg-rose-900/40">
+                          <XCircle className="h-4 w-4 text-rose-600 dark:text-rose-400" />
+                        </div>
+                        {t.reviewTemplatesReject}
+                      </CardTitle>
+                      <CardDescription>{t.reviewTemplatesRejectDesc}</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="flex gap-2">
+                        <Textarea
+                          value={newTemplateReject}
+                          onChange={(e) => setNewTemplateReject(e.target.value)}
+                          placeholder={t.reviewTemplatePlaceholder}
+                          rows={2}
+                          className="flex-1"
+                        />
+                        <Button
+                          onClick={() =>
+                            handleAddTemplate("reject", newTemplateReject, setNewTemplateReject)
+                          }
+                          type="button"
+                          className="shrink-0 self-end"
+                        >
+                          <Plus className="h-4 w-4 mr-1" />
+                          {t.reviewTemplateAdd}
+                        </Button>
+                      </div>
+                      <TemplateList
+                        items={systemConfig.reviewTemplatesReject}
+                        onRemove={(text) => handleRemoveTemplate("reject", text)}
+                        emptyText={t.reviewTemplatesEmpty}
+                        colorClass="bg-rose-50 dark:bg-rose-900/20 border border-rose-200/50 dark:border-rose-800/30"
+                      />
+                    </CardContent>
+                  </Card>
+
+                  {/* 申诉模板 */}
+                  <Card className="border-amber-200/50 dark:border-amber-800/30">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/40">
+                          <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                        </div>
+                        {t.reviewTemplatesDispute}
+                      </CardTitle>
+                      <CardDescription>{t.reviewTemplatesDisputeDesc}</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="flex gap-2">
+                        <Textarea
+                          value={newTemplateDispute}
+                          onChange={(e) => setNewTemplateDispute(e.target.value)}
+                          placeholder={t.reviewTemplatePlaceholder}
+                          rows={2}
+                          className="flex-1"
+                        />
+                        <Button
+                          onClick={() =>
+                            handleAddTemplate("dispute", newTemplateDispute, setNewTemplateDispute)
+                          }
+                          type="button"
+                          className="shrink-0 self-end"
+                        >
+                          <Plus className="h-4 w-4 mr-1" />
+                          {t.reviewTemplateAdd}
+                        </Button>
+                      </div>
+                      <TemplateList
+                        items={systemConfig.reviewTemplatesDispute}
+                        onRemove={(text) => handleRemoveTemplate("dispute", text)}
+                        emptyText={t.reviewTemplatesEmpty}
+                        colorClass="bg-amber-50 dark:bg-amber-900/20 border border-amber-200/50 dark:border-amber-800/30"
+                      />
+                    </CardContent>
+                  </Card>
                 </div>
-                <div className="space-y-2">
-                  {systemConfig.reviewTemplatesReject.map((text, index) => (
-                    <div
-                      key={index}
-                      className="flex items-start justify-between gap-2 px-3 py-2 bg-red-50 dark:bg-red-900/20 rounded-md"
-                    >
-                      <span className="text-sm flex-1">{text}</span>
+              )}
+
+              {/* 危险区域 */}
+              {activeTab === "danger" && (
+                <Card className="border-destructive/50">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-destructive">
+                      <AlertTriangle className="h-5 w-5" />
+                      {t.dangerZone}
+                    </CardTitle>
+                    <CardDescription>{t.dangerZoneDesc}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/5 p-4">
+                      <div className="flex items-start gap-3">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-destructive/10">
+                          <RefreshCw className="h-5 w-5 text-destructive" />
+                        </div>
+                        <div>
+                          <p className="font-medium">{t.clearCache}</p>
+                          <p className="text-sm text-muted-foreground">{t.clearCacheDesc}</p>
+                        </div>
+                      </div>
                       <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleRemoveTemplate("reject", text)}
-                        className="h-6 w-6 p-0 shrink-0"
+                        variant="outline"
+                        className="border-destructive/50 text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                        onClick={() => setClearOpen(true)}
                       >
-                        <X className="h-4 w-4" />
+                        {t.clearCacheBtn}
                       </Button>
                     </div>
-                  ))}
-                  {systemConfig.reviewTemplatesReject.length === 0 && (
-                    <p className="text-sm text-muted-foreground">{t.reviewTemplatesEmpty}</p>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
 
-            <Card>
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  <AlertTriangle className="h-5 w-5 text-amber-500" />
-                  <div>
-                    <CardTitle>{t.reviewTemplatesDispute}</CardTitle>
-                    <CardDescription>{t.reviewTemplatesDisputeDesc}</CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex gap-2">
-                  <Textarea
-                    value={newTemplateDispute}
-                    onChange={(e) => setNewTemplateDispute(e.target.value)}
-                    placeholder={t.reviewTemplatePlaceholder}
-                    rows={2}
-                    className="flex-1"
-                  />
-                  <Button
-                    onClick={() =>
-                      handleAddTemplate("dispute", newTemplateDispute, setNewTemplateDispute)
-                    }
-                    type="button"
-                    className="shrink-0"
-                  >
-                    <Plus className="h-4 w-4 mr-1" />
-                    {t.reviewTemplateAdd}
-                  </Button>
-                </div>
-                <div className="space-y-2">
-                  {systemConfig.reviewTemplatesDispute.map((text, index) => (
-                    <div
-                      key={index}
-                      className="flex items-start justify-between gap-2 px-3 py-2 bg-amber-50 dark:bg-amber-900/20 rounded-md"
-                    >
-                      <span className="text-sm flex-1">{text}</span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleRemoveTemplate("dispute", text)}
-                        className="h-6 w-6 p-0 shrink-0"
-                      >
-                        <X className="h-4 w-4" />
+                    <div className="flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/5 p-4">
+                      <div className="flex items-start gap-3">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-destructive/10">
+                          <Trash2 className="h-5 w-5 text-destructive" />
+                        </div>
+                        <div>
+                          <p className="font-medium">{t.resetDatabase}</p>
+                          <p className="text-sm text-muted-foreground">{t.resetDatabaseDesc}</p>
+                        </div>
+                      </div>
+                      <Button variant="destructive" onClick={() => setResetOpen(true)}>
+                        {t.resetDatabaseBtn}
                       </Button>
                     </div>
-                  ))}
-                  {systemConfig.reviewTemplatesDispute.length === 0 && (
-                    <p className="text-sm text-muted-foreground">{t.reviewTemplatesEmpty}</p>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  <Mail className="h-5 w-5" />
-                  <div>
-                    <CardTitle>{t.systemConfigTestEmail}</CardTitle>
-                    <CardDescription>{t.systemConfigTestEmailDesc}</CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex gap-2">
-                  <Input
-                    type="email"
-                    value={testEmailAddress}
-                    onChange={(e) => setTestEmailAddress(e.target.value)}
-                    placeholder={t.systemConfigTestEmailPlaceholder}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault()
-                        handleTestEmail()
-                      }
-                    }}
-                  />
-                  <Button onClick={handleTestEmail} type="button" disabled={testingEmail}>
-                    <Mail className="h-4 w-4 mr-1" />
-                    {testingEmail ? t.systemConfigTestEmailSending : t.systemConfigTestEmailSend}
-                  </Button>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {t.systemConfigEmailProvider}:
-                  <strong className="ml-1">
-                    {process.env.NEXT_PUBLIC_EMAIL_PROVIDER ||
-                      t.systemConfigEmailProviderNotConfigured}
-                  </strong>
-                </p>
-              </CardContent>
-            </Card>
-
-            <div className="flex justify-end">
-              <Button
-                onClick={handleSystemConfigSave}
-                disabled={savingSystemConfig || systemConfig.allowedEmailDomains.length === 0}
-              >
-                {savingSystemConfig ? t.systemConfigSaving : t.systemConfigSave}
-              </Button>
-            </div>
-          </>
-        )}
-
-        <Card className="border-destructive">
-          <CardHeader>
-            <CardTitle className="text-destructive">{t.dangerZone}</CardTitle>
-            <CardDescription>{t.dangerZoneDesc}</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between rounded-lg border border-destructive/50 p-4">
-              <div>
-                <p className="font-medium">{t.clearCache}</p>
-                <p className="text-sm text-muted-foreground">{t.clearCacheDesc}</p>
-              </div>
-              <Button
-                variant="outline"
-                className="border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground bg-transparent"
-                onClick={() => setClearOpen(true)}
-              >
-                {t.clearCacheBtn}
-              </Button>
-            </div>
-            <div className="flex items-center justify-between rounded-lg border border-destructive/50 p-4">
-              <div>
-                <p className="font-medium">{t.resetDatabase}</p>
-                <p className="text-sm text-muted-foreground">{t.resetDatabaseDesc}</p>
-              </div>
-              <Button variant="destructive" onClick={() => setResetOpen(true)}>
-                {t.resetDatabaseBtn}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+                  </CardContent>
+                </Card>
+              )}
+            </motion.div>
+          </AnimatePresence>
+        </div>
       </div>
 
       <ConfirmDialog
