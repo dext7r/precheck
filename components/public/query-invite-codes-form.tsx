@@ -157,10 +157,7 @@ export function QueryInviteCodesForm({ locale, dict }: QueryInviteCodesFormProps
   }
 
   const getStatusBadge = (status: string) => {
-    const config: Record<
-      string,
-      { label: string; className: string; icon: React.ReactNode }
-    > = {
+    const config: Record<string, { label: string; className: string; icon: React.ReactNode }> = {
       PENDING: {
         label: t.statusPending,
         className:
@@ -256,13 +253,8 @@ export function QueryInviteCodesForm({ locale, dict }: QueryInviteCodesFormProps
                 }`}
               >
                 <div className="min-w-0 flex-1 space-y-2">
-                  <p className="truncate font-mono text-sm font-medium">
-                    {getFullUrl(item.code)}
-                  </p>
-                  <Badge
-                    variant={expired ? "destructive" : "secondary"}
-                    className="text-xs"
-                  >
+                  <p className="truncate font-mono text-sm font-medium">{getFullUrl(item.code)}</p>
+                  <Badge variant={expired ? "destructive" : "secondary"} className="text-xs">
                     {getExpiryText(item.expiresAt)}
                   </Badge>
                 </div>
@@ -270,9 +262,7 @@ export function QueryInviteCodesForm({ locale, dict }: QueryInviteCodesFormProps
                   variant="ghost"
                   size="icon"
                   className={`ml-3 shrink-0 transition-all duration-200 ${
-                    !expired
-                      ? "hover:bg-primary/10 hover:text-primary active:scale-95"
-                      : ""
+                    !expired ? "hover:bg-primary/10 hover:text-primary active:scale-95" : ""
                   }`}
                   onClick={() => handleCopy(item.code, index)}
                   disabled={expired}

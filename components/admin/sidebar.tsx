@@ -16,7 +16,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Home,
-  Cog,
   Send,
 } from "lucide-react"
 import { useState } from "react"
@@ -49,14 +48,6 @@ export function AdminSidebar({ locale, dict, user }: AdminSidebarProps) {
     { name: dict.admin.auditLogs, href: `/${locale}/admin/audit-logs`, icon: ScrollText },
     { name: dict.admin.settings, href: `/${locale}/admin/settings`, icon: Settings },
   ]
-
-  if (user?.role === "SUPER_ADMIN") {
-    navigation.push({
-      name: dict.admin.systemConfig,
-      href: `/${locale}/admin/system-config`,
-      icon: Cog,
-    })
-  }
 
   return (
     <motion.aside
