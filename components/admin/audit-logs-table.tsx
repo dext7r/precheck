@@ -188,14 +188,22 @@ export function AdminAuditLogsTable({ locale, dict }: AdminAuditLogsTableProps) 
     fetchLogs()
   }, [page, pageSize, search, entityType, actionType])
 
+  const tAdmin = t as unknown as Record<string, string>
+
+  const getActionLabel = (action: string) => tAdmin[`auditAction_${action}`] || action
+
+  const getEntityLabel = (entity: string) => tAdmin[`auditEntity_${entity}`] || entity
+
   const formatPageSummary = (summary: { total: number; page: number; totalPages: number }) =>
     t.pageSummary
       .replace("{total}", summary.total.toString())
       .replace("{page}", summary.page.toString())
       .replace("{totalPages}", summary.totalPages.toString())
 
-  const columns: Column<AuditLogRecord>[] = useMemo(
-    () => [
+  const columns: Column<AuditLogRecord>[] = useMemo(() => {
+    const actionLabel = (action: string) => tAdmin[`auditAction_${action}`] || action
+    const entityLabel = (entity: string) => tAdmin[`auditEntity_${entity}`] || entity
+    return [
       {
         key: "createdAt",
         label: t.auditTime,
@@ -210,7 +218,9 @@ export function AdminAuditLogsTable({ locale, dict }: AdminAuditLogsTableProps) 
         key: "action",
         label: t.auditAction,
         width: "18%",
-        render: (record) => <span className="text-sm font-medium">{record.action}</span>,
+        render: (record) => (
+          <span className="text-sm font-medium">{actionLabel(record.action)}</span>
+        ),
       },
       {
         key: "entity",
@@ -218,7 +228,7 @@ export function AdminAuditLogsTable({ locale, dict }: AdminAuditLogsTableProps) 
         width: "18%",
         render: (record) => (
           <div className="text-sm">
-            <p className="font-medium">{record.entityType}</p>
+            <p className="font-medium">{entityLabel(record.entityType)}</p>
             <p className="text-xs text-muted-foreground">{record.entityId || "-"}</p>
           </div>
         ),
@@ -259,9 +269,8 @@ export function AdminAuditLogsTable({ locale, dict }: AdminAuditLogsTableProps) 
           </Button>
         ),
       },
-    ],
-    [locale, t],
-  )
+    ]
+  }, [locale, t, tAdmin])
 
   const formatJson = (value: unknown) => {
     if (!value) return "-"
@@ -278,7 +287,7 @@ export function AdminAuditLogsTable({ locale, dict }: AdminAuditLogsTableProps) 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           icon={Activity}
-          label="全部"
+          label={t.auditCategoryAll}
           value={stats.total}
           color="primary"
           active={entityType === "ALL"}
@@ -289,7 +298,7 @@ export function AdminAuditLogsTable({ locale, dict }: AdminAuditLogsTableProps) 
         />
         <StatCard
           icon={Shield}
-          label="认证"
+          label={t.auditCategoryAuth}
           value={stats.auth}
           color="info"
           active={entityType === "AUTH"}
@@ -300,7 +309,7 @@ export function AdminAuditLogsTable({ locale, dict }: AdminAuditLogsTableProps) 
         />
         <StatCard
           icon={User}
-          label="用户"
+          label={t.auditCategoryUser}
           value={stats.user}
           color="success"
           active={entityType === "USER"}
@@ -311,7 +320,7 @@ export function AdminAuditLogsTable({ locale, dict }: AdminAuditLogsTableProps) 
         />
         <StatCard
           icon={FileText}
-          label="预申请"
+          label={t.auditCategoryPreApp}
           value={stats.preApp}
           color="warning"
           active={entityType === "PRE_APPLICATION"}
@@ -387,12 +396,12 @@ export function AdminAuditLogsTable({ locale, dict }: AdminAuditLogsTableProps) 
             }}
           >
             <SelectTrigger className="md:w-48">
-              <SelectValue placeholder={t.auditAction || "操作类型"} />
+              <SelectValue placeholder={t.auditActionType} />
             </SelectTrigger>
             <SelectContent>
               {actionTypeOptions.map((option) => (
                 <SelectItem key={option} value={option}>
-                  {option === "ALL" ? t.statusAll || "全部" : option}
+                  {option === "ALL" ? t.auditCategoryAll : option}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -408,7 +417,7 @@ export function AdminAuditLogsTable({ locale, dict }: AdminAuditLogsTableProps) 
               setPage(1)
             }}
           >
-            {t.reset || "重置"}
+            {t.reset}
           </Button>
         </div>
       </div>
@@ -430,9 +439,9 @@ export function AdminAuditLogsTable({ locale, dict }: AdminAuditLogsTableProps) 
           mobileCardRender={(record) => (
             <Card className="p-4">
               <div className="space-y-2">
-                <p className="text-sm font-medium">{record.action}</p>
+                <p className="text-sm font-medium">{getActionLabel(record.action)}</p>
                 <p className="text-xs text-muted-foreground">
-                  {record.entityType} · {record.entityId || "-"}
+                  {getEntityLabel(record.entityType)} · {record.entityId || "-"}
                 </p>
                 <p className="text-xs text-muted-foreground">
                   {record.actorName || record.actorEmail || "-"}
@@ -459,9 +468,9 @@ export function AdminAuditLogsTable({ locale, dict }: AdminAuditLogsTableProps) 
       <Drawer open={drawerOpen} onOpenChange={setDrawerOpen} direction="right">
         <DrawerContent className="h-full data-[vaul-drawer-direction=right]:w-[92vw] data-[vaul-drawer-direction=right]:sm:max-w-3xl">
           <DrawerHeader className="sticky top-0 z-10 border-b bg-background">
-            <DrawerTitle>{selected?.action || t.auditDetail}</DrawerTitle>
+            <DrawerTitle>{selected ? getActionLabel(selected.action) : t.auditDetail}</DrawerTitle>
             <DrawerDescription>
-              {selected?.entityType} · {selected?.entityId || "-"}
+              {selected ? getEntityLabel(selected.entityType) : ""} · {selected?.entityId || "-"}
             </DrawerDescription>
           </DrawerHeader>
 
