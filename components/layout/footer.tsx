@@ -31,7 +31,7 @@ export function Footer({ dict, locale }: FooterProps) {
               target="_blank"
               rel="noopener noreferrer"
             >
-              {dict.footer.visitCommunity || "访问社区"}
+              {dict.footer.visitCommunity}
               <ExternalLink className="h-3.5 w-3.5" />
             </a>
           </div>
@@ -48,7 +48,7 @@ export function Footer({ dict, locale }: FooterProps) {
             ))}
             <div className="flex items-center gap-1.5 text-sm">
               <MessageCircle className="h-4 w-4" />
-              <span>QQ 群：</span>
+              <span>{dict.footer.qqGroupLabel}</span>
               <span className="font-mono font-semibold text-foreground">1080464482</span>
             </div>
             <a

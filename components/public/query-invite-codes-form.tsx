@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Label } from "@/components/ui/label"
 import { Copy, Check, Search, Loader2 } from "lucide-react"
+import { getDictionaryEntry } from "@/lib/i18n/get-dictionary-entry"
 import type { Dictionary } from "@/lib/i18n/get-dictionary"
 import type { Locale } from "@/lib/i18n/config"
 
@@ -41,8 +42,15 @@ interface QueryInviteCodesFormProps {
   dict: Dictionary
 }
 
+interface ApiErrorPayload {
+  error?: {
+    code?: string
+    message?: string
+  }
+}
+
 export function QueryInviteCodesForm({ locale, dict }: QueryInviteCodesFormProps) {
-  const t = dict.queryInviteCodes || {}
+  const t = dict.queryInviteCodes ?? {}
   const searchParams = useSearchParams()
   const [token, setToken] = useState("")
   const [loading, setLoading] = useState(false)
@@ -53,10 +61,27 @@ export function QueryInviteCodesForm({ locale, dict }: QueryInviteCodesFormProps
 
   const getFullUrl = (code: string) => `https://linux.do/invites/${code}`
 
+  const resolveApiErrorMessage = (payload: ApiErrorPayload | null) => {
+    const error = payload?.error
+    if (!error) {
+      return undefined
+    }
+
+    if (typeof error.message === "string" && error.message.trim()) {
+      return error.message
+    }
+
+    if (typeof error.code === "string") {
+      return getDictionaryEntry(dict, error.code)
+    }
+
+    return undefined
+  }
+
   const handleQuery = async (queryToken?: string) => {
     const trimmedToken = (queryToken || token).trim().toUpperCase()
     if (!trimmedToken) {
-      toast.error(t.placeholder || "请输入查询码")
+      toast.error(t.tokenRequired)
       return
     }
     setLoading(true)
@@ -67,15 +92,18 @@ export function QueryInviteCodesForm({ locale, dict }: QueryInviteCodesFormProps
       const res = await fetch(
         `/api/public/query-invite-codes?token=${encodeURIComponent(trimmedToken)}`,
       )
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}))
-        throw new Error(data?.error || t.notFound || "未找到或查询码已失效")
+      const payload = await res.json().catch(() => null)
+
+      if (!res.ok || !payload) {
+        const message = resolveApiErrorMessage(payload) ?? t.queryFailed
+        throw new Error(message)
       }
-      const data = await res.json()
-      setResult(data)
+
+      setResult(payload as QueryResult)
       setQueried(true)
     } catch (err) {
-      const message = err instanceof Error ? err.message : t.notFound || "查询失败"
+      console.error("Query invite codes failed:", err)
+      const message = err instanceof Error ? err.message : t.queryFailed
       setError(message)
       toast.error(message)
     } finally {
@@ -98,19 +126,19 @@ export function QueryInviteCodesForm({ locale, dict }: QueryInviteCodesFormProps
     try {
       await navigator.clipboard.writeText(getFullUrl(code))
       setCopiedIndex(index)
-      toast.success(t.copied || "已复制")
+      toast.success(t.copied)
       setTimeout(() => setCopiedIndex(null), 2000)
     } catch {
-      toast.error("复制失败")
+      toast.error(t.copyFailed)
     }
   }
 
   const getExpiryText = (expiresAt: string | null) => {
-    if (!expiresAt) return t.noExpiry || "永久有效"
+    if (!expiresAt) return t.noExpiry
     const date = new Date(expiresAt)
     const now = Date.now()
-    if (date.getTime() <= now) return t.expired || "已过期"
-    return `${t.expiresAt || "有效期至"} ${date.toLocaleString(locale)}`
+    if (date.getTime() <= now) return t.expired
+    return `${t.expiresAt} ${date.toLocaleString(locale)}`
   }
 
   const isExpired = (expiresAt: string | null) => {
@@ -121,15 +149,15 @@ export function QueryInviteCodesForm({ locale, dict }: QueryInviteCodesFormProps
   const getStatusBadge = (status: string) => {
     const config: Record<string, { label: string; className: string }> = {
       PENDING: {
-        label: t.statusPending || "审核中",
+        label: t.statusPending,
         className: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400",
       },
       APPROVED: {
-        label: t.statusApproved || "已通过",
+        label: t.statusApproved,
         className: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
       },
       REJECTED: {
-        label: t.statusRejected || "未通过",
+        label: t.statusRejected,
         className: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400",
       },
     }
@@ -148,7 +176,7 @@ export function QueryInviteCodesForm({ locale, dict }: QueryInviteCodesFormProps
           animate={{ opacity: 1 }}
           className="py-8 text-center text-muted-foreground"
         >
-          {t.notFound || "未找到可用邀请码"}
+          {t.noInviteCodes}
         </motion.div>
       )
     }
@@ -159,7 +187,7 @@ export function QueryInviteCodesForm({ locale, dict }: QueryInviteCodesFormProps
         animate={{ opacity: 1, y: 0 }}
         className="space-y-3"
       >
-        <h3 className="text-sm font-medium text-muted-foreground">{t.result || "查询结果"}</h3>
+        <h3 className="text-sm font-medium text-muted-foreground">{t.result}</h3>
         {data.inviteCodes.map((item, index) => (
           <motion.div
             key={index}
@@ -205,31 +233,29 @@ export function QueryInviteCodesForm({ locale, dict }: QueryInviteCodesFormProps
         animate={{ opacity: 1, y: 0 }}
         className="space-y-4"
       >
-        <h3 className="text-sm font-medium text-muted-foreground">
-          {t.applicationStatus || "申请状态"}
-        </h3>
+        <h3 className="text-sm font-medium text-muted-foreground">{t.applicationStatus}</h3>
 
         <div className="rounded-xl border border-border/60 bg-muted/30 p-4 space-y-4">
           <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">{t.statusLabel || "状态"}</span>
+            <span className="text-sm text-muted-foreground">{t.statusLabel}</span>
             {getStatusBadge(data.status)}
           </div>
 
           <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">{t.submittedAt || "提交时间"}</span>
+            <span className="text-sm text-muted-foreground">{t.submittedAt}</span>
             <span className="text-sm">{formatDate(data.createdAt)}</span>
           </div>
 
           {data.reviewedAt && (
             <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">{t.reviewedAt || "审核时间"}</span>
+              <span className="text-sm text-muted-foreground">{t.reviewedAt}</span>
               <span className="text-sm">{formatDate(data.reviewedAt)}</span>
             </div>
           )}
 
           {data.guidance && (
             <div className="pt-3 border-t border-border/60">
-              <p className="text-sm text-muted-foreground mb-2">{t.guidance || "审核意见"}</p>
+              <p className="text-sm text-muted-foreground mb-2">{t.guidance}</p>
               <p className="text-sm whitespace-pre-wrap bg-background/50 rounded-lg p-3">
                 {data.guidance}
               </p>
@@ -244,9 +270,7 @@ export function QueryInviteCodesForm({ locale, dict }: QueryInviteCodesFormProps
             transition={{ delay: 0.2 }}
             className="space-y-3"
           >
-            <h3 className="text-sm font-medium text-muted-foreground">
-              {t.inviteCodeTitle || "邀请码"}
-            </h3>
+            <h3 className="text-sm font-medium text-muted-foreground">{t.inviteCodeTitle}</h3>
             <div
               className={`flex items-center justify-between rounded-xl border border-border/60 bg-muted/30 p-4 ${
                 data.inviteCode.used || isExpired(data.inviteCode.expiresAt) ? "opacity-50" : ""
@@ -265,7 +289,7 @@ export function QueryInviteCodesForm({ locale, dict }: QueryInviteCodesFormProps
                   </Badge>
                   {data.inviteCode.used && (
                     <Badge variant="outline" className="text-xs">
-                      {t.used || "已使用"}
+                      {t.used}
                     </Badge>
                   )}
                 </div>
@@ -289,7 +313,7 @@ export function QueryInviteCodesForm({ locale, dict }: QueryInviteCodesFormProps
 
         {data.status === "APPROVED" && !data.inviteCode && (
           <div className="py-4 text-center text-muted-foreground">
-            {t.noInviteCode || "暂无邀请码"}
+            {t.noInviteCode}
           </div>
         )}
       </motion.div>
@@ -309,10 +333,8 @@ export function QueryInviteCodesForm({ locale, dict }: QueryInviteCodesFormProps
             <Search className="h-5 w-5 text-primary-foreground" />
           </div>
         </Link>
-        <h1 className="text-2xl font-bold tracking-tight">{t.title || "查询"}</h1>
-        <p className="mt-2 text-muted-foreground">
-          {t.description || "输入查询码查看申请状态或可用的邀请码"}
-        </p>
+        <h1 className="text-2xl font-bold tracking-tight">{t.title}</h1>
+        <p className="mt-2 text-muted-foreground">{t.description}</p>
       </div>
 
       <div className="space-y-6">
@@ -345,7 +367,7 @@ export function QueryInviteCodesForm({ locale, dict }: QueryInviteCodesFormProps
               htmlFor="queryToken"
               className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-all duration-300 peer-focus:top-2 peer-focus:text-xs peer-focus:text-primary peer-[:not(:placeholder-shown)]:top-2 peer-[:not(:placeholder-shown)]:text-xs"
             >
-              {t.placeholder || "输入查询码"}
+              {t.placeholder}
             </Label>
           </div>
         </div>
@@ -365,12 +387,12 @@ export function QueryInviteCodesForm({ locale, dict }: QueryInviteCodesFormProps
             {loading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                {t.submit || "查询"}
+                {t.submit}
               </>
             ) : (
               <>
                 <Search className="mr-2 h-4 w-4" />
-                {t.submit || "查询"}
+                {t.submit}
               </>
             )}
           </span>
@@ -382,7 +404,7 @@ export function QueryInviteCodesForm({ locale, dict }: QueryInviteCodesFormProps
             animate={{ opacity: 1 }}
             className="py-6 text-center text-muted-foreground"
           >
-            {t.notFound || "未找到或查询码已失效"}
+            {t.notFound}
           </motion.div>
         )}
 

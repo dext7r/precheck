@@ -15,18 +15,19 @@ interface HeroSectionProps {
 }
 
 export function HeroSection({ dict, locale }: HeroSectionProps) {
+  const heroActions = dict.hero.actions
   const actions = [
     {
       icon: UserPlus,
-      title: dict.hero.actions?.apply?.title || "提交预申请",
-      description: dict.hero.actions?.apply?.description || "填写表单申请加入 linux.do 社区",
+      title: heroActions?.apply?.title,
+      description: heroActions?.apply?.description,
       href: `/${locale}/dashboard/pre-application`,
       primary: true,
     },
     {
       icon: Search,
-      title: dict.hero.actions?.query?.title || "查询进度",
-      description: dict.hero.actions?.query?.description || "使用查询码查看申请状态",
+      title: heroActions?.query?.title,
+      description: heroActions?.query?.description,
       href: `/${locale}/query-invite-codes`,
       primary: false,
     },
@@ -144,7 +145,7 @@ export function HeroSection({ dict, locale }: HeroSectionProps) {
             className="mt-12 flex items-center justify-center gap-2 text-sm text-muted-foreground"
           >
             <ClipboardCheck className="h-4 w-4" />
-            <span>{dict.hero.tip || "已有账号？请先登录后再提交申请"}</span>
+            <span>{dict.hero.tip}</span>
             <Button variant="link" asChild className="h-auto p-0">
               <Link href={`/${locale}/login`}>{dict.nav.login}</Link>
             </Button>

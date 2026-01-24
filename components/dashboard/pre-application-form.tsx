@@ -483,11 +483,7 @@ export function PreApplicationForm({
                         className="h-6 w-6"
                         onClick={async () => {
                           try {
-                            const appUrl =
-                              typeof window !== "undefined"
-                                ? window.location.origin
-                                : process.env.NEXT_PUBLIC_APP_URL || ""
-                            const queryUrl = `${appUrl}/${locale}/query-invite-codes?queryCode=${latest.queryToken}`
+                            const queryUrl = `${window.location.origin}/${locale}/query-invite-codes?queryCode=${latest.queryToken}`
                             await navigator.clipboard.writeText(queryUrl)
                             setTokenCopied(true)
                             toast.success(t.queryTokenCopied || "查询链接已复制")

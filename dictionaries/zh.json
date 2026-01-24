@@ -15,6 +15,16 @@
     "logout": "退出登录",
     "queryStatus": "查询进度"
   },
+  "apiErrors": {
+    "databaseNotConfigured": "数据库未配置",
+    "notAuthenticated": "未登录",
+    "queryInviteCodes": {
+      "invalidToken": "无效查询码",
+      "tokenExpired": "查询码已过期",
+      "tokenNotFound": "未找到查询码",
+      "queryFailed": "查询失败"
+    }
+  },
   "hero": {
     "badge": "linux.do 社区",
     "title": "欢迎来到",
@@ -107,6 +117,7 @@
     "privacy": "隐私政策",
     "terms": "服务条款",
     "copyright": "保留所有权利。",
+    "qqGroupLabel": "QQ 群：",
     "apiReference": "API 参考",
     "examples": "示例",
     "license": "许可协议"
@@ -585,6 +596,9 @@
     "description": "输入查询码查看申请状态或可用的邀请码",
     "placeholder": "输入查询码",
     "submit": "查询",
+    "tokenRequired": "请输入查询码",
+    "queryFailed": "查询失败，请稍后再试",
+    "copyFailed": "复制失败，请重试",
     "notFound": "未找到或查询码已失效",
     "result": "查询结果",
     "copyCode": "复制",
@@ -602,7 +616,8 @@
     "guidance": "审核意见",
     "inviteCodeTitle": "邀请码",
     "used": "已使用",
-    "noInviteCode": "暂无邀请码"
+    "noInviteCode": "暂无邀请码",
+    "noInviteCodes": "暂无可用邀请码"
   },
   "admin": {
     "title": "管理面板",

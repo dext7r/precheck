@@ -1,17 +1,20 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
+import { createApiErrorResponse } from "@/lib/api/error-response"
 
 export async function GET(request: NextRequest) {
   try {
     if (!db) {
-      return NextResponse.json({ error: "Database not configured" }, { status: 503 })
+      return createApiErrorResponse(request, "apiErrors.databaseNotConfigured", { status: 503 })
     }
 
     const { searchParams } = request.nextUrl
     const token = (searchParams.get("token") || "").trim().toUpperCase()
 
     if (!token || token.length < 4) {
-      return NextResponse.json({ error: "Invalid token" }, { status: 400 })
+      return createApiErrorResponse(request, "apiErrors.queryInviteCodes.invalidToken", {
+        status: 400,
+      })
     }
 
     const now = new Date()
@@ -37,7 +40,9 @@ export async function GET(request: NextRequest) {
 
     if (inviteQueryToken) {
       if (inviteQueryToken.expiresAt && inviteQueryToken.expiresAt < now) {
-        return NextResponse.json({ error: "Token expired" }, { status: 410 })
+        return createApiErrorResponse(request, "apiErrors.queryInviteCodes.tokenExpired", {
+          status: 410,
+        })
       }
 
       if (!inviteQueryToken.queriedAt) {
@@ -93,9 +98,13 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    return NextResponse.json({ error: "Token not found" }, { status: 404 })
+    return createApiErrorResponse(request, "apiErrors.queryInviteCodes.tokenNotFound", {
+      status: 404,
+    })
   } catch (error) {
     console.error("Query invite codes error:", error)
-    return NextResponse.json({ error: "Failed to query" }, { status: 500 })
+    return createApiErrorResponse(request, "apiErrors.queryInviteCodes.queryFailed", {
+      status: 500,
+    })
   }
 }
