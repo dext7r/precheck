@@ -20,7 +20,7 @@ const sendCodeSchema = z.object({
 export async function POST(request: NextRequest) {
   try {
     // 检查邮件服务是否配置
-    if (!isEmailConfigured()) {
+    if (!(await isEmailConfigured())) {
       return createApiErrorResponse(
         request,
         ApiErrorKeys.auth.verificationCode.emailServiceNotConfigured,

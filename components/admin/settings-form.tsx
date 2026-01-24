@@ -54,6 +54,23 @@ type SystemConfig = {
   reviewTemplatesApprove: string[]
   reviewTemplatesReject: string[]
   reviewTemplatesDispute: string[]
+  emailProvider: "env" | "api" | "smtp"
+  selectedEmailApiConfigId: string | null
+  smtpHost: string | null
+  smtpPort: number | null
+  smtpUser: string | null
+  smtpPass: string | null
+  smtpSecure: boolean
+}
+
+type EmailApiConfig = {
+  id: string
+  name: string
+  host: string
+  port: number
+  user: string
+  createdAt: string
+  updatedAt: string
 }
 
 interface AdminSettingsFormProps {
@@ -92,6 +109,20 @@ export function AdminSettingsForm({ locale, dict }: AdminSettingsFormProps) {
   const [testingEmail, setTestingEmail] = useState(false)
   const [testEmailAddress, setTestEmailAddress] = useState("")
 
+  // API 配置管理
+  const [emailApiConfigs, setEmailApiConfigs] = useState<EmailApiConfig[]>([])
+  const [apiConfigLoading, setApiConfigLoading] = useState(false)
+  const [editingApiConfig, setEditingApiConfig] = useState<{
+    id?: string
+    name: string
+    host: string
+    port: number
+    user: string
+    pass: string
+  } | null>(null)
+  const [savingApiConfig, setSavingApiConfig] = useState(false)
+  const [deletingApiConfigId, setDeletingApiConfigId] = useState<string | null>(null)
+
   const t = dict.admin
 
   const tabs: TabItem[] = [
@@ -123,9 +154,10 @@ export function AdminSettingsForm({ locale, dict }: AdminSettingsFormProps) {
       setLoading(true)
       setError("")
       try {
-        const [settingsRes, configRes] = await Promise.all([
+        const [settingsRes, configRes, apiConfigsRes] = await Promise.all([
           fetch("/api/admin/settings"),
           fetch("/api/admin/system-config"),
+          fetch("/api/admin/email-api-configs"),
         ])
 
         if (!settingsRes.ok) {
@@ -144,6 +176,13 @@ export function AdminSettingsForm({ locale, dict }: AdminSettingsFormProps) {
           if (active) {
             setSystemConfig(configData)
             setInitialSystemConfig(configData)
+          }
+        }
+
+        if (apiConfigsRes.ok) {
+          const apiConfigsData = await apiConfigsRes.json()
+          if (active) {
+            setEmailApiConfigs(apiConfigsData)
           }
         }
       } catch (err) {
@@ -348,6 +387,76 @@ export function AdminSettingsForm({ locale, dict }: AdminSettingsFormProps) {
       toast.error(err instanceof Error ? err.message : t.systemConfigTestEmailFailed)
     } finally {
       setTestingEmail(false)
+    }
+  }
+
+  // API 配置 CRUD 操作
+  const loadApiConfigs = async () => {
+    setApiConfigLoading(true)
+    try {
+      const res = await fetch("/api/admin/email-api-configs")
+      if (res.ok) {
+        const data = await res.json()
+        setEmailApiConfigs(data)
+      }
+    } finally {
+      setApiConfigLoading(false)
+    }
+  }
+
+  const handleSaveApiConfig = async () => {
+    if (!editingApiConfig) return
+    setSavingApiConfig(true)
+    try {
+      const isUpdate = !!editingApiConfig.id
+      const url = isUpdate
+        ? `/api/admin/email-api-configs/${editingApiConfig.id}`
+        : "/api/admin/email-api-configs"
+      const res = await fetch(url, {
+        method: isUpdate ? "PUT" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: editingApiConfig.name,
+          host: editingApiConfig.host,
+          port: editingApiConfig.port,
+          user: editingApiConfig.user,
+          pass: editingApiConfig.pass,
+        }),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data?.error || (isUpdate ? "更新失败" : "创建失败"))
+      }
+      toast.success(isUpdate ? "配置已更新" : "配置已创建")
+      setEditingApiConfig(null)
+      loadApiConfigs()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "操作失败")
+    } finally {
+      setSavingApiConfig(false)
+    }
+  }
+
+  const handleDeleteApiConfig = async (id: string) => {
+    setDeletingApiConfigId(id)
+    try {
+      const res = await fetch(`/api/admin/email-api-configs/${id}`, {
+        method: "DELETE",
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data?.error || "删除失败")
+      }
+      toast.success("配置已删除")
+      // 如果删除的是当前选中的配置，清除选择
+      if (systemConfig?.selectedEmailApiConfigId === id) {
+        setSystemConfig({ ...systemConfig, selectedEmailApiConfigId: null })
+      }
+      loadApiConfigs()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "删除失败")
+    } finally {
+      setDeletingApiConfigId(null)
     }
   }
 
@@ -719,6 +828,343 @@ export function AdminSettingsForm({ locale, dict }: AdminSettingsFormProps) {
               {/* 邮件配置 */}
               {activeTab === "email" && systemConfig && (
                 <div className="space-y-6">
+                  {/* 邮件发送方式配置 */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Settings className="h-5 w-5" />
+                        {t.emailProviderLabel || "邮件发送方式"}
+                      </CardTitle>
+                      <CardDescription>
+                        {t.emailProviderDesc || "选择邮件服务的配置来源"}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                      {/* 发送方式选择 */}
+                      <div className="space-y-3">
+                        {(
+                          [
+                            {
+                              value: "env",
+                              label: t.emailProviderEnv || "使用环境变量",
+                              desc: t.emailProviderEnvDesc || "从服务器环境变量读取邮件配置",
+                            },
+                            {
+                              value: "api",
+                              label: t.emailProviderApi || "使用 API 配置",
+                              desc: t.emailProviderApiDesc || "使用 push.h7ml.cn API 代理发送邮件",
+                            },
+                            {
+                              value: "smtp",
+                              label: t.emailProviderSmtp || "使用 SMTP 配置",
+                              desc: t.emailProviderSmtpDesc || "直接连接 SMTP 服务器发送邮件",
+                            },
+                          ] as const
+                        ).map((option) => (
+                          <label
+                            key={option.value}
+                            className={cn(
+                              "flex items-start gap-3 p-4 rounded-lg border cursor-pointer transition-colors",
+                              systemConfig.emailProvider === option.value
+                                ? "border-primary bg-primary/5"
+                                : "border-border hover:bg-muted/50",
+                            )}
+                          >
+                            <input
+                              type="radio"
+                              name="emailProvider"
+                              value={option.value}
+                              checked={systemConfig.emailProvider === option.value}
+                              onChange={() =>
+                                setSystemConfig({ ...systemConfig, emailProvider: option.value })
+                              }
+                              className="mt-1"
+                            />
+                            <div>
+                              <p className="font-medium">{option.label}</p>
+                              <p className="text-sm text-muted-foreground">{option.desc}</p>
+                            </div>
+                          </label>
+                        ))}
+                      </div>
+
+                      {/* API 配置管理 */}
+                      {systemConfig.emailProvider === "api" && (
+                        <div className="pt-4 border-t space-y-4">
+                          <div className="flex items-center justify-between">
+                            <h4 className="font-medium">{t.emailApiConfig || "API 配置"}</h4>
+                            <Button
+                              size="sm"
+                              onClick={() =>
+                                setEditingApiConfig({
+                                  name: "",
+                                  host: "smtp.qq.com",
+                                  port: 587,
+                                  user: "",
+                                  pass: "",
+                                })
+                              }
+                            >
+                              <Plus className="h-4 w-4 mr-1" />
+                              新增配置
+                            </Button>
+                          </div>
+
+                          {/* 配置列表 */}
+                          {emailApiConfigs.length === 0 && !apiConfigLoading && (
+                            <p className="text-sm text-muted-foreground py-4 text-center">
+                              暂无 API 配置，请点击上方按钮新增
+                            </p>
+                          )}
+                          {apiConfigLoading && (
+                            <div className="flex justify-center py-4">
+                              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                            </div>
+                          )}
+                          <div className="space-y-2">
+                            {emailApiConfigs.map((config) => (
+                              <div
+                                key={config.id}
+                                className={cn(
+                                  "flex items-center justify-between p-3 rounded-lg border",
+                                  systemConfig.selectedEmailApiConfigId === config.id
+                                    ? "border-primary bg-primary/5"
+                                    : "border-border",
+                                )}
+                              >
+                                <label className="flex items-center gap-3 flex-1 cursor-pointer">
+                                  <input
+                                    type="radio"
+                                    name="selectedApiConfig"
+                                    checked={systemConfig.selectedEmailApiConfigId === config.id}
+                                    onChange={() =>
+                                      setSystemConfig({
+                                        ...systemConfig,
+                                        selectedEmailApiConfigId: config.id,
+                                      })
+                                    }
+                                  />
+                                  <div>
+                                    <p className="font-medium">{config.name}</p>
+                                    <p className="text-xs text-muted-foreground">
+                                      {config.host}:{config.port} | {config.user}
+                                    </p>
+                                  </div>
+                                </label>
+                                <div className="flex gap-1">
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() =>
+                                      setEditingApiConfig({
+                                        id: config.id,
+                                        name: config.name,
+                                        host: config.host,
+                                        port: config.port,
+                                        user: config.user,
+                                        pass: "",
+                                      })
+                                    }
+                                  >
+                                    <Settings className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    disabled={
+                                      deletingApiConfigId === config.id ||
+                                      systemConfig.selectedEmailApiConfigId === config.id
+                                    }
+                                    onClick={() => handleDeleteApiConfig(config.id)}
+                                  >
+                                    {deletingApiConfigId === config.id ? (
+                                      <Loader2 className="h-4 w-4 animate-spin" />
+                                    ) : (
+                                      <Trash2 className="h-4 w-4" />
+                                    )}
+                                  </Button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+
+                          {/* 编辑/新增弹窗 */}
+                          {editingApiConfig && (
+                            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                              <Card className="w-full max-w-md mx-4">
+                                <CardHeader>
+                                  <CardTitle>
+                                    {editingApiConfig.id ? "编辑 API 配置" : "新增 API 配置"}
+                                  </CardTitle>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                  <div className="space-y-2">
+                                    <Label>配置名称</Label>
+                                    <Input
+                                      value={editingApiConfig.name}
+                                      onChange={(e) =>
+                                        setEditingApiConfig({
+                                          ...editingApiConfig,
+                                          name: e.target.value,
+                                        })
+                                      }
+                                      placeholder="如：QQ邮箱配置"
+                                    />
+                                  </div>
+                                  <div className="grid gap-4 sm:grid-cols-2">
+                                    <div className="space-y-2">
+                                      <Label>服务器地址</Label>
+                                      <Input
+                                        value={editingApiConfig.host}
+                                        onChange={(e) =>
+                                          setEditingApiConfig({
+                                            ...editingApiConfig,
+                                            host: e.target.value,
+                                          })
+                                        }
+                                        placeholder="smtp.qq.com"
+                                      />
+                                    </div>
+                                    <div className="space-y-2">
+                                      <Label>端口</Label>
+                                      <Input
+                                        type="number"
+                                        value={editingApiConfig.port}
+                                        onChange={(e) =>
+                                          setEditingApiConfig({
+                                            ...editingApiConfig,
+                                            port: Number(e.target.value) || 587,
+                                          })
+                                        }
+                                        placeholder="587"
+                                      />
+                                    </div>
+                                  </div>
+                                  <div className="space-y-2">
+                                    <Label>用户名</Label>
+                                    <Input
+                                      value={editingApiConfig.user}
+                                      onChange={(e) =>
+                                        setEditingApiConfig({
+                                          ...editingApiConfig,
+                                          user: e.target.value,
+                                        })
+                                      }
+                                      placeholder="your-email@qq.com"
+                                    />
+                                  </div>
+                                  <div className="space-y-2">
+                                    <Label>密码{editingApiConfig.id && "（留空则不修改）"}</Label>
+                                    <Input
+                                      type="password"
+                                      value={editingApiConfig.pass}
+                                      onChange={(e) =>
+                                        setEditingApiConfig({
+                                          ...editingApiConfig,
+                                          pass: e.target.value,
+                                        })
+                                      }
+                                      placeholder="••••••••"
+                                    />
+                                  </div>
+                                </CardContent>
+                                <div className="flex justify-end gap-2 p-6 pt-0">
+                                  <Button
+                                    variant="outline"
+                                    onClick={() => setEditingApiConfig(null)}
+                                  >
+                                    取消
+                                  </Button>
+                                  <Button onClick={handleSaveApiConfig} disabled={savingApiConfig}>
+                                    {savingApiConfig && (
+                                      <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                                    )}
+                                    保存
+                                  </Button>
+                                </div>
+                              </Card>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* SMTP 配置表单 */}
+                      {systemConfig.emailProvider === "smtp" && (
+                        <div className="pt-4 border-t space-y-4">
+                          <h4 className="font-medium">{t.smtpConfig || "SMTP 配置"}</h4>
+                          <div className="grid gap-4 sm:grid-cols-2">
+                            <div className="space-y-2">
+                              <Label>{t.smtpHost || "SMTP 服务器地址"}</Label>
+                              <Input
+                                value={systemConfig.smtpHost || ""}
+                                onChange={(e) =>
+                                  setSystemConfig({
+                                    ...systemConfig,
+                                    smtpHost: e.target.value || null,
+                                  })
+                                }
+                                placeholder="smtp.gmail.com"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label>{t.smtpPort || "SMTP 端口"}</Label>
+                              <Input
+                                type="number"
+                                value={systemConfig.smtpPort || ""}
+                                onChange={(e) =>
+                                  setSystemConfig({
+                                    ...systemConfig,
+                                    smtpPort: e.target.value ? Number(e.target.value) : null,
+                                  })
+                                }
+                                placeholder="587"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label>{t.smtpUser || "SMTP 用户名"}</Label>
+                              <Input
+                                value={systemConfig.smtpUser || ""}
+                                onChange={(e) =>
+                                  setSystemConfig({
+                                    ...systemConfig,
+                                    smtpUser: e.target.value || null,
+                                  })
+                                }
+                                placeholder="your-email@gmail.com"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label>{t.smtpPass || "SMTP 密码"}</Label>
+                              <Input
+                                type="password"
+                                value={systemConfig.smtpPass || ""}
+                                onChange={(e) =>
+                                  setSystemConfig({
+                                    ...systemConfig,
+                                    smtpPass: e.target.value || null,
+                                  })
+                                }
+                                placeholder="••••••••"
+                              />
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Switch
+                              id="smtpSecure"
+                              checked={systemConfig.smtpSecure}
+                              onCheckedChange={(v) =>
+                                setSystemConfig({ ...systemConfig, smtpSecure: v })
+                              }
+                            />
+                            <Label htmlFor="smtpSecure" className="cursor-pointer">
+                              {t.smtpSecure || "使用 SSL/TLS"}
+                            </Label>
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+
                   <Card>
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
@@ -816,8 +1262,11 @@ export function AdminSettingsForm({ locale, dict }: AdminSettingsFormProps) {
                       <p className="text-xs text-muted-foreground">
                         {t.systemConfigEmailProvider}:
                         <Badge variant="secondary" className="ml-2">
-                          {process.env.NEXT_PUBLIC_EMAIL_PROVIDER ||
-                            t.systemConfigEmailProviderNotConfigured}
+                          {systemConfig.emailProvider === "env"
+                            ? t.emailProviderEnv || "环境变量"
+                            : systemConfig.emailProvider === "api"
+                              ? t.emailProviderApi || "API"
+                              : t.emailProviderSmtp || "SMTP"}
                         </Badge>
                       </p>
                     </CardContent>

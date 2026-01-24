@@ -222,8 +222,28 @@ export interface SiteSettings {
   reviewTemplatesApprove: Prisma.JsonValue
   reviewTemplatesReject: Prisma.JsonValue
   reviewTemplatesDispute: Prisma.JsonValue
+  emailProvider: string
+  selectedEmailApiConfigId: string | null
+  smtpHost: string | null
+  smtpPort: number | null
+  smtpUser: string | null
+  smtpPass: string | null
+  smtpSecure: boolean
   createdAt: Date
   updatedAt: Date
+  selectedEmailApiConfig: EmailApiConfig | null
+}
+
+export interface EmailApiConfig {
+  id: string
+  name: string
+  host: string
+  port: number
+  user: string
+  pass: string
+  createdAt: Date
+  updatedAt: Date
+  siteSettings: SiteSettings[]
 }
 
 export interface EmailLog {

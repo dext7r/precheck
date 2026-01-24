@@ -6,57 +6,134 @@ export type EmailPayload = {
   subject: string
   html?: string
   text: string
-  from?: string // 可选：发件人地址（默认使用 EMAIL_API_USER）
-  fromName?: string // 可选：发件人显示名称
+  from?: string
+  fromName?: string
 }
 
-// 邮件发送方式配置
-const emailProvider = process.env.EMAIL_PROVIDER || "smtp"
+type EmailConfig = {
+  provider: "env" | "api" | "smtp"
+  apiHost?: string | null
+  apiPort?: number | null
+  apiUser?: string | null
+  apiPass?: string | null
+  smtpHost?: string | null
+  smtpPort?: number | null
+  smtpUser?: string | null
+  smtpPass?: string | null
+  smtpSecure?: boolean
+}
 
-// push.h7ml.cn API 配置
-const emailApiUrl = process.env.EMAIL_API_URL || "https://push.h7ml.cn/forward"
-const emailApiHost = process.env.EMAIL_API_HOST || "smtp.qq.com"
-const emailApiPort = Number(process.env.EMAIL_API_PORT || "587")
-const emailApiUser = process.env.EMAIL_API_USER
-const emailApiPass = process.env.EMAIL_API_PASS
-// 默认发件人（可被 payload.from 覆盖）
-const emailApiDefaultFrom = process.env.EMAIL_API_FROM || emailApiUser
+// 环境变量配置（作为 fallback）
+const envEmailProvider = process.env.EMAIL_PROVIDER || "smtp"
+const envEmailApiUrl = process.env.EMAIL_API_URL || "https://push.h7ml.cn/forward"
+const envEmailApiHost = process.env.EMAIL_API_HOST || "smtp.qq.com"
+const envEmailApiPort = Number(process.env.EMAIL_API_PORT || "587")
+const envEmailApiUser = process.env.EMAIL_API_USER
+const envEmailApiPass = process.env.EMAIL_API_PASS
+const envSmtpHost = process.env.SMTP_HOST
+const envSmtpPort = Number(process.env.SMTP_PORT || "587")
+const envSmtpUser = process.env.SMTP_USER
+const envSmtpPass = process.env.SMTP_PASS
+const envSmtpSecure = process.env.SMTP_SECURE === "true"
 
-// 传统 SMTP 配置（备用）
-const smtpHost = process.env.SMTP_HOST
-const smtpPort = Number(process.env.SMTP_PORT || "587")
-const smtpUser = process.env.SMTP_USER
-const smtpPass = process.env.SMTP_PASS
-const smtpSecure = process.env.SMTP_SECURE === "true"
-// 默认发件人（可被 payload.from 覆盖）
-const smtpDefaultFrom = process.env.SMTP_FROM || smtpUser
+/**
+ * 获取邮件配置（优先从数据库，否则使用环境变量）
+ */
+async function getEmailConfig(): Promise<EmailConfig> {
+  if (!db) {
+    return {
+      provider: envEmailProvider === "api" ? "api" : "smtp",
+      apiHost: envEmailApiHost,
+      apiPort: envEmailApiPort,
+      apiUser: envEmailApiUser,
+      apiPass: envEmailApiPass,
+      smtpHost: envSmtpHost,
+      smtpPort: envSmtpPort,
+      smtpUser: envSmtpUser,
+      smtpPass: envSmtpPass,
+      smtpSecure: envSmtpSecure,
+    }
+  }
 
-// Nodemailer 传输器（仅在 SMTP 模式下使用）
-const transporter =
-  smtpHost && smtpUser && smtpPass
-    ? nodemailer.createTransport({
-        host: smtpHost,
-        port: smtpPort,
-        secure: smtpSecure,
-        auth: {
-          user: smtpUser,
-          pass: smtpPass,
-        },
-      })
-    : null
+  const settings = await db.siteSettings.findUnique({
+    where: { id: "global" },
+    select: {
+      emailProvider: true,
+      selectedEmailApiConfigId: true,
+      smtpHost: true,
+      smtpPort: true,
+      smtpUser: true,
+      smtpPass: true,
+      smtpSecure: true,
+    },
+  })
+
+  // 使用环境变量配置
+  if (!settings || settings.emailProvider === "env") {
+    return {
+      provider: envEmailProvider === "api" ? "api" : "smtp",
+      apiHost: envEmailApiHost,
+      apiPort: envEmailApiPort,
+      apiUser: envEmailApiUser,
+      apiPass: envEmailApiPass,
+      smtpHost: envSmtpHost,
+      smtpPort: envSmtpPort,
+      smtpUser: envSmtpUser,
+      smtpPass: envSmtpPass,
+      smtpSecure: envSmtpSecure,
+    }
+  }
+
+  // 使用数据库 API 配置
+  if (settings.emailProvider === "api" && settings.selectedEmailApiConfigId) {
+    const apiConfig = await db.emailApiConfig.findUnique({
+      where: { id: settings.selectedEmailApiConfigId },
+    })
+    if (apiConfig) {
+      return {
+        provider: "api",
+        apiHost: apiConfig.host,
+        apiPort: apiConfig.port,
+        apiUser: apiConfig.user,
+        apiPass: apiConfig.pass,
+        smtpHost: null,
+        smtpPort: null,
+        smtpUser: null,
+        smtpPass: null,
+        smtpSecure: false,
+      }
+    }
+  }
+
+  // 使用数据库 SMTP 配置
+  return {
+    provider: settings.emailProvider as "api" | "smtp",
+    apiHost: null,
+    apiPort: null,
+    apiUser: null,
+    apiPass: null,
+    smtpHost: settings.smtpHost,
+    smtpPort: settings.smtpPort,
+    smtpUser: settings.smtpUser,
+    smtpPass: settings.smtpPass,
+    smtpSecure: settings.smtpSecure,
+  }
+}
 
 /**
  * 使用 push.h7ml.cn API 发送邮件
  */
-async function sendEmailViaAPI(payload: EmailPayload): Promise<void> {
-  if (!emailApiUser || !emailApiPass) {
+async function sendEmailViaAPI(payload: EmailPayload, config: EmailConfig): Promise<void> {
+  const apiUser = config.apiUser
+  const apiPass = config.apiPass
+  const apiHost = config.apiHost || envEmailApiHost
+  const apiPort = config.apiPort || envEmailApiPort
+
+  if (!apiUser || !apiPass) {
     throw new Error("EMAIL_API_USER and EMAIL_API_PASS must be configured")
   }
 
-  // 使用用户指定的发件人，或使用默认值
-  const fromEmail = payload.from || emailApiDefaultFrom || emailApiUser
-
-  // 构建发件人字段（支持显示名称）
+  const fromEmail = payload.from || apiUser
   const fromField = payload.fromName ? `${payload.fromName} <${fromEmail}>` : fromEmail
 
   const requestBody = {
@@ -66,16 +143,16 @@ async function sendEmailViaAPI(payload: EmailPayload): Promise<void> {
     config: {
       EMAIL_TYPE: payload.html ? "html" : "text",
       EMAIL_TO_ADDRESS: payload.to,
-      EMAIL_AUTH_USER: emailApiUser,
-      EMAIL_AUTH_PASS: emailApiPass,
-      EMAIL_HOST: emailApiHost,
-      EMAIL_PORT: emailApiPort,
-      EMAIL_FROM_ADDRESS: fromField, // 使用动态发件人
+      EMAIL_AUTH_USER: apiUser,
+      EMAIL_AUTH_PASS: apiPass,
+      EMAIL_HOST: apiHost,
+      EMAIL_PORT: apiPort,
+      EMAIL_FROM_ADDRESS: fromField,
     },
     option: {},
   }
 
-  const response = await fetch(emailApiUrl, {
+  const response = await fetch(envEmailApiUrl, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -99,15 +176,25 @@ async function sendEmailViaAPI(payload: EmailPayload): Promise<void> {
 /**
  * 使用传统 SMTP 发送邮件
  */
-async function sendEmailViaSMTP(payload: EmailPayload): Promise<void> {
-  if (!transporter || !smtpDefaultFrom) {
+async function sendEmailViaSMTP(payload: EmailPayload, config: EmailConfig): Promise<void> {
+  const host = config.smtpHost
+  const port = config.smtpPort || 587
+  const user = config.smtpUser
+  const pass = config.smtpPass
+  const secure = config.smtpSecure ?? false
+
+  if (!host || !user || !pass) {
     throw new Error("SMTP not configured")
   }
 
-  // 使用用户指定的发件人，或使用默认值
-  const fromEmail = payload.from || smtpDefaultFrom
+  const transporter = nodemailer.createTransport({
+    host,
+    port,
+    secure,
+    auth: { user, pass },
+  })
 
-  // 构建发件人字段（支持显示名称）
+  const fromEmail = payload.from || user
   const fromField = payload.fromName ? `${payload.fromName} <${fromEmail}>` : fromEmail
 
   await transporter.sendMail({
@@ -123,11 +210,11 @@ async function sendEmailViaSMTP(payload: EmailPayload): Promise<void> {
  * 发送邮件（自动选择发送方式）并记录日志
  */
 export async function sendEmail(payload: EmailPayload): Promise<void> {
-  const provider = emailProvider === "api" ? "api" : "smtp"
+  const config = await getEmailConfig()
+  const provider = config.provider
   let logId: string | undefined
 
   try {
-    // 创建待处理日志
     if (db) {
       const log = await db.emailLog.create({
         data: {
@@ -146,13 +233,12 @@ export async function sendEmail(payload: EmailPayload): Promise<void> {
       logId = log.id
     }
 
-    if (emailProvider === "api") {
-      await sendEmailViaAPI(payload)
+    if (provider === "api") {
+      await sendEmailViaAPI(payload, config)
     } else {
-      await sendEmailViaSMTP(payload)
+      await sendEmailViaSMTP(payload, config)
     }
 
-    // 更新日志状态为成功
     if (db && logId) {
       await db.emailLog.update({
         where: { id: logId },
@@ -161,7 +247,6 @@ export async function sendEmail(payload: EmailPayload): Promise<void> {
     }
   } catch (error) {
     console.error("Email sending error:", error)
-    // 更新日志状态为失败
     if (db && logId) {
       await db.emailLog
         .update({
@@ -180,9 +265,21 @@ export async function sendEmail(payload: EmailPayload): Promise<void> {
 /**
  * 检查邮件服务是否已配置
  */
-export function isEmailConfigured(): boolean {
-  if (emailProvider === "api") {
-    return !!(emailApiUser && emailApiPass)
+export async function isEmailConfigured(): Promise<boolean> {
+  const config = await getEmailConfig()
+
+  if (config.provider === "api") {
+    return !!(config.apiUser && config.apiPass)
   }
-  return !!(smtpHost && smtpUser && smtpPass)
+  return !!(config.smtpHost && config.smtpUser && config.smtpPass)
+}
+
+/**
+ * 同步检查邮件服务配置（仅检查环境变量，用于初始化场景）
+ */
+export function isEmailConfiguredSync(): boolean {
+  if (envEmailProvider === "api") {
+    return !!(envEmailApiUser && envEmailApiPass)
+  }
+  return !!(envSmtpHost && envSmtpUser && envSmtpPass)
 }

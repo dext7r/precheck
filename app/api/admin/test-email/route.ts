@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
       return createApiErrorResponse(request, ApiErrorKeys.general.forbidden, { status: 403 })
     }
 
-    if (!isEmailConfigured()) {
+    if (!(await isEmailConfigured())) {
       return createApiErrorResponse(
         request,
         ApiErrorKeys.auth.verificationCode.emailServiceNotConfigured,

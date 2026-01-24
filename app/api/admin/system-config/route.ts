@@ -15,6 +15,14 @@ const systemConfigSchema = z.object({
   reviewTemplatesApprove: z.array(z.string()).optional(),
   reviewTemplatesReject: z.array(z.string()).optional(),
   reviewTemplatesDispute: z.array(z.string()).optional(),
+  // 邮件配置
+  emailProvider: z.enum(["env", "api", "smtp"]).optional(),
+  selectedEmailApiConfigId: z.string().optional().nullable(),
+  smtpHost: z.string().optional().nullable(),
+  smtpPort: z.number().int().min(1).max(65535).optional().nullable(),
+  smtpUser: z.string().optional().nullable(),
+  smtpPass: z.string().optional().nullable(),
+  smtpSecure: z.boolean().optional(),
 })
 
 export async function GET(request: NextRequest) {
@@ -39,6 +47,13 @@ export async function GET(request: NextRequest) {
         reviewTemplatesApprove: true,
         reviewTemplatesReject: true,
         reviewTemplatesDispute: true,
+        emailProvider: true,
+        selectedEmailApiConfigId: true,
+        smtpHost: true,
+        smtpPort: true,
+        smtpUser: true,
+        smtpPass: true,
+        smtpSecure: true,
       },
     })
 
@@ -50,6 +65,13 @@ export async function GET(request: NextRequest) {
         reviewTemplatesApprove: [],
         reviewTemplatesReject: [],
         reviewTemplatesDispute: [],
+        emailProvider: "env",
+        selectedEmailApiConfigId: null,
+        smtpHost: null,
+        smtpPort: null,
+        smtpUser: null,
+        smtpPass: null,
+        smtpSecure: false,
       })
     }
 
@@ -68,6 +90,13 @@ export async function GET(request: NextRequest) {
       reviewTemplatesDispute: Array.isArray(settings.reviewTemplatesDispute)
         ? settings.reviewTemplatesDispute
         : [],
+      emailProvider: settings.emailProvider ?? "env",
+      selectedEmailApiConfigId: settings.selectedEmailApiConfigId,
+      smtpHost: settings.smtpHost,
+      smtpPort: settings.smtpPort,
+      smtpUser: settings.smtpUser,
+      smtpPass: settings.smtpPass,
+      smtpSecure: settings.smtpSecure ?? false,
     })
   } catch (error) {
     console.error("System config fetch error:", error)
@@ -110,6 +139,13 @@ export async function PUT(request: NextRequest) {
         reviewTemplatesApprove: data.reviewTemplatesApprove ?? [],
         reviewTemplatesReject: data.reviewTemplatesReject ?? [],
         reviewTemplatesDispute: data.reviewTemplatesDispute ?? [],
+        emailProvider: data.emailProvider ?? "env",
+        selectedEmailApiConfigId: data.selectedEmailApiConfigId ?? null,
+        smtpHost: data.smtpHost ?? null,
+        smtpPort: data.smtpPort ?? null,
+        smtpUser: data.smtpUser ?? null,
+        smtpPass: data.smtpPass ?? null,
+        smtpSecure: data.smtpSecure ?? false,
       },
       update: {
         preApplicationEssayHint: data.preApplicationEssayHint,
@@ -124,6 +160,15 @@ export async function PUT(request: NextRequest) {
         ...(data.reviewTemplatesDispute !== undefined && {
           reviewTemplatesDispute: data.reviewTemplatesDispute,
         }),
+        ...(data.emailProvider !== undefined && { emailProvider: data.emailProvider }),
+        ...(data.selectedEmailApiConfigId !== undefined && {
+          selectedEmailApiConfigId: data.selectedEmailApiConfigId,
+        }),
+        ...(data.smtpHost !== undefined && { smtpHost: data.smtpHost }),
+        ...(data.smtpPort !== undefined && { smtpPort: data.smtpPort }),
+        ...(data.smtpUser !== undefined && { smtpUser: data.smtpUser }),
+        ...(data.smtpPass !== undefined && { smtpPass: data.smtpPass }),
+        ...(data.smtpSecure !== undefined && { smtpSecure: data.smtpSecure }),
       },
     })
 
@@ -142,6 +187,12 @@ export async function PUT(request: NextRequest) {
           "reviewTemplatesApprove",
           "reviewTemplatesReject",
           "reviewTemplatesDispute",
+          "emailProvider",
+          "selectedEmailApiConfigId",
+          "smtpHost",
+          "smtpPort",
+          "smtpUser",
+          "smtpSecure",
         ],
       },
       request,
@@ -154,6 +205,13 @@ export async function PUT(request: NextRequest) {
       reviewTemplatesApprove: updated.reviewTemplatesApprove,
       reviewTemplatesReject: updated.reviewTemplatesReject,
       reviewTemplatesDispute: updated.reviewTemplatesDispute,
+      emailProvider: updated.emailProvider,
+      selectedEmailApiConfigId: updated.selectedEmailApiConfigId,
+      smtpHost: updated.smtpHost,
+      smtpPort: updated.smtpPort,
+      smtpUser: updated.smtpUser,
+      smtpPass: updated.smtpPass,
+      smtpSecure: updated.smtpSecure,
     })
   } catch (error) {
     if (error instanceof z.ZodError) {

@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
     resetUrl.searchParams.set("token", resetToken)
     const resetLink = resetUrl.toString()
 
-    if (isEmailConfigured() && settings.emailNotifications) {
+    if ((await isEmailConfigured()) && settings.emailNotifications) {
       const appName = dict.metadata?.title || "App"
       const expiresInHours = Math.max(1, Math.round(authConfig.resetTokenExpiry / (60 * 60 * 1000)))
       const emailContent = buildResetPasswordEmail({
