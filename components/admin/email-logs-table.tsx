@@ -113,7 +113,7 @@ function StatCard({
 
 export function AdminEmailLogsTable({ locale, dict }: AdminEmailLogsTableProps) {
   const t = dict.admin
-  const translationSource = t as Record<string, string | undefined>
+  const translationSource = t as unknown as Record<string, string | undefined>
   const translateAdmin = (key: string, fallback: string, vars?: TranslationVars) => {
     const template = translationSource[key] ?? fallback
     if (!vars) {
