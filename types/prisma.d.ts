@@ -6,7 +6,7 @@ export type UserStatus = "ACTIVE" | "INACTIVE" | "BANNED"
 
 export type PostStatus = "DRAFT" | "PUBLISHED" | "PENDING" | "REJECTED"
 
-export type PreApplicationStatus = "PENDING" | "APPROVED" | "REJECTED"
+export type PreApplicationStatus = "PENDING" | "APPROVED" | "REJECTED" | "DISPUTED"
 
 export type PreApplicationSource = "TIEBA" | "BILIBILI" | "DOUYIN" | "XIAOHONGSHU" | "OTHER"
 

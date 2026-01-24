@@ -913,6 +913,8 @@
     "reviewAction": "Review Action",
     "reviewApprove": "Approve",
     "reviewReject": "Reject",
+    "reviewDispute": "Mark as Disputed",
+    "disputed": "Disputed",
     "guidance": "Guidance",
     "reviewGuidanceRequired": "Guidance is required",
     "inviteCode": "Invite Code",

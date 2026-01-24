@@ -15,7 +15,7 @@ import { createApiErrorResponse } from "@/lib/api/error-response"
 import { ApiErrorKeys } from "@/lib/api/error-keys"
 
 const reviewSchema = z.object({
-  action: z.enum(["APPROVE", "REJECT"]),
+  action: z.enum(["APPROVE", "REJECT", "DISPUTE"]),
   guidance: z.string().min(1).max(2000),
   inviteCode: z.string().trim().optional(),
   inviteExpiresAt: z.string().optional(),
@@ -68,7 +68,11 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
       return createApiErrorResponse(request, ApiErrorKeys.general.notFound, { status: 404 })
     }
 
-    if (record.status !== PreApplicationStatus.PENDING) {
+    // PENDING 和 DISPUTED 状态都可以审核
+    if (
+      record.status !== PreApplicationStatus.PENDING &&
+      record.status !== PreApplicationStatus.DISPUTED
+    ) {
       return createApiErrorResponse(request, ApiErrorKeys.admin.preApplications.alreadyReviewed, {
         status: 400,
       })
@@ -89,6 +93,45 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
 
     const guidance = data.guidance.trim()
     const isApproved = data.action === "APPROVE"
+    const isDisputed = data.action === "DISPUTE"
+
+    if (isDisputed) {
+      // 标记为有争议，不发送通知给用户
+      await db.$transaction(async (tx) => {
+        const updated = await tx.preApplication.update({
+          where: { id: record.id },
+          data: {
+            status: PreApplicationStatus.DISPUTED,
+            guidance,
+            reviewedAt: new Date(),
+            reviewedBy: { connect: { id: user.id } },
+          },
+        })
+
+        await tx.preApplicationVersion.updateMany({
+          where: { preApplicationId: record.id, version: record.version },
+          data: {
+            status: PreApplicationStatus.DISPUTED,
+            guidance,
+            reviewedAt: new Date(),
+            reviewedById: user.id,
+          },
+        })
+
+        await writeAuditLog(tx, {
+          action: "PRE_APPLICATION_REVIEW_DISPUTE",
+          entityType: "PRE_APPLICATION",
+          entityId: record.id,
+          actor: user,
+          before: record,
+          after: updated,
+          metadata: { guidance },
+          request,
+        })
+      })
+
+      return NextResponse.json({ success: true })
+    }
 
     if (isApproved) {
       const code = data.inviteCode?.trim()

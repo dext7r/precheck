@@ -46,7 +46,7 @@ type AdminPreApplication = {
   registerEmail: string
   queryToken: string | null
   group: string
-  status: "PENDING" | "APPROVED" | "REJECTED"
+  status: "PENDING" | "APPROVED" | "REJECTED" | "DISPUTED"
   guidance: string | null
   reviewedAt: string | null
   createdAt: string
@@ -65,7 +65,7 @@ type PreApplicationVersion = {
   sourceDetail: string | null
   registerEmail: string
   group: string
-  status: "PENDING" | "APPROVED" | "REJECTED"
+  status: "PENDING" | "APPROVED" | "REJECTED" | "DISPUTED"
   guidance: string | null
   reviewedAt: string | null
   createdAt: string
@@ -103,7 +103,7 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc")
   const [dialogOpen, setDialogOpen] = useState(false)
   const [selected, setSelected] = useState<AdminPreApplication | null>(null)
-  const [reviewAction, setReviewAction] = useState<"APPROVE" | "REJECT">("APPROVE")
+  const [reviewAction, setReviewAction] = useState<"APPROVE" | "REJECT" | "DISPUTE">("APPROVE")
   const [guidance, setGuidance] = useState("")
   const [inviteCode, setInviteCode] = useState("")
   const [inviteExpiresAt, setInviteExpiresAt] = useState("")
@@ -141,7 +141,8 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
   }, [reviewAction])
 
   useEffect(() => {
-    if (selected?.status !== "PENDING") return
+    // PENDING 和 DISPUTED 状态都可以自动填充审核意见
+    if (selected?.status !== "PENDING" && selected?.status !== "DISPUTED") return
     if (guidance.trim()) return
 
     if (reviewAction === "APPROVE") {
@@ -159,7 +160,9 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
   ])
 
   useEffect(() => {
-    if (!dialogOpen || reviewAction !== "APPROVE" || selected?.status !== "PENDING") return
+    // PENDING 和 DISPUTED 状态审核通过时加载邀请码选项
+    if (!dialogOpen || reviewAction !== "APPROVE") return
+    if (selected?.status !== "PENDING" && selected?.status !== "DISPUTED") return
     loadInviteOptions()
   }, [dialogOpen, reviewAction, selected?.status])
 
@@ -242,6 +245,7 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
       PENDING: { label: t.pending, className: "bg-amber-100 text-amber-800 text-xs" },
       APPROVED: { label: t.approved, className: "bg-emerald-100 text-emerald-700 text-xs" },
       REJECTED: { label: t.rejected, className: "bg-rose-100 text-rose-700 text-xs" },
+      DISPUTED: { label: t.disputed || "有争议", className: "bg-purple-100 text-purple-700 text-xs" },
     }
     const config = map[status] || map.PENDING
     return <Badge className={config.className}>{config.label}</Badge>
@@ -298,9 +302,10 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
   const openDialog = (record: AdminPreApplication) => {
     setSelected(record)
     setHistoryRecords([])
-    if (record.status === "PENDING") {
+    // PENDING 和 DISPUTED 状态都可以审核
+    if (record.status === "PENDING" || record.status === "DISPUTED") {
       setReviewAction("APPROVE")
-      setGuidance("")
+      setGuidance(record.guidance || "")
       setInviteCode("")
       setInviteExpiresAt("")
     } else {
@@ -433,7 +438,9 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
             className="h-7 text-xs"
             onClick={() => openDialog(record)}
           >
-            {record.status === "PENDING" ? t.preApplicationReviewAction : t.preApplicationView}
+            {record.status === "PENDING" || record.status === "DISPUTED"
+              ? t.preApplicationReviewAction
+              : t.preApplicationView}
           </Button>
         ),
       },
@@ -524,6 +531,7 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
             <SelectContent>
               <SelectItem value="ALL">{t.statusAll}</SelectItem>
               <SelectItem value="PENDING">{t.pending}</SelectItem>
+              <SelectItem value="DISPUTED">{t.disputed || "有争议"}</SelectItem>
               <SelectItem value="APPROVED">{t.approved}</SelectItem>
               <SelectItem value="REJECTED">{t.rejected}</SelectItem>
             </SelectContent>
@@ -646,7 +654,9 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
               variant="outline"
               onClick={() => openDialog(record)}
             >
-              {record.status === "PENDING" ? t.preApplicationReviewAction : t.preApplicationView}
+              {record.status === "PENDING" || record.status === "DISPUTED"
+                ? t.preApplicationReviewAction
+                : t.preApplicationView}
             </Button>
           </Card>
         )}
@@ -775,13 +785,15 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
                 )}
               </div>
 
-              {selected.status === "PENDING" ? (
+              {(selected.status === "PENDING" || selected.status === "DISPUTED") ? (
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
                     <Label>{t.reviewAction}</Label>
                     <Select
                       value={reviewAction}
-                      onValueChange={(value) => setReviewAction(value as "APPROVE" | "REJECT")}
+                      onValueChange={(value) =>
+                        setReviewAction(value as "APPROVE" | "REJECT" | "DISPUTE")
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue />
@@ -789,6 +801,7 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
                       <SelectContent>
                         <SelectItem value="APPROVE">{t.reviewApprove}</SelectItem>
                         <SelectItem value="REJECT">{t.reviewReject}</SelectItem>
+                        <SelectItem value="DISPUTE">{t.reviewDispute || "标记有争议"}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -867,8 +880,10 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
                   value={guidance}
                   onChange={(event) => setGuidance(event.target.value)}
                   rows={5}
-                  disabled={selected.status !== "PENDING"}
-                  className={cn(selected.status !== "PENDING" && "opacity-80")}
+                  disabled={selected.status !== "PENDING" && selected.status !== "DISPUTED"}
+                  className={cn(
+                    selected.status !== "PENDING" && selected.status !== "DISPUTED" && "opacity-80"
+                  )}
                 />
               </div>
             </div>
@@ -879,7 +894,7 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
               <Button variant="outline" onClick={() => setDialogOpen(false)}>
                 {t.reviewCancel}
               </Button>
-              {selected?.status === "PENDING" && (
+              {(selected?.status === "PENDING" || selected?.status === "DISPUTED") && (
                 <Button onClick={handleReview} disabled={submitting}>
                   {submitting ? t.saving : t.reviewSubmit}
                 </Button>

@@ -909,6 +909,8 @@
     "reviewAction": "审核动作",
     "reviewApprove": "通过",
     "reviewReject": "驳回",
+    "reviewDispute": "标记有争议",
+    "disputed": "有争议",
     "guidance": "指导意见",
     "reviewGuidanceRequired": "请输入指导意见",
     "inviteCode": "邀请码",

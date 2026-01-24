@@ -278,6 +278,7 @@ enum PreApplicationStatus {
   PENDING
   APPROVED
   REJECTED
+  DISPUTED
 }
 
 enum PreApplicationSource {
