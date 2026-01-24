@@ -149,6 +149,7 @@ export async function GET(request: NextRequest) {
       inviteExpiredRows,
       sourceRows,
       inviteStatusAssignedUnusedCount,
+      reviewerStatsRows,
     ] = await Promise.all([
       db.preApplication.count({ where: { status: "PENDING" } }),
       db.preApplication.count({ where: { status: "APPROVED" } }),
@@ -249,6 +250,21 @@ export async function GET(request: NextRequest) {
           OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
         },
       }),
+      db.$queryRaw<
+        Array<{ reviewedById: string; name: string | null; email: string; count: number }>
+      >`
+        SELECT
+          p."reviewedById",
+          u."name",
+          u."email",
+          COUNT(*)::int AS count
+        FROM "PreApplication" p
+        INNER JOIN "User" u ON p."reviewedById" = u."id"
+        WHERE p."reviewedById" IS NOT NULL
+          AND p."status" IN ('APPROVED', 'REJECTED')
+        GROUP BY p."reviewedById", u."name", u."email"
+        ORDER BY count DESC
+      `,
     ])
 
     for (const row of submissionsRows) {
@@ -305,6 +321,17 @@ export async function GET(request: NextRequest) {
       }))
       .sort((a, b) => b.count - a.count)
 
+    const reviewerStats = reviewerStatsRows.map((row) => ({
+      reviewerId: row.reviewedById,
+      name: row.name || row.email,
+      count: Number(row.count),
+    }))
+
+    const currentUserReviewed = reviewerStats.find((r) => r.reviewerId === user.id)?.count ?? 0
+    const othersReviewed = reviewerStats
+      .filter((r) => r.reviewerId !== user.id)
+      .reduce((sum, r) => sum + r.count, 0)
+
     return NextResponse.json({
       range: rangeDays,
       granularity,
@@ -334,6 +361,12 @@ export async function GET(request: NextRequest) {
           { key: "used", count: inviteUsedCount },
           { key: "expired", count: inviteExpiredUnusedCount },
         ],
+      },
+      reviewerStats: {
+        currentUser: currentUserReviewed,
+        others: othersReviewed,
+        total: currentUserReviewed + othersReviewed,
+        breakdown: reviewerStats,
       },
     })
   } catch (error) {

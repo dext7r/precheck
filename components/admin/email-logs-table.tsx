@@ -174,9 +174,7 @@ export function AdminEmailLogsTable({ locale, dict }: AdminEmailLogsTableProps) 
         label: t.emailLogProvider,
         width: "10%",
         render: (record) => (
-          <span className="text-sm text-muted-foreground uppercase">
-            {record.provider || "-"}
-          </span>
+          <span className="text-sm text-muted-foreground uppercase">{record.provider || "-"}</span>
         ),
       },
       {
@@ -203,7 +201,11 @@ export function AdminEmailLogsTable({ locale, dict }: AdminEmailLogsTableProps) 
   const formatJson = (value: unknown) => {
     if (!value) return "-"
     try {
-      return JSON.stringify(value, null, 2)
+      const filtered = { ...(value as Record<string, unknown>) }
+      delete filtered.html
+      delete filtered.text
+      if (Object.keys(filtered).length === 0) return "-"
+      return JSON.stringify(filtered, null, 2)
     } catch {
       return "-"
     }
@@ -365,6 +367,22 @@ export function AdminEmailLogsTable({ locale, dict }: AdminEmailLogsTableProps) 
               <p className="text-xs text-muted-foreground">{t.emailLogSubject}</p>
               <p className="break-words">{selected?.subject || "-"}</p>
             </div>
+
+            {(() => {
+              const html = (selected?.metadata as Record<string, unknown> | null)?.html
+              if (!html || typeof html !== "string") return null
+              return (
+                <div className="space-y-2">
+                  <p className="text-xs text-muted-foreground">
+                    {(t as Record<string, unknown>).emailLogContent as string}
+                  </p>
+                  <div
+                    className="max-h-80 overflow-auto rounded-lg border border-border bg-white p-4 text-sm dark:bg-zinc-900"
+                    dangerouslySetInnerHTML={{ __html: html }}
+                  />
+                </div>
+              )
+            })()}
 
             {selected?.errorMessage && (
               <div className="space-y-2">

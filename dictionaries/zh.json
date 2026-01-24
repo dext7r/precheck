@@ -1275,7 +1275,12 @@
     "emailLogError": "错误信息",
     "emailLogMetadata": "附加信息",
     "emailLogSearchPlaceholder": "搜索收件人/主题...",
-    "emailLogEmpty": "暂无邮件日志"
+    "emailLogEmpty": "暂无邮件日志",
+    "emailLogContent": "邮件正文",
+    "myReviewedCount": "我审核的数量",
+    "othersReviewedCount": "其他管理员审核",
+    "totalReviewedCount": "总审核数量",
+    "reviewerBreakdown": "审核人员明细"
   },
   "theme": {
     "toggle": "切换主题",

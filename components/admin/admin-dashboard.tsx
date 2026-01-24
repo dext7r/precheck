@@ -12,6 +12,19 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
+import {
+  Clock,
+  CheckCircle,
+  XCircle,
+  FileText,
+  Ticket,
+  Send,
+  AlertTriangle,
+  Package,
+  UserCheck,
+  Users,
+  TrendingUp,
+} from "lucide-react"
 import type { Dictionary } from "@/lib/i18n/get-dictionary"
 import type { Locale } from "@/lib/i18n/config"
 import { preApplicationSources } from "@/lib/pre-application/constants"
@@ -45,6 +58,12 @@ type DashboardData = {
   distributions: {
     sources: Array<{ source: string; count: number }>
     inviteStatuses: Array<{ key: string; count: number }>
+  }
+  reviewerStats: {
+    currentUser: number
+    others: number
+    total: number
+    breakdown: Array<{ reviewerId: string; name: string; count: number }>
   }
 }
 
@@ -129,38 +148,65 @@ export function AdminDashboard({ locale, dict }: AdminDashboardProps) {
         {
           title: t.preApplicationPending,
           value: data.kpis.preApplicationPending,
+          icon: Clock,
+          color: "text-amber-500",
+          bg: "bg-amber-500/10",
         },
         {
           title: t.preApplicationApproved,
           value: data.kpis.preApplicationApproved,
+          icon: CheckCircle,
+          color: "text-emerald-500",
+          bg: "bg-emerald-500/10",
         },
         {
           title: t.preApplicationRejected,
           value: data.kpis.preApplicationRejected,
+          icon: XCircle,
+          color: "text-red-500",
+          bg: "bg-red-500/10",
         },
         {
           title: t.preApplicationSubmitted,
           value: data.kpis.preApplicationSubmitted,
+          icon: FileText,
+          color: "text-blue-500",
+          bg: "bg-blue-500/10",
         },
         {
           title: t.inviteTotal,
           value: data.kpis.inviteTotal,
+          icon: Ticket,
+          color: "text-violet-500",
+          bg: "bg-violet-500/10",
         },
         {
           title: t.inviteAssigned,
           value: data.kpis.inviteAssigned,
+          icon: Send,
+          color: "text-cyan-500",
+          bg: "bg-cyan-500/10",
         },
         {
           title: t.inviteExpired,
           value: data.kpis.inviteExpired,
+          icon: AlertTriangle,
+          color: "text-orange-500",
+          bg: "bg-orange-500/10",
         },
         {
           title: t.inviteAvailableUnassigned,
           value: data.kpis.inviteAvailableUnassigned,
+          icon: Package,
+          color: "text-teal-500",
+          bg: "bg-teal-500/10",
         },
         {
           title: t.inviteAvailableUnused,
           value: data.kpis.inviteAvailableUnused,
+          icon: Ticket,
+          color: "text-indigo-500",
+          bg: "bg-indigo-500/10",
         },
       ]
     : []
@@ -209,14 +255,71 @@ export function AdminDashboard({ locale, dict }: AdminDashboardProps) {
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {cards.map((card) => (
-          <Card key={card.title}>
+          <Card key={card.title} className="overflow-hidden">
             <CardContent className="pt-6">
-              <p className="text-sm text-muted-foreground">{card.title}</p>
-              <p className="mt-1 text-2xl font-semibold">{card.value.toLocaleString()}</p>
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <p className="text-sm text-muted-foreground">{card.title}</p>
+                  <p className="text-2xl font-bold tabular-nums">{card.value.toLocaleString()}</p>
+                </div>
+                <div className={`rounded-full p-3 ${card.bg}`}>
+                  <card.icon className={`h-5 w-5 ${card.color}`} />
+                </div>
+              </div>
             </CardContent>
           </Card>
         ))}
       </div>
+
+      {data?.reviewerStats && (
+        <div className="grid gap-4 md:grid-cols-3">
+          <Card className="overflow-hidden border-l-4 border-l-primary">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-4">
+                <div className="rounded-full bg-primary/10 p-3">
+                  <UserCheck className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">{t.myReviewedCount}</p>
+                  <p className="text-3xl font-bold tabular-nums">
+                    {data.reviewerStats.currentUser.toLocaleString()}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="overflow-hidden border-l-4 border-l-muted-foreground/30">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-4">
+                <div className="rounded-full bg-muted p-3">
+                  <Users className="h-5 w-5 text-muted-foreground" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">{t.othersReviewedCount}</p>
+                  <p className="text-3xl font-bold tabular-nums">
+                    {data.reviewerStats.others.toLocaleString()}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="overflow-hidden border-l-4 border-l-emerald-500">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-4">
+                <div className="rounded-full bg-emerald-500/10 p-3">
+                  <TrendingUp className="h-5 w-5 text-emerald-500" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">{t.totalReviewedCount}</p>
+                  <p className="text-3xl font-bold tabular-nums">
+                    {data.reviewerStats.total.toLocaleString()}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       <div className="grid gap-6 xl:grid-cols-3">
         <Card className="xl:col-span-2">

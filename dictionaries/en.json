@@ -1279,7 +1279,12 @@
     "emailLogError": "Error Message",
     "emailLogMetadata": "Metadata",
     "emailLogSearchPlaceholder": "Search recipient/subject...",
-    "emailLogEmpty": "No email logs"
+    "emailLogEmpty": "No email logs",
+    "emailLogContent": "Email Content",
+    "myReviewedCount": "My Reviews",
+    "othersReviewedCount": "Other Admins",
+    "totalReviewedCount": "Total Reviews",
+    "reviewerBreakdown": "Reviewer Breakdown"
   },
   "theme": {
     "toggle": "Toggle theme",

@@ -70,7 +70,10 @@ export function SystemConfigForm({ locale, dict }: SystemConfigFormProps) {
 
       setMessage({ type: "success", text: t.systemConfigSaveSuccess })
     } catch (error) {
-      setMessage({ type: "error", text: error instanceof Error ? error.message : t.systemConfigSaveFailed })
+      setMessage({
+        type: "error",
+        text: error instanceof Error ? error.message : t.systemConfigSaveFailed,
+      })
     } finally {
       setSaving(false)
     }
@@ -148,9 +151,7 @@ export function SystemConfigForm({ locale, dict }: SystemConfigFormProps) {
         <div className="space-y-4">
           <div>
             <Label htmlFor="essayHint">{t.systemConfigEssayHint}</Label>
-            <p className="text-sm text-muted-foreground mb-2">
-              {t.systemConfigEssayHintDesc}
-            </p>
+            <p className="text-sm text-muted-foreground mb-2">{t.systemConfigEssayHintDesc}</p>
             <Textarea
               id="essayHint"
               value={essayHint}
@@ -167,9 +168,7 @@ export function SystemConfigForm({ locale, dict }: SystemConfigFormProps) {
           <div className="flex items-center justify-between">
             <div className="space-y-1">
               <Label htmlFor="auditLog">{t.systemConfigAuditLog}</Label>
-              <p className="text-sm text-muted-foreground">
-                {t.systemConfigAuditLogDesc}
-              </p>
+              <p className="text-sm text-muted-foreground">{t.systemConfigAuditLogDesc}</p>
             </div>
             <Switch id="auditLog" checked={auditLogEnabled} onCheckedChange={setAuditLogEnabled} />
           </div>
@@ -180,9 +179,7 @@ export function SystemConfigForm({ locale, dict }: SystemConfigFormProps) {
         <div className="space-y-4">
           <div>
             <Label>{t.systemConfigEmailDomains}</Label>
-            <p className="text-sm text-muted-foreground mb-2">
-              {t.systemConfigEmailDomainsDesc}
-            </p>
+            <p className="text-sm text-muted-foreground mb-2">{t.systemConfigEmailDomainsDesc}</p>
           </div>
 
           <div className="flex gap-2">
@@ -232,9 +229,7 @@ export function SystemConfigForm({ locale, dict }: SystemConfigFormProps) {
         <div className="space-y-4">
           <div>
             <Label htmlFor="testEmail">{t.systemConfigTestEmail}</Label>
-            <p className="text-sm text-muted-foreground mb-2">
-              {t.systemConfigTestEmailDesc}
-            </p>
+            <p className="text-sm text-muted-foreground mb-2">{t.systemConfigTestEmailDesc}</p>
           </div>
 
           <div className="flex gap-2">
@@ -259,7 +254,9 @@ export function SystemConfigForm({ locale, dict }: SystemConfigFormProps) {
 
           <p className="text-xs text-muted-foreground">
             {t.systemConfigEmailProvider}:
-            <strong className="ml-1">{process.env.NEXT_PUBLIC_EMAIL_PROVIDER || t.systemConfigEmailProviderNotConfigured}</strong>
+            <strong className="ml-1">
+              {process.env.NEXT_PUBLIC_EMAIL_PROVIDER || t.systemConfigEmailProviderNotConfigured}
+            </strong>
           </p>
         </div>
       </Card>
@@ -267,7 +264,9 @@ export function SystemConfigForm({ locale, dict }: SystemConfigFormProps) {
       {message && (
         <div
           className={`p-4 rounded-md ${
-            message.type === "success" ? "bg-green-50 text-green-800 dark:bg-green-900/20 dark:text-green-400" : "bg-red-50 text-red-800 dark:bg-red-900/20 dark:text-red-400"
+            message.type === "success"
+              ? "bg-green-50 text-green-800 dark:bg-green-900/20 dark:text-green-400"
+              : "bg-red-50 text-red-800 dark:bg-red-900/20 dark:text-red-400"
           }`}
         >
           {message.text}

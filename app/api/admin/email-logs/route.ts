@@ -34,7 +34,12 @@ export async function GET(request: NextRequest) {
     }
 
     const orderBy: Prisma.EmailLogOrderByWithRelationInput = {}
-    if (sortKey === "createdAt" || sortKey === "to" || sortKey === "subject" || sortKey === "status") {
+    if (
+      sortKey === "createdAt" ||
+      sortKey === "to" ||
+      sortKey === "subject" ||
+      sortKey === "status"
+    ) {
       orderBy[sortKey] = sortDir
     } else {
       orderBy.createdAt = "desc"

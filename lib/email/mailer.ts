@@ -136,7 +136,8 @@ export async function sendEmail(payload: EmailPayload): Promise<void> {
           status: "PENDING",
           provider,
           metadata: {
-            hasHtml: !!payload.html,
+            html: payload.html,
+            text: payload.text,
             from: payload.from,
             fromName: payload.fromName,
           },
@@ -162,13 +163,15 @@ export async function sendEmail(payload: EmailPayload): Promise<void> {
     console.error("Email sending error:", error)
     // 更新日志状态为失败
     if (db && logId) {
-      await db.emailLog.update({
-        where: { id: logId },
-        data: {
-          status: "FAILED",
-          errorMessage: error instanceof Error ? error.message : String(error),
-        },
-      }).catch(() => {})
+      await db.emailLog
+        .update({
+          where: { id: logId },
+          data: {
+            status: "FAILED",
+            errorMessage: error instanceof Error ? error.message : String(error),
+          },
+        })
+        .catch(() => {})
     }
     throw error
   }

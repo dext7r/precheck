@@ -1,7 +1,16 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Search, MoreHorizontal, Shield, ShieldOff, Ban, CheckCircle2, Trash2, X } from "lucide-react"
+import {
+  Search,
+  MoreHorizontal,
+  Shield,
+  ShieldOff,
+  Ban,
+  CheckCircle2,
+  Trash2,
+  X,
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -164,7 +173,9 @@ export function AdminUsersTable({ locale, dict }: AdminUsersTableProps) {
       USER: "bg-muted text-muted-foreground",
     }
     return (
-      <span className={`rounded-full px-2 py-1 text-xs font-medium ${roleStyles[role] || roleStyles.USER}`}>
+      <span
+        className={`rounded-full px-2 py-1 text-xs font-medium ${roleStyles[role] || roleStyles.USER}`}
+      >
         {role}
       </span>
     )
