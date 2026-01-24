@@ -245,7 +245,10 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
       PENDING: { label: t.pending, className: "bg-amber-100 text-amber-800 text-xs" },
       APPROVED: { label: t.approved, className: "bg-emerald-100 text-emerald-700 text-xs" },
       REJECTED: { label: t.rejected, className: "bg-rose-100 text-rose-700 text-xs" },
-      DISPUTED: { label: t.disputed || "有争议", className: "bg-purple-100 text-purple-700 text-xs" },
+      DISPUTED: {
+        label: t.disputed || "有争议",
+        className: "bg-purple-100 text-purple-700 text-xs",
+      },
     }
     const config = map[status] || map.PENDING
     return <Badge className={config.className}>{config.label}</Badge>
@@ -785,7 +788,7 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
                 )}
               </div>
 
-              {(selected.status === "PENDING" || selected.status === "DISPUTED") ? (
+              {selected.status === "PENDING" || selected.status === "DISPUTED" ? (
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
                     <Label>{t.reviewAction}</Label>
@@ -882,7 +885,7 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
                   rows={5}
                   disabled={selected.status !== "PENDING" && selected.status !== "DISPUTED"}
                   className={cn(
-                    selected.status !== "PENDING" && selected.status !== "DISPUTED" && "opacity-80"
+                    selected.status !== "PENDING" && selected.status !== "DISPUTED" && "opacity-80",
                   )}
                 />
               </div>

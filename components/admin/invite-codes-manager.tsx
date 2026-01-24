@@ -602,8 +602,8 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
       toast.success(
         (t.inviteCodeBatchDeleteSuccess || "已删除 {count} 个邀请码").replace(
           "{count}",
-          data.deleted.toString()
-        )
+          data.deleted.toString(),
+        ),
       )
       setBatchDeleteOpen(false)
       setSelectedIds(new Set())
@@ -975,7 +975,7 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
               />
             </div>
             <Button onClick={handleGenerateQueryToken} disabled={generatingToken}>
-              {generatingToken ? t.saving : (t.queryTokenGenerate || "生成查询码")}
+              {generatingToken ? t.saving : t.queryTokenGenerate || "生成查询码"}
             </Button>
             <Button
               variant="destructive"
@@ -1272,12 +1272,9 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
           setBatchDeleteOpen(open)
         }}
         title={t.inviteCodeBatchDeleteTitle || "批量删除邀请码"}
-        description={
-          (t.inviteCodeBatchDeleteDesc || "确定要删除选中的 {count} 个邀请码吗？此操作不可撤销。").replace(
-            "{count}",
-            selectedIds.size.toString()
-          )
-        }
+        description={(
+          t.inviteCodeBatchDeleteDesc || "确定要删除选中的 {count} 个邀请码吗？此操作不可撤销。"
+        ).replace("{count}", selectedIds.size.toString())}
         confirmLabel={t.inviteCodeBatchDelete || "批量删除"}
         cancelLabel={t.cancel}
         confirming={batchDeleting}
