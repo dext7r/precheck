@@ -689,7 +689,8 @@
     "updateSuccess": "Updated successfully",
     "submitFailed": "Submission failed, please try again",
     "validation": {
-      "essayTooShort": "Your essay must be at least {min} characters"
+      "essayTooShort": "Your essay must be at least {min} characters",
+      "sourceDetailRequired": "Please provide details when selecting Other"
     },
     "allowedDomainsTitle": "Allowed email domains",
     "historyTitle": "Submission History",

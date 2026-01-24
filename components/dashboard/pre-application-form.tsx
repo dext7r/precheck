@@ -256,6 +256,12 @@ export function PreApplicationForm({
         return
       }
 
+      // 选择其他平台时必须填写说明
+      if (formData.source === "OTHER" && !formData.sourceDetail.trim()) {
+        toast.error(t.validation.sourceDetailRequired)
+        return
+      }
+
       const method = latest ? "PUT" : "POST"
       const res = await fetch("/api/pre-application", {
         method,

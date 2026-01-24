@@ -685,7 +685,8 @@
     "updateSuccess": "编辑成功",
     "submitFailed": "提交失败，请重试",
     "validation": {
-      "essayTooShort": "申请小作文至少需要 {min} 个字符"
+      "essayTooShort": "申请小作文至少需要 {min} 个字符",
+      "sourceDetailRequired": "选择其他平台时请填写说明"
     },
     "allowedDomainsTitle": "支持邮箱后缀",
     "historyTitle": "提交历史",
