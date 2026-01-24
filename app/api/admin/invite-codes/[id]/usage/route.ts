@@ -32,6 +32,12 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
 
     const before = await db.inviteCode.findUnique({ where: { id } })
 
+    if (!before || before.deletedAt) {
+      return createApiErrorResponse(request, ApiErrorKeys.admin.inviteCodes.notFound, {
+        status: 404,
+      })
+    }
+
     const record = await db.inviteCode.update({
       where: { id },
       data: data.used

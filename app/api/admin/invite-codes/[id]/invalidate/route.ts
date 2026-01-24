@@ -24,7 +24,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
     const { id } = await context.params
     const before = await db.inviteCode.findUnique({ where: { id } })
 
-    if (!before) {
+    if (!before || before.deletedAt) {
       return createApiErrorResponse(request, ApiErrorKeys.admin.inviteCodes.notFound, {
         status: 404,
       })

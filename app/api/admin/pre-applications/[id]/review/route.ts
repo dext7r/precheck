@@ -127,7 +127,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
         include: { preApplication: { select: { id: true } } },
       })
 
-      if (!existing) {
+      if (!existing || existing.deletedAt) {
         return createApiErrorResponse(request, ApiErrorKeys.admin.inviteCodes.notFound, {
           status: 400,
         })

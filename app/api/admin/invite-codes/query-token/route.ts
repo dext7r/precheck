@@ -50,6 +50,7 @@ export async function POST(request: NextRequest) {
         id: { in: data.inviteCodeIds },
         usedAt: null,
         queryTokenId: null,
+        deletedAt: null,
         OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
       },
       select: { id: true, code: true },

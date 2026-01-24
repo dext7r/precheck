@@ -55,7 +55,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
       },
     })
 
-    if (!record) {
+    if (!record || record.deletedAt) {
       return createApiErrorResponse(request, ApiErrorKeys.admin.inviteCodes.assign.notFound, {
         status: 404,
       })
