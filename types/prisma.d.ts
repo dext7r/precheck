@@ -164,6 +164,7 @@ export interface InviteCode {
   issuedToEmail: string | null
   issuedAt: Date | null
   queryTokenId: string | null
+  deletedAt: Date | null
   createdAt: Date
   updatedAt: Date
   assignedBy: User | null

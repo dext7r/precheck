@@ -198,6 +198,7 @@ model InviteCode {
   issuedToEmail  String?
   issuedAt       DateTime?
   queryTokenId   String?
+  deletedAt   DateTime?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
@@ -213,6 +214,7 @@ model InviteCode {
   @@index([issuedToUserId])
   @@index([issuedToEmail])
   @@index([queryTokenId])
+  @@index([deletedAt])
 }
 
 model InviteCodeQueryToken {

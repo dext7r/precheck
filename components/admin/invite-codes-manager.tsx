@@ -36,6 +36,7 @@ import {
   Copy,
   Check,
   X,
+  Trash2,
 } from "lucide-react"
 import {
   DropdownMenu,
@@ -132,6 +133,11 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
   const [queryTokenExpiry, setQueryTokenExpiry] = useState("")
   const [generatingToken, setGeneratingToken] = useState(false)
   const [tokenCopied, setTokenCopied] = useState(false)
+  const [deleteOpen, setDeleteOpen] = useState(false)
+  const [deleteRecord, setDeleteRecord] = useState<InviteCodeRecord | null>(null)
+  const [deleting, setDeleting] = useState(false)
+  const [batchDeleteOpen, setBatchDeleteOpen] = useState(false)
+  const [batchDeleting, setBatchDeleting] = useState(false)
 
   const inviteCodePattern = /(?:https?:\/\/linux\.do)?\/?invites\/([A-Za-z0-9_-]{4,64})/i
 
@@ -551,6 +557,63 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
     }
   }
 
+  const openDeleteDialog = (record: InviteCodeRecord) => {
+    setDeleteRecord(record)
+    setDeleteOpen(true)
+  }
+
+  const handleDelete = async () => {
+    if (!deleteRecord) return
+    setDeleting(true)
+    try {
+      const res = await fetch(`/api/admin/invite-codes/${deleteRecord.id}/delete`, {
+        method: "POST",
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data?.error || t.actionFailed)
+      }
+      toast.success(t.inviteCodeDeleteSuccess || "邀请码已删除")
+      setDeleteOpen(false)
+      setDeleteRecord(null)
+      await fetchRecords()
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t.actionFailed)
+    } finally {
+      setDeleting(false)
+    }
+  }
+
+  const handleBatchDelete = async () => {
+    if (selectedIds.size === 0) return
+    setBatchDeleting(true)
+    try {
+      const res = await fetch("/api/admin/invite-codes/batch-delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: Array.from(selectedIds) }),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data?.error || t.actionFailed)
+      }
+      const data = await res.json()
+      toast.success(
+        (t.inviteCodeBatchDeleteSuccess || "已删除 {count} 个邀请码").replace(
+          "{count}",
+          data.deleted.toString()
+        )
+      )
+      setBatchDeleteOpen(false)
+      setSelectedIds(new Set())
+      await fetchRecords()
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t.actionFailed)
+    } finally {
+      setBatchDeleting(false)
+    }
+  }
+
   const columns: Column<InviteCodeRecord>[] = useMemo(
     () => [
       {
@@ -664,6 +727,13 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
               <DropdownMenuItem onClick={() => updateUsage(record, !record.usedAt)}>
                 <CheckCircle2 className="mr-2 h-4 w-4" />
                 {record.usedAt ? t.inviteCodeMarkUnused : t.inviteCodeMarkUsed}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="text-destructive focus:text-destructive"
+                onClick={() => openDeleteDialog(record)}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                {t.inviteCodeDelete || "删除"}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -885,7 +955,15 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
               />
             </div>
             <Button onClick={handleGenerateQueryToken} disabled={generatingToken}>
-              {generatingToken ? t.saving : t.queryTokenGenerate || "生成查询码"}
+              {generatingToken ? t.saving : (t.queryTokenGenerate || "生成查询码")}
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => setBatchDeleteOpen(true)}
+              disabled={batchDeleting}
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              {t.inviteCodeBatchDelete || "批量删除"}
             </Button>
           </div>
         </Card>
@@ -1140,6 +1218,42 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={deleteOpen}
+        onOpenChange={(open) => {
+          setDeleteOpen(open)
+          if (!open && !deleting) {
+            setDeleteRecord(null)
+          }
+        }}
+        title={t.inviteCodeDeleteTitle || "删除邀请码"}
+        description={t.inviteCodeDeleteDesc || "确定要删除此邀请码吗？此操作不可撤销。"}
+        confirmLabel={t.inviteCodeDelete || "删除"}
+        cancelLabel={t.cancel}
+        confirming={deleting}
+        destructive
+        onConfirm={handleDelete}
+      />
+
+      <ConfirmDialog
+        open={batchDeleteOpen}
+        onOpenChange={(open) => {
+          setBatchDeleteOpen(open)
+        }}
+        title={t.inviteCodeBatchDeleteTitle || "批量删除邀请码"}
+        description={
+          (t.inviteCodeBatchDeleteDesc || "确定要删除选中的 {count} 个邀请码吗？此操作不可撤销。").replace(
+            "{count}",
+            selectedIds.size.toString()
+          )
+        }
+        confirmLabel={t.inviteCodeBatchDelete || "批量删除"}
+        cancelLabel={t.cancel}
+        confirming={batchDeleting}
+        destructive
+        onConfirm={handleBatchDelete}
+      />
     </div>
   )
 }

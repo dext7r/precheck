@@ -37,7 +37,9 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit
 
     const now = new Date()
-    const where: Record<string, unknown> = {}
+    const where: Record<string, unknown> = {
+      deletedAt: null,
+    }
 
     if (search) {
       where.code = { contains: search, mode: "insensitive" }

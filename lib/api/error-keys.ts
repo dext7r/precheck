@@ -69,6 +69,8 @@ export const ApiErrorKeys = {
       userIdRequired: "apiErrors.admin.inviteCodes.userIdRequired",
       emailRequired: "apiErrors.admin.inviteCodes.emailRequired",
       emailNotificationsDisabled: "apiErrors.admin.inviteCodes.emailNotificationsDisabled",
+      alreadyDeleted: "apiErrors.admin.inviteCodes.alreadyDeleted",
+      failedToDelete: "apiErrors.admin.inviteCodes.failedToDelete",
       assign: {
         notFound: "apiErrors.admin.inviteCodes.assign.notFound",
         alreadyUsed: "apiErrors.admin.inviteCodes.assign.alreadyUsed",
