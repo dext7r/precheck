@@ -853,7 +853,18 @@
     "inviteCodeTitle": "Invite Code",
     "used": "Used",
     "noInviteCode": "No invite code available",
-    "noInviteCodes": "No invite codes available"
+    "noInviteCodes": "No invite codes available",
+    "stepSubmitted": "Submitted",
+    "stepReviewing": "Reviewing",
+    "stepApproved": "Approved",
+    "stepRejected": "Rejected",
+    "stepWaiting": "Awaiting",
+    "pendingTitle": "Application Under Review",
+    "pendingMessage": "We are carefully reviewing your application. Please be patient. Reviews are typically completed within 1-3 business days.",
+    "approvedTitle": "Congratulations, Approved!",
+    "approvedMessage": "Welcome to the linux.do community! Use the invite code below to complete your registration.",
+    "rejectedTitle": "Application Not Approved",
+    "rejectedMessage": "Unfortunately, your application was not approved. Please review the guidance for details."
   },
   "admin": {
     "title": "Admin Panel",

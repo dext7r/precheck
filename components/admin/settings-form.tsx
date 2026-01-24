@@ -268,7 +268,7 @@ export function AdminSettingsForm({ locale, dict }: AdminSettingsFormProps) {
   const handleAddTemplate = (
     type: "approve" | "reject" | "dispute",
     value: string,
-    setValue: (v: string) => void
+    setValue: (v: string) => void,
   ) => {
     if (!systemConfig) return
     const text = value.trim()
@@ -336,7 +336,7 @@ export function AdminSettingsForm({ locale, dict }: AdminSettingsFormProps) {
       toast.success(
         t.systemConfigTestEmailSuccess
           .replace("{email}", testEmailAddress)
-          .replace("{provider}", result.provider)
+          .replace("{provider}", result.provider),
       )
       setTestEmailAddress("")
     } catch (err) {

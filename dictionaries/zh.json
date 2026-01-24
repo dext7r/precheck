@@ -849,7 +849,18 @@
     "inviteCodeTitle": "邀请码",
     "used": "已使用",
     "noInviteCode": "暂无邀请码",
-    "noInviteCodes": "暂无可用邀请码"
+    "noInviteCodes": "暂无可用邀请码",
+    "stepSubmitted": "已提交",
+    "stepReviewing": "审核中",
+    "stepApproved": "已通过",
+    "stepRejected": "未通过",
+    "stepWaiting": "等待结果",
+    "pendingTitle": "申请正在审核中",
+    "pendingMessage": "我们正在认真审核您的申请，请耐心等待。通常会在 1-3 个工作日内完成审核。",
+    "approvedTitle": "恭喜，申请已通过！",
+    "approvedMessage": "欢迎加入 linux.do 社区！请使用下方的邀请码完成注册。",
+    "rejectedTitle": "申请未通过",
+    "rejectedMessage": "很遗憾，您的申请暂未通过审核。请查看审核意见了解详情。"
   },
   "admin": {
     "title": "管理面板",

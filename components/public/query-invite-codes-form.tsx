@@ -19,6 +19,9 @@ import {
   XCircle,
   Ticket,
   SearchX,
+  FileText,
+  UserCheck,
+  Sparkles,
 } from "lucide-react"
 import { getDictionaryEntry } from "@/lib/i18n/get-dictionary-entry"
 import type { Dictionary } from "@/lib/i18n/get-dictionary"
@@ -121,7 +124,6 @@ export function QueryInviteCodesForm({ locale, dict }: QueryInviteCodesFormProps
     }
   }
 
-  // 自动从URL参数读取queryCode并查询
   useEffect(() => {
     const queryCode = searchParams.get("queryCode")
     if (queryCode) {
@@ -156,53 +158,191 @@ export function QueryInviteCodesForm({ locale, dict }: QueryInviteCodesFormProps
     return new Date(expiresAt).getTime() <= Date.now()
   }
 
-  const getStatusBadge = (status: string) => {
-    const config: Record<string, { label: string; className: string; icon: React.ReactNode }> = {
-      PENDING: {
-        label: t.statusPending,
-        className:
-          "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200 dark:border-amber-800/50",
-        icon: (
-          <motion.span
-            animate={{ rotate: 360 }}
-            transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-          >
-            <Clock className="h-3.5 w-3.5" />
-          </motion.span>
-        ),
+  const formatDate = (value?: string | null) =>
+    value ? new Date(value).toLocaleString(locale) : "-"
+
+  // 进度步骤组件
+  const ProgressSteps = ({ status }: { status: "PENDING" | "APPROVED" | "REJECTED" }) => {
+    const steps = [
+      { key: "submitted", icon: FileText, label: t.stepSubmitted || "已提交" },
+      { key: "reviewing", icon: UserCheck, label: t.stepReviewing || "审核中" },
+      {
+        key: "result",
+        icon: status === "APPROVED" ? Sparkles : status === "REJECTED" ? XCircle : Clock,
+        label:
+          status === "APPROVED"
+            ? t.stepApproved || "已通过"
+            : status === "REJECTED"
+              ? t.stepRejected || "未通过"
+              : t.stepWaiting || "等待结果",
       },
-      APPROVED: {
-        label: t.statusApproved,
-        className:
-          "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/50",
-        icon: (
-          <motion.span
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ type: "spring", stiffness: 400, damping: 10 }}
-          >
-            <CheckCircle2 className="h-3.5 w-3.5" />
-          </motion.span>
-        ),
-      },
-      REJECTED: {
-        label: t.statusRejected,
-        className:
-          "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 border-rose-200 dark:border-rose-800/50",
-        icon: <XCircle className="h-3.5 w-3.5" />,
-      },
-    }
-    const item = config[status] || config.PENDING
+    ]
+
+    const currentStep = status === "PENDING" ? 1 : 2
+
     return (
-      <Badge variant="outline" className={`gap-1.5 ${item.className}`}>
-        {item.icon}
-        {item.label}
-      </Badge>
+      <div className="flex items-center justify-between mb-6">
+        {steps.map((step, index) => {
+          const Icon = step.icon
+          const isActive = index <= currentStep
+          const isCurrent = index === currentStep
+          const isLast = index === steps.length - 1
+
+          return (
+            <div key={step.key} className="flex items-center flex-1">
+              <div className="flex flex-col items-center">
+                <motion.div
+                  initial={false}
+                  animate={
+                    isCurrent && status === "PENDING"
+                      ? { scale: [1, 1.1, 1], opacity: [0.7, 1, 0.7] }
+                      : { scale: 1, opacity: 1 }
+                  }
+                  transition={
+                    isCurrent && status === "PENDING"
+                      ? { duration: 2, repeat: Infinity, ease: "easeInOut" }
+                      : {}
+                  }
+                  className={`flex h-10 w-10 items-center justify-center rounded-full transition-all duration-300 ${
+                    isActive
+                      ? status === "REJECTED" && isLast
+                        ? "bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400"
+                        : status === "APPROVED" && isLast
+                          ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400"
+                          : "bg-primary/10 text-primary"
+                      : "bg-muted text-muted-foreground/50"
+                  }`}
+                >
+                  <Icon className="h-5 w-5" />
+                </motion.div>
+                <span
+                  className={`mt-2 text-xs font-medium ${
+                    isActive ? "text-foreground" : "text-muted-foreground/50"
+                  }`}
+                >
+                  {step.label}
+                </span>
+              </div>
+              {!isLast && (
+                <div className="flex-1 mx-2 mt-[-1.5rem]">
+                  <div
+                    className={`h-0.5 rounded-full transition-colors duration-300 ${
+                      index < currentStep
+                        ? "bg-primary"
+                        : index === currentStep && status !== "PENDING"
+                          ? status === "APPROVED"
+                            ? "bg-emerald-500"
+                            : "bg-rose-500"
+                          : "bg-border"
+                    }`}
+                  />
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </div>
     )
   }
 
-  const formatDate = (value?: string | null) =>
-    value ? new Date(value).toLocaleString(locale) : "-"
+  // 状态卡片
+  const StatusCard = ({ data }: { data: PreApplicationQueryResult }) => {
+    const statusConfig = {
+      PENDING: {
+        bgClass:
+          "bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20",
+        borderClass: "border-amber-200/60 dark:border-amber-800/40",
+        iconBg: "bg-amber-100 dark:bg-amber-900/40",
+        iconClass: "text-amber-600 dark:text-amber-400",
+        title: t.pendingTitle || "申请正在审核中",
+        message:
+          t.pendingMessage ||
+          "我们正在认真审核您的申请，请耐心等待。通常会在 1-3 个工作日内完成审核。",
+      },
+      APPROVED: {
+        bgClass:
+          "bg-gradient-to-br from-emerald-50 to-green-50 dark:from-emerald-950/20 dark:to-green-950/20",
+        borderClass: "border-emerald-200/60 dark:border-emerald-800/40",
+        iconBg: "bg-emerald-100 dark:bg-emerald-900/40",
+        iconClass: "text-emerald-600 dark:text-emerald-400",
+        title: t.approvedTitle || "恭喜，申请已通过！",
+        message: t.approvedMessage || "欢迎加入 linux.do 社区！请使用下方的邀请码完成注册。",
+      },
+      REJECTED: {
+        bgClass:
+          "bg-gradient-to-br from-rose-50 to-red-50 dark:from-rose-950/20 dark:to-red-950/20",
+        borderClass: "border-rose-200/60 dark:border-rose-800/40",
+        iconBg: "bg-rose-100 dark:bg-rose-900/40",
+        iconClass: "text-rose-600 dark:text-rose-400",
+        title: t.rejectedTitle || "申请未通过",
+        message: t.rejectedMessage || "很遗憾，您的申请暂未通过审核。请查看审核意见了解详情。",
+      },
+    }
+
+    const config = statusConfig[data.status]
+    const StatusIcon =
+      data.status === "PENDING" ? Clock : data.status === "APPROVED" ? CheckCircle2 : XCircle
+
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className={`relative overflow-hidden rounded-2xl border p-5 ${config.bgClass} ${config.borderClass}`}
+      >
+        {/* 装饰性背景 */}
+        <div className="absolute top-0 right-0 w-32 h-32 opacity-[0.03] pointer-events-none">
+          <StatusIcon className="w-full h-full" />
+        </div>
+
+        <div className="relative flex gap-4">
+          <motion.div
+            animate={
+              data.status === "PENDING" ? { scale: [1, 1.05, 1], rotate: [0, 5, -5, 0] } : {}
+            }
+            transition={
+              data.status === "PENDING" ? { duration: 3, repeat: Infinity, ease: "easeInOut" } : {}
+            }
+            className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${config.iconBg}`}
+          >
+            <StatusIcon className={`h-6 w-6 ${config.iconClass}`} />
+          </motion.div>
+          <div className="flex-1 min-w-0">
+            <h3 className="font-semibold text-foreground">{config.title}</h3>
+            <p className="mt-1 text-sm text-muted-foreground leading-relaxed">{config.message}</p>
+          </div>
+        </div>
+
+        {/* 提交时间信息 */}
+        <div className="mt-4 pt-4 border-t border-border/40 flex flex-wrap gap-x-6 gap-y-2 text-sm">
+          <div className="flex items-center gap-2">
+            <span className="text-muted-foreground">{t.submittedAt}</span>
+            <span className="font-medium">{formatDate(data.createdAt)}</span>
+          </div>
+          {data.reviewedAt && (
+            <div className="flex items-center gap-2">
+              <span className="text-muted-foreground">{t.reviewedAt}</span>
+              <span className="font-medium">{formatDate(data.reviewedAt)}</span>
+            </div>
+          )}
+        </div>
+
+        {/* 审核意见 */}
+        {data.guidance && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            className="mt-4 pt-4 border-t border-border/40"
+          >
+            <p className="text-sm font-medium text-muted-foreground mb-2">{t.guidance}</p>
+            <div className="rounded-xl bg-background/60 p-4 text-sm leading-relaxed whitespace-pre-wrap">
+              {data.guidance}
+            </div>
+          </motion.div>
+        )}
+      </motion.div>
+    )
+  }
 
   const renderInviteCodesResult = (data: InviteCodesQueryResult) => {
     if (data.inviteCodes.length === 0) {
@@ -298,67 +438,40 @@ export function QueryInviteCodesForm({ locale, dict }: QueryInviteCodesFormProps
       data.inviteCode && (data.inviteCode.used || isExpired(data.inviteCode.expiresAt))
 
     return (
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="space-y-4"
-      >
-        <h3 className="text-sm font-medium text-muted-foreground">{t.applicationStatus}</h3>
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-5">
+        {/* 进度指示器 */}
+        <ProgressSteps status={data.status} />
 
-        <div className="rounded-xl border border-border/60 bg-card/80 p-4 space-y-4 backdrop-blur-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">{t.statusLabel}</span>
-            {getStatusBadge(data.status)}
-          </div>
+        {/* 状态卡片 */}
+        <StatusCard data={data} />
 
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">{t.submittedAt}</span>
-            <span className="text-sm font-medium">{formatDate(data.createdAt)}</span>
-          </div>
-
-          {data.reviewedAt && (
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">{t.reviewedAt}</span>
-              <span className="text-sm font-medium">{formatDate(data.reviewedAt)}</span>
-            </div>
-          )}
-
-          {data.guidance && (
-            <div className="pt-3 border-t border-border/60">
-              <p className="text-sm text-muted-foreground mb-2">{t.guidance}</p>
-              <p className="text-sm whitespace-pre-wrap rounded-lg bg-muted/50 p-3 leading-relaxed">
-                {data.guidance}
-              </p>
-            </div>
-          )}
-        </div>
-
+        {/* 邀请码区域 */}
         {data.status === "APPROVED" && data.inviteCode && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
+            transition={{ delay: 0.3 }}
             className="space-y-3"
           >
             <div className="flex items-center gap-2">
-              <Ticket className="h-4 w-4 text-primary" />
-              <h3 className="text-sm font-medium text-muted-foreground">{t.inviteCodeTitle}</h3>
+              <Sparkles className="h-4 w-4 text-emerald-500" />
+              <h3 className="text-sm font-medium">{t.inviteCodeTitle}</h3>
             </div>
             <div className="group relative">
               <div
-                className={`absolute -inset-0.5 rounded-xl bg-gradient-to-r from-emerald-500/20 via-primary/10 to-emerald-500/20 opacity-0 blur transition-opacity duration-300 ${
+                className={`absolute -inset-0.5 rounded-xl bg-gradient-to-r from-emerald-500/30 via-primary/20 to-emerald-500/30 opacity-0 blur transition-opacity duration-300 ${
                   !codeDisabled ? "group-hover:opacity-100" : ""
                 }`}
               />
               <div
-                className={`relative flex items-center justify-between rounded-xl border bg-card/80 p-4 backdrop-blur-sm transition-all duration-200 ${
+                className={`relative flex items-center justify-between rounded-xl border-2 bg-card p-4 transition-all duration-200 ${
                   codeDisabled
                     ? "border-border/40 opacity-50"
-                    : "border-border/60 group-hover:border-emerald-500/30"
+                    : "border-emerald-200 dark:border-emerald-800/50 group-hover:border-emerald-400"
                 }`}
               >
                 <div className="min-w-0 flex-1 space-y-2">
-                  <p className="truncate font-mono text-sm font-medium">
+                  <p className="truncate font-mono text-sm font-semibold">
                     {getFullUrl(data.inviteCode.code)}
                   </p>
                   <div className="flex flex-wrap gap-2">
@@ -376,12 +489,10 @@ export function QueryInviteCodesForm({ locale, dict }: QueryInviteCodesFormProps
                   </div>
                 </div>
                 <Button
-                  variant="ghost"
-                  size="icon"
+                  variant={codeDisabled ? "ghost" : "default"}
+                  size="sm"
                   className={`ml-3 shrink-0 transition-all duration-200 ${
-                    !codeDisabled
-                      ? "hover:bg-emerald-500/10 hover:text-emerald-600 active:scale-95"
-                      : ""
+                    !codeDisabled ? "bg-emerald-600 hover:bg-emerald-700 active:scale-95" : ""
                   }`}
                   onClick={() => handleCopy(data.inviteCode!.code, 0)}
                   disabled={!!codeDisabled}
@@ -393,13 +504,15 @@ export function QueryInviteCodesForm({ locale, dict }: QueryInviteCodesFormProps
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
                         exit={{ scale: 0 }}
-                        transition={{ type: "spring", stiffness: 400, damping: 15 }}
+                        className="flex items-center gap-1.5"
                       >
-                        <Check className="h-4 w-4 text-emerald-500" />
+                        <Check className="h-4 w-4" />
+                        {t.copied}
                       </motion.span>
                     ) : (
-                      <motion.span key="copy" initial={{ scale: 1 }} exit={{ scale: 0 }}>
+                      <motion.span key="copy" className="flex items-center gap-1.5">
                         <Copy className="h-4 w-4" />
+                        {t.copyCode}
                       </motion.span>
                     )}
                   </AnimatePresence>
