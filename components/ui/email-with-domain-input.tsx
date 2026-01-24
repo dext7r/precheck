@@ -1,13 +1,17 @@
 "use client"
 
+import { Check, ChevronsUpDown } from "lucide-react"
 import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
 import { normalizeLocalPart } from "@/lib/validators/email"
 import { useEffect, useMemo, useState } from "react"
@@ -151,6 +155,8 @@ export function EmailWithDomainInput({
     return selectedDomain || domainOptions[0] || ""
   }, [useCustomDomain, selectedDomain, domainOptions])
 
+  const [open, setOpen] = useState(false)
+
   if (!domainOptions.length) {
     return (
       <Input
@@ -180,18 +186,50 @@ export function EmailWithDomainInput({
         </div>
         <span className="text-muted-foreground">@</span>
         <div className="flex-1">
-          <Select value={currentSelectValue} onValueChange={handleDomainChange} disabled={disabled}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder={selectPlaceholder ?? "选择后缀"} />
-            </SelectTrigger>
-            <SelectContent position="popper">
-              {domainOptions.map((domain) => (
-                <SelectItem key={domain} value={domain}>
-                  {domain}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                role="combobox"
+                aria-expanded={open}
+                disabled={disabled}
+                className="w-full justify-between font-normal"
+              >
+                {currentSelectValue && currentSelectValue !== CUSTOM_DOMAIN_VALUE
+                  ? currentSelectValue
+                  : (selectPlaceholder ?? "选择后缀")}
+                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[200px] p-0" align="start">
+              <Command>
+                <CommandInput placeholder="搜索后缀..." />
+                <CommandList>
+                  <CommandEmpty>未找到匹配项</CommandEmpty>
+                  <CommandGroup>
+                    {domainOptions.map((domain) => (
+                      <CommandItem
+                        key={domain}
+                        value={domain}
+                        onSelect={() => {
+                          handleDomainChange(domain)
+                          setOpen(false)
+                        }}
+                      >
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            currentSelectValue === domain ? "opacity-100" : "opacity-0",
+                          )}
+                        />
+                        {domain}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
         </div>
       </div>
       {useCustomDomain && (
