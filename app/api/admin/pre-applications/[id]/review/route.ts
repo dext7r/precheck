@@ -237,6 +237,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
           status: PreApplicationStatus.APPROVED,
           reviewerName,
           guidance,
+          essay: record.essay,
           inviteCode: inviteCode.code,
           inviteExpiresAt: inviteCode.expiresAt,
           locale: currentLocale,
@@ -295,6 +296,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
         status: PreApplicationStatus.REJECTED,
         reviewerName,
         guidance,
+        essay: record.essay,
         locale: currentLocale,
       })
 
@@ -398,6 +400,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
         status: isApproved ? "APPROVED" : "REJECTED",
         reviewerName,
         guidance,
+        essay: record.essay,
         inviteCode: inviteCodeRecord?.code ?? undefined,
         inviteExpiresAt: inviteCodeRecord?.expiresAt ?? undefined,
         locale: currentLocale,

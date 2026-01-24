@@ -756,6 +756,7 @@
       "rejectedIntro": "Your linux.do pre-application has been rejected.",
       "reviewerLabel": "Reviewer: ",
       "guidanceLabel": "Guidance: ",
+      "essayLabel": "Your application: ",
       "inviteCodeLabel": "Invite code: ",
       "inviteExpiresLabel": "Expires at: ",
       "footer": "If you have questions, please contact an admin."
@@ -763,8 +764,9 @@
     "emailTemplate": {
       "approved": {
         "subject": "{appName} pre-application approved",
-        "title": "Pre-application approved",
-        "intro": "Your linux.do pre-application is approved. Follow the guidance to proceed.",
+        "title": "🎉 Pre-application approved",
+        "intro": "Congratulations! Your linux.do pre-application is approved. Follow the guidance to proceed.",
+        "essayTitle": "Your Application",
         "reviewer": "Reviewer: {reviewer}",
         "guidance": "Guidance: {guidance}",
         "inviteCode": "Invite code: {code}",
@@ -775,6 +777,7 @@
         "subject": "{appName} pre-application rejected",
         "title": "Pre-application rejected",
         "intro": "Your linux.do pre-application was not approved. Please adjust based on guidance.",
+        "essayTitle": "Your Application",
         "reviewer": "Reviewer: {reviewer}",
         "guidance": "Guidance: {guidance}",
         "inviteCode": "",

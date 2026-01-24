@@ -6,6 +6,7 @@ interface PreApplicationNotificationInput {
   status: PreApplicationStatus
   reviewerName: string
   guidance: string
+  essay?: string
   inviteCode?: string | null
   inviteExpiresAt?: Date | null
   locale: string
@@ -16,6 +17,7 @@ export function buildPreApplicationMessage({
   status,
   reviewerName,
   guidance,
+  essay,
   inviteCode,
   inviteExpiresAt,
   locale,
@@ -25,7 +27,13 @@ export function buildPreApplicationMessage({
   const title = isApproved ? t.approvedTitle : t.rejectedTitle
   const intro = isApproved ? t.approvedIntro : t.rejectedIntro
 
-  const lines = [intro, `${t.reviewerLabel}${reviewerName}`, `${t.guidanceLabel}${guidance}`]
+  const lines = [intro]
+
+  if (essay) {
+    lines.push(`${t.essayLabel}\n${essay}`)
+  }
+
+  lines.push(`${t.reviewerLabel}${reviewerName}`, `${t.guidanceLabel}${guidance}`)
 
   if (isApproved && inviteCode) {
     lines.push(`${t.inviteCodeLabel}${inviteCode}`)
