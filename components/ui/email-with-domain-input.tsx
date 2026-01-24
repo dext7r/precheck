@@ -18,7 +18,6 @@ type EmailWithDomainInputProps = {
   value: string
   domains: string[]
   onChange: (email: string) => void
-  selectLabel?: string
   selectPlaceholder?: string
   inputId?: string
   inputPlaceholder?: string
@@ -30,7 +29,6 @@ export function EmailWithDomainInput({
   value,
   domains,
   onChange,
-  selectLabel,
   selectPlaceholder,
   inputId,
   inputPlaceholder,
@@ -169,7 +167,7 @@ export function EmailWithDomainInput({
 
   return (
     <div className={cn("flex flex-col gap-2", className)}>
-      <div className="flex w-full gap-2">
+      <div className="flex w-full items-center gap-2">
         <div className="flex-1">
           <Input
             id={inputId}
@@ -180,20 +178,16 @@ export function EmailWithDomainInput({
             disabled={disabled}
           />
         </div>
-        <div className="flex flex-1 flex-col gap-1">
-          {selectLabel && (
-            <span className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
-              {selectLabel}
-            </span>
-          )}
+        <span className="text-muted-foreground">@</span>
+        <div className="flex-1">
           <Select value={currentSelectValue} onValueChange={handleDomainChange} disabled={disabled}>
             <SelectTrigger className="w-full">
-              <SelectValue placeholder={selectPlaceholder ?? "Suffix"} />
+              <SelectValue placeholder={selectPlaceholder ?? "选择后缀"} />
             </SelectTrigger>
             <SelectContent position="popper">
               {domainOptions.map((domain) => (
                 <SelectItem key={domain} value={domain}>
-                  @{domain}
+                  {domain}
                 </SelectItem>
               ))}
             </SelectContent>

@@ -54,7 +54,6 @@ export function RegisterForm({ locale, dict, oauthProviders }: RegisterFormProps
   const t = dict.auth.register
   const emailLocalPartError =
     getDictionaryEntry(dict, "auth.register.errors.invalidEmailLocalPart") ?? t.errors.invalidEmail
-  const emailSuffixLabel = t.emailSuffixLabel ?? "Choose an allowed email suffix"
   const emailSuffixPlaceholder = t.emailSuffixPlaceholder ?? t.emailPlaceholder
   const allowedDomains = useAllowedEmailDomains()
   const errorMap: Record<string, string> = {
@@ -307,7 +306,6 @@ export function RegisterForm({ locale, dict, oauthProviders }: RegisterFormProps
               value={formData.email}
               domains={allowedDomains}
               onChange={(email) => setFormData({ ...formData, email })}
-              selectLabel={emailSuffixLabel}
               selectPlaceholder={emailSuffixPlaceholder}
               inputId="email"
               inputPlaceholder={t.emailPlaceholder}

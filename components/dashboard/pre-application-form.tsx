@@ -119,7 +119,6 @@ export function PreApplicationForm({
 }: PreApplicationFormProps) {
   const router = useRouter()
   const t = dict.preApplication
-  const emailSuffixLabel = t.emailSuffixLabel ?? "Choose an allowed email suffix"
   const emailSuffixPlaceholder = t.emailSuffixPlaceholder ?? ""
   const essayMinChars = 50
   const [loading, setLoading] = useState(!initialRecords)
@@ -599,7 +598,6 @@ export function PreApplicationForm({
                     value={formData.registerEmail}
                     domains={allowedDomains}
                     onChange={(email) => setFormData({ ...formData, registerEmail: email })}
-                    selectLabel={emailSuffixLabel}
                     selectPlaceholder={emailSuffixPlaceholder}
                     inputId="registerEmail"
                     inputPlaceholder={t.fields.registerEmailHint}
