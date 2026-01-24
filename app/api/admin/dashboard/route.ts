@@ -262,6 +262,8 @@ export async function GET(request: NextRequest) {
         INNER JOIN "User" u ON p."reviewedById" = u."id"
         WHERE p."reviewedById" IS NOT NULL
           AND p."status" IN ('APPROVED', 'REJECTED')
+          AND p."reviewedAt" >= ${rangeStart}
+          AND p."reviewedAt" <= ${rangeEnd}
         GROUP BY p."reviewedById", u."name", u."email"
         ORDER BY count DESC
       `,
