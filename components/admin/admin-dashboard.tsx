@@ -171,7 +171,10 @@ export function AdminDashboard({ locale, dict }: AdminDashboardProps) {
       setDetailLoading(true)
       try {
         let url = ""
-        const params = new URLSearchParams({ page: page.toString(), limit: detailPageSize.toString() })
+        const params = new URLSearchParams({
+          page: page.toString(),
+          limit: detailPageSize.toString(),
+        })
 
         if (type.startsWith("preApplication")) {
           const statusMap: Record<string, string> = {
@@ -184,7 +187,10 @@ export function AdminDashboard({ locale, dict }: AdminDashboardProps) {
           }
           url = `/api/admin/pre-applications?${params}`
         } else {
-          const filterMap: Record<string, { status?: string; assignment?: string; expiringWithin?: string }> = {
+          const filterMap: Record<
+            string,
+            { status?: string; assignment?: string; expiringWithin?: string }
+          > = {
             inviteTotal: {},
             inviteAssigned: { assignment: "assigned" },
             inviteExpired: { status: "expired" },
@@ -209,7 +215,7 @@ export function AdminDashboard({ locale, dict }: AdminDashboardProps) {
         setDetailLoading(false)
       }
     },
-    [t.fetchFailed, detailPageSize]
+    [t.fetchFailed, detailPageSize],
   )
 
   const handleCardClick = (type: CardDetailType, title: string) => {
