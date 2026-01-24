@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { getCurrentUser } from "@/lib/auth/session"
+import { isSuperAdmin } from "@/lib/auth/permissions"
 import { createApiErrorResponse } from "@/lib/api/error-response"
 
 export async function GET(request: NextRequest) {
@@ -11,7 +12,8 @@ export async function GET(request: NextRequest) {
       return createApiErrorResponse(request, "apiErrors.general.notAuthenticated", { status: 401 })
     }
 
-    if (user.role !== "ADMIN" && user.role !== "SUPER_ADMIN") {
+    // 审计日志仅限超级管理员
+    if (!isSuperAdmin(user.role)) {
       return createApiErrorResponse(request, "apiErrors.general.forbidden", { status: 403 })
     }
 

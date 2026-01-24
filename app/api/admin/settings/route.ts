@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { getCurrentUser } from "@/lib/auth/session"
+import { isAdmin, isSuperAdmin } from "@/lib/auth/permissions"
 import { getSiteSettings, updateSiteSettings } from "@/lib/site-settings"
 import { db } from "@/lib/db"
 import { writeAuditLog } from "@/lib/audit"
@@ -25,7 +26,8 @@ export async function GET(request: NextRequest) {
   if (!user) {
     return createApiErrorResponse(request, ApiErrorKeys.notAuthenticated, { status: 401 })
   }
-  if (user.role !== "ADMIN" && user.role !== "SUPER_ADMIN") {
+  // 设置查看需要管理员权限
+  if (!isAdmin(user.role)) {
     return createApiErrorResponse(request, ApiErrorKeys.general.forbidden, { status: 403 })
   }
 
@@ -45,7 +47,8 @@ export async function PUT(request: NextRequest) {
   if (!user) {
     return createApiErrorResponse(request, ApiErrorKeys.notAuthenticated, { status: 401 })
   }
-  if (user.role !== "ADMIN" && user.role !== "SUPER_ADMIN") {
+  // 设置修改仅限超级管理员
+  if (!isSuperAdmin(user.role)) {
     return createApiErrorResponse(request, ApiErrorKeys.general.forbidden, { status: 403 })
   }
 

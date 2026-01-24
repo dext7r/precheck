@@ -49,7 +49,15 @@ export function Footer({ dict, locale }: FooterProps) {
             <div className="flex items-center gap-1.5 text-sm">
               <MessageCircle className="h-4 w-4" />
               <span>{dict.footer.qqGroupLabel}</span>
-              <span className="font-mono font-semibold text-foreground">1080464482</span>
+              <a
+                href="https://qm.qq.com/q/HlNOiN0IYS"
+                target="_blank"
+                rel="noopener noreferrer"
+                title="打开 QQ 群 1080464482"
+                className="font-mono font-semibold text-foreground transition-colors hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              >
+                1080464482
+              </a>
             </div>
             <a
               href="https://github.com/dext7r/precheck"

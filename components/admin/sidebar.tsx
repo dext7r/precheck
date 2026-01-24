@@ -23,31 +23,73 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import type { Dictionary } from "@/lib/i18n/get-dictionary"
 import type { Locale } from "@/lib/i18n/config"
+import type { Role } from "@prisma/client"
 
 interface AdminSidebarProps {
   locale: Locale
   dict: Dictionary
-  user?: { id: string; name?: string | null; email: string; role: string }
+  user?: { id: string; name?: string | null; email: string; role: Role }
 }
 
 export function AdminSidebar({ locale, dict, user }: AdminSidebarProps) {
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
+  const isSuperAdmin = user?.role === "SUPER_ADMIN"
 
-  const navigation = [
-    { name: dict.dashboard.overview, href: `/${locale}/admin`, icon: LayoutDashboard },
-    { name: dict.admin.users, href: `/${locale}/admin/users`, icon: Users },
+  // 定义导航项，带权限标记
+  const allNavigation = [
+    {
+      name: dict.dashboard.overview,
+      href: `/${locale}/admin`,
+      icon: LayoutDashboard,
+      superAdminOnly: false,
+    },
+    {
+      name: dict.admin.users,
+      href: `/${locale}/admin/users`,
+      icon: Users,
+      superAdminOnly: true, // 仅超管
+    },
     {
       name: dict.admin.preApplications,
       href: `/${locale}/admin/pre-applications`,
       icon: ClipboardList,
+      superAdminOnly: false,
     },
-    { name: dict.admin.inviteCodes, href: `/${locale}/admin/invite-codes`, icon: Key },
-    { name: dict.admin.messages, href: `/${locale}/admin/messages`, icon: Mail },
-    { name: dict.admin.emailLogs, href: `/${locale}/admin/email-logs`, icon: Send },
-    { name: dict.admin.auditLogs, href: `/${locale}/admin/audit-logs`, icon: ScrollText },
-    { name: dict.admin.settings, href: `/${locale}/admin/settings`, icon: Settings },
+    {
+      name: dict.admin.inviteCodes,
+      href: `/${locale}/admin/invite-codes`,
+      icon: Key,
+      superAdminOnly: false,
+    },
+    {
+      name: dict.admin.messages,
+      href: `/${locale}/admin/messages`,
+      icon: Mail,
+      superAdminOnly: false,
+    },
+    {
+      name: dict.admin.emailLogs,
+      href: `/${locale}/admin/email-logs`,
+      icon: Send,
+      superAdminOnly: true, // 仅超管
+    },
+    {
+      name: dict.admin.auditLogs,
+      href: `/${locale}/admin/audit-logs`,
+      icon: ScrollText,
+      superAdminOnly: true, // 仅超管
+    },
+    {
+      name: dict.admin.settings,
+      href: `/${locale}/admin/settings`,
+      icon: Settings,
+      superAdminOnly: true, // 仅超管可修改，但这里直接隐藏
+    },
   ]
+
+  // 根据角色过滤导航项
+  const navigation = allNavigation.filter((item) => !item.superAdminOnly || isSuperAdmin)
 
   return (
     <motion.aside

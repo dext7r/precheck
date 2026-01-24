@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { getCurrentUser } from "@/lib/auth/session"
+import { isSuperAdmin } from "@/lib/auth/permissions"
 import { db } from "@/lib/db"
 import { writeAuditLog } from "@/lib/audit"
 import { createApiErrorResponse } from "@/lib/api/error-response"
@@ -10,7 +11,8 @@ export async function POST(request: NextRequest) {
   if (!user) {
     return createApiErrorResponse(request, ApiErrorKeys.notAuthenticated, { status: 401 })
   }
-  if (user.role !== "ADMIN" && user.role !== "SUPER_ADMIN") {
+  // 重置数据库仅限超级管理员
+  if (!isSuperAdmin(user.role)) {
     return createApiErrorResponse(request, ApiErrorKeys.general.forbidden, { status: 403 })
   }
   if (!db) {

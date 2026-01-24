@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { db } from "@/lib/db"
 import { getCurrentUser } from "@/lib/auth/session"
+import { isAdmin, isSuperAdmin } from "@/lib/auth/permissions"
 import { writeAuditLog } from "@/lib/audit"
 import { allowedEmailDomains as defaultEmailDomains } from "@/lib/pre-application/constants"
 import { createApiErrorResponse } from "@/lib/api/error-response"
@@ -20,7 +21,8 @@ export async function GET(request: NextRequest) {
   try {
     const user = await getCurrentUser()
 
-    if (!user || (user.role !== "ADMIN" && user.role !== "SUPER_ADMIN")) {
+    // 系统配置查看需要管理员权限
+    if (!user || !isAdmin(user.role)) {
       return createApiErrorResponse(request, ApiErrorKeys.general.forbidden, { status: 403 })
     }
 
@@ -79,7 +81,8 @@ export async function PUT(request: NextRequest) {
   try {
     const user = await getCurrentUser()
 
-    if (!user || (user.role !== "ADMIN" && user.role !== "SUPER_ADMIN")) {
+    // 系统配置修改仅限超级管理员
+    if (!user || !isSuperAdmin(user.role)) {
       return createApiErrorResponse(request, ApiErrorKeys.general.forbidden, { status: 403 })
     }
 

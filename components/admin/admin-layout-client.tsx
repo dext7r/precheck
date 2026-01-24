@@ -6,11 +6,12 @@ import { AdminHeader } from "@/components/admin/header"
 import { Sheet, SheetContent } from "@/components/ui/sheet"
 import type { Dictionary } from "@/lib/i18n/get-dictionary"
 import type { Locale } from "@/lib/i18n/config"
+import type { Role } from "@prisma/client"
 
 interface AdminLayoutClientProps {
   locale: Locale
   dict: Dictionary
-  user: { id: string; name?: string | null; email: string; role: string }
+  user: { id: string; name?: string | null; email: string; role: Role }
   children: React.ReactNode
 }
 

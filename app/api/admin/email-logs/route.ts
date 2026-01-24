@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { getCurrentUser } from "@/lib/auth/session"
+import { isSuperAdmin } from "@/lib/auth/permissions"
 import { createApiErrorResponse } from "@/lib/api/error-response"
 import { ApiErrorKeys } from "@/lib/api/error-keys"
 import type { Prisma } from "@prisma/client"
@@ -8,7 +9,8 @@ import type { Prisma } from "@prisma/client"
 export async function GET(request: NextRequest) {
   try {
     const user = await getCurrentUser()
-    if (!user || (user.role !== "ADMIN" && user.role !== "SUPER_ADMIN")) {
+    // 邮件日志仅限超级管理员
+    if (!user || !isSuperAdmin(user.role)) {
       return createApiErrorResponse(request, ApiErrorKeys.general.forbidden, { status: 403 })
     }
 

@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { getCurrentUser } from "@/lib/auth/session"
+import { isAdmin, isSuperAdmin } from "@/lib/auth/permissions"
 import { z } from "zod"
 import { writeAuditLog } from "@/lib/audit"
 import { createApiErrorResponse } from "@/lib/api/error-response"
@@ -18,7 +19,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
       return createApiErrorResponse(request, ApiErrorKeys.notAuthenticated, { status: 401 })
     }
 
-    if (user.role !== "ADMIN" && user.role !== "SUPER_ADMIN") {
+    if (!isAdmin(user.role)) {
       return createApiErrorResponse(request, ApiErrorKeys.general.forbidden, { status: 403 })
     }
 
@@ -66,7 +67,8 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
       return createApiErrorResponse(request, ApiErrorKeys.notAuthenticated, { status: 401 })
     }
 
-    if (user.role !== "ADMIN" && user.role !== "SUPER_ADMIN") {
+    // 文章审核 ADMIN 可用
+    if (!isAdmin(user.role)) {
       return createApiErrorResponse(request, ApiErrorKeys.general.forbidden, { status: 403 })
     }
 
@@ -132,7 +134,8 @@ export async function DELETE(request: NextRequest, context: { params: Promise<{ 
       return createApiErrorResponse(request, ApiErrorKeys.notAuthenticated, { status: 401 })
     }
 
-    if (user.role !== "ADMIN" && user.role !== "SUPER_ADMIN") {
+    // 删除文章仅限超级管理员
+    if (!isSuperAdmin(user.role)) {
       return createApiErrorResponse(request, ApiErrorKeys.general.forbidden, { status: 403 })
     }
 
