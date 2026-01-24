@@ -3,7 +3,7 @@ import { db } from "@/lib/db"
 import { generateResetToken } from "@/lib/auth/password"
 import { authConfig } from "@/lib/auth/config"
 import { buildResetPasswordEmail } from "@/lib/email/templates"
-import { sendEmail } from "@/lib/email/mailer"
+import { sendEmail, isEmailConfigured } from "@/lib/email/mailer"
 import { features } from "@/lib/features"
 import { getDictionary } from "@/lib/i18n/get-dictionary"
 import { getSiteSettings } from "@/lib/site-settings"
@@ -85,10 +85,7 @@ export async function POST(request: NextRequest) {
     resetUrl.searchParams.set("token", resetToken)
     const resetLink = resetUrl.toString()
 
-    const emailConfigured =
-      features.email && process.env.SMTP_PASS && (process.env.SMTP_FROM || process.env.SMTP_USER)
-
-    if (emailConfigured && settings.emailNotifications) {
+    if (isEmailConfigured() && settings.emailNotifications) {
       const appName = dict.metadata?.title || "App"
       const expiresInHours = Math.max(1, Math.round(authConfig.resetTokenExpiry / (60 * 60 * 1000)))
       const emailContent = buildResetPasswordEmail({
