@@ -10,8 +10,6 @@ export type PreApplicationStatus = "PENDING" | "APPROVED" | "REJECTED" | "DISPUT
 
 export type PreApplicationSource = "TIEBA" | "BILIBILI" | "DOUYIN" | "XIAOHONGSHU" | "OTHER"
 
-export type PreApplicationGroup = "GROUP_ONE" | "GROUP_TWO" | "GROUP_THREE"
-
 export type EmailLogStatus = "PENDING" | "SUCCESS" | "FAILED"
 
 export interface User {
@@ -119,7 +117,7 @@ export interface PreApplication {
   sourceDetail: string | null
   registerEmail: string
   queryToken: string | null
-  group: PreApplicationGroup
+  group: string
   status: PreApplicationStatus
   guidance: string | null
   reviewedAt: Date | null
@@ -143,7 +141,7 @@ export interface PreApplicationVersion {
   source: PreApplicationSource | null
   sourceDetail: string | null
   registerEmail: string
-  group: PreApplicationGroup
+  group: string
   status: PreApplicationStatus
   guidance: string | null
   reviewedAt: Date | null

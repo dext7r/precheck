@@ -154,10 +154,12 @@ export const ApiErrorKeys = {
   preApplication: {
     failedToFetch: "apiErrors.preApplication.failedToFetch",
     failedToSubmit: "apiErrors.preApplication.failedToSubmit",
+    failedToDelete: "apiErrors.preApplication.failedToDelete",
     alreadySubmitted: "apiErrors.preApplication.alreadySubmitted",
     alreadyApproved: "apiErrors.preApplication.alreadyApproved",
     essayTooShort: "apiErrors.preApplication.essayTooShort",
     invalidEmailDomain: "apiErrors.preApplication.invalidEmailDomain",
+    invalidGroup: "apiErrors.preApplication.invalidGroup",
     sourceDetailRequired: "apiErrors.preApplication.sourceDetailRequired",
     noPreApplicationFound: "apiErrors.preApplication.noPreApplicationFound",
     versionConflict: "apiErrors.preApplication.versionConflict",

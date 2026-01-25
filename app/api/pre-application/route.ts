@@ -4,10 +4,11 @@ import { db } from "@/lib/db"
 import { getCurrentUser } from "@/lib/auth/session"
 import { writeAuditLog } from "@/lib/audit"
 import { isAllowedEmailDomainAsync, normalizeEmail } from "@/lib/pre-application/validation"
-import { PreApplicationGroup, PreApplicationSource } from "@prisma/client"
+import { PreApplicationSource } from "@prisma/client"
 import { randomBytes } from "crypto"
 import { createApiErrorResponse } from "@/lib/api/error-response"
 import { ApiErrorKeys } from "@/lib/api/error-keys"
+import { getQQGroups } from "@/lib/qq-groups"
 
 // 最大重新提交次数
 const MAX_RESUBMIT_COUNT = 3
@@ -27,9 +28,15 @@ const preApplicationSchema = z.object({
   source: z.nativeEnum(PreApplicationSource).optional().nullable(),
   sourceDetail: z.string().max(100).optional().nullable(),
   registerEmail: z.string().email(),
-  group: z.nativeEnum(PreApplicationGroup),
+  group: z.string().min(1), // 动态群 ID，由 QQ 群配置决定
   version: z.number().optional(), // 乐观锁版本号
 })
+
+// 验证群 ID 是否在配置中
+async function isValidGroupId(groupId: string): Promise<boolean> {
+  const groups = await getQQGroups()
+  return groups.some((g) => g.id === groupId)
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -125,6 +132,13 @@ export async function POST(request: NextRequest) {
 
     if (data.source === "OTHER" && !data.sourceDetail?.trim()) {
       return createApiErrorResponse(request, ApiErrorKeys.preApplication.sourceDetailRequired, {
+        status: 400,
+      })
+    }
+
+    // 验证群 ID 是否有效
+    if (!(await isValidGroupId(data.group))) {
+      return createApiErrorResponse(request, ApiErrorKeys.preApplication.invalidGroup, {
         status: 400,
       })
     }
@@ -234,6 +248,13 @@ export async function PUT(request: NextRequest) {
 
     if (data.source === "OTHER" && !data.sourceDetail?.trim()) {
       return createApiErrorResponse(request, ApiErrorKeys.preApplication.sourceDetailRequired, {
+        status: 400,
+      })
+    }
+
+    // 验证群 ID 是否有效
+    if (!(await isValidGroupId(data.group))) {
+      return createApiErrorResponse(request, ApiErrorKeys.preApplication.invalidGroup, {
         status: 400,
       })
     }
@@ -365,6 +386,68 @@ export async function PUT(request: NextRequest) {
     }
     console.error("Pre-application update error:", error)
     return createApiErrorResponse(request, ApiErrorKeys.preApplication.failedToUpdate, {
+      status: 500,
+    })
+  }
+}
+
+// 管理员删除自己的预申请记录（用于测试）
+export async function DELETE(request: NextRequest) {
+  try {
+    const user = await getCurrentUser()
+
+    if (!user) {
+      return createApiErrorResponse(request, ApiErrorKeys.notAuthenticated, { status: 401 })
+    }
+
+    // 仅 ADMIN 和 SUPER_ADMIN 可以删除
+    if (user.role !== "ADMIN" && user.role !== "SUPER_ADMIN") {
+      return createApiErrorResponse(request, ApiErrorKeys.general.forbidden, { status: 403 })
+    }
+
+    if (!db) {
+      return createApiErrorResponse(request, ApiErrorKeys.databaseNotConfigured, { status: 503 })
+    }
+
+    // 查找当前用户的预申请记录
+    const records = await db.preApplication.findMany({
+      where: { userId: user.id },
+      select: { id: true },
+    })
+
+    if (records.length === 0) {
+      return createApiErrorResponse(request, ApiErrorKeys.preApplication.noPreApplicationFound, {
+        status: 404,
+      })
+    }
+
+    const recordIds = records.map((r) => r.id)
+
+    // 使用事务删除预申请及其版本历史
+    await db.$transaction(async (tx) => {
+      // 先删除版本历史
+      await tx.preApplicationVersion.deleteMany({
+        where: { preApplicationId: { in: recordIds } },
+      })
+      // 再删除预申请记录
+      await tx.preApplication.deleteMany({
+        where: { userId: user.id },
+      })
+    })
+
+    await writeAuditLog(db, {
+      action: "PRE_APPLICATION_DELETE_SELF",
+      entityType: "PRE_APPLICATION",
+      entityId: recordIds.join(","),
+      actor: user,
+      metadata: { deletedCount: records.length, reason: "admin_self_delete_for_testing" },
+      request,
+    })
+
+    return NextResponse.json({ success: true, deletedCount: records.length })
+  } catch (error) {
+    console.error("Pre-application delete error:", error)
+    return createApiErrorResponse(request, ApiErrorKeys.preApplication.failedToDelete, {
       status: 500,
     })
   }

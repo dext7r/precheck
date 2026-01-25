@@ -37,9 +37,11 @@ import {
   Users,
   Heart,
   Sparkles,
+  Trash2,
 } from "lucide-react"
 import type { Dictionary } from "@/lib/i18n/get-dictionary"
 import type { Locale } from "@/lib/i18n/config"
+import type { Role } from "@prisma/client"
 import { ApiErrorKeys } from "@/lib/api/error-keys"
 import { resolveApiErrorMessage } from "@/lib/api/error-message"
 import { preApplicationSources } from "@/lib/pre-application/constants"
@@ -49,6 +51,17 @@ import { useAllowedEmailDomains } from "@/lib/hooks/use-allowed-email-domains"
 import { cn } from "@/lib/utils"
 
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 type PreApplicationVersion = {
   id: string
@@ -94,6 +107,7 @@ interface PreApplicationFormProps {
   initialRecords?: PreApplicationRecord[]
   maxResubmitCount?: number
   userEmail?: string
+  userRole?: Role
 }
 
 // Loading Skeleton 组件
@@ -140,6 +154,7 @@ export function PreApplicationForm({
   initialRecords,
   maxResubmitCount: initialMaxResubmit = 3,
   userEmail,
+  userRole,
 }: PreApplicationFormProps) {
   const router = useRouter()
   const t = dict.preApplication
@@ -147,6 +162,7 @@ export function PreApplicationForm({
   const essayMinChars = 50
   const [loading, setLoading] = useState(!initialRecords)
   const [submitting, setSubmitting] = useState(false)
+  const [deleting, setDeleting] = useState(false)
   const [records, setRecords] = useState<PreApplicationRecord[]>(initialRecords || [])
   const [maxResubmitCount, setMaxResubmitCount] = useState(initialMaxResubmit)
   const [tokenCopied, setTokenCopied] = useState(false)
@@ -201,6 +217,46 @@ export function PreApplicationForm({
   const canResubmit = latest?.status === "REJECTED" && remainingResubmits > 0
   // DISPUTED 状态且没有邀请码时可以修改
   const canEditDisputed = latest?.status === "DISPUTED" && !latest?.inviteCode
+  // 管理员可以删除自己的申请记录（用于测试）
+  const isAdmin = userRole === "ADMIN" || userRole === "SUPER_ADMIN"
+  const canDelete = isAdmin && latest
+
+  // 删除申请记录
+  const handleDelete = async () => {
+    setDeleting(true)
+    try {
+      const res = await fetch("/api/pre-application", { method: "DELETE" })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        const message =
+          resolveApiErrorMessage(data, dict) ??
+          ((t as Record<string, unknown>).deleteFailed as string) ??
+          "删除失败"
+        toast.error(message)
+        return
+      }
+      toast.success(
+        ((t as Record<string, unknown>).deleteSuccess as string) ?? "申请记录已删除",
+      )
+      setRecords([])
+      setFormData({
+        essay: "",
+        source: "",
+        sourceDetail: "",
+        registerEmail: userEmail || "",
+        group: qqGroups[0]?.id || "GROUP_ONE",
+      })
+      router.refresh()
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : ((t as Record<string, unknown>).deleteFailed as string) ?? "删除失败",
+      )
+    } finally {
+      setDeleting(false)
+    }
+  }
 
   const loadRecord = async () => {
     setLoading(true)
@@ -777,6 +833,49 @@ export function PreApplicationForm({
                     {hasReviewInfo ? t.formInfoTitle : t.status.label}
                     {!hasReviewInfo && <StatusBadge status={latest.status} />}
                   </CardTitle>
+                  {/* 管理员删除按钮 */}
+                  {canDelete && (
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                          disabled={deleting}
+                        >
+                          {deleting ? (
+                            <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-4 w-4 mr-1.5" />
+                          )}
+                          {((t as Record<string, unknown>).deleteRecord as string) || "删除记录"}
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>
+                            {((t as Record<string, unknown>).deleteConfirmTitle as string) ||
+                              "确认删除申请记录？"}
+                          </AlertDialogTitle>
+                          <AlertDialogDescription>
+                            {((t as Record<string, unknown>).deleteConfirmDesc as string) ||
+                              "此操作将删除您的预申请记录和所有版本历史，删除后可以重新填写申请。此操作不可撤销。"}
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>
+                            {((t as Record<string, unknown>).cancel as string) || "取消"}
+                          </AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={handleDelete}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            {((t as Record<string, unknown>).confirmDelete as string) || "确认删除"}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  )}
                 </div>
                 <CardDescription>{t.submitted}</CardDescription>
               </CardHeader>

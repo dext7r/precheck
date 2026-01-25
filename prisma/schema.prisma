@@ -141,7 +141,7 @@ model PreApplication {
   sourceDetail  String?
   registerEmail String
   queryToken    String?                @unique
-  group         PreApplicationGroup
+  group         String                 // 动态 QQ 群 ID
   status        PreApplicationStatus   @default(PENDING)
   guidance      String?
   reviewedAt    DateTime?
@@ -171,7 +171,7 @@ model PreApplicationVersion {
   source            PreApplicationSource?
   sourceDetail      String?
   registerEmail     String
-  group             PreApplicationGroup
+  group             String                 // 动态 QQ 群 ID
   status            PreApplicationStatus   // 当前状态（会在审核时更新）
   guidance          String?                // 审核意见
   reviewedAt        DateTime?              // 审核时间
@@ -288,12 +288,6 @@ enum PreApplicationSource {
   DOUYIN
   XIAOHONGSHU
   OTHER
-}
-
-enum PreApplicationGroup {
-  GROUP_ONE
-  GROUP_TWO
-  GROUP_THREE
 }
 
 model SiteSettings {

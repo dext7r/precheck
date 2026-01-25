@@ -66,6 +66,7 @@ export default async function PreApplicationPage({ params }: PreApplicationPageP
       initialRecords={initialRecords}
       maxResubmitCount={MAX_RESUBMIT_COUNT}
       userEmail={user.email}
+      userRole={user.role}
     />
   )
 }
