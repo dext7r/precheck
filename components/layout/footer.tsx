@@ -3,6 +3,7 @@ import { ExternalLink, MessageCircle, Github, Rss, FileCode2 } from "lucide-reac
 import type { Dictionary } from "@/lib/i18n/get-dictionary"
 import type { Locale } from "@/lib/i18n/config"
 import { getQQGroups } from "@/lib/qq-groups"
+import { BuildInfoDisplay } from "./build-info-display"
 
 interface FooterProps {
   dict: Dictionary
@@ -135,9 +136,12 @@ export async function Footer({ dict, locale }: FooterProps) {
 
         {/* 版权区 */}
         <div className="mt-8 border-t border-border pt-6">
-          <p className="text-center text-sm text-muted-foreground">
-            &copy; {new Date().getFullYear()} linux.do. {dict.footer.copyright}
-          </p>
+          <div className="flex flex-col items-center gap-3">
+            <p className="text-center text-sm text-muted-foreground">
+              &copy; {new Date().getFullYear()} linux.do. {dict.footer.copyright}
+            </p>
+            <BuildInfoDisplay locale={locale} />
+          </div>
         </div>
       </div>
     </footer>

@@ -19,7 +19,7 @@ export const siteConfig = {
   ],
   links: {
     community: "https://linux.do",
-    github: "https://github.com/linux-do",
+    github: "https://github.com/dext7r/precheck",
     twitter: "https://twitter.com/",
   },
   contact: {
