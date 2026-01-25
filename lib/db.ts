@@ -16,6 +16,10 @@ function createPrismaClient(): PrismaClient | null {
 
   return new PrismaClient({
     log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
+    transactionOptions: {
+      maxWait: 10000, // 最大等待时间 10s
+      timeout: 30000, // 事务超时 30s
+    },
   })
 }
 

@@ -153,6 +153,9 @@ export async function POST(request: NextRequest) {
       })
     }
 
+    // 在事务外部生成 queryToken，避免 pgBouncer 兼容性问题
+    const queryToken = await generateUniqueQueryToken()
+
     // 使用事务创建预申请和版本记录
     const record = await db.$transaction(async (tx) => {
       const preApp = await tx.preApplication.create({
@@ -162,7 +165,7 @@ export async function POST(request: NextRequest) {
           source: data.source ?? null,
           sourceDetail: data.source === "OTHER" ? data.sourceDetail?.trim() || null : null,
           registerEmail,
-          queryToken: await generateUniqueQueryToken(),
+          queryToken,
           group: data.group,
           version: 1,
           resubmitCount: 0,
