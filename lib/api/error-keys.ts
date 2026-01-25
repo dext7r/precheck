@@ -91,6 +91,9 @@ export const ApiErrorKeys = {
       invalidInviteExpiry: "apiErrors.admin.preApplications.invalidInviteExpiry",
       expiryMustBeInFuture: "apiErrors.admin.preApplications.expiryMustBeInFuture",
       alreadyReviewed: "apiErrors.admin.preApplications.alreadyReviewed",
+      aiNotConfigured: "apiErrors.admin.preApplications.aiNotConfigured",
+      aiReviewFailed: "apiErrors.admin.preApplications.aiReviewFailed",
+      duplicateCheckFailed: "apiErrors.admin.preApplications.duplicateCheckFailed",
     },
     posts: {
       failedToFetch: "apiErrors.admin.posts.failedToFetch",

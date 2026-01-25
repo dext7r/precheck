@@ -26,6 +26,10 @@ import {
   Users,
   Inbox,
   Archive,
+  Sparkles,
+  Copy,
+  Check,
+  ExternalLink,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -65,7 +69,40 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
+
+// AI 审核结果类型
+type AIReviewResult = {
+  suggestion: "APPROVE" | "REJECT" | "DISPUTE"
+  confidence: number
+  scores: {
+    relevance: number
+    authenticity: number
+    completeness: number
+    expression: number
+  }
+  referenceReply: string
+  reasoning: string
+}
+
+// 查重结果类型
+type DuplicateRecord = {
+  id: string
+  similarity: number
+  essay: string
+  user: { name: string | null; email: string }
+  createdAt: string
+  status: string
+  aiReason?: string
+}
+
+type DuplicateCheckResult = {
+  hasDuplicates: boolean
+  records: DuplicateRecord[]
+  totalCandidates: number
+  aiEnabled: boolean
+}
 
 type AdminPreApplication = {
   id: string
@@ -226,6 +263,19 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
   }>({ approve: [], reject: [], dispute: [] })
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [batchArchiving, setBatchArchiving] = useState(false)
+
+  // AI 审核相关状态
+  const [aiReviewLoading, setAIReviewLoading] = useState(false)
+  const [aiReviewResult, setAIReviewResult] = useState<AIReviewResult | null>(null)
+  const [aiReviewError, setAIReviewError] = useState<string | null>(null)
+  const [replyCopied, setReplyCopied] = useState(false)
+
+  // 查重相关状态
+  const [duplicateCheckLoading, setDuplicateCheckLoading] = useState(false)
+  const [duplicateCheckResult, setDuplicateCheckResult] = useState<DuplicateCheckResult | null>(
+    null,
+  )
+  const [duplicateCheckError, setDuplicateCheckError] = useState<string | null>(null)
 
   useEffect(() => {
     if (reviewAction === "REJECT") {
@@ -457,6 +507,11 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
   const openDialog = (record: AdminPreApplication) => {
     setSelected(record)
     setHistoryRecords([])
+    // 重置 AI 审核状态
+    setAIReviewResult(null)
+    setAIReviewError(null)
+    setDuplicateCheckResult(null)
+    setDuplicateCheckError(null)
     if (record.status === "PENDING" || record.status === "DISPUTED") {
       setReviewAction("APPROVE")
       setGuidance(record.guidance || "")
@@ -475,6 +530,92 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
     }
     setDialogOpen(true)
     loadHistory(record.id)
+  }
+
+  // AI 审核处理函数
+  const handleAIReview = async () => {
+    if (!selected) return
+    setAIReviewLoading(true)
+    setAIReviewError(null)
+
+    try {
+      const res = await fetch(`/api/admin/pre-applications/${selected.id}/ai-review`, {
+        method: "POST",
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data?.error?.message || t.aiReviewFailed)
+      }
+      const data = await res.json()
+      setAIReviewResult(data)
+    } catch (error) {
+      setAIReviewError(error instanceof Error ? error.message : t.aiReviewFailed)
+      toast.error(t.aiReviewFailed)
+    } finally {
+      setAIReviewLoading(false)
+    }
+  }
+
+  // 查重处理函数
+  const handleDuplicateCheck = async () => {
+    if (!selected) return
+    setDuplicateCheckLoading(true)
+    setDuplicateCheckError(null)
+
+    try {
+      const res = await fetch(`/api/admin/pre-applications/${selected.id}/duplicate-check`, {
+        method: "POST",
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data?.error?.message || t.duplicateCheckFailed)
+      }
+      const data = await res.json()
+      setDuplicateCheckResult(data)
+    } catch (error) {
+      setDuplicateCheckError(error instanceof Error ? error.message : t.duplicateCheckFailed)
+      toast.error(t.duplicateCheckFailed)
+    } finally {
+      setDuplicateCheckLoading(false)
+    }
+  }
+
+  // 复制参考回复
+  const handleCopyReply = () => {
+    if (aiReviewResult?.referenceReply) {
+      navigator.clipboard.writeText(aiReviewResult.referenceReply)
+      setReplyCopied(true)
+      setTimeout(() => setReplyCopied(false), 2000)
+    }
+  }
+
+  // 获取 AI 建议配置
+  const getAISuggestionConfig = (suggestion: "APPROVE" | "REJECT" | "DISPUTE") => {
+    const configs = {
+      APPROVE: {
+        label: t.aiReviewSuggestApprove,
+        className:
+          "bg-green-500/10 text-green-600 border-green-500/20 dark:bg-green-500/20 dark:text-green-400",
+      },
+      REJECT: {
+        label: t.aiReviewSuggestReject,
+        className:
+          "bg-red-500/10 text-red-600 border-red-500/20 dark:bg-red-500/20 dark:text-red-400",
+      },
+      DISPUTE: {
+        label: t.aiReviewSuggestDispute,
+        className:
+          "bg-amber-500/10 text-amber-600 border-amber-500/20 dark:bg-amber-500/20 dark:text-amber-400",
+      },
+    }
+    return configs[suggestion]
+  }
+
+  // 获取分数颜色
+  const getScoreColor = (score: number) => {
+    if (score >= 70) return "bg-green-500"
+    if (score >= 40) return "bg-amber-500"
+    return "bg-red-500"
   }
 
   const handleReview = async () => {
@@ -1162,6 +1303,239 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
                     <div className="rounded-lg border bg-card p-4 text-sm">
                       <PostContent content={selected.essay} emptyMessage={t.preApplicationEssay} />
                     </div>
+
+                    {/* AI 辅助工具栏 */}
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 gap-1.5 text-xs"
+                        onClick={handleAIReview}
+                        disabled={aiReviewLoading}
+                      >
+                        {aiReviewLoading ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Sparkles className="h-3.5 w-3.5" />
+                        )}
+                        {aiReviewLoading ? t.aiReviewLoading : t.aiReview}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 gap-1.5 text-xs"
+                        onClick={handleDuplicateCheck}
+                        disabled={duplicateCheckLoading}
+                      >
+                        {duplicateCheckLoading ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Search className="h-3.5 w-3.5" />
+                        )}
+                        {duplicateCheckLoading ? t.duplicateCheckLoading : t.duplicateCheck}
+                      </Button>
+                    </div>
+
+                    {/* AI 审核结果卡片 */}
+                    {aiReviewResult && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="mt-3 space-y-3 rounded-lg border bg-gradient-to-br from-primary/5 to-transparent p-4"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Sparkles className="h-4 w-4 text-primary" />
+                            <span className="text-sm font-medium">{t.aiReviewResult}</span>
+                          </div>
+                          <Badge
+                            className={cn(
+                              "border",
+                              getAISuggestionConfig(aiReviewResult.suggestion).className,
+                            )}
+                          >
+                            {getAISuggestionConfig(aiReviewResult.suggestion).label}
+                            <span className="ml-1 opacity-70">({aiReviewResult.confidence}%)</span>
+                          </Badge>
+                        </div>
+
+                        {/* 多维度评分 */}
+                        <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                          {[
+                            { key: "relevance", label: t.aiReviewRelevance },
+                            { key: "authenticity", label: t.aiReviewAuthenticity },
+                            { key: "completeness", label: t.aiReviewCompleteness },
+                            { key: "expression", label: t.aiReviewExpression },
+                          ].map(({ key, label }) => {
+                            const score =
+                              aiReviewResult.scores[key as keyof typeof aiReviewResult.scores]
+                            return (
+                              <div key={key} className="space-y-1">
+                                <div className="flex items-center justify-between text-xs">
+                                  <span className="text-muted-foreground">{label}</span>
+                                  <span className="font-medium">{score}</span>
+                                </div>
+                                <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                                  <div
+                                    className={cn(
+                                      "h-full rounded-full transition-all",
+                                      getScoreColor(score),
+                                    )}
+                                    style={{ width: `${score}%` }}
+                                  />
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
+
+                        {/* 分析理由 */}
+                        {aiReviewResult.reasoning && (
+                          <div className="rounded-md border bg-muted/30 p-3">
+                            <p className="text-xs text-muted-foreground">
+                              {aiReviewResult.reasoning}
+                            </p>
+                          </div>
+                        )}
+
+                        {/* 参考回复 */}
+                        <div className="space-y-1.5">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-medium text-muted-foreground">
+                              {t.aiReviewReferenceReply}
+                            </span>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-6 w-6 p-0"
+                                  onClick={handleCopyReply}
+                                >
+                                  {replyCopied ? (
+                                    <Check className="h-3 w-3 text-green-500" />
+                                  ) : (
+                                    <Copy className="h-3 w-3" />
+                                  )}
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                {replyCopied ? t.aiReviewCopied : t.aiReviewCopy}
+                              </TooltipContent>
+                            </Tooltip>
+                          </div>
+                          <div className="rounded-md border bg-card p-3 text-sm">
+                            {aiReviewResult.referenceReply}
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+
+                    {/* AI 审核错误 */}
+                    {aiReviewError && (
+                      <div className="mt-3 flex items-center justify-between rounded-lg border border-destructive/20 bg-destructive/5 p-3">
+                        <div className="flex items-center gap-2 text-sm text-destructive">
+                          <XCircle className="h-4 w-4" />
+                          <span>{t.aiReviewFailed}</span>
+                        </div>
+                        <Button variant="ghost" size="sm" onClick={handleAIReview}>
+                          <RotateCcw className="mr-1.5 h-3 w-3" />
+                          {dict.errors.tryAgain}
+                        </Button>
+                      </div>
+                    )}
+
+                    {/* 查重结果卡片 */}
+                    {duplicateCheckResult && (
+                      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+                        {!duplicateCheckResult.hasDuplicates ? (
+                          <div className="mt-3 flex items-center gap-2 rounded-lg border border-green-500/20 bg-green-500/10 p-3 text-sm text-green-600 dark:bg-green-500/20 dark:text-green-400">
+                            <CheckCircle2 className="h-4 w-4" />
+                            <span>{t.duplicateCheckNoDuplicates}</span>
+                          </div>
+                        ) : (
+                          <div className="mt-3 space-y-2 rounded-lg border border-amber-500/20 bg-amber-500/5 p-3">
+                            <div className="flex items-center gap-2 text-sm font-medium text-amber-600 dark:text-amber-400">
+                              <AlertTriangle className="h-4 w-4" />
+                              <span>
+                                {t.duplicateCheckFound.replace(
+                                  "{count}",
+                                  String(duplicateCheckResult.records.length),
+                                )}
+                              </span>
+                            </div>
+                            <div className="max-h-48 space-y-2 overflow-y-auto">
+                              {duplicateCheckResult.records.map((record) => (
+                                <div
+                                  key={record.id}
+                                  className="flex items-center justify-between rounded-md border bg-card p-2.5"
+                                >
+                                  <div className="min-w-0 flex-1">
+                                    <div className="flex items-center gap-2">
+                                      <span className="truncate text-sm font-medium">
+                                        {record.user.name || record.user.email}
+                                      </span>
+                                      {statusBadge(record.status as AdminPreApplication["status"])}
+                                    </div>
+                                    <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                                      {record.essay}
+                                    </p>
+                                  </div>
+                                  <div className="ml-3 flex items-center gap-2">
+                                    <Badge
+                                      variant="outline"
+                                      className={cn(
+                                        "font-mono text-xs",
+                                        record.similarity >= 80
+                                          ? "border-red-500/50 text-red-500"
+                                          : record.similarity >= 50
+                                            ? "border-amber-500/50 text-amber-500"
+                                            : "border-muted-foreground/50",
+                                      )}
+                                    >
+                                      {record.similarity}%
+                                    </Badge>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          className="h-7 w-7 p-0"
+                                          onClick={() => {
+                                            // 查看原申请（打开新记录）
+                                            const original = records.find((r) => r.id === record.id)
+                                            if (original) openDialog(original)
+                                          }}
+                                        >
+                                          <ExternalLink className="h-3.5 w-3.5" />
+                                        </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        {t.duplicateCheckViewOriginal}
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </motion.div>
+                    )}
+
+                    {/* 查重错误 */}
+                    {duplicateCheckError && (
+                      <div className="mt-3 flex items-center justify-between rounded-lg border border-destructive/20 bg-destructive/5 p-3">
+                        <div className="flex items-center gap-2 text-sm text-destructive">
+                          <XCircle className="h-4 w-4" />
+                          <span>{t.duplicateCheckFailed}</span>
+                        </div>
+                        <Button variant="ghost" size="sm" onClick={handleDuplicateCheck}>
+                          <RotateCcw className="mr-1.5 h-3 w-3" />
+                          {dict.errors.tryAgain}
+                        </Button>
+                      </div>
+                    )}
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
