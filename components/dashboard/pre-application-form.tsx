@@ -235,9 +235,7 @@ export function PreApplicationForm({
         toast.error(message)
         return
       }
-      toast.success(
-        ((t as Record<string, unknown>).deleteSuccess as string) ?? "申请记录已删除",
-      )
+      toast.success(((t as Record<string, unknown>).deleteSuccess as string) ?? "申请记录已删除")
       setRecords([])
       setFormData({
         essay: "",
@@ -251,7 +249,7 @@ export function PreApplicationForm({
       toast.error(
         error instanceof Error
           ? error.message
-          : ((t as Record<string, unknown>).deleteFailed as string) ?? "删除失败",
+          : (((t as Record<string, unknown>).deleteFailed as string) ?? "删除失败"),
       )
     } finally {
       setDeleting(false)
