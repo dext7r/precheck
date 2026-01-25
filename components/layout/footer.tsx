@@ -25,13 +25,10 @@ export async function Footer({ dict, locale }: FooterProps) {
     { name: "LLMs", href: "/llms.txt" },
   ]
 
-  // 从数据库获取 QQ 群配置
+  // 从数据库获取 QQ 群配置，根据语言显示对应名称
   const qqGroupsData = await getQQGroups()
-  const qqGroups = qqGroupsData.map((group, index) => ({
-    name:
-      group.name ||
-      dict.footer[`qqGroup${index + 1}` as keyof typeof dict.footer] ||
-      `群${index + 1}`,
+  const qqGroups = qqGroupsData.map((group) => ({
+    name: locale === "en" && group.nameEn ? group.nameEn : group.name,
     href: group.url,
     title: group.number,
   }))

@@ -15,6 +15,7 @@ import { ApiErrorKeys } from "@/lib/api/error-keys"
 const qqGroupSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
+  nameEn: z.string().optional(),
   number: z.string().min(5),
   url: z.string().url(),
   enabled: z.boolean(),

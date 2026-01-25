@@ -36,10 +36,11 @@ export const preApplicationGroups = [
   { value: "GROUP_THREE", labelKey: "preApplication.groups.groupThree" },
 ] as const
 
-// QQ 群默认配置
+// QQ 群默认配置（支持多语言）
 export type QQGroupConfig = {
   id: string
-  name: string
+  name: string // 中文名称
+  nameEn?: string // 英文名称（可选）
   number: string
   url: string
   enabled: boolean
@@ -49,6 +50,7 @@ export const defaultQQGroups: QQGroupConfig[] = [
   {
     id: "GROUP_ONE",
     name: "一群",
+    nameEn: "Group 1",
     number: "311795307",
     url: "https://qm.qq.com/q/yBh3PibMFG",
     enabled: true,
@@ -56,6 +58,7 @@ export const defaultQQGroups: QQGroupConfig[] = [
   {
     id: "GROUP_TWO",
     name: "二群",
+    nameEn: "Group 2",
     number: "1080464482",
     url: "https://qm.qq.com/q/kAcXh7ovC0",
     enabled: true,
@@ -63,6 +66,7 @@ export const defaultQQGroups: QQGroupConfig[] = [
   {
     id: "GROUP_THREE",
     name: "三群",
+    nameEn: "Group 3",
     number: "915386705",
     url: "https://qm.qq.com/q/It6OPlkI8g",
     enabled: true,

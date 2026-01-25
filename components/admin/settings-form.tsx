@@ -53,6 +53,7 @@ type SiteSettings = {
 type QQGroupConfig = {
   id: string
   name: string
+  nameEn?: string
   number: string
   url: string
   enabled: boolean
@@ -1349,10 +1350,10 @@ export function AdminSettingsForm({ locale, dict }: AdminSettingsFormProps) {
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
-                          <div className="grid gap-3 sm:grid-cols-3">
+                          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                             <div className="space-y-1">
                               <Label className="text-xs text-muted-foreground">
-                                {t.qqGroupName || "群名称"}
+                                {t.qqGroupName || "群名称(中文)"}
                               </Label>
                               <Input
                                 value={group.name}
@@ -1362,6 +1363,20 @@ export function AdminSettingsForm({ locale, dict }: AdminSettingsFormProps) {
                                   setSystemConfig({ ...systemConfig, qqGroups: newGroups })
                                 }}
                                 placeholder="一群"
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <Label className="text-xs text-muted-foreground">
+                                {t.qqGroupNameEn || "群名称(英文)"}
+                              </Label>
+                              <Input
+                                value={group.nameEn || ""}
+                                onChange={(e) => {
+                                  const newGroups = [...systemConfig.qqGroups]
+                                  newGroups[index] = { ...group, nameEn: e.target.value }
+                                  setSystemConfig({ ...systemConfig, qqGroups: newGroups })
+                                }}
+                                placeholder="Group 1"
                               />
                             </div>
                             <div className="space-y-1">
