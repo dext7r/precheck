@@ -827,7 +827,7 @@ export function PreApplicationForm({
                       selectPlaceholder={emailSuffixPlaceholder}
                       inputId="registerEmail"
                       inputPlaceholder={t.fields.registerEmailHint}
-                      disabled={isEditing && !canEditDisputed}
+                      disabled
                     />
                     <p className="text-xs text-muted-foreground">{t.fields.registerEmailHint}</p>
                   </div>
