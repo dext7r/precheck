@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { ExternalLink, Menu, X, User, Search } from "lucide-react"
+import { ExternalLink, Menu, X, User, Search, Play } from "lucide-react"
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
@@ -22,6 +22,21 @@ export function Header({ locale, dict, user, authEnabled = true }: HeaderProps) 
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-lg">
+      {/* 公告横幅 */}
+      <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 border-b border-primary/20">
+        <a
+          href="https://www.bilibili.com/video/BV1rEzyBxEe8/?share_source=copy_web&vd_source=49695bdf86058dec57a6549df9ba1d52"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-foreground/90 transition-colors hover:text-primary"
+        >
+          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/20">
+            <Play className="h-3 w-3 text-primary fill-primary" />
+          </span>
+          <span className="truncate">LINUX DO预申请系统测试版上线了！</span>
+          <ExternalLink className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+        </a>
+      </div>
       <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link href={`/${locale}`} className="flex items-center gap-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">

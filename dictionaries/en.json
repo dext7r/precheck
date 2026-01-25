@@ -1558,6 +1558,22 @@
     }
   },
   "homepage": {
+    "stats": {
+      "members": "Members",
+      "activeDaily": "Daily Active",
+      "topics": "Topics",
+      "posts": "Posts"
+    },
+    "trust": {
+      "title": "Why LINUX DO",
+      "subtitle": "Sincere, Friendly, United, Professional - Building a community we're proud of",
+      "items": [
+        { "title": "Sincere", "description": "Be genuine and honest, reject deception" },
+        { "title": "Friendly", "description": "Help every member warmly, reject arrogance" },
+        { "title": "United", "description": "Build an ideal community together, reject isolation" },
+        { "title": "Professional", "description": "Pursue excellence, reject mediocrity" }
+      ]
+    },
     "features": {
       "title": "Core Features",
       "subtitle": "Simple and efficient pre-application process",

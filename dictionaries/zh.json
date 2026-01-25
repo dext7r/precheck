@@ -1554,6 +1554,22 @@
     }
   },
   "homepage": {
+    "stats": {
+      "members": "社区成员",
+      "activeDaily": "日活用户",
+      "topics": "话题数量",
+      "posts": "帖子数量"
+    },
+    "trust": {
+      "title": "为什么选择 LINUX DO",
+      "subtitle": "真诚、友善、团结、专业，共建你我引以为荣之社区",
+      "items": [
+        { "title": "真诚待人", "description": "以真诚待人为荣，拒绝虚伪欺骗" },
+        { "title": "友善热心", "description": "热情帮助每一位佬友，拒绝傲慢冷漠" },
+        { "title": "团结协作", "description": "共建理想型社区，拒绝孤立对抗" },
+        { "title": "专业敬业", "description": "追求技术卓越，拒绝敷衍了事" }
+      ]
+    },
     "features": {
       "title": "核心功能",
       "subtitle": "简单高效的预申请流程",
