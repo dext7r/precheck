@@ -69,7 +69,12 @@ export function QueryInviteCodesForm({ locale, dict }: QueryInviteCodesFormProps
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null)
   const [error, setError] = useState("")
 
-  const getFullUrl = (code: string) => `https://linux.do/invites/${code}`
+  const getFullUrl = (code: string) => {
+    // 如果 code 已经是完整 URL，提取纯代码部分
+    const match = code.match(/(?:https?:\/\/linux\.do)?\/invites\/([A-Za-z0-9_-]+)/i)
+    const pureCode = match?.[1] || code
+    return `https://linux.do/invites/${pureCode}`
+  }
 
   const handleQuery = async (queryToken?: string, queryEmail?: string) => {
     const trimmedToken = (queryToken || token).trim().toUpperCase()
