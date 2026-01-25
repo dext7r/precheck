@@ -46,18 +46,38 @@ export function Footer({ dict, locale }: FooterProps) {
                 {link.name}
               </Link>
             ))}
-            <div className="flex items-center gap-1.5 text-sm">
+            <div className="flex items-center gap-2 text-sm">
               <MessageCircle className="h-4 w-4" />
               <span>{dict.footer.qqGroupLabel}</span>
-              <a
-                href="https://qm.qq.com/q/HlNOiN0IYS"
-                target="_blank"
-                rel="noopener noreferrer"
-                title="打开 QQ 群 1080464482"
-                className="font-mono font-semibold text-foreground transition-colors hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-              >
-                1080464482
-              </a>
+              <div className="flex items-center gap-1.5">
+                <a
+                  href="https://qm.qq.com/q/yBh3PibMFG"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title="311795307"
+                  className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary transition-all hover:bg-primary hover:text-primary-foreground"
+                >
+                  {dict.footer.qqGroup1}
+                </a>
+                <a
+                  href="https://qm.qq.com/q/kAcXh7ovC0"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title="1080464482"
+                  className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary transition-all hover:bg-primary hover:text-primary-foreground"
+                >
+                  {dict.footer.qqGroup2}
+                </a>
+                <a
+                  href="https://qm.qq.com/q/It6OPlkI8g"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title="915386705"
+                  className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary transition-all hover:bg-primary hover:text-primary-foreground"
+                >
+                  {dict.footer.qqGroup3}
+                </a>
+              </div>
             </div>
             <a
               href="https://github.com/dext7r/precheck"

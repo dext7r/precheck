@@ -15,6 +15,10 @@
     "logout": "退出登录",
     "queryStatus": "查询进度"
   },
+  "header": {
+    "videoAnnouncement": "预申请系统上线了！",
+    "qqAnnouncement": "加入 QQ 答疑群"
+  },
   "apiErrors": {
     "databaseNotConfigured": "数据库未配置",
     "notAuthenticated": "未登录",
@@ -332,6 +336,9 @@
     "terms": "服务条款",
     "copyright": "保留所有权利。",
     "qqGroupLabel": "QQ 群：",
+    "qqGroup1": "一群",
+    "qqGroup2": "二群",
+    "qqGroup3": "三群",
     "apiReference": "API 参考",
     "examples": "示例",
     "license": "许可协议"

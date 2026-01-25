@@ -15,6 +15,10 @@
     "logout": "Logout",
     "queryStatus": "Check Status"
   },
+  "header": {
+    "videoAnnouncement": "Pre-application system is live!",
+    "qqAnnouncement": "Join QQ Group"
+  },
   "apiErrors": {
     "databaseNotConfigured": "Database not configured",
     "notAuthenticated": "Not authenticated",
@@ -334,6 +338,9 @@
     "terms": "Terms",
     "copyright": "All rights reserved.",
     "qqGroupLabel": "QQ Group:",
+    "qqGroup1": "Group 1",
+    "qqGroup2": "Group 2",
+    "qqGroup3": "Group 3",
     "apiReference": "API Reference",
     "examples": "Examples",
     "license": "License"
