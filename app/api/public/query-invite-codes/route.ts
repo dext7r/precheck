@@ -10,6 +10,19 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = request.nextUrl
     const token = (searchParams.get("token") || "").trim().toUpperCase()
+    const rawEmail = (searchParams.get("email") || "").trim()
+    if (!rawEmail) {
+      return createApiErrorResponse(request, "apiErrors.queryInviteCodes.emailRequired", {
+        status: 400,
+      })
+    }
+    const email = rawEmail.toLowerCase()
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email)) {
+      return createApiErrorResponse(request, "apiErrors.queryInviteCodes.emailInvalid", {
+        status: 400,
+      })
+    }
 
     if (!token || token.length < 4) {
       return createApiErrorResponse(request, "apiErrors.queryInviteCodes.invalidToken", {
@@ -71,6 +84,7 @@ export async function GET(request: NextRequest) {
         guidance: true,
         reviewedAt: true,
         createdAt: true,
+        registerEmail: true,
         inviteCode: {
           select: {
             code: true,
@@ -82,6 +96,11 @@ export async function GET(request: NextRequest) {
     })
 
     if (preApplication) {
+      if (preApplication.registerEmail.toLowerCase() !== email) {
+        return createApiErrorResponse(request, "apiErrors.queryInviteCodes.emailMismatch", {
+          status: 403,
+        })
+      }
       return NextResponse.json({
         type: "pre_application",
         status: preApplication.status,

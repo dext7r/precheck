@@ -22,12 +22,27 @@ import {
 } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
 import { PostContent } from "@/components/posts/post-content"
-import { Copy, Check, History, FileText, AlertCircle, ExternalLink } from "lucide-react"
+import {
+  Copy,
+  Check,
+  History,
+  FileText,
+  ExternalLink,
+  Clock,
+  CheckCircle2,
+  XCircle,
+  HelpCircle,
+  ClipboardList,
+  Loader2,
+  Users,
+  Heart,
+} from "lucide-react"
 import type { Dictionary } from "@/lib/i18n/get-dictionary"
 import type { Locale } from "@/lib/i18n/config"
 import { preApplicationGroups, preApplicationSources } from "@/lib/pre-application/constants"
 import { EmailWithDomainInput } from "@/components/ui/email-with-domain-input"
 import { useAllowedEmailDomains } from "@/lib/hooks/use-allowed-email-domains"
+import { cn } from "@/lib/utils"
 
 type PreApplicationVersion = {
   id: string
@@ -79,11 +94,14 @@ interface PreApplicationFormProps {
 function FormSkeleton() {
   return (
     <div className="space-y-6">
-      <div>
-        <Skeleton className="h-9 w-48" />
-        <Skeleton className="mt-2 h-5 w-72" />
+      <div className="flex items-center gap-4">
+        <Skeleton className="h-12 w-12 rounded-xl" />
+        <div>
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="mt-2 h-4 w-72" />
+        </div>
       </div>
-      <Card>
+      <Card className="border-0 shadow-md">
         <CardHeader>
           <Skeleton className="h-6 w-32" />
           <Skeleton className="h-4 w-64" />
@@ -91,19 +109,19 @@ function FormSkeleton() {
         <CardContent className="space-y-6">
           <div className="space-y-2">
             <Skeleton className="h-4 w-20" />
-            <Skeleton className="h-32 w-full" />
+            <Skeleton className="h-32 w-full rounded-xl" />
           </div>
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Skeleton className="h-4 w-24" />
-              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full rounded-lg" />
             </div>
             <div className="space-y-2">
               <Skeleton className="h-4 w-24" />
-              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full rounded-lg" />
             </div>
           </div>
-          <Skeleton className="h-10 w-24" />
+          <Skeleton className="h-10 w-28 rounded-lg" />
         </CardContent>
       </Card>
     </div>
@@ -128,6 +146,11 @@ export function PreApplicationForm({
   const [tokenCopied, setTokenCopied] = useState(false)
   const [activeTab, setActiveTab] = useState<"form" | "history">("form")
   const [essayHint, setEssayHint] = useState(t.fields.essayHint)
+  const [queueInfo, setQueueInfo] = useState<{
+    totalPending: number
+    position: number
+    aheadCount: number
+  } | null>(null)
   const allowedDomains = useAllowedEmailDomains()
   const [formData, setFormData] = useState({
     essay: "",
@@ -151,6 +174,8 @@ export function PreApplicationForm({
     ? maxResubmitCount - (latest.resubmitCount || 0)
     : maxResubmitCount
   const canResubmit = latest?.status === "REJECTED" && remainingResubmits > 0
+  // DISPUTED 状态且没有邀请码时可以修改
+  const canEditDisputed = latest?.status === "DISPUTED" && !latest?.inviteCode
 
   const loadRecord = async () => {
     setLoading(true)
@@ -161,6 +186,7 @@ export function PreApplicationForm({
       const nextRecords = data.records || []
       setRecords(nextRecords)
       if (data.maxResubmitCount) setMaxResubmitCount(data.maxResubmitCount)
+      if (data.queueInfo) setQueueInfo(data.queueInfo)
       if (typeof window !== "undefined") {
         window.dispatchEvent(
           new CustomEvent("pre-application:updated", {
@@ -214,14 +240,48 @@ export function PreApplicationForm({
     }
   }, [formData.source, formData.sourceDetail])
 
-  const statusBadge = (status: PreApplicationRecord["status"]) => {
-    const map: Record<string, { label: string; className: string }> = {
-      PENDING: { label: t.status.pending, className: "bg-amber-100 text-amber-800" },
-      APPROVED: { label: t.status.approved, className: "bg-emerald-100 text-emerald-700" },
-      REJECTED: { label: t.status.rejected, className: "bg-rose-100 text-rose-700" },
-    }
-    const config = map[status] || map.PENDING
-    return <Badge className={config.className}>{config.label}</Badge>
+  const statusConfig: Record<
+    PreApplicationRecord["status"],
+    { label: string; icon: typeof Clock; color: string; bg: string }
+  > = {
+    PENDING: {
+      label: t.status.pending,
+      icon: Clock,
+      color: "text-amber-600 dark:text-amber-400",
+      bg: "bg-amber-500/10",
+    },
+    APPROVED: {
+      label: t.status.approved,
+      icon: CheckCircle2,
+      color: "text-emerald-600 dark:text-emerald-400",
+      bg: "bg-emerald-500/10",
+    },
+    REJECTED: {
+      label: t.status.rejected,
+      icon: XCircle,
+      color: "text-rose-600 dark:text-rose-400",
+      bg: "bg-rose-500/10",
+    },
+    DISPUTED: {
+      label: t.status.disputed || "待补充",
+      icon: HelpCircle,
+      color: "text-orange-600 dark:text-orange-400",
+      bg: "bg-orange-500/10",
+    },
+  }
+
+  const StatusBadge = ({ status }: { status: PreApplicationRecord["status"] }) => {
+    const config = statusConfig[status] || statusConfig.PENDING
+    const Icon = config.icon
+    return (
+      <Badge
+        variant="secondary"
+        className={cn("gap-1.5 px-2.5 py-1 font-medium", config.bg, config.color)}
+      >
+        <Icon className="h-3.5 w-3.5" />
+        {config.label}
+      </Badge>
+    )
   }
 
   const getSourceLabel = (value: string | null) => {
@@ -250,7 +310,7 @@ export function PreApplicationForm({
         return
       }
 
-      // 检查重新提交次数
+      // 检查重新提交次数（仅 REJECTED 状态）
       if (latest?.status === "REJECTED" && remainingResubmits <= 0) {
         toast.error(t.maxResubmitExceeded || `已达到最大重新提交次数限制 (${maxResubmitCount} 次)`)
         return
@@ -272,7 +332,7 @@ export function PreApplicationForm({
           sourceDetail: formData.source === "OTHER" ? formData.sourceDetail : null,
           registerEmail: formData.registerEmail,
           group: formData.group,
-          version: latest?.version, // 乐观锁
+          version: latest?.version,
         }),
       })
 
@@ -310,27 +370,107 @@ export function PreApplicationForm({
   if (loading) return <FormSkeleton />
 
   const hasHistory = latest?.versions && latest.versions.length > 1
+  // 显示表单的条件：无记录、PENDING、可重新提交的REJECTED、可修改的DISPUTED
+  const showForm = !latest || latest.status === "PENDING" || canResubmit || canEditDisputed
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">{t.title}</h1>
-        <p className="mt-1 text-muted-foreground">{t.description}</p>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+      {/* 页面标题 */}
+      <div className="flex items-center gap-4">
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ type: "spring", bounce: 0.5, delay: 0.1 }}
+          className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 shadow-lg shadow-violet-500/25"
+        >
+          <ClipboardList className="h-6 w-6 text-white" />
+        </motion.div>
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{t.title}</h1>
+          <p className="text-sm text-muted-foreground">{t.description}</p>
+        </div>
       </div>
 
-      {/* 驳回后重新提交次数警告 */}
+      {/* PENDING 状态 - 排队信息和温馨提示 */}
+      {latest?.status === "PENDING" && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="space-y-4"
+        >
+          {/* 排队信息卡片 */}
+          {queueInfo && (
+            <div className="flex items-start gap-3 rounded-xl border border-blue-200 bg-gradient-to-r from-blue-50 to-transparent p-4 dark:border-blue-900/50 dark:from-blue-950/30">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-500/10">
+                <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div className="flex-1">
+                <p className="font-semibold text-blue-800 dark:text-blue-200">
+                  {(t as unknown as Record<string, string>).queueTitle || "排队信息"}
+                </p>
+                <div className="mt-2 grid gap-2 sm:grid-cols-3">
+                  <div className="rounded-lg bg-blue-100/50 dark:bg-blue-900/20 p-2 text-center">
+                    <p className="text-2xl font-bold text-blue-700 dark:text-blue-300">
+                      {queueInfo.position}
+                    </p>
+                    <p className="text-xs text-blue-600/70 dark:text-blue-400/70">
+                      {(t as unknown as Record<string, string>).yourPosition || "您的位置"}
+                    </p>
+                  </div>
+                  <div className="rounded-lg bg-blue-100/50 dark:bg-blue-900/20 p-2 text-center">
+                    <p className="text-2xl font-bold text-blue-700 dark:text-blue-300">
+                      {queueInfo.aheadCount}
+                    </p>
+                    <p className="text-xs text-blue-600/70 dark:text-blue-400/70">
+                      {(t as unknown as Record<string, string>).aheadOfYou || "前面还有"}
+                    </p>
+                  </div>
+                  <div className="rounded-lg bg-blue-100/50 dark:bg-blue-900/20 p-2 text-center">
+                    <p className="text-2xl font-bold text-blue-700 dark:text-blue-300">
+                      {queueInfo.totalPending}
+                    </p>
+                    <p className="text-xs text-blue-600/70 dark:text-blue-400/70">
+                      {(t as unknown as Record<string, string>).totalPending || "总待审核"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* 温馨提示 */}
+          <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-gradient-to-r from-amber-50 to-transparent p-4 dark:border-amber-900/50 dark:from-amber-950/30">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-500/10">
+              <Heart className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+            </div>
+            <div className="text-sm">
+              <p className="font-semibold text-amber-800 dark:text-amber-200">
+                {(t as unknown as Record<string, string>).warmTipTitle || "温馨提示"}
+              </p>
+              <p className="mt-1 text-amber-700 dark:text-amber-300 leading-relaxed">
+                {(t as unknown as Record<string, string>).warmTipMessage ||
+                  "感谢您的耐心等待！我们正在认真审核每一份申请，通常会在 1-3 个工作日内完成。审核结果会通过站内信和邮件通知您，请留意查收。"}
+              </p>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
+      {/* 状态警告 */}
       {latest?.status === "REJECTED" && (
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950/30"
+          className="flex items-start gap-3 rounded-xl border border-rose-200 bg-gradient-to-r from-rose-50 to-transparent p-4 dark:border-rose-900/50 dark:from-rose-950/30"
         >
-          <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-rose-500/10">
+            <XCircle className="h-5 w-5 text-rose-600 dark:text-rose-400" />
+          </div>
           <div className="text-sm">
-            <p className="font-medium text-amber-800 dark:text-amber-200">
+            <p className="font-semibold text-rose-800 dark:text-rose-200">
               {t.resubmitWarningTitle || "申请已被驳回"}
             </p>
-            <p className="mt-1 text-amber-700 dark:text-amber-300">
+            <p className="mt-0.5 text-rose-700 dark:text-rose-300">
               {canResubmit
                 ? (t.resubmitRemaining || "您还可以重新提交 {count} 次").replace(
                     "{count}",
@@ -342,17 +482,42 @@ export function PreApplicationForm({
         </motion.div>
       )}
 
+      {/* DISPUTED 状态提示 */}
+      {latest?.status === "DISPUTED" && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-start gap-3 rounded-xl border border-orange-200 bg-gradient-to-r from-orange-50 to-transparent p-4 dark:border-orange-900/50 dark:from-orange-950/30"
+        >
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-orange-500/10">
+            <HelpCircle className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+          </div>
+          <div className="text-sm">
+            <p className="font-semibold text-orange-800 dark:text-orange-200">
+              {t.disputedWarningTitle || "申请需要补充信息"}
+            </p>
+            <p className="mt-0.5 text-orange-700 dark:text-orange-300">
+              {canEditDisputed
+                ? t.disputedCanEdit || "请根据审核意见补充或修改您的申请内容"
+                : t.disputedWithCode || "您的申请已关联邀请码，等待最终审核"}
+            </p>
+          </div>
+        </motion.div>
+      )}
+
       {latest && hasHistory ? (
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "form" | "history")}>
-          <TabsList className="mb-4">
-            <TabsTrigger value="form" className="gap-2">
+          <TabsList className="mb-4 h-11 p-1 bg-muted/50">
+            <TabsTrigger value="form" className="gap-2 data-[state=active]:shadow-sm">
               <FileText className="h-4 w-4" />
-              {t.currentApplication || "当前申请"}
+              <span className="hidden sm:inline">{t.currentApplication || "当前申请"}</span>
+              <span className="sm:hidden">{locale === "zh" ? "申请" : "Form"}</span>
             </TabsTrigger>
-            <TabsTrigger value="history" className="gap-2">
+            <TabsTrigger value="history" className="gap-2 data-[state=active]:shadow-sm">
               <History className="h-4 w-4" />
-              {t.versionHistory || "版本历史"}
-              <Badge variant="secondary" className="ml-1">
+              <span className="hidden sm:inline">{t.versionHistory || "版本历史"}</span>
+              <span className="sm:hidden">{locale === "zh" ? "历史" : "History"}</span>
+              <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-[10px]">
                 {latest.versions?.length || 0}
               </Badge>
             </TabsTrigger>
@@ -385,267 +550,345 @@ export function PreApplicationForm({
       ) : (
         renderMainContent()
       )}
-    </div>
+    </motion.div>
   )
 
   function renderMainContent() {
     return (
       <div className="space-y-6">
+        {/* 审核信息卡片 */}
         {latest && hasReviewInfo && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-3">
-                {t.reviewInfoTitle}
-                {statusBadge(latest.status)}
-              </CardTitle>
-              <CardDescription>
-                {t.submittedAt}：{formatDate(latest.createdAt)} · {t.updatedAt}：
-                {formatDate(latest.updatedAt)}
-                {latest.version > 1 && ` · v${latest.version}`}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid gap-4 md:grid-cols-2">
-                <div>
-                  <p className="text-sm text-muted-foreground">{t.review.reviewer}</p>
-                  <p className="font-medium">
-                    {latest.reviewedBy?.name || latest.reviewedBy?.email || "-"}
-                  </p>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+          >
+            <Card className="border-0 shadow-md overflow-hidden">
+              <CardHeader className="bg-gradient-to-r from-muted/50 to-transparent border-b">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <CardTitle className="flex items-center gap-3 text-lg">
+                    {t.reviewInfoTitle}
+                    <StatusBadge status={latest.status} />
+                  </CardTitle>
+                  <CardDescription className="text-xs sm:text-sm">
+                    {t.submittedAt}：{formatDate(latest.createdAt)}
+                    {latest.version > 1 && ` · v${latest.version}`}
+                  </CardDescription>
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">{t.review.reviewedAt}</p>
-                  <p className="font-medium">{formatDate(latest.reviewedAt)}</p>
-                </div>
-              </div>
-
-              {latest.guidance && (
-                <div>
-                  <p className="text-sm text-muted-foreground">{t.review.guidance}</p>
-                  <div className="mt-2 rounded-lg border bg-card p-4">
-                    <PostContent content={latest.guidance} emptyMessage={t.review.guidance} />
-                  </div>
-                </div>
-              )}
-
-              {latest.inviteCode && (
-                <div className="grid gap-4 md:grid-cols-3">
-                  <div>
-                    <p className="text-sm text-muted-foreground">{t.invite.code}</p>
-                    <p className="font-medium">{latest.inviteCode.code}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">{t.invite.expiresAt}</p>
-                    <p className="font-medium">{formatDate(latest.inviteCode.expiresAt)}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">{t.invite.used}</p>
+              </CardHeader>
+              <CardContent className="p-4 md:p-6 space-y-6">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-1">
+                    <p className="text-xs text-muted-foreground">{t.review.reviewer}</p>
                     <p className="font-medium">
-                      {latest.inviteCode.usedAt ? t.invite.used : t.invite.unused}
+                      {latest.reviewedBy?.name || latest.reviewedBy?.email || "-"}
                     </p>
                   </div>
+                  <div className="space-y-1">
+                    <p className="text-xs text-muted-foreground">{t.review.reviewedAt}</p>
+                    <p className="font-medium">{formatDate(latest.reviewedAt)}</p>
+                  </div>
                 </div>
-              )}
-            </CardContent>
-          </Card>
-        )}
 
-        {latest && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-3">
-                {hasReviewInfo ? t.formInfoTitle : t.status.label}
-                {!hasReviewInfo && statusBadge(latest.status)}
-              </CardTitle>
-              <CardDescription>{t.submitted}</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid gap-4 md:grid-cols-2">
-                <div>
-                  <p className="text-sm text-muted-foreground">{t.fields.registerEmail}</p>
-                  <p className="font-medium">{latest.registerEmail}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">{t.fields.group}</p>
-                  <p className="font-medium">{getGroupLabel(latest.group)}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">{t.fields.source}</p>
-                  <p className="font-medium">{getSourceLabel(latest.source)}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">{t.fields.queryToken}</p>
-                  {latest.queryToken ? (
-                    <div className="flex items-center gap-2">
-                      <code className="font-mono font-medium tracking-widest">
-                        {latest.queryToken}
-                      </code>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6"
-                        onClick={async () => {
-                          try {
-                            const queryUrl = `${window.location.origin}/${locale}/query-invite-codes?queryCode=${latest.queryToken}`
-                            await navigator.clipboard.writeText(queryUrl)
-                            setTokenCopied(true)
-                            toast.success(t.queryTokenCopied || "查询链接已复制")
-                            setTimeout(() => setTokenCopied(false), 2000)
-                          } catch {
-                            toast.error("复制失败")
-                          }
-                        }}
-                      >
-                        {tokenCopied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6"
-                        onClick={() => {
-                          router.push(
-                            `/${locale}/query-invite-codes?queryCode=${latest.queryToken}`,
-                          )
-                        }}
-                      >
-                        <ExternalLink className="h-3 w-3" />
-                      </Button>
+                {latest.guidance && (
+                  <div className="space-y-2">
+                    <p className="text-xs text-muted-foreground">{t.review.guidance}</p>
+                    <div className="rounded-xl border bg-muted/30 p-4">
+                      <PostContent content={latest.guidance} emptyMessage={t.review.guidance} />
                     </div>
-                  ) : (
-                    <p className="font-medium">-</p>
-                  )}
-                </div>
-                {latest.sourceDetail && (
-                  <div>
-                    <p className="text-sm text-muted-foreground">{t.fields.sourceDetail}</p>
-                    <p className="font-medium">{latest.sourceDetail}</p>
                   </div>
                 )}
-              </div>
 
-              <Separator />
-
-              <div>
-                <p className="text-sm text-muted-foreground">{t.fields.essay}</p>
-                <div className="mt-2 rounded-lg border bg-card p-4">
-                  <PostContent content={latest.essay} emptyMessage={essayHint} />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+                {latest.inviteCode && (
+                  <div className="grid gap-4 sm:grid-cols-3 p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/50">
+                    <div className="space-y-1">
+                      <p className="text-xs text-emerald-600 dark:text-emerald-400">
+                        {t.invite.code}
+                      </p>
+                      <p className="font-mono font-bold text-emerald-700 dark:text-emerald-300">
+                        {latest.inviteCode.code}
+                      </p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-xs text-emerald-600 dark:text-emerald-400">
+                        {t.invite.expiresAt}
+                      </p>
+                      <p className="font-medium text-emerald-700 dark:text-emerald-300">
+                        {formatDate(latest.inviteCode.expiresAt)}
+                      </p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-xs text-emerald-600 dark:text-emerald-400">
+                        {t.invite.used}
+                      </p>
+                      <p className="font-medium text-emerald-700 dark:text-emerald-300">
+                        {latest.inviteCode.usedAt ? t.invite.used : t.invite.unused}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </motion.div>
         )}
 
-        {(!latest ||
-          (latest.status !== "APPROVED" && canResubmit) ||
-          latest.status === "PENDING") && (
-          <Card>
-            <CardHeader>
-              <CardTitle>
-                {latest?.status === "REJECTED" ? t.resubmit || "重新提交" : t.submit}
-              </CardTitle>
-              <CardDescription>
-                {t.allowedDomainsTitle}：{allowedDomainsText}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="essay">{t.fields.essay}</Label>
-                <Textarea
-                  id="essay"
-                  value={formData.essay}
-                  onChange={(event) => setFormData({ ...formData, essay: event.target.value })}
-                  rows={6}
-                  placeholder={essayHint}
-                />
-                <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <span>{essayHint}</span>
-                  <span>
-                    {formData.essay.length}/{essayMinChars}
-                  </span>
+        {/* 已提交信息卡片 */}
+        {latest && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <Card className="border-0 shadow-md">
+              <CardHeader>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                  <CardTitle className="flex items-center gap-3 text-lg">
+                    {hasReviewInfo ? t.formInfoTitle : t.status.label}
+                    {!hasReviewInfo && <StatusBadge status={latest.status} />}
+                  </CardTitle>
                 </div>
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label>{t.fields.source}</Label>
-                  <Select
-                    value={formData.source}
-                    onValueChange={(value) => setFormData({ ...formData, source: value })}
-                    disabled={isEditing}
-                  >
-                    <SelectTrigger disabled={isEditing}>
-                      <SelectValue placeholder={t.fields.sourceOptional} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {preApplicationSources.map((source) => {
-                        const key = source.labelKey.split(".").pop() || ""
-                        return (
-                          <SelectItem key={source.value} value={source.value}>
-                            {(t.sources as Record<string, string>)[key]}
-                          </SelectItem>
-                        )
-                      })}
-                    </SelectContent>
-                  </Select>
-                  {formData.source === "OTHER" && (
-                    <Input
-                      value={formData.sourceDetail}
-                      onChange={(event) =>
-                        setFormData({ ...formData, sourceDetail: event.target.value })
-                      }
-                      placeholder={t.fields.sourceDetail}
-                      readOnly={isEditing}
-                    />
+                <CardDescription>{t.submitted}</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-1 p-3 rounded-lg bg-muted/30">
+                    <p className="text-xs text-muted-foreground">{t.fields.registerEmail}</p>
+                    <p className="font-medium truncate">{latest.registerEmail}</p>
+                  </div>
+                  <div className="space-y-1 p-3 rounded-lg bg-muted/30">
+                    <p className="text-xs text-muted-foreground">{t.fields.group}</p>
+                    <p className="font-medium">{getGroupLabel(latest.group)}</p>
+                  </div>
+                  <div className="space-y-1 p-3 rounded-lg bg-muted/30">
+                    <p className="text-xs text-muted-foreground">{t.fields.source}</p>
+                    <p className="font-medium">{getSourceLabel(latest.source)}</p>
+                  </div>
+                  <div className="space-y-1 p-3 rounded-lg bg-muted/30">
+                    <p className="text-xs text-muted-foreground">{t.fields.queryToken}</p>
+                    {latest.queryToken ? (
+                      <div className="flex items-center gap-2">
+                        <code className="font-mono font-medium tracking-wider text-sm">
+                          {latest.queryToken}
+                        </code>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 shrink-0"
+                          onClick={async () => {
+                            try {
+                              const queryUrl = `${window.location.origin}/${locale}/query-invite-codes?queryCode=${latest.queryToken}`
+                              await navigator.clipboard.writeText(queryUrl)
+                              setTokenCopied(true)
+                              toast.success(t.queryTokenCopied || "查询链接已复制")
+                              setTimeout(() => setTokenCopied(false), 2000)
+                            } catch {
+                              toast.error("复制失败")
+                            }
+                          }}
+                        >
+                          {tokenCopied ? (
+                            <Check className="h-3 w-3" />
+                          ) : (
+                            <Copy className="h-3 w-3" />
+                          )}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 shrink-0"
+                          onClick={() => {
+                            router.push(
+                              `/${locale}/query-invite-codes?queryCode=${latest.queryToken}`,
+                            )
+                          }}
+                        >
+                          <ExternalLink className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <p className="font-medium">-</p>
+                    )}
+                  </div>
+                  {latest.sourceDetail && (
+                    <div className="space-y-1 p-3 rounded-lg bg-muted/30 sm:col-span-2">
+                      <p className="text-xs text-muted-foreground">{t.fields.sourceDetail}</p>
+                      <p className="font-medium">{latest.sourceDetail}</p>
+                    </div>
                   )}
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="registerEmail">{t.fields.registerEmail}</Label>
-                  <EmailWithDomainInput
-                    value={formData.registerEmail}
-                    domains={allowedDomains}
-                    onChange={(email) => setFormData({ ...formData, registerEmail: email })}
-                    selectPlaceholder={emailSuffixPlaceholder}
-                    inputId="registerEmail"
-                    inputPlaceholder={t.fields.registerEmailHint}
-                    disabled={isEditing}
-                  />
-                  <p className="text-xs text-muted-foreground">{t.fields.registerEmailHint}</p>
-                </div>
+                <Separator />
 
                 <div className="space-y-2">
-                  <Label>{t.fields.group}</Label>
-                  <RadioGroup
-                    value={formData.group}
-                    onValueChange={(value) => setFormData({ ...formData, group: value })}
-                    className="flex flex-col gap-2"
-                  >
-                    {preApplicationGroups.map((group) => {
-                      const key = group.labelKey.split(".").pop() || ""
-                      return (
-                        <label key={group.value} className="flex items-center gap-2 text-sm">
-                          <RadioGroupItem value={group.value} />
-                          {(t.groups as Record<string, string>)[key]}
-                        </label>
-                      )
-                    })}
-                  </RadioGroup>
+                  <p className="text-xs text-muted-foreground">{t.fields.essay}</p>
+                  <div className="rounded-xl border bg-muted/30 p-4">
+                    <PostContent content={latest.essay} emptyMessage={essayHint} />
+                  </div>
                 </div>
-              </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
 
-              <Button
-                onClick={handleSubmit}
-                disabled={submitting || (latest?.status === "REJECTED" && !canResubmit)}
-              >
-                {submitting
-                  ? t.submitting
-                  : latest?.status === "REJECTED"
+        {/* 编辑/提交表单 */}
+        {showForm && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            <Card className="border-0 shadow-md">
+              <CardHeader>
+                <CardTitle className="text-lg">
+                  {latest?.status === "REJECTED"
                     ? t.resubmit || "重新提交"
-                    : latest
-                      ? t.update
-                      : t.submit}
-              </Button>
-            </CardContent>
-          </Card>
+                    : latest?.status === "DISPUTED"
+                      ? t.editDisputed || "补充修改"
+                      : latest
+                        ? t.update
+                        : t.submit}
+                </CardTitle>
+                <CardDescription>
+                  {t.allowedDomainsTitle}：{allowedDomainsText}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="essay" className="text-sm font-medium">
+                    {t.fields.essay}
+                  </Label>
+                  <Textarea
+                    id="essay"
+                    value={formData.essay}
+                    onChange={(event) => setFormData({ ...formData, essay: event.target.value })}
+                    rows={6}
+                    placeholder={essayHint}
+                    className="resize-none rounded-xl"
+                  />
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span className="line-clamp-1">{essayHint}</span>
+                    <span
+                      className={cn(
+                        "shrink-0 tabular-nums",
+                        formData.essay.length >= essayMinChars && "text-emerald-600",
+                      )}
+                    >
+                      {formData.essay.length}/{essayMinChars}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">{t.fields.source}</Label>
+                    <Select
+                      value={formData.source}
+                      onValueChange={(value) => setFormData({ ...formData, source: value })}
+                      disabled={isEditing && !canEditDisputed}
+                    >
+                      <SelectTrigger
+                        disabled={isEditing && !canEditDisputed}
+                        className="rounded-lg"
+                      >
+                        <SelectValue placeholder={t.fields.sourceOptional} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {preApplicationSources.map((source) => {
+                          const key = source.labelKey.split(".").pop() || ""
+                          return (
+                            <SelectItem key={source.value} value={source.value}>
+                              {(t.sources as Record<string, string>)[key]}
+                            </SelectItem>
+                          )
+                        })}
+                      </SelectContent>
+                    </Select>
+                    {formData.source === "OTHER" && (
+                      <Input
+                        value={formData.sourceDetail}
+                        onChange={(event) =>
+                          setFormData({ ...formData, sourceDetail: event.target.value })
+                        }
+                        placeholder={t.fields.sourceDetail}
+                        readOnly={isEditing && !canEditDisputed}
+                        className="rounded-lg"
+                      />
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="registerEmail" className="text-sm font-medium">
+                      {t.fields.registerEmail}
+                    </Label>
+                    <EmailWithDomainInput
+                      value={formData.registerEmail}
+                      domains={allowedDomains}
+                      onChange={(email) => setFormData({ ...formData, registerEmail: email })}
+                      selectPlaceholder={emailSuffixPlaceholder}
+                      inputId="registerEmail"
+                      inputPlaceholder={t.fields.registerEmailHint}
+                      disabled={isEditing && !canEditDisputed}
+                    />
+                    <p className="text-xs text-muted-foreground">{t.fields.registerEmailHint}</p>
+                  </div>
+
+                  <div className="space-y-3 md:col-span-2">
+                    <Label className="text-sm font-medium">{t.fields.group}</Label>
+                    <RadioGroup
+                      value={formData.group}
+                      onValueChange={(value) => setFormData({ ...formData, group: value })}
+                      className="flex flex-wrap gap-4"
+                    >
+                      {preApplicationGroups.map((group) => {
+                        const key = group.labelKey.split(".").pop() || ""
+                        return (
+                          <label
+                            key={group.value}
+                            className={cn(
+                              "flex items-center gap-2 rounded-lg border p-3 cursor-pointer transition-colors",
+                              formData.group === group.value
+                                ? "border-primary bg-primary/5"
+                                : "border-border hover:bg-muted/50",
+                            )}
+                          >
+                            <RadioGroupItem value={group.value} />
+                            <span className="text-sm">
+                              {(t.groups as Record<string, string>)[key]}
+                            </span>
+                          </label>
+                        )
+                      })}
+                    </RadioGroup>
+                  </div>
+                </div>
+
+                <Button
+                  onClick={handleSubmit}
+                  disabled={
+                    submitting ||
+                    (latest?.status === "REJECTED" && !canResubmit && !canEditDisputed)
+                  }
+                  className="w-full sm:w-auto"
+                  size="lg"
+                >
+                  {submitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      {t.submitting}
+                    </>
+                  ) : latest?.status === "REJECTED" ? (
+                    t.resubmit || "重新提交"
+                  ) : latest?.status === "DISPUTED" ? (
+                    t.editDisputed || "提交修改"
+                  ) : latest ? (
+                    t.update
+                  ) : (
+                    t.submit
+                  )}
+                </Button>
+              </CardContent>
+            </Card>
+          </motion.div>
         )}
       </div>
     )
@@ -654,9 +897,12 @@ export function PreApplicationForm({
   function renderVersionHistory() {
     if (!latest?.versions?.length) {
       return (
-        <Card>
-          <CardContent className="py-12 text-center text-muted-foreground">
-            {t.noVersionHistory || "暂无版本历史"}
+        <Card className="border-0 shadow-md">
+          <CardContent className="py-16 text-center">
+            <div className="flex h-14 w-14 mx-auto items-center justify-center rounded-2xl bg-muted/50 mb-4">
+              <History className="h-7 w-7 text-muted-foreground/50" />
+            </div>
+            <p className="text-muted-foreground">{t.noVersionHistory || "暂无版本历史"}</p>
           </CardContent>
         </Card>
       )
@@ -671,39 +917,46 @@ export function PreApplicationForm({
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.05 }}
           >
-            <Card className={index === 0 ? "border-primary/50" : ""}>
+            <Card
+              className={cn(
+                "border-0 shadow-md transition-all",
+                index === 0 && "ring-2 ring-primary/20",
+              )}
+            >
               <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center gap-2 text-base">
-                    v{version.version}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                  <CardTitle className="flex flex-wrap items-center gap-2 text-base">
+                    <span className="font-mono">v{version.version}</span>
                     {index === 0 && (
-                      <Badge variant="secondary">{t.currentVersion || "当前版本"}</Badge>
+                      <Badge variant="default" className="text-xs">
+                        {t.currentVersion || "当前版本"}
+                      </Badge>
                     )}
-                    {statusBadge(version.status as PreApplicationRecord["status"])}
+                    <StatusBadge status={version.status as PreApplicationRecord["status"]} />
                   </CardTitle>
-                  <span className="text-sm text-muted-foreground">
+                  <span className="text-xs text-muted-foreground">
                     {formatDate(version.createdAt)}
                   </span>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid gap-3 text-sm md:grid-cols-3">
-                  <div>
-                    <span className="text-muted-foreground">{t.fields.registerEmail}：</span>
-                    <span className="font-medium">{version.registerEmail}</span>
+                <div className="grid gap-3 text-sm sm:grid-cols-3">
+                  <div className="p-2 rounded-lg bg-muted/30">
+                    <span className="text-xs text-muted-foreground">{t.fields.registerEmail}</span>
+                    <p className="font-medium truncate">{version.registerEmail}</p>
                   </div>
-                  <div>
-                    <span className="text-muted-foreground">{t.fields.group}：</span>
-                    <span className="font-medium">{getGroupLabel(version.group)}</span>
+                  <div className="p-2 rounded-lg bg-muted/30">
+                    <span className="text-xs text-muted-foreground">{t.fields.group}</span>
+                    <p className="font-medium">{getGroupLabel(version.group)}</p>
                   </div>
-                  <div>
-                    <span className="text-muted-foreground">{t.fields.source}：</span>
-                    <span className="font-medium">{getSourceLabel(version.source)}</span>
+                  <div className="p-2 rounded-lg bg-muted/30">
+                    <span className="text-xs text-muted-foreground">{t.fields.source}</span>
+                    <p className="font-medium">{getSourceLabel(version.source)}</p>
                   </div>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground mb-2">{t.fields.essay}</p>
-                  <div className="rounded-lg border bg-muted/50 p-3 text-sm">
+                  <p className="text-xs text-muted-foreground mb-2">{t.fields.essay}</p>
+                  <div className="rounded-xl border bg-muted/30 p-3 text-sm">
                     <PostContent content={version.essay} emptyMessage="" />
                   </div>
                 </div>

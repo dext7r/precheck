@@ -4,6 +4,7 @@ import { useState } from "react"
 import { DashboardSidebar } from "@/components/dashboard/sidebar"
 import { DashboardHeader } from "@/components/dashboard/header"
 import { Sheet, SheetContent } from "@/components/ui/sheet"
+import { Watermark } from "@/components/ui/watermark"
 import type { Dictionary } from "@/lib/i18n/get-dictionary"
 import type { Locale } from "@/lib/i18n/config"
 
@@ -24,6 +25,9 @@ export function DashboardLayoutClient({
 
   return (
     <div className="flex min-h-screen bg-muted/30">
+      {/* 水印 */}
+      <Watermark userId={user.id} email={user.email} name={user.name ?? undefined} />
+
       {/* Desktop Sidebar */}
       <div className="hidden lg:block">
         <DashboardSidebar locale={locale} dict={dict} user={user} />

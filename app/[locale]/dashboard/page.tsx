@@ -1,97 +1,281 @@
-import { getDictionary } from "@/lib/i18n/get-dictionary"
-import { getCurrentUser } from "@/lib/auth/session"
+"use client"
+
+import { useEffect, useState } from "react"
+import { motion } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
 import { defaultLocale, locales, type Locale } from "@/lib/i18n/config"
+import { getDictionary, type Dictionary } from "@/lib/i18n/get-dictionary"
 import Link from "next/link"
+import {
+  Mail,
+  ClipboardList,
+  ChevronRight,
+  Sparkles,
+  BookOpen,
+  CheckCircle2,
+  Clock,
+  AlertCircle,
+  Inbox,
+} from "lucide-react"
+import { cn } from "@/lib/utils"
 
 interface DashboardPageProps {
   params: Promise<{ locale: string }>
 }
 
-export default async function DashboardPage({ params }: DashboardPageProps) {
-  const { locale } = await params
-  const currentLocale = locales.includes(locale as Locale) ? (locale as Locale) : defaultLocale
-  const dict = await getDictionary(currentLocale)
-  const user = await getCurrentUser()
+interface UserInfo {
+  id: string
+  name?: string | null
+  email: string
+}
+
+const container = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1 },
+  },
+}
+
+const item = {
+  hidden: { opacity: 0, y: 20 },
+  show: { opacity: 1, y: 0 },
+}
+
+export default function DashboardPage({ params }: DashboardPageProps) {
+  const [locale, setLocale] = useState<Locale>("en")
+  const [dict, setDict] = useState<Dictionary | null>(null)
+  const [user, setUser] = useState<UserInfo | null>(null)
+  const [unreadCount, setUnreadCount] = useState(0)
+
+  useEffect(() => {
+    params.then(({ locale: l }) => {
+      const currentLocale = locales.includes(l as Locale) ? (l as Locale) : defaultLocale
+      setLocale(currentLocale)
+      getDictionary(currentLocale).then(setDict)
+    })
+  }, [params])
+
+  useEffect(() => {
+    // 获取用户信息
+    fetch("/api/auth/session")
+      .then((res) => res.json())
+      .then((data) => setUser(data.user))
+      .catch(() => null)
+
+    // 获取未读消息数
+    fetch("/api/dashboard/messages?page=1&pageSize=100")
+      .then((res) => res.json())
+      .then((data) => {
+        const count = (data.messages || []).filter(
+          (m: { readAt: string | null }) => !m.readAt,
+        ).length
+        setUnreadCount(count)
+      })
+      .catch(() => null)
+  }, [])
+
+  if (!dict) return null
+
+  const quickNavItems = [
+    {
+      href: `/${locale}/dashboard/messages`,
+      icon: Mail,
+      title: dict.dashboard.messages,
+      description: dict.dashboard.inbox,
+      badge: unreadCount > 0 ? unreadCount : null,
+      gradient: "from-blue-500/10 via-blue-500/5 to-transparent",
+      iconBg: "bg-blue-500/10",
+      iconColor: "text-blue-600 dark:text-blue-400",
+    },
+    {
+      href: `/${locale}/dashboard/pre-application`,
+      icon: ClipboardList,
+      title: dict.dashboard.preApplication,
+      description: dict.preApplication.description,
+      gradient: "from-violet-500/10 via-violet-500/5 to-transparent",
+      iconBg: "bg-violet-500/10",
+      iconColor: "text-violet-600 dark:text-violet-400",
+    },
+  ]
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold">{dict.dashboard.title}</h1>
-        <p className="mt-1 text-muted-foreground">
-          {dict.dashboard.welcome}, {user?.name || user?.email}
-        </p>
-      </div>
-
-      {currentLocale === "zh" && dict.dashboard.preApplicationGuide && (
-        <Card>
-          <CardHeader>
-            <CardTitle>{dict.dashboard.preApplicationGuide.title}</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4 text-sm text-muted-foreground">
-            <p>{dict.dashboard.preApplicationGuide.description}</p>
-            <div className="grid gap-4 md:grid-cols-3">
-              <div>
-                <p className="font-medium text-foreground">
-                  {dict.dashboard.preApplicationGuide.stepsTitle}
-                </p>
-                <ol className="mt-2 list-decimal space-y-1 pl-4">
-                  {dict.dashboard.preApplicationGuide.steps.map((item: string) => (
-                    <li key={item}>{item}</li>
-                  ))}
-                </ol>
-              </div>
-              <div>
-                <p className="font-medium text-foreground">
-                  {dict.dashboard.preApplicationGuide.statusTitle}
-                </p>
-                <ul className="mt-2 list-disc space-y-1 pl-4">
-                  {dict.dashboard.preApplicationGuide.statuses.map((item: string) => (
-                    <li key={item}>{item}</li>
-                  ))}
-                </ul>
-              </div>
-              <div>
-                <p className="font-medium text-foreground">
-                  {dict.dashboard.preApplicationGuide.rulesTitle}
-                </p>
-                <ul className="mt-2 list-disc space-y-1 pl-4">
-                  {dict.dashboard.preApplicationGuide.rules.map((item: string) => (
-                    <li key={item}>{item}</li>
-                  ))}
-                </ul>
-              </div>
+    <motion.div variants={container} initial="hidden" animate="show" className="space-y-8">
+      {/* 欢迎区域 */}
+      <motion.div variants={item} className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent rounded-2xl" />
+        <div className="relative p-6 md:p-8">
+          <div className="flex items-start gap-4">
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: "spring", bounce: 0.5, delay: 0.2 }}
+              className="hidden sm:flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-primary/80 shadow-lg shadow-primary/25"
+            >
+              <Sparkles className="h-7 w-7 text-primary-foreground" />
+            </motion.div>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
+                {dict.dashboard.title}
+              </h1>
+              <p className="mt-1 text-muted-foreground truncate">
+                {dict.dashboard.welcome}, {user?.name || user?.email || "..."}
+              </p>
             </div>
-          </CardContent>
-        </Card>
-      )}
-
-      <Card>
-        <CardHeader>
-          <CardTitle>{dict.dashboard.quickNav}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            <Link href={`/${currentLocale}/dashboard/messages`}>
-              <Button variant="outline" className="h-auto w-full justify-start">
-                <div className="space-y-1 text-left">
-                  <p className="font-medium">{dict.dashboard.messages}</p>
-                  <p className="text-xs text-muted-foreground">{dict.dashboard.inbox}</p>
-                </div>
-              </Button>
-            </Link>
-            <Link href={`/${currentLocale}/dashboard/pre-application`}>
-              <Button variant="outline" className="h-auto w-full justify-start">
-                <div className="space-y-1 text-left">
-                  <p className="font-medium">{dict.dashboard.preApplication}</p>
-                  <p className="text-xs text-muted-foreground">{dict.preApplication.description}</p>
-                </div>
-              </Button>
-            </Link>
           </div>
-        </CardContent>
-      </Card>
-    </div>
+        </div>
+      </motion.div>
+
+      {/* 快捷导航 */}
+      <motion.div variants={item}>
+        <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+          <BookOpen className="h-5 w-5 text-muted-foreground" />
+          {dict.dashboard.quickNav}
+        </h2>
+        <div className="grid gap-4 sm:grid-cols-2">
+          {quickNavItems.map((navItem, index) => (
+            <Link key={navItem.href} href={navItem.href} className="group">
+              <motion.div
+                whileHover={{ scale: 1.02, y: -2 }}
+                whileTap={{ scale: 0.98 }}
+                transition={{ type: "spring", stiffness: 400, damping: 17 }}
+              >
+                <Card className="relative overflow-hidden border-0 shadow-md hover:shadow-xl transition-shadow duration-300">
+                  <div
+                    className={cn(
+                      "absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-100 transition-opacity duration-300",
+                      navItem.gradient,
+                    )}
+                  />
+                  <CardContent className="relative p-5">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex items-start gap-4 min-w-0">
+                        <div
+                          className={cn(
+                            "flex h-12 w-12 shrink-0 items-center justify-center rounded-xl transition-transform duration-300 group-hover:scale-110",
+                            navItem.iconBg,
+                          )}
+                        >
+                          <navItem.icon className={cn("h-6 w-6", navItem.iconColor)} />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <p className="font-semibold truncate">{navItem.title}</p>
+                            {navItem.badge && (
+                              <motion.span
+                                initial={{ scale: 0 }}
+                                animate={{ scale: 1 }}
+                                className="flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1.5 text-[10px] font-bold text-destructive-foreground"
+                              >
+                                {navItem.badge > 99 ? "99+" : navItem.badge}
+                              </motion.span>
+                            )}
+                          </div>
+                          <p className="mt-0.5 text-sm text-muted-foreground line-clamp-2">
+                            {navItem.description}
+                          </p>
+                        </div>
+                      </div>
+                      <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground/50 transition-transform duration-300 group-hover:translate-x-1 group-hover:text-foreground" />
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            </Link>
+          ))}
+        </div>
+      </motion.div>
+
+      {/* 预申请指南 - 仅中文 */}
+      {locale === "zh" && dict.dashboard.preApplicationGuide && (
+        <motion.div variants={item}>
+          <Card className="border-0 shadow-md overflow-hidden">
+            <CardHeader className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30 border-b">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/10">
+                  <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                </div>
+                {dict.dashboard.preApplicationGuide.title}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <p className="text-sm text-muted-foreground mb-6">
+                {dict.dashboard.preApplicationGuide.description}
+              </p>
+              <div className="grid gap-6 md:grid-cols-3">
+                {/* 申请步骤 */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <div className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-500/10">
+                      <span className="text-xs font-bold text-blue-600 dark:text-blue-400">1</span>
+                    </div>
+                    <p className="font-medium text-sm">
+                      {dict.dashboard.preApplicationGuide.stepsTitle}
+                    </p>
+                  </div>
+                  <ul className="space-y-2 pl-8">
+                    {dict.dashboard.preApplicationGuide.steps.map((step: string, i: number) => (
+                      <li
+                        key={step}
+                        className="text-sm text-muted-foreground flex items-start gap-2"
+                      >
+                        <span className="text-blue-500 font-medium shrink-0">{i + 1}.</span>
+                        <span>{step}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* 状态说明 */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <div className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500/10">
+                      <Clock className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
+                    </div>
+                    <p className="font-medium text-sm">
+                      {dict.dashboard.preApplicationGuide.statusTitle}
+                    </p>
+                  </div>
+                  <ul className="space-y-2 pl-8">
+                    {dict.dashboard.preApplicationGuide.statuses.map((status: string) => (
+                      <li
+                        key={status}
+                        className="text-sm text-muted-foreground flex items-start gap-2"
+                      >
+                        <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
+                        <span>{status}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* 注意事项 */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <div className="flex h-6 w-6 items-center justify-center rounded-full bg-rose-500/10">
+                      <Inbox className="h-3 w-3 text-rose-600 dark:text-rose-400" />
+                    </div>
+                    <p className="font-medium text-sm">
+                      {dict.dashboard.preApplicationGuide.rulesTitle}
+                    </p>
+                  </div>
+                  <ul className="space-y-2 pl-8">
+                    {dict.dashboard.preApplicationGuide.rules.map((rule: string) => (
+                      <li
+                        key={rule}
+                        className="text-sm text-muted-foreground flex items-start gap-2"
+                      >
+                        <span className="text-rose-500 shrink-0">•</span>
+                        <span>{rule}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
+    </motion.div>
   )
 }

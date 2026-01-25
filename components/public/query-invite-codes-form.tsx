@@ -22,6 +22,7 @@ import {
   FileText,
   UserCheck,
   Sparkles,
+  AlertTriangle,
 } from "lucide-react"
 import { getDictionaryEntry } from "@/lib/i18n/get-dictionary-entry"
 import type { Dictionary } from "@/lib/i18n/get-dictionary"
@@ -41,12 +42,14 @@ interface InviteCodesQueryResult {
 
 interface PreApplicationQueryResult {
   type: "pre_application"
-  status: "PENDING" | "APPROVED" | "REJECTED"
+  status: "PENDING" | "APPROVED" | "REJECTED" | "DISPUTED"
   guidance: string | null
   reviewedAt: string | null
   createdAt: string
   inviteCode: InviteCodeResult | null
 }
+
+type PreApplicationStatus = PreApplicationQueryResult["status"]
 
 type QueryResult = InviteCodesQueryResult | PreApplicationQueryResult
 
@@ -66,6 +69,7 @@ export function QueryInviteCodesForm({ locale, dict }: QueryInviteCodesFormProps
   const t = dict.queryInviteCodes ?? {}
   const searchParams = useSearchParams()
   const [token, setToken] = useState("")
+  const [email, setEmail] = useState("")
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<QueryResult | null>(null)
   const [queried, setQueried] = useState(false)
@@ -91,8 +95,19 @@ export function QueryInviteCodesForm({ locale, dict }: QueryInviteCodesFormProps
     return undefined
   }
 
-  const handleQuery = async (queryToken?: string) => {
+  const handleQuery = async (queryToken?: string, queryEmail?: string) => {
     const trimmedToken = (queryToken || token).trim().toUpperCase()
+    const emailInput = (queryEmail ?? email).trim()
+    if (!emailInput) {
+      toast.error((t as Record<string, string>).emailRequired || "请输入邮箱")
+      return
+    }
+    const emailLower = emailInput.toLowerCase()
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(emailLower)) {
+      toast.error((t as Record<string, string>).emailInvalid || "邮箱格式不正确")
+      return
+    }
     if (!trimmedToken) {
       toast.error(t.tokenRequired)
       return
@@ -102,9 +117,11 @@ export function QueryInviteCodesForm({ locale, dict }: QueryInviteCodesFormProps
     setResult(null)
     setError("")
     try {
-      const res = await fetch(
-        `/api/public/query-invite-codes?token=${encodeURIComponent(trimmedToken)}`,
-      )
+      const params = new URLSearchParams({
+        token: trimmedToken,
+        email: emailLower,
+      })
+      const res = await fetch(`/api/public/query-invite-codes?${params.toString()}`)
       const payload = await res.json().catch(() => null)
 
       if (!res.ok || !payload) {
@@ -126,10 +143,14 @@ export function QueryInviteCodesForm({ locale, dict }: QueryInviteCodesFormProps
 
   useEffect(() => {
     const queryCode = searchParams.get("queryCode")
+    const queryEmail = searchParams.get("email")
+    if (queryEmail) {
+      setEmail(queryEmail.trim())
+    }
     if (queryCode) {
       const upperCode = queryCode.trim().toUpperCase()
       setToken(upperCode)
-      handleQuery(upperCode)
+      handleQuery(upperCode, queryEmail ?? undefined)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -162,19 +183,26 @@ export function QueryInviteCodesForm({ locale, dict }: QueryInviteCodesFormProps
     value ? new Date(value).toLocaleString(locale) : "-"
 
   // 进度步骤组件
-  const ProgressSteps = ({ status }: { status: "PENDING" | "APPROVED" | "REJECTED" }) => {
+  const ProgressSteps = ({ status }: { status: PreApplicationStatus }) => {
     const steps = [
       { key: "submitted", icon: FileText, label: t.stepSubmitted || "已提交" },
       { key: "reviewing", icon: UserCheck, label: t.stepReviewing || "审核中" },
       {
         key: "result",
-        icon: status === "APPROVED" ? Sparkles : status === "REJECTED" ? XCircle : Clock,
+        icon:
+          status === "APPROVED"
+            ? Sparkles
+            : status === "REJECTED" || status === "DISPUTED"
+              ? XCircle
+              : Clock,
         label:
           status === "APPROVED"
             ? t.stepApproved || "已通过"
             : status === "REJECTED"
               ? t.stepRejected || "未通过"
-              : t.stepWaiting || "等待结果",
+              : status === "DISPUTED"
+                ? t.stepDisputed || "待补充"
+                : (t as Record<string, string>).stepWaiting || "等待结果",
       },
     ]
 
@@ -277,11 +305,27 @@ export function QueryInviteCodesForm({ locale, dict }: QueryInviteCodesFormProps
         title: t.rejectedTitle || "申请未通过",
         message: t.rejectedMessage || "很遗憾，您的申请暂未通过审核。请查看审核意见了解详情。",
       },
+      DISPUTED: {
+        bgClass:
+          "bg-gradient-to-br from-rose-50 to-amber-50 dark:from-rose-950/20 dark:via-slate-900/20 dark:to-amber-900/20",
+        borderClass: "border-rose-200/60 dark:border-rose-800/40",
+        iconBg: "bg-rose-100 dark:bg-rose-900/40",
+        iconClass: "text-rose-600 dark:text-rose-200",
+        title: t.disputedTitle || "Application marked as disputed",
+        message:
+          t.disputedMessage ||
+          "An admin marked this application for further review. Please wait for follow-up.",
+      },
     }
 
-    const config = statusConfig[data.status]
-    const StatusIcon =
-      data.status === "PENDING" ? Clock : data.status === "APPROVED" ? CheckCircle2 : XCircle
+    const defaultConfig = statusConfig["PENDING"]
+    const config = statusConfig[data.status] ?? defaultConfig
+    const StatusIcon = (() => {
+      if (data.status === "PENDING") return Clock
+      if (data.status === "APPROVED") return CheckCircle2
+      if (data.status === "DISPUTED") return AlertTriangle
+      return XCircle
+    })()
 
     return (
       <motion.div
@@ -436,9 +480,34 @@ export function QueryInviteCodesForm({ locale, dict }: QueryInviteCodesFormProps
   const renderPreApplicationResult = (data: PreApplicationQueryResult) => {
     const codeDisabled =
       data.inviteCode && (data.inviteCode.used || isExpired(data.inviteCode.expiresAt))
+    const statusLabels: Record<PreApplicationStatus, string> = {
+      PENDING: t.statusPending || "审核中",
+      APPROVED: t.statusApproved || "已通过",
+      REJECTED: t.statusRejected || "未通过",
+      DISPUTED: t.statusDisputed || "争议中",
+    }
 
     return (
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-sm text-muted-foreground">{t.applicationStatus}</p>
+            <h3 className="text-lg font-semibold">{statusLabels[data.status]}</h3>
+          </div>
+          <Badge
+            variant={
+              data.status === "APPROVED"
+                ? "default"
+                : data.status === "REJECTED"
+                  ? "destructive"
+                  : data.status === "PENDING"
+                    ? "outline"
+                    : "secondary"
+            }
+          >
+            {statusLabels[data.status]}
+          </Badge>
+        </div>
         {/* 进度指示器 */}
         <ProgressSteps status={data.status} />
 
@@ -571,6 +640,26 @@ export function QueryInviteCodesForm({ locale, dict }: QueryInviteCodesFormProps
         </AnimatePresence>
 
         <div className="space-y-4">
+          <div className="relative">
+            <Input
+              id="queryEmail"
+              type="email"
+              placeholder=" "
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleQuery()
+              }}
+              disabled={loading}
+              className="peer pt-6 pb-2 focus:border-primary focus:ring-2 focus:ring-primary/20"
+            />
+            <Label
+              htmlFor="queryEmail"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-all duration-300 peer-focus:top-2 peer-focus:text-xs peer-focus:text-primary peer-[:not(:placeholder-shown)]:top-2 peer-[:not(:placeholder-shown)]:text-xs"
+            >
+              {t.emailLabel || "Email"}
+            </Label>
+          </div>
           <div className="relative">
             <Input
               id="queryToken"

@@ -22,7 +22,10 @@
       "invalidToken": "无效查询码",
       "tokenExpired": "查询码已过期",
       "tokenNotFound": "未找到查询码",
-      "queryFailed": "查询失败"
+      "queryFailed": "查询失败",
+      "emailRequired": "请先输入邮箱以查看邀请码",
+      "emailMismatch": "输入的邮箱与预申请记录不匹配",
+      "emailInvalid": "请输入有效的邮箱地址"
     },
     "general": {
       "forbidden": "权限不足",
@@ -727,7 +730,8 @@
       "label": "审核状态",
       "pending": "待审核",
       "approved": "已通过",
-      "rejected": "已驳回"
+      "rejected": "已驳回",
+      "disputed": "待补充"
     },
     "fields": {
       "essay": "申请小作文",
@@ -743,7 +747,8 @@
     },
     "groups": {
       "groupOne": "一群",
-      "groupTwo": "二群"
+      "groupTwo": "二群",
+      "groupThree": "三群"
     },
     "sources": {
       "tieba": "贴吧",
@@ -773,6 +778,16 @@
     "resubmit": "重新提交",
     "noVersionHistory": "暂无版本历史",
     "currentVersion": "当前版本",
+    "disputedWarningTitle": "申请需要补充信息",
+    "disputedCanEdit": "请根据审核意见补充或修改您的申请内容",
+    "disputedWithCode": "您的申请已关联邀请码，等待最终审核",
+    "editDisputed": "提交修改",
+    "queueTitle": "排队信息",
+    "yourPosition": "您的位置",
+    "aheadOfYou": "前面还有",
+    "totalPending": "总待审核",
+    "warmTipTitle": "温馨提示",
+    "warmTipMessage": "感谢您的耐心等待！我们正在认真审核每一份申请，通常会在 1-3 个工作日内完成。审核结果会通过站内信和邮件通知您，请留意查收。祝您早日加入 L 站大家庭！",
     "notifications": {
       "approvedTitle": "预申请已通过",
       "rejectedTitle": "预申请已驳回",
@@ -851,6 +866,8 @@
     "metaDescription": "使用查询码查看预申请审核状态和邀请码",
     "title": "查询",
     "description": "输入查询码查看申请状态或可用的邀请码",
+    "emailLabel": "邮箱",
+    "emailPlaceholder": "输入您的邮箱",
     "placeholder": "输入查询码",
     "submit": "查询",
     "tokenRequired": "请输入查询码",
@@ -866,6 +883,7 @@
     "statusPending": "审核中",
     "statusApproved": "已通过",
     "statusRejected": "未通过",
+    "statusDisputed": "争议中",
     "applicationStatus": "申请状态",
     "statusLabel": "状态",
     "submittedAt": "提交时间",
@@ -879,13 +897,16 @@
     "stepReviewing": "审核中",
     "stepApproved": "已通过",
     "stepRejected": "未通过",
-    "stepWaiting": "等待结果",
+    "stepDisputed": "争议中",
+    "statusDisputed": "待重审",
     "pendingTitle": "申请正在审核中",
     "pendingMessage": "我们正在认真审核您的申请，请耐心等待。通常会在 1-3 个工作日内完成审核。",
     "approvedTitle": "恭喜，申请已通过！",
     "approvedMessage": "欢迎加入 linux.do 社区！请使用下方的邀请码完成注册。",
     "rejectedTitle": "申请未通过",
-    "rejectedMessage": "很遗憾，您的申请暂未通过审核。请查看审核意见了解详情。"
+    "rejectedMessage": "很遗憾，您的申请暂未通过审核。请查看审核意见了解详情。",
+    "disputedTitle": "申请存在争议",
+    "disputedMessage": "此申请正在被管理员重新审核，请稍后查看最新状态。"
   },
   "admin": {
     "title": "管理面板",

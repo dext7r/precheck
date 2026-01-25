@@ -4,7 +4,7 @@ import Link from "next/link"
 
 interface GlobalErrorProps {
   error: Error & { digest?: string }
-  reset: () => void
+  reset?: () => void
 }
 
 export default function GlobalError({ error, reset }: GlobalErrorProps) {
@@ -17,13 +17,15 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
             The app hit an unexpected error. You can retry or go back home.
           </p>
           <div className="flex flex-wrap gap-3">
-            <button
-              type="button"
-              onClick={() => reset()}
-              className="rounded-md bg-primary px-4 py-2 text-primary-foreground"
-            >
-              Try again
-            </button>
+            {reset && (
+              <button
+                type="button"
+                onClick={() => reset()}
+                className="rounded-md bg-primary px-4 py-2 text-primary-foreground"
+              >
+                Try again
+              </button>
+            )}
             <Link href="/" className="rounded-md border border-border px-4 py-2 text-foreground">
               Go home
             </Link>

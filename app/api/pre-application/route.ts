@@ -58,10 +58,33 @@ export async function GET(request: NextRequest) {
       },
     })
 
+    // 获取排队信息
+    let queueInfo = null
+    const latest = records[0]
+    if (latest && latest.status === "PENDING") {
+      // 统计所有待审核的数量
+      const totalPending = await db.preApplication.count({
+        where: { status: "PENDING" },
+      })
+      // 统计在当前用户之前的待审核数量（按创建时间排序）
+      const aheadCount = await db.preApplication.count({
+        where: {
+          status: "PENDING",
+          createdAt: { lt: latest.createdAt },
+        },
+      })
+      queueInfo = {
+        totalPending,
+        position: aheadCount + 1, // 自己的位置
+        aheadCount,
+      }
+    }
+
     return NextResponse.json({
       records,
       latest: records[0] ?? null,
       maxResubmitCount: MAX_RESUBMIT_COUNT,
+      queueInfo,
     })
   } catch (error) {
     console.error("Pre-application fetch error:", error)

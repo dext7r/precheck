@@ -22,7 +22,12 @@
       "invalidToken": "Invalid token",
       "tokenExpired": "Token expired",
       "tokenNotFound": "Token not found",
-      "queryFailed": "Failed to query invite codes"
+      "queryFailed": "Failed to query invite codes",
+      "emailRequired": "Email is required to view invite codes",
+      "emailMismatch": "Provided email does not match the application",
+      "emailInvalid": "Invalid email address",
+      "emailPlaceholder": "Enter your email",
+      "emailLabel": "Email"
     },
     "general": {
       "forbidden": "Forbidden",
@@ -731,7 +736,8 @@
       "label": "Status",
       "pending": "Pending",
       "approved": "Approved",
-      "rejected": "Rejected"
+      "rejected": "Rejected",
+      "disputed": "Needs Review"
     },
     "fields": {
       "essay": "Application Essay",
@@ -747,7 +753,8 @@
     },
     "groups": {
       "groupOne": "Group One",
-      "groupTwo": "Group Two"
+      "groupTwo": "Group Two",
+      "groupThree": "Group Three"
     },
     "sources": {
       "tieba": "Tieba",
@@ -777,6 +784,16 @@
     "resubmit": "Resubmit",
     "noVersionHistory": "No version history",
     "currentVersion": "Current Version",
+    "disputedWarningTitle": "Application needs revision",
+    "disputedCanEdit": "Please revise according to the review feedback",
+    "disputedWithCode": "Your application has an invite code attached, awaiting final review",
+    "editDisputed": "Submit Changes",
+    "queueTitle": "Queue Status",
+    "yourPosition": "Your Position",
+    "aheadOfYou": "Ahead of You",
+    "totalPending": "Total Pending",
+    "warmTipTitle": "Friendly Reminder",
+    "warmTipMessage": "Thank you for your patience! We review each application carefully, typically within 1-3 business days. You'll receive notifications via in-app messages and email once reviewed. Looking forward to welcoming you to the community!",
     "notifications": {
       "approvedTitle": "Pre-application approved",
       "rejectedTitle": "Pre-application rejected",
@@ -855,6 +872,8 @@
     "metaDescription": "Use query code to check pre-application review status and invite codes",
     "title": "Query",
     "description": "Enter a query code to check application status or available invite codes",
+    "emailLabel": "Email",
+    "emailPlaceholder": "Enter your email",
     "placeholder": "Enter query code",
     "submit": "Query",
     "tokenRequired": "Please enter a query code",
@@ -870,6 +889,7 @@
     "statusPending": "Pending",
     "statusApproved": "Approved",
     "statusRejected": "Rejected",
+    "statusDisputed": "Disputed",
     "applicationStatus": "Application Status",
     "statusLabel": "Status",
     "submittedAt": "Submitted at",
@@ -883,13 +903,16 @@
     "stepReviewing": "Reviewing",
     "stepApproved": "Approved",
     "stepRejected": "Rejected",
+    "stepDisputed": "Disputed",
     "stepWaiting": "Awaiting",
     "pendingTitle": "Application Under Review",
     "pendingMessage": "We are carefully reviewing your application. Please be patient. Reviews are typically completed within 1-3 business days.",
     "approvedTitle": "Congratulations, Approved!",
     "approvedMessage": "Welcome to the linux.do community! Use the invite code below to complete your registration.",
     "rejectedTitle": "Application Not Approved",
-    "rejectedMessage": "Unfortunately, your application was not approved. Please review the guidance for details."
+    "rejectedMessage": "Unfortunately, your application was not approved. Please review the guidance for details.",
+    "disputedTitle": "Application Under Dispute",
+    "disputedMessage": "An administrator marked this submission for additional review. We will update you when there's progress."
   },
   "admin": {
     "title": "Admin Panel",

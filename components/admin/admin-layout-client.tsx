@@ -4,6 +4,7 @@ import { useState } from "react"
 import { AdminSidebar } from "@/components/admin/sidebar"
 import { AdminHeader } from "@/components/admin/header"
 import { Sheet, SheetContent } from "@/components/ui/sheet"
+import { Watermark } from "@/components/ui/watermark"
 import type { Dictionary } from "@/lib/i18n/get-dictionary"
 import type { Locale } from "@/lib/i18n/config"
 import type { Role } from "@prisma/client"
@@ -20,6 +21,9 @@ export function AdminLayoutClient({ locale, dict, user, children }: AdminLayoutC
 
   return (
     <div className="flex min-h-screen bg-muted/30">
+      {/* 水印 */}
+      <Watermark userId={user.id} email={user.email} name={user.name ?? undefined} />
+
       {/* Desktop Sidebar */}
       <div className="hidden lg:block">
         <AdminSidebar locale={locale} dict={dict} user={user} />

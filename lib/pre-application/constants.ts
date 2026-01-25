@@ -33,4 +33,5 @@ export const preApplicationSources = [
 export const preApplicationGroups = [
   { value: "GROUP_ONE", labelKey: "preApplication.groups.groupOne" },
   { value: "GROUP_TWO", labelKey: "preApplication.groups.groupTwo" },
+  { value: "GROUP_THREE", labelKey: "preApplication.groups.groupThree" },
 ] as const
