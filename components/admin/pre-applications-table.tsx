@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
-import { motion, AnimatePresence } from "framer-motion"
+import { motion } from "framer-motion"
 import {
   X,
   ClipboardList,
@@ -18,7 +18,6 @@ import {
   Eye,
   Pencil,
   Filter,
-  ChevronRight,
   Loader2,
   History,
   Send,
@@ -447,8 +446,11 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
     if (record.status === "PENDING" || record.status === "DISPUTED") {
       setReviewAction("APPROVE")
       setGuidance(record.guidance || "")
-      setInviteCode("")
-      setInviteExpiresAt("")
+      // 保留已有的邀请码
+      setInviteCode(record.inviteCode?.code || "")
+      setInviteExpiresAt(
+        record.inviteCode?.expiresAt ? toDateTimeLocal(record.inviteCode.expiresAt) : "",
+      )
     } else {
       setReviewAction(record.status === "APPROVED" ? "APPROVE" : "REJECT")
       setGuidance(record.guidance || "")

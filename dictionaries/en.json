@@ -780,8 +780,10 @@
     "notifications": {
       "approvedTitle": "Pre-application approved",
       "rejectedTitle": "Pre-application rejected",
+      "disputedTitle": "Pre-application needs revision",
       "approvedIntro": "Your linux.do pre-application has been approved.",
       "rejectedIntro": "Your linux.do pre-application has been rejected.",
+      "disputedIntro": "Your linux.do pre-application needs additional information. Please revise according to the guidance and resubmit.",
       "reviewerLabel": "Reviewer: ",
       "guidanceLabel": "Guidance: ",
       "essayLabel": "Your application: ",
@@ -810,6 +812,17 @@
         "guidance": "Guidance: {guidance}",
         "inviteCode": "",
         "inviteExpires": "",
+        "footer": "If you have questions, please contact an admin."
+      },
+      "disputed": {
+        "subject": "{appName} pre-application needs revision",
+        "title": "Pre-application needs revision",
+        "intro": "Your linux.do pre-application needs additional information. Please revise according to the guidance and resubmit.",
+        "essayTitle": "Your Application",
+        "reviewer": "Reviewer: {reviewer}",
+        "guidance": "Guidance: {guidance}",
+        "inviteCode": "Invite code: {code}",
+        "inviteExpires": "Expires at: {expiresAt}",
         "footer": "If you have questions, please contact an admin."
       }
     }

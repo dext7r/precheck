@@ -10,7 +10,7 @@ type ResetPasswordEmailOptions = {
 type PreApplicationReviewEmailOptions = {
   appName: string
   dictionary: Dictionary
-  status: "APPROVED" | "REJECTED"
+  status: "APPROVED" | "REJECTED" | "DISPUTED"
   reviewerName: string
   guidance: string
   essay?: string
@@ -158,13 +158,29 @@ export function buildPreApplicationReviewEmail({
   inviteExpiresAt,
   locale,
 }: PreApplicationReviewEmailOptions) {
-  const t =
-    status === "APPROVED"
-      ? dictionary.preApplication.emailTemplate.approved
-      : dictionary.preApplication.emailTemplate.rejected
+  const isApproved = status === "APPROVED"
+  const isDisputed = status === "DISPUTED"
+
+  let t: (typeof dictionary.preApplication.emailTemplate)["approved"]
+  if (isApproved) {
+    t = dictionary.preApplication.emailTemplate.approved
+  } else if (isDisputed) {
+    t = dictionary.preApplication.emailTemplate.disputed ?? {
+      subject: "{appName} 预申请待补充",
+      title: "预申请待补充",
+      intro: "你的预申请需要补充信息，请根据指导意见修改后重新提交。",
+      essayTitle: "你的申请内容",
+      reviewer: "审核管理员：{reviewer}",
+      guidance: "指导意见：{guidance}",
+      inviteCode: "邀请码：{code}",
+      inviteExpires: "有效期至：{expiresAt}",
+      footer: "如有疑问，请联系管理员。",
+    }
+  } else {
+    t = dictionary.preApplication.emailTemplate.rejected
+  }
 
   const expiresAtText = inviteExpiresAt ? inviteExpiresAt.toLocaleString(locale) : ""
-  const isApproved = status === "APPROVED"
 
   const tokens = {
     "{appName}": appName,
@@ -185,19 +201,30 @@ export function buildPreApplicationReviewEmail({
   const footer = replaceTokens(t.footer, tokens)
   const essayTitle = t.essayTitle ?? (locale === "zh" ? "你的申请内容" : "Your Application")
 
-  const accentColor = isApproved ? "#10b981" : "#ef4444"
-  const accentBg = isApproved ? "#ecfdf5" : "#fef2f2"
-  const accentBorder = isApproved ? "#a7f3d0" : "#fecaca"
-  const badgeText = isApproved
-    ? locale === "zh"
-      ? "&#10003; 审核通过"
-      : "&#10003; Approved"
-    : locale === "zh"
-      ? "&#10007; 审核驳回"
-      : "&#10007; Rejected"
+  let accentColor: string
+  let accentBg: string
+  let accentBorder: string
+  let badgeText: string
+
+  if (isApproved) {
+    accentColor = "#10b981"
+    accentBg = "#ecfdf5"
+    accentBorder = "#a7f3d0"
+    badgeText = locale === "zh" ? "&#10003; 审核通过" : "&#10003; Approved"
+  } else if (isDisputed) {
+    accentColor = "#f59e0b"
+    accentBg = "#fffbeb"
+    accentBorder = "#fcd34d"
+    badgeText = locale === "zh" ? "&#9888; 待补充" : "&#9888; Needs Review"
+  } else {
+    accentColor = "#ef4444"
+    accentBg = "#fef2f2"
+    accentBorder = "#fecaca"
+    badgeText = locale === "zh" ? "&#10007; 审核驳回" : "&#10007; Rejected"
+  }
 
   const inviteCodeBlock =
-    isApproved && inviteCode
+    (isApproved || isDisputed) && inviteCode
       ? `
     <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:24px 0;">
       <tr>

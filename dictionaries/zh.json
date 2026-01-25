@@ -776,8 +776,10 @@
     "notifications": {
       "approvedTitle": "预申请已通过",
       "rejectedTitle": "预申请已驳回",
+      "disputedTitle": "预申请待补充",
       "approvedIntro": "你的 linux.do 预申请已通过。",
       "rejectedIntro": "你的 linux.do 预申请已驳回。",
+      "disputedIntro": "你的 linux.do 预申请需要补充信息，请根据指导意见修改后重新提交。",
       "reviewerLabel": "审核管理员：",
       "guidanceLabel": "指导意见：",
       "essayLabel": "申请内容：",
@@ -806,6 +808,17 @@
         "guidance": "指导意见：{guidance}",
         "inviteCode": "",
         "inviteExpires": "",
+        "footer": "如有疑问，请联系管理员。"
+      },
+      "disputed": {
+        "subject": "{appName} 预申请待补充",
+        "title": "预申请待补充",
+        "intro": "你的 linux.do 预申请需要补充信息，请根据指导意见修改后重新提交。",
+        "essayTitle": "你的申请内容",
+        "reviewer": "审核管理员：{reviewer}",
+        "guidance": "指导意见：{guidance}",
+        "inviteCode": "邀请码：{code}",
+        "inviteExpires": "有效期至：{expiresAt}",
         "footer": "如有疑问，请联系管理员。"
       }
     }

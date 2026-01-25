@@ -520,7 +520,7 @@ export function AdminMessagesManager({ locale, dict }: AdminMessagesManagerProps
       render: (item) => (
         <div className="flex items-center gap-2 text-muted-foreground">
           <Clock className="h-4 w-4" />
-          <span className="text-sm">{new Date(item.createdAt).toLocaleDateString(locale)}</span>
+          <span className="text-sm">{new Date(item.createdAt).toLocaleString(locale)}</span>
         </div>
       ),
     },
@@ -723,7 +723,7 @@ export function AdminMessagesManager({ locale, dict }: AdminMessagesManagerProps
                       </div>
                       <div className="flex items-center gap-1.5">
                         <Clock className="h-3.5 w-3.5" />
-                        <span>{new Date(item.createdAt).toLocaleDateString(locale)}</span>
+                        <span>{new Date(item.createdAt).toLocaleString(locale)}</span>
                       </div>
                     </div>
 

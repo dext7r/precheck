@@ -24,8 +24,21 @@ export function buildPreApplicationMessage({
 }: PreApplicationNotificationInput) {
   const t = dict.preApplication.notifications
   const isApproved = status === "APPROVED"
-  const title = isApproved ? t.approvedTitle : t.rejectedTitle
-  const intro = isApproved ? t.approvedIntro : t.rejectedIntro
+  const isDisputed = status === "DISPUTED"
+
+  let title: string
+  let intro: string
+
+  if (isApproved) {
+    title = t.approvedTitle
+    intro = t.approvedIntro
+  } else if (isDisputed) {
+    title = t.disputedTitle ?? "预申请待补充"
+    intro = t.disputedIntro ?? "你的预申请需要补充信息。"
+  } else {
+    title = t.rejectedTitle
+    intro = t.rejectedIntro
+  }
 
   const lines = [intro]
 
@@ -35,7 +48,7 @@ export function buildPreApplicationMessage({
 
   lines.push(`${t.reviewerLabel}${reviewerName}`, `${t.guidanceLabel}${guidance}`)
 
-  if (isApproved && inviteCode) {
+  if ((isApproved || isDisputed) && inviteCode) {
     lines.push(`${t.inviteCodeLabel}${inviteCode}`)
     if (inviteExpiresAt) {
       lines.push(`${t.inviteExpiresLabel}${inviteExpiresAt.toLocaleString(locale)}`)

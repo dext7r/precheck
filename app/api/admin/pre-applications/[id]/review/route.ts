@@ -158,7 +158,18 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
     }
 
     if (isDisputed) {
-      // 标记为有争议，可选发码，不发送通知给用户
+      // 标记为有争议，可选发码，发送通知给用户
+      const messageContent = buildPreApplicationMessage({
+        dict,
+        status: PreApplicationStatus.DISPUTED,
+        reviewerName,
+        guidance,
+        essay: record.essay,
+        inviteCode: inviteCodeData?.code,
+        inviteExpiresAt: inviteCodeData?.expiresAt,
+        locale: currentLocale,
+      })
+
       await db.$transaction(async (tx) => {
         if (inviteCodeData) {
           await tx.inviteCode.update({
@@ -192,6 +203,15 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
           },
         })
 
+        const message = await tx.message.create({
+          data: {
+            title: messageContent.title,
+            content: messageContent.content,
+            createdById: user.id,
+            recipients: { create: { userId: record.userId } },
+          },
+        })
+
         await writeAuditLog(tx, {
           action: "PRE_APPLICATION_REVIEW_DISPUTE",
           entityType: "PRE_APPLICATION",
@@ -213,7 +233,46 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
             request,
           })
         }
+
+        await writeAuditLog(tx, {
+          action: "MESSAGE_CREATE",
+          entityType: "MESSAGE",
+          entityId: message.id,
+          actor: user,
+          after: message,
+          metadata: { recipientUserId: record.userId },
+          request,
+        })
       })
+
+      // 发送邮件
+      const settings = await getSiteSettings()
+      const shouldSendEmail = features.email && settings.emailNotifications
+
+      if (shouldSendEmail) {
+        const emailContent = buildPreApplicationReviewEmail({
+          appName: settings.siteName || dict.metadata?.title || "App",
+          dictionary: dict,
+          status: "DISPUTED",
+          reviewerName,
+          guidance,
+          essay: record.essay,
+          inviteCode: inviteCodeData?.code ?? undefined,
+          inviteExpiresAt: inviteCodeData?.expiresAt ?? undefined,
+          locale: currentLocale,
+        })
+
+        try {
+          await sendEmail({
+            to: record.registerEmail,
+            subject: emailContent.subject,
+            html: emailContent.html,
+            text: emailContent.text,
+          })
+        } catch (sendError) {
+          console.error("Pre-application disputed email failed:", sendError)
+        }
+      }
 
       return NextResponse.json({ success: true })
     }
