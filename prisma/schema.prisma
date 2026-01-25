@@ -279,6 +279,7 @@ enum PreApplicationStatus {
   APPROVED
   REJECTED
   DISPUTED
+  ARCHIVED
 }
 
 enum PreApplicationSource {

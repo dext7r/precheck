@@ -54,7 +54,7 @@ type CardDetailType =
 type PreApplicationRecord = {
   id: string
   registerEmail: string
-  status: "PENDING" | "APPROVED" | "REJECTED" | "DISPUTED"
+  status: "PENDING" | "APPROVED" | "REJECTED" | "DISPUTED" | "ARCHIVED"
   createdAt: string
   user: { name: string | null; email: string }
 }
@@ -728,6 +728,7 @@ function PreApplicationDetailTable({
       APPROVED: { label: t.approved, variant: "default" as const },
       REJECTED: { label: t.rejected, variant: "destructive" as const },
       DISPUTED: { label: t.disputed || "申诉中", variant: "outline" as const },
+      ARCHIVED: { label: t.archived || "已归档", variant: "outline" as const },
     }
     const config = map[status] || map.PENDING
     return <Badge variant={config.variant}>{config.label}</Badge>

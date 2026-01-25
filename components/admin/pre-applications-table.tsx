@@ -25,6 +25,7 @@ import {
   Calendar,
   Users,
   Inbox,
+  Archive,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -74,7 +75,7 @@ type AdminPreApplication = {
   registerEmail: string
   queryToken: string | null
   group: string
-  status: "PENDING" | "APPROVED" | "REJECTED" | "DISPUTED"
+  status: "PENDING" | "APPROVED" | "REJECTED" | "DISPUTED" | "ARCHIVED"
   guidance: string | null
   reviewedAt: string | null
   createdAt: string
@@ -93,7 +94,7 @@ type PreApplicationVersion = {
   sourceDetail: string | null
   registerEmail: string
   group: string
-  status: "PENDING" | "APPROVED" | "REJECTED" | "DISPUTED"
+  status: "PENDING" | "APPROVED" | "REJECTED" | "DISPUTED" | "ARCHIVED"
   guidance: string | null
   reviewedAt: string | null
   createdAt: string
@@ -184,7 +185,13 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
   const t = dict.admin
   const [records, setRecords] = useState<AdminPreApplication[]>([])
   const [total, setTotal] = useState(0)
-  const [stats, setStats] = useState({ pending: 0, approved: 0, rejected: 0, disputed: 0 })
+  const [stats, setStats] = useState({
+    pending: 0,
+    approved: 0,
+    rejected: 0,
+    disputed: 0,
+    archived: 0,
+  })
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(20)
   const [loading, setLoading] = useState(true)
@@ -217,6 +224,8 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
     reject: string[]
     dispute: string[]
   }>({ approve: [], reject: [], dispute: [] })
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [batchArchiving, setBatchArchiving] = useState(false)
 
   useEffect(() => {
     if (reviewAction === "REJECT") {
@@ -356,6 +365,11 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
         label: t.disputed || "有争议",
         className: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
         icon: AlertTriangle,
+      },
+      ARCHIVED: {
+        label: t.archived || "已归档",
+        className: "bg-slate-100 text-slate-700 dark:bg-slate-800/50 dark:text-slate-400",
+        icon: Archive,
       },
     }
     return map[status] || map.PENDING
@@ -509,6 +523,30 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
     }
   }
 
+  const handleBatchArchive = async () => {
+    if (selectedIds.size === 0) return
+    setBatchArchiving(true)
+    try {
+      const res = await fetch("/api/admin/pre-applications/batch-archive", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: Array.from(selectedIds) }),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data?.error || t.actionFailed)
+      }
+      const result = await res.json()
+      toast.success(`${t.batchArchiveSuccess || "已归档"} ${result.count} ${t.records || "条记录"}`)
+      setSelectedIds(new Set())
+      await fetchRecords()
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t.actionFailed)
+    } finally {
+      setBatchArchiving(false)
+    }
+  }
+
   const columns: Column<AdminPreApplication>[] = useMemo(
     () => [
       {
@@ -640,7 +678,7 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
       </div>
 
       {/* 统计卡片 */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <StatCard
           icon={Clock}
           label={t.pending}
@@ -682,6 +720,17 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
           active={statusFilter.length === 1 && statusFilter[0] === "DISPUTED"}
           onClick={() => {
             setStatusFilter(["DISPUTED"])
+            setPage(1)
+          }}
+        />
+        <StatCard
+          icon={Archive}
+          label={t.archived || "已归档"}
+          value={stats.archived}
+          color="primary"
+          active={statusFilter.length === 1 && statusFilter[0] === "ARCHIVED"}
+          onClick={() => {
+            setStatusFilter(["ARCHIVED"])
             setPage(1)
           }}
         />
@@ -797,6 +846,7 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
                     { value: "DISPUTED", label: t.disputed || "有争议" },
                     { value: "APPROVED", label: t.approved },
                     { value: "REJECTED", label: t.rejected },
+                    { value: "ARCHIVED", label: t.archived || "已归档" },
                   ].map((item) => (
                     <DropdownMenuCheckboxItem
                       key={item.value}
@@ -888,6 +938,39 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
 
       {/* 数据表格 */}
       <Card className="overflow-hidden">
+        {/* 批量操作栏 */}
+        {selectedIds.size > 0 && (
+          <div className="flex items-center justify-between border-b bg-muted/50 px-4 py-2">
+            <span className="text-sm text-muted-foreground">
+              {t.selectedCount?.replace("{count}", String(selectedIds.size)) ||
+                `已选择 ${selectedIds.size} 条记录`}
+            </span>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setSelectedIds(new Set())}
+                className="h-8"
+              >
+                {t.clearSelection || "取消选择"}
+              </Button>
+              <Button
+                variant="default"
+                size="sm"
+                onClick={handleBatchArchive}
+                disabled={batchArchiving}
+                className="h-8 gap-1.5"
+              >
+                {batchArchiving ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Archive className="h-4 w-4" />
+                )}
+                {t.batchArchive || "批量归档"}
+              </Button>
+            </div>
+          </div>
+        )}
         <DataTable
           columns={columns}
           data={records}
@@ -898,6 +981,10 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
           onPageSizeChange={setPageSize}
           onSort={handleSort}
           loading={loading}
+          selectable
+          selectedIds={selectedIds}
+          onSelectionChange={setSelectedIds}
+          rowKey="id"
           emptyMessage={
             <div className="flex flex-col items-center justify-center py-12">
               <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted">

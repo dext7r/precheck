@@ -64,7 +64,7 @@ type PreApplicationRecord = {
   registerEmail: string
   queryToken: string | null
   group: string
-  status: "PENDING" | "APPROVED" | "REJECTED" | "DISPUTED"
+  status: "PENDING" | "APPROVED" | "REJECTED" | "DISPUTED" | "ARCHIVED"
   guidance: string | null
   reviewedAt: string | null
   updatedAt: string
@@ -267,6 +267,12 @@ export function PreApplicationForm({
       icon: HelpCircle,
       color: "text-orange-600 dark:text-orange-400",
       bg: "bg-orange-500/10",
+    },
+    ARCHIVED: {
+      label: t.status.archived || "已归档",
+      icon: Clock,
+      color: "text-slate-600 dark:text-slate-400",
+      bg: "bg-slate-500/10",
     },
   }
 

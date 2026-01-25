@@ -12,11 +12,24 @@ import {
   Trash2,
   X,
   Users,
+  UserPlus,
+  Loader2,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Label } from "@/components/ui/label"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { toast } from "sonner"
 import { DataTable, type Column } from "@/components/ui/data-table"
 import {
   DropdownMenu,
@@ -117,6 +130,9 @@ export function AdminUsersTable({ locale, dict }: AdminUsersTableProps) {
     onConfirm: () => Promise<void>
   } | null>(null)
   const [currentUserRole, setCurrentUserRole] = useState<string | null>(null)
+  const [createDialogOpen, setCreateDialogOpen] = useState(false)
+  const [emailsInput, setEmailsInput] = useState("")
+  const [creating, setCreating] = useState(false)
 
   const fetchCurrentUser = async () => {
     try {
@@ -223,6 +239,46 @@ export function AdminUsersTable({ locale, dict }: AdminUsersTableProps) {
       setError(t.actionFailed)
     } finally {
       setBusyId(null)
+    }
+  }
+
+  const handleCreateUsers = async () => {
+    const emails = emailsInput
+      .split(/[\n,;]+/)
+      .map((e) => e.trim().toLowerCase())
+      .filter((e) => e && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e))
+
+    if (emails.length === 0) {
+      toast.error(t.createUserInvalidEmails || "请输入有效的邮箱地址")
+      return
+    }
+
+    setCreating(true)
+    try {
+      const res = await fetch("/api/admin/users/batch-create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ emails }),
+      })
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data?.error || t.actionFailed)
+      }
+
+      const result = await res.json()
+      toast.success(
+        (t.createUserSuccess || "已创建 {created} 个用户，跳过 {skipped} 个已存在")
+          .replace("{created}", String(result.created))
+          .replace("{skipped}", String(result.skipped)),
+      )
+      setCreateDialogOpen(false)
+      setEmailsInput("")
+      await fetchUsers()
+    } catch (createError) {
+      toast.error(createError instanceof Error ? createError.message : t.actionFailed)
+    } finally {
+      setCreating(false)
     }
   }
 
@@ -490,6 +546,12 @@ export function AdminUsersTable({ locale, dict }: AdminUsersTableProps) {
         <Button onClick={handleSearch} variant="secondary">
           {t.searchAction}
         </Button>
+        {currentUserRole === "SUPER_ADMIN" && (
+          <Button onClick={() => setCreateDialogOpen(true)} className="gap-2">
+            <UserPlus className="h-4 w-4" />
+            {t.createUser || "创建用户"}
+          </Button>
+        )}
       </div>
 
       {error && (
@@ -570,6 +632,56 @@ export function AdminUsersTable({ locale, dict }: AdminUsersTableProps) {
           }}
         />
       )}
+
+      {/* 创建用户对话框 */}
+      <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <UserPlus className="h-5 w-5" />
+              {t.createUser || "创建用户"}
+            </DialogTitle>
+            <DialogDescription>
+              {t.createUserDesc ||
+                "输入邮箱地址，每行一个或用逗号/分号分隔。新用户将使用默认密码。"}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>{t.createUserEmails || "邮箱地址"}</Label>
+              <Textarea
+                value={emailsInput}
+                onChange={(e) => setEmailsInput(e.target.value)}
+                placeholder={t.createUserPlaceholder || "user1@example.com\nuser2@example.com"}
+                rows={6}
+                className="resize-none font-mono text-sm"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setCreateDialogOpen(false)}
+              disabled={creating}
+            >
+              {t.cancel}
+            </Button>
+            <Button onClick={handleCreateUsers} disabled={creating} className="gap-2">
+              {creating ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  {t.creating || "创建中..."}
+                </>
+              ) : (
+                <>
+                  <UserPlus className="h-4 w-4" />
+                  {t.createUserSubmit || "创建"}
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
