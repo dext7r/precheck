@@ -42,7 +42,8 @@ import type { Dictionary } from "@/lib/i18n/get-dictionary"
 import type { Locale } from "@/lib/i18n/config"
 import { ApiErrorKeys } from "@/lib/api/error-keys"
 import { resolveApiErrorMessage } from "@/lib/api/error-message"
-import { preApplicationGroups, preApplicationSources } from "@/lib/pre-application/constants"
+import { preApplicationSources } from "@/lib/pre-application/constants"
+import type { QQGroupConfig } from "@/lib/pre-application/constants"
 import { EmailWithDomainInput } from "@/components/ui/email-with-domain-input"
 import { useAllowedEmailDomains } from "@/lib/hooks/use-allowed-email-domains"
 import { cn } from "@/lib/utils"
@@ -165,6 +166,9 @@ export function PreApplicationForm({
     group: "GROUP_ONE",
   })
 
+  // QQ 群配置（动态加载）
+  const [qqGroups, setQqGroups] = useState<QQGroupConfig[]>([])
+
   // AI 预审状态
   type AIPreviewResult = {
     suggestion: "APPROVE" | "REJECT" | "DISPUTE"
@@ -244,6 +248,26 @@ export function PreApplicationForm({
     loadSystemConfig()
   }, [])
 
+  // 加载 QQ 群配置
+  useEffect(() => {
+    const loadQQGroups = async () => {
+      try {
+        const res = await fetch("/api/qq-groups")
+        if (res.ok) {
+          const data: QQGroupConfig[] = await res.json()
+          setQqGroups(data)
+          // 如果当前选择的群不在可用列表中，自动选择第一个
+          if (data.length > 0 && !data.some((g) => g.id === formData.group)) {
+            setFormData((prev) => ({ ...prev, group: data[0].id }))
+          }
+        }
+      } catch (error) {
+        console.error("Failed to load QQ groups:", error)
+      }
+    }
+    loadQQGroups()
+  }, [])
+
   useEffect(() => {
     if (!latest || latest.status === "APPROVED") return
     setFormData({
@@ -320,10 +344,19 @@ export function PreApplicationForm({
   }
 
   const getGroupLabel = (value: string) => {
-    const item = preApplicationGroups.find((group) => group.value === value)
-    if (!item) return value
-    const key = item.labelKey.split(".").pop() || ""
-    return (t.groups as Record<string, string>)[key] || value
+    // 优先从动态加载的 QQ 群配置中获取
+    const qqGroup = qqGroups.find((g) => g.id === value)
+    if (qqGroup) {
+      return locale === "en" && qqGroup.nameEn ? qqGroup.nameEn : qqGroup.name
+    }
+    // 回退到字典翻译
+    const keyMap: Record<string, string> = {
+      GROUP_ONE: "groupOne",
+      GROUP_TWO: "groupTwo",
+      GROUP_THREE: "groupThree",
+    }
+    const key = keyMap[value]
+    return key ? (t.groups as Record<string, string>)[key] || value : value
   }
 
   const formatDate = (value?: string | null) =>
@@ -1041,25 +1074,23 @@ export function PreApplicationForm({
                       onValueChange={(value) => setFormData({ ...formData, group: value })}
                       className="flex flex-wrap gap-4"
                     >
-                      {preApplicationGroups.map((group) => {
-                        const key = group.labelKey.split(".").pop() || ""
-                        return (
-                          <label
-                            key={group.value}
-                            className={cn(
-                              "flex items-center gap-2 rounded-lg border p-3 cursor-pointer transition-colors",
-                              formData.group === group.value
-                                ? "border-primary bg-primary/5"
-                                : "border-border hover:bg-muted/50",
-                            )}
-                          >
-                            <RadioGroupItem value={group.value} />
-                            <span className="text-sm">
-                              {(t.groups as Record<string, string>)[key]}
-                            </span>
-                          </label>
-                        )
-                      })}
+                      {qqGroups.map((group) => (
+                        <label
+                          key={group.id}
+                          className={cn(
+                            "flex items-center gap-2 rounded-lg border p-3 cursor-pointer transition-colors",
+                            formData.group === group.id
+                              ? "border-primary bg-primary/5"
+                              : "border-border hover:bg-muted/50",
+                          )}
+                        >
+                          <RadioGroupItem value={group.id} />
+                          <span className="text-sm">
+                            {locale === "en" && group.nameEn ? group.nameEn : group.name}
+                          </span>
+                          <span className="text-xs text-muted-foreground">({group.number})</span>
+                        </label>
+                      ))}
                     </RadioGroup>
                   </div>
                 </div>
