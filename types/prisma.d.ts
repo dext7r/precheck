@@ -10,7 +10,7 @@ export type PreApplicationStatus = "PENDING" | "APPROVED" | "REJECTED" | "DISPUT
 
 export type PreApplicationSource = "TIEBA" | "BILIBILI" | "DOUYIN" | "XIAOHONGSHU" | "OTHER"
 
-export type PreApplicationGroup = "GROUP_ONE" | "GROUP_TWO"
+export type PreApplicationGroup = "GROUP_ONE" | "GROUP_TWO" | "GROUP_THREE"
 
 export type EmailLogStatus = "PENDING" | "SUCCESS" | "FAILED"
 

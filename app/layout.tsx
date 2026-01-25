@@ -2,15 +2,27 @@ import type React from "react"
 import type { Metadata } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
 import "./globals.css"
-import Script from "next/script"
 
 const geistSans = Geist({ subsets: ["latin"], variable: "--font-geist-sans" })
 const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono" })
 
 export const metadata: Metadata = {
-  title: "linux.do 预申请系统",
-  description: "linux.do 社区预申请与邀请码管理系统",
-  generator: "v0.app",
+  title: {
+    default: "linux.do 预申请系统",
+    template: "%s | linux.do",
+  },
+  description: "linux.do 社区官方预申请与邀请码管理平台，快速获取社区注册邀请码",
+  keywords: ["linux.do", "预申请", "邀请码", "社区注册", "Linux社区", "开发者社区"],
+  authors: [{ name: "linux.do" }],
+  creator: "linux.do",
+  icons: {
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+      { url: "/icon-dark-32x32.png", sizes: "32x32", type: "image/png" },
+    ],
+    apple: "/apple-icon.png",
+  },
+  manifest: "/manifest.webmanifest",
 }
 
 export default function RootLayout({
@@ -19,22 +31,8 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}>
-        <Script
-          id="LA_COLLECT"
-          strategy="afterInteractive"
-          src="//sdk.51.la/js-sdk-pro.min.js?id=L501OCykxVLJmw8n&ck=L501OCykxVLJmw8n&autoTrack=true&hashMode=true&screenRecord=true"
-        />
-        <Script
-          id="LA_PERF"
-          strategy="afterInteractive"
-          dangerouslySetInnerHTML={{
-            __html: `!(function(c,i,e,b){var h=i.createElement("script");var f=i.getElementsByTagName("script")[0];h.type="text/javascript";h.crossorigin=true;h.onload=function(){new c[b]["Monitor"]().init({id:"L52KT284INPvfCrf"});};f.parentNode.insertBefore(h,f);h.src=e;})(window,document,"https://sdk.51.la/perf/js-sdk-perf.min.js","LingQue");`,
-          }}
-        />
-        {children}
-      </body>
+    <html suppressHydrationWarning className={`${geistSans.variable} ${geistMono.variable}`}>
+      <body className="font-sans antialiased">{children}</body>
     </html>
   )
 }

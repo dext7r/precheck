@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { ExternalLink, MessageCircle, Github } from "lucide-react"
+import { ExternalLink, MessageCircle, Github, Rss, FileCode2 } from "lucide-react"
 import type { Dictionary } from "@/lib/i18n/get-dictionary"
 import type { Locale } from "@/lib/i18n/config"
 
@@ -9,25 +9,44 @@ interface FooterProps {
 }
 
 export function Footer({ dict, locale }: FooterProps) {
-  const footerLinks = [
+  const navLinks = [
+    { name: dict.footer.docs, href: `/${locale}/docs` },
     { name: dict.footer.privacy, href: `/${locale}/privacy` },
     { name: dict.footer.terms, href: `/${locale}/terms` },
+    { name: dict.footer.license, href: `/${locale}/license` },
+  ]
+
+  const techLinks = [
+    { name: "Sitemap", href: "/sitemap.xml" },
+    { name: "RSS", href: "/feed.xml" },
+    { name: "Atom", href: "/atom.xml" },
+    { name: "Robots", href: "/robots.txt" },
+    { name: "LLMs", href: "/llms.txt" },
+  ]
+
+  const qqGroups = [
+    { name: dict.footer.qqGroup1, href: "https://qm.qq.com/q/yBh3PibMFG", title: "311795307" },
+    { name: dict.footer.qqGroup2, href: "https://qm.qq.com/q/kAcXh7ovC0", title: "1080464482" },
+    { name: dict.footer.qqGroup3, href: "https://qm.qq.com/q/It6OPlkI8g", title: "915386705" },
   ]
 
   return (
     <footer className="border-t border-border bg-muted/30">
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="flex flex-col items-center gap-6 md:flex-row md:justify-between">
-          <div className="flex items-center gap-4">
-            <Link href={`/${locale}`} className="flex items-center gap-2">
+        {/* 主内容区 */}
+        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+          {/* 品牌区 */}
+          <div className="space-y-3">
+            <Link href={`/${locale}`} className="inline-flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
                 <span className="text-sm font-bold text-primary-foreground">L</span>
               </div>
               <span className="text-lg font-semibold">linux.do</span>
             </Link>
+            <p className="text-sm text-muted-foreground">{dict.footer.description}</p>
             <a
               href="https://linux.do"
-              className="flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-primary"
+              className="inline-flex items-center gap-1.5 text-sm text-primary transition-colors hover:text-primary/80"
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -36,63 +55,83 @@ export function Footer({ dict, locale }: FooterProps) {
             </a>
           </div>
 
-          <div className="flex flex-wrap items-center justify-center gap-4 text-sm text-muted-foreground">
-            {footerLinks.map((link) => (
-              <Link
-                key={link.name}
-                href={link.href}
-                className="transition-colors hover:text-primary"
+          {/* 导航链接 */}
+          <div className="space-y-3">
+            <h3 className="text-sm font-semibold">{dict.footer.navigation}</h3>
+            <ul className="space-y-2">
+              {navLinks.map((link) => (
+                <li key={link.name}>
+                  <Link
+                    href={link.href}
+                    className="text-sm text-muted-foreground transition-colors hover:text-primary"
+                  >
+                    {link.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* 社区 */}
+          <div className="space-y-3">
+            <h3 className="text-sm font-semibold">{dict.footer.community}</h3>
+            <div className="space-y-2">
+              <a
+                href="https://github.com/dext7r/precheck"
+                className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-primary"
+                target="_blank"
+                rel="noopener noreferrer"
               >
-                {link.name}
-              </Link>
-            ))}
-            <div className="flex items-center gap-2 text-sm">
-              <MessageCircle className="h-4 w-4" />
-              <span>{dict.footer.qqGroupLabel}</span>
-              <div className="flex items-center gap-1.5">
-                <a
-                  href="https://qm.qq.com/q/yBh3PibMFG"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  title="311795307"
-                  className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary transition-all hover:bg-primary hover:text-primary-foreground"
-                >
-                  {dict.footer.qqGroup1}
-                </a>
-                <a
-                  href="https://qm.qq.com/q/kAcXh7ovC0"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  title="1080464482"
-                  className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary transition-all hover:bg-primary hover:text-primary-foreground"
-                >
-                  {dict.footer.qqGroup2}
-                </a>
-                <a
-                  href="https://qm.qq.com/q/It6OPlkI8g"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  title="915386705"
-                  className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary transition-all hover:bg-primary hover:text-primary-foreground"
-                >
-                  {dict.footer.qqGroup3}
-                </a>
+                <Github className="h-4 w-4" />
+                GitHub
+              </a>
+              <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                <MessageCircle className="h-4 w-4 shrink-0" />
+                <span className="shrink-0">{dict.footer.qqGroupLabel}</span>
+                <div className="flex flex-wrap gap-1">
+                  {qqGroups.map((group) => (
+                    <a
+                      key={group.title}
+                      href={group.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title={group.title}
+                      className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary transition-all hover:bg-primary hover:text-primary-foreground"
+                    >
+                      {group.name}
+                    </a>
+                  ))}
+                </div>
               </div>
             </div>
-            <a
-              href="https://github.com/dext7r/precheck"
-              className="flex items-center gap-1.5 transition-colors hover:text-primary"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <Github className="h-4 w-4" />
-              <span>GitHub</span>
-              <ExternalLink className="h-3 w-3" />
-            </a>
+          </div>
+
+          {/* 技术资源 */}
+          <div className="space-y-3">
+            <h3 className="text-sm font-semibold">{dict.footer.techResources}</h3>
+            <div className="flex flex-wrap gap-2">
+              {techLinks.map((link) => (
+                <a
+                  key={link.name}
+                  href={link.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 rounded-md border border-border bg-background px-2 py-1 text-xs text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+                >
+                  {link.name === "RSS" || link.name === "Atom" ? (
+                    <Rss className="h-3 w-3" />
+                  ) : (
+                    <FileCode2 className="h-3 w-3" />
+                  )}
+                  {link.name}
+                </a>
+              ))}
+            </div>
           </div>
         </div>
 
-        <div className="mt-6 border-t border-border pt-6">
+        {/* 版权区 */}
+        <div className="mt-8 border-t border-border pt-6">
           <p className="text-center text-sm text-muted-foreground">
             &copy; {new Date().getFullYear()} linux.do. {dict.footer.copyright}
           </p>

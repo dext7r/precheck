@@ -104,7 +104,7 @@ export function OrganizationJsonLd() {
     name: "linux.do",
     alternateName: siteConfig.name,
     url: siteConfig.links.community,
-    logo: `${baseUrl}/logo.png`,
+    logo: `${baseUrl}${siteConfig.logo}`,
     description: "linux.do 开发者技术社区",
     contactPoint: {
       "@type": "ContactPoint",

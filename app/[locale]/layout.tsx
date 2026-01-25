@@ -1,6 +1,7 @@
 import type React from "react"
 import type { Metadata, Viewport } from "next"
 import { notFound } from "next/navigation"
+import Script from "next/script"
 import { ThemeProvider } from "@/components/providers/theme-provider"
 import { Toaster } from "@/components/ui/sonner"
 import { defaultLocale, locales, type Locale } from "@/lib/i18n/config"
@@ -11,6 +12,7 @@ import {
   OrganizationJsonLd,
   SoftwareApplicationJsonLd,
 } from "@/components/seo/json-ld"
+import { HtmlLang } from "@/components/seo/html-lang"
 
 export async function generateStaticParams() {
   return locales.map((locale) => ({ locale }))
@@ -68,7 +70,7 @@ export async function generateMetadata({
       url: `${baseUrl}/${currentLocale}`,
       images: [
         {
-          url: `${baseUrl}/og-image.png`,
+          url: `${baseUrl}${siteConfig.ogImage}`,
           width: 1200,
           height: 630,
           alt: dict.metadata.title,
@@ -79,7 +81,7 @@ export async function generateMetadata({
       card: "summary_large_image",
       title: dict.metadata.title,
       description: dict.metadata.description,
-      images: [`${baseUrl}/og-image.png`],
+      images: [`${baseUrl}${siteConfig.ogImage}`],
       creator: "",
     },
     robots: {
@@ -125,6 +127,19 @@ export default async function LocaleLayout({
 
   return (
     <>
+      <HtmlLang locale={currentLocale} />
+      <Script
+        id="LA_COLLECT"
+        strategy="afterInteractive"
+        src="//sdk.51.la/js-sdk-pro.min.js?id=L501OCykxVLJmw8n&ck=L501OCykxVLJmw8n&autoTrack=true&hashMode=true&screenRecord=true"
+      />
+      <Script
+        id="LA_PERF"
+        strategy="afterInteractive"
+        dangerouslySetInnerHTML={{
+          __html: `!(function(c,i,e,b){var h=i.createElement("script");var f=i.getElementsByTagName("script")[0];h.type="text/javascript";h.crossorigin=true;h.onload=function(){new c[b]["Monitor"]().init({id:"L52KT284INPvfCrf"});};f.parentNode.insertBefore(h,f);h.src=e;})(window,document,"https://sdk.51.la/perf/js-sdk-perf.min.js","LingQue");`,
+        }}
+      />
       <WebsiteJsonLd locale={currentLocale} />
       <OrganizationJsonLd />
       <SoftwareApplicationJsonLd locale={currentLocale} />

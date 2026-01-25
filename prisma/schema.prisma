@@ -293,6 +293,7 @@ enum PreApplicationSource {
 enum PreApplicationGroup {
   GROUP_ONE
   GROUP_TWO
+  GROUP_THREE
 }
 
 model SiteSettings {

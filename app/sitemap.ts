@@ -10,62 +10,55 @@ const staticRoutes = [
   { path: "", changeFrequency: "daily" as const, priority: 1.0 },
   { path: "/login", changeFrequency: "monthly" as const, priority: 0.6 },
   { path: "/register", changeFrequency: "monthly" as const, priority: 0.6 },
+  { path: "/forgot-password", changeFrequency: "yearly" as const, priority: 0.4 },
   { path: "/pre-application", changeFrequency: "monthly" as const, priority: 0.8 },
   { path: "/query-invite-codes", changeFrequency: "monthly" as const, priority: 0.7 },
   { path: "/posts", changeFrequency: "daily" as const, priority: 0.8 },
+  { path: "/docs", changeFrequency: "monthly" as const, priority: 0.7 },
+  { path: "/docs/api", changeFrequency: "monthly" as const, priority: 0.6 },
+  { path: "/docs/examples", changeFrequency: "monthly" as const, priority: 0.6 },
   { path: "/privacy", changeFrequency: "yearly" as const, priority: 0.3 },
   { path: "/terms", changeFrequency: "yearly" as const, priority: 0.3 },
+  { path: "/license", changeFrequency: "yearly" as const, priority: 0.3 },
 ]
+
+function buildAlternates(baseUrl: string, path: string) {
+  const languages: Record<string, string> = {
+    "x-default": `${baseUrl}/${defaultLocale}${path}`,
+  }
+  for (const locale of locales) {
+    languages[locale] = `${baseUrl}/${locale}${path}`
+  }
+  return { languages }
+}
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = getBaseUrl()
   const lastModified = new Date()
   const sitemapEntries: MetadataRoute.Sitemap = []
 
-  // 静态路由
-  for (const locale of locales) {
-    for (const route of staticRoutes) {
-      sitemapEntries.push({
-        url: `${baseUrl}/${locale}${route.path}`,
-        lastModified,
-        changeFrequency: route.changeFrequency,
-        priority: route.priority,
-        alternates: {
-          languages: locales.reduce(
-            (acc, l) => {
-              acc[l] = `${baseUrl}/${l}${route.path}`
-              return acc
-            },
-            {} as Record<string, string>,
-          ),
-        },
-      })
-    }
-  }
-
-  // 默认语言根路由
+  // 根路由
   sitemapEntries.push({
     url: baseUrl,
     lastModified,
     changeFrequency: "daily",
     priority: 1.0,
-    alternates: {
-      languages: {
-        [defaultLocale]: baseUrl,
-        ...locales
-          .filter((l) => l !== defaultLocale)
-          .reduce(
-            (acc, l) => {
-              acc[l] = `${baseUrl}/${l}`
-              return acc
-            },
-            {} as Record<string, string>,
-          ),
-      },
-    },
+    alternates: buildAlternates(baseUrl, ""),
   })
 
-  // 已发布文章（限制1000篇，按更新时间倒序）
+  // 静态路由（每个路由一个条目，使用默认语言 URL）
+  for (const route of staticRoutes) {
+    if (route.path === "") continue // 根路由已单独处理
+    sitemapEntries.push({
+      url: `${baseUrl}/${defaultLocale}${route.path}`,
+      lastModified,
+      changeFrequency: route.changeFrequency,
+      priority: route.priority,
+      alternates: buildAlternates(baseUrl, route.path),
+    })
+  }
+
+  // 已发布文章
   if (db) {
     try {
       const posts = await db.post.findMany({
@@ -76,26 +69,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       })
 
       for (const post of posts) {
-        for (const locale of locales) {
-          sitemapEntries.push({
-            url: `${baseUrl}/${locale}/posts/${post.id}`,
-            lastModified: post.updatedAt,
-            changeFrequency: "weekly",
-            priority: 0.7,
-            alternates: {
-              languages: locales.reduce(
-                (acc, l) => {
-                  acc[l] = `${baseUrl}/${l}/posts/${post.id}`
-                  return acc
-                },
-                {} as Record<string, string>,
-              ),
-            },
-          })
-        }
+        const postPath = `/posts/${post.id}`
+        sitemapEntries.push({
+          url: `${baseUrl}/${defaultLocale}${postPath}`,
+          lastModified: post.updatedAt,
+          changeFrequency: "weekly",
+          priority: 0.7,
+          alternates: buildAlternates(baseUrl, postPath),
+        })
       }
-    } catch (error) {
-      // 数据库不可用时静默跳过，避免构建失败
+    } catch {
       console.warn("Sitemap: Database unavailable, skipping posts")
     }
   }

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 import { locales, defaultLocale } from "@/lib/i18n/config"
 
-export function proxy(request: NextRequest) {
+export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // 检查路径是否已包含语言前缀
@@ -30,7 +30,7 @@ export function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // 跳过静态资源和 API 路由
-    "/((?!api|_next/static|_next/image|favicon.ico|.*\\..*).*)",
+    // 跳过静态资源、API 路由和特殊文件
+    "/((?!api|_next/static|_next/image|favicon.ico|icon|apple-icon|manifest|sitemap|robots|.*\\..*).*)",
   ],
 }

@@ -346,14 +346,23 @@
     "qqGroup3": "Group 3",
     "apiReference": "API Reference",
     "examples": "Examples",
-    "license": "License"
+    "license": "License",
+    "docs": "Docs",
+    "sitemap": "Sitemap",
+    "navigation": "Navigation",
+    "community": "Community",
+    "techResources": "Tech Resources"
   },
   "docs": {
-    "title": "Documentation",
-    "description": "linux.do pre-application system user guide",
+    "title": "User Guide",
+    "description": "Complete guide to applying for linux.do community membership",
     "backHome": "Back to Home",
     "envTitle": "Environment Variables",
     "envDescription": "Required configuration for your application",
+    "tabs": {
+      "userGuide": "User Guide",
+      "developer": "Developer"
+    },
     "sections": {
       "gettingStarted": {
         "title": "Getting Started",
@@ -393,6 +402,138 @@
           "Docker: docker compose up -d",
           "Fly.io: fly launch && fly deploy",
           "Railway: Connect repo in dashboard"
+        ]
+      }
+    },
+    "userGuide": {
+      "overview": {
+        "title": "Overview",
+        "description": "Welcome to the linux.do pre-application system! This guide will walk you through the entire process from registration to joining the community.",
+        "steps": [
+          "Register an account on this platform",
+          "Fill out and submit your pre-application",
+          "Wait for admin review (typically 1-3 business days)",
+          "Receive your invite code upon approval",
+          "Use the invite code to register on linux.do"
+        ]
+      },
+      "register": {
+        "title": "Step 1: Register Account",
+        "description": "Create your account to start the application process",
+        "items": [
+          "Click the \"Register\" button in the top navigation bar",
+          "Enter your email address (must use an allowed domain)",
+          "Create a secure password (8+ characters with uppercase, lowercase, and numbers)",
+          "Complete email verification if required",
+          "Agree to the Terms of Service and Privacy Policy"
+        ],
+        "tips": {
+          "title": "Tips",
+          "items": [
+            "Use a personal email address you check regularly",
+            "Check the allowed email domains list before registering",
+            "Save your login credentials securely"
+          ]
+        }
+      },
+      "apply": {
+        "title": "Step 2: Submit Pre-Application",
+        "description": "Fill out the application form with your information",
+        "items": [
+          "Log in and go to Dashboard → Pre-Application",
+          "Write your application essay (about 100 words recommended)",
+          "Enter your registration email (the email you'll use for linux.do)",
+          "Select where you heard about linux.do (optional)",
+          "Set a query token for checking status (optional)",
+          "Click \"Submit for Review\""
+        ],
+        "essayTips": {
+          "title": "Essay Writing Tips",
+          "items": [
+            "Be genuine and sincere in your writing",
+            "Explain why you want to join the community",
+            "Describe what you hope to contribute or learn",
+            "Avoid excessive praise or flattery",
+            "Keep it concise but meaningful (around 100 words)"
+          ]
+        }
+      },
+      "query": {
+        "title": "Step 3: Check Application Status",
+        "description": "Track your application progress anytime",
+        "items": [
+          "Method 1: Log in and check Dashboard → Pre-Application",
+          "Method 2: Use your query token on the Query page",
+          "Method 3: Check your email for notifications",
+          "Method 4: Check Dashboard → Messages for updates"
+        ],
+        "statuses": {
+          "title": "Application Statuses",
+          "pending": "Pending - Your application is waiting for review",
+          "approved": "Approved - Congratulations! Check for your invite code",
+          "rejected": "Rejected - Review the feedback and consider resubmitting",
+          "disputed": "Needs Revision - Additional information requested"
+        }
+      },
+      "inviteCode": {
+        "title": "Step 4: Get & Use Invite Code",
+        "description": "Receive and use your invite code to join linux.do",
+        "items": [
+          "Once approved, your invite code will appear in your dashboard",
+          "You'll also receive it via email and site message",
+          "Copy the invite code carefully",
+          "Go to linux.do registration page",
+          "Paste the invite code in the registration form",
+          "Complete your linux.do account setup"
+        ],
+        "warnings": {
+          "title": "Important Notes",
+          "items": [
+            "Invite codes expire after 12 hours - use them promptly!",
+            "Each invite code can only be used once",
+            "If your code expires, you may need to contact admin",
+            "Do not share your invite code with others"
+          ]
+        }
+      },
+      "resubmit": {
+        "title": "Resubmitting Applications",
+        "description": "What to do if your application is rejected",
+        "items": [
+          "Read the admin's feedback carefully",
+          "Revise your application based on the guidance",
+          "Go to Dashboard → Pre-Application",
+          "Click \"Resubmit\" and update your content",
+          "Submit for review again"
+        ],
+        "limits": {
+          "title": "Resubmission Limits",
+          "content": "You can resubmit up to 3 times after rejection. Make each revision count by addressing all feedback points."
+        }
+      },
+      "faq": {
+        "title": "Frequently Asked Questions",
+        "items": [
+          {
+            "q": "How long does the review process take?",
+            "a": "Typically 1-3 business days, depending on application volume."
+          },
+          {
+            "q": "Can I change my application after submission?",
+            "a": "You can only edit your application if it's been rejected or marked for revision."
+          },
+          {
+            "q": "What email domains are allowed?",
+            "a": "Check the allowed domains list on the registration and pre-application pages."
+          },
+          {
+            "q": "My invite code expired. What should I do?",
+            "a": "Contact admin through the community or resubmit your application."
+          },
+          {
+            "q": "Can I apply for multiple accounts?",
+            "a": "No, each person should only have one account. Multiple applications may result in all being rejected."
+          }
         ]
       }
     }
