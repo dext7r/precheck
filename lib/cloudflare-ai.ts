@@ -74,8 +74,27 @@ function parseJSONFromResponse<T>(text: string): T {
   return JSON.parse(jsonMatch[0]) as T
 }
 
-export async function reviewEssayWithAI(essay: string): Promise<AIReviewResult> {
-  const prompt = `你是一个社区预申请审核助手。分析以下申请理由，给出审核建议。
+interface ReviewOptions {
+  userMode?: boolean // 用户端模式，不返回参考回复
+}
+
+export async function reviewEssayWithAI(
+  essay: string,
+  options?: ReviewOptions,
+): Promise<AIReviewResult> {
+  const { userMode = false } = options || {}
+
+  const prompt = userMode
+    ? `你是一个社区申请内容质量检测助手。分析用户的申请理由，帮助用户改进内容质量。`
+    : `你是一个社区预申请审核助手。分析以下申请理由，给出审核建议。`
+
+  const referenceReplyField = userMode ? "" : `"referenceReply": "给管理员参考的中文回复模板",`
+
+  const reasoningField = userMode
+    ? `"suggestions": "给用户的具体改进建议，用中文回答"`
+    : `"reasoning": "简要分析理由"`
+
+  const fullPrompt = `${prompt}
 
 申请理由：
 """
@@ -92,8 +111,8 @@ ${essay}
     "completeness": 0-100 的完整性分数,
     "expression": 0-100 的表达能力分数
   },
-  "referenceReply": "给管理员参考的中文回复模板",
-  "reasoning": "简要分析理由"
+  ${referenceReplyField}
+  ${reasoningField}
 }
 
 评判标准：
@@ -107,10 +126,11 @@ ${essay}
 - 四项分数平均 < 40 或任一项 < 20：建议 REJECT
 - 其他情况：建议 DISPUTE（需人工复核）`
 
-  const response = await callCloudflareAI(prompt)
+  const response = await callCloudflareAI(fullPrompt)
 
   try {
-    const result = parseJSONFromResponse<AIReviewResult>(response)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result = parseJSONFromResponse<any>(response)
 
     // 验证并规范化结果
     return {
@@ -124,8 +144,10 @@ ${essay}
         completeness: Math.min(100, Math.max(0, Number(result.scores?.completeness) || 50)),
         expression: Math.min(100, Math.max(0, Number(result.scores?.expression) || 50)),
       },
-      referenceReply: result.referenceReply || "感谢您的申请，我们会尽快处理。",
-      reasoning: result.reasoning || "AI 分析完成",
+      referenceReply: userMode ? "" : result.referenceReply || "感谢您的申请，我们会尽快处理。",
+      reasoning: userMode
+        ? result.suggestions || "请补充更多具体内容"
+        : result.reasoning || "AI 分析完成",
     }
   } catch {
     // JSON 解析失败时返回默认值
@@ -138,8 +160,8 @@ ${essay}
         completeness: 50,
         expression: 50,
       },
-      referenceReply: "感谢您的申请，需要人工复核。",
-      reasoning: "AI 分析结果解析失败，建议人工复核",
+      referenceReply: userMode ? "" : "感谢您的申请，需要人工复核。",
+      reasoning: userMode ? "AI 分析暂时不可用，请稍后重试" : "AI 分析结果解析失败，建议人工复核",
     }
   }
 }

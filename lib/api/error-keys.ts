@@ -163,5 +163,7 @@ export const ApiErrorKeys = {
     versionConflict: "apiErrors.preApplication.versionConflict",
     resubmitLimitExceeded: "apiErrors.preApplication.resubmitLimitExceeded",
     failedToUpdate: "apiErrors.preApplication.failedToUpdate",
+    aiPreviewNotConfigured: "apiErrors.preApplication.aiPreviewNotConfigured",
+    aiPreviewFailed: "apiErrors.preApplication.aiPreviewFailed",
   },
 } as const

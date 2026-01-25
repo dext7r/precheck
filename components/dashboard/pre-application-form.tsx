@@ -36,6 +36,7 @@ import {
   Loader2,
   Users,
   Heart,
+  Sparkles,
 } from "lucide-react"
 import type { Dictionary } from "@/lib/i18n/get-dictionary"
 import type { Locale } from "@/lib/i18n/config"
@@ -45,6 +46,8 @@ import { preApplicationGroups, preApplicationSources } from "@/lib/pre-applicati
 import { EmailWithDomainInput } from "@/components/ui/email-with-domain-input"
 import { useAllowedEmailDomains } from "@/lib/hooks/use-allowed-email-domains"
 import { cn } from "@/lib/utils"
+
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 type PreApplicationVersion = {
   id: string
@@ -161,6 +164,22 @@ export function PreApplicationForm({
     registerEmail: userEmail || "",
     group: "GROUP_ONE",
   })
+
+  // AI 预审状态
+  type AIPreviewResult = {
+    suggestion: "APPROVE" | "REJECT" | "DISPUTE"
+    confidence: number
+    scores: {
+      relevance: number
+      authenticity: number
+      completeness: number
+      expression: number
+    }
+    reasoning: string
+  }
+  const [aiPreviewLoading, setAiPreviewLoading] = useState(false)
+  const [aiPreviewResult, setAiPreviewResult] = useState<AIPreviewResult | null>(null)
+  const [aiPreviewError, setAiPreviewError] = useState<string | null>(null)
 
   const allowedDomainsText = useMemo(() => {
     const joiner = locale === "zh" ? "、" : ", "
@@ -368,6 +387,82 @@ export function PreApplicationForm({
     } finally {
       setSubmitting(false)
     }
+  }
+
+  // AI 预审检测
+  const aiPreviewT = (t as unknown as Record<string, unknown>).aiPreview as
+    | Record<string, unknown>
+    | undefined
+  const handleAIPreview = async () => {
+    if (formData.essay.length < essayMinChars) {
+      toast.error(
+        aiPreviewT?.minCharsHint
+          ? String(aiPreviewT.minCharsHint).replace("{min}", String(essayMinChars))
+          : `至少输入 ${essayMinChars} 个字符后可检测`,
+      )
+      return
+    }
+
+    setAiPreviewLoading(true)
+    setAiPreviewError(null)
+    setAiPreviewResult(null)
+
+    try {
+      const res = await fetch("/api/pre-application/ai-preview", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ essay: formData.essay }),
+      })
+
+      if (!res.ok) {
+        const errorText = res.status === 503 ? aiPreviewT?.notConfigured : aiPreviewT?.error
+        setAiPreviewError(String(errorText || "检测失败"))
+        return
+      }
+
+      const data = await res.json()
+      setAiPreviewResult(data.result)
+    } catch {
+      setAiPreviewError(String(aiPreviewT?.error || "检测失败，请稍后重试"))
+    } finally {
+      setAiPreviewLoading(false)
+    }
+  }
+
+  // AI 建议配置
+  const getAISuggestionConfig = (suggestion: string) => {
+    const configs: Record<string, { label: string; color: string; bg: string }> = {
+      APPROVE: {
+        label: String(
+          (aiPreviewT?.suggestion as Record<string, string> | undefined)?.approve || "内容质量良好",
+        ),
+        color: "text-emerald-600 dark:text-emerald-400",
+        bg: "bg-emerald-500/10",
+      },
+      REJECT: {
+        label: String(
+          (aiPreviewT?.suggestion as Record<string, string> | undefined)?.reject ||
+            "建议修改后提交",
+        ),
+        color: "text-rose-600 dark:text-rose-400",
+        bg: "bg-rose-500/10",
+      },
+      DISPUTE: {
+        label: String(
+          (aiPreviewT?.suggestion as Record<string, string> | undefined)?.dispute || "建议补充完善",
+        ),
+        color: "text-amber-600 dark:text-amber-400",
+        bg: "bg-amber-500/10",
+      },
+    }
+    return configs[suggestion] || configs.DISPUTE
+  }
+
+  // 分数颜色
+  const getScoreColor = (score: number) => {
+    if (score >= 70) return "text-emerald-600 dark:text-emerald-400"
+    if (score >= 50) return "text-amber-600 dark:text-amber-400"
+    return "text-rose-600 dark:text-rose-400"
   }
 
   if (loading) return <FormSkeleton />
@@ -778,6 +873,110 @@ export function PreApplicationForm({
                     >
                       {formData.essay.length}/{essayMinChars}
                     </span>
+                  </div>
+
+                  {/* AI 预审检测按钮和结果 */}
+                  <div className="space-y-3">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={handleAIPreview}
+                            disabled={aiPreviewLoading || formData.essay.length < essayMinChars}
+                            className="gap-2"
+                          >
+                            {aiPreviewLoading ? (
+                              <>
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                {String(aiPreviewT?.loading || "检测中...")}
+                              </>
+                            ) : (
+                              <>
+                                <Sparkles className="h-4 w-4" />
+                                {String(aiPreviewT?.button || "AI 检测")}
+                              </>
+                            )}
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{String(aiPreviewT?.title || "AI 内容检测")}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+
+                    {/* AI 预审错误 */}
+                    {aiPreviewError && (
+                      <div className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-rose-300">
+                        {aiPreviewError}
+                      </div>
+                    )}
+
+                    {/* AI 预审结果 */}
+                    {aiPreviewResult && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="rounded-xl border bg-muted/30 p-4 space-y-4"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium">
+                            {String(aiPreviewT?.resultTitle || "检测结果")}
+                          </span>
+                          <Badge
+                            variant="secondary"
+                            className={cn(
+                              "px-2.5 py-1",
+                              getAISuggestionConfig(aiPreviewResult.suggestion).bg,
+                              getAISuggestionConfig(aiPreviewResult.suggestion).color,
+                            )}
+                          >
+                            {getAISuggestionConfig(aiPreviewResult.suggestion).label}
+                          </Badge>
+                        </div>
+
+                        {/* 分数展示 */}
+                        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                          {(
+                            [
+                              ["relevance", "相关性"],
+                              ["authenticity", "真实性"],
+                              ["completeness", "完整性"],
+                              ["expression", "表达能力"],
+                            ] as const
+                          ).map(([key, fallback]) => {
+                            const score =
+                              aiPreviewResult.scores[key as keyof typeof aiPreviewResult.scores]
+                            const label =
+                              (aiPreviewT?.scores as Record<string, string> | undefined)?.[key] ||
+                              fallback
+                            return (
+                              <div
+                                key={key}
+                                className="rounded-lg bg-background/50 p-2 text-center"
+                              >
+                                <p className={cn("text-lg font-bold", getScoreColor(score))}>
+                                  {score}
+                                </p>
+                                <p className="text-xs text-muted-foreground">{label}</p>
+                              </div>
+                            )
+                          })}
+                        </div>
+
+                        {/* 改进建议 */}
+                        {aiPreviewResult.reasoning && (
+                          <div className="space-y-1">
+                            <p className="text-xs text-muted-foreground">
+                              {String(aiPreviewT?.suggestions || "改进建议")}
+                            </p>
+                            <p className="text-sm leading-relaxed">{aiPreviewResult.reasoning}</p>
+                          </div>
+                        )}
+                      </motion.div>
+                    )}
                   </div>
                 </div>
 

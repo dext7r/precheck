@@ -799,6 +799,27 @@
     "totalPending": "总待审核",
     "warmTipTitle": "温馨提示",
     "warmTipMessage": "感谢您的耐心等待！我们正在认真审核每一份申请，通常会在 1-3 个工作日内完成。审核结果会通过站内信和邮件通知您，请留意查收。祝您早日加入 L 站大家庭！",
+    "aiPreview": {
+      "title": "AI 内容检测",
+      "button": "AI 检测",
+      "loading": "检测中...",
+      "resultTitle": "检测结果",
+      "suggestion": {
+        "approve": "内容质量良好",
+        "reject": "建议修改后提交",
+        "dispute": "建议补充完善"
+      },
+      "scores": {
+        "relevance": "相关性",
+        "authenticity": "真实性",
+        "completeness": "完整性",
+        "expression": "表达能力"
+      },
+      "suggestions": "改进建议",
+      "minCharsHint": "至少输入 {min} 个字符后可检测",
+      "error": "检测失败，请稍后重试",
+      "notConfigured": "AI 检测功能暂未开启"
+    },
     "notifications": {
       "approvedTitle": "预申请已通过",
       "rejectedTitle": "预申请已驳回",
