@@ -12,6 +12,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { ConfirmDialog } from "@/components/admin/confirm-dialog"
 import type { Locale } from "@/lib/i18n/config"
 import type { Dictionary } from "@/lib/i18n/get-dictionary"
+import { resolveApiErrorMessage } from "@/lib/api/error-message"
 
 type SettingsUser = {
   name?: string | null
@@ -74,7 +75,8 @@ export function SettingsForm({ locale, dict, user, hasPassword }: SettingsFormPr
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
-        setProfileError(data?.error || t.profileUpdateFailed)
+        const message = resolveApiErrorMessage(data, dict) ?? t.profileUpdateFailed
+        setProfileError(message)
         return
       }
 
@@ -103,7 +105,8 @@ export function SettingsForm({ locale, dict, user, hasPassword }: SettingsFormPr
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
-        setPasswordError(data?.error || t.passwordUpdateFailed)
+        const message = resolveApiErrorMessage(data, dict) ?? t.passwordUpdateFailed
+        setPasswordError(message)
         return
       }
 
@@ -129,7 +132,8 @@ export function SettingsForm({ locale, dict, user, hasPassword }: SettingsFormPr
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
-        toast.error(data?.error || t.accountDeleteFailed)
+        const message = resolveApiErrorMessage(data, dict) ?? t.accountDeleteFailed
+        toast.error(message)
         return
       }
 

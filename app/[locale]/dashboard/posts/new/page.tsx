@@ -15,10 +15,11 @@ import {
 } from "@/components/ui/select"
 import { ArrowLeft } from "lucide-react"
 import Link from "next/link"
-import { getDictionary } from "@/lib/i18n/get-dictionary"
-import { defaultLocale, locales, type Locale } from "@/lib/i18n/config"
 import { RichTextEditor } from "@/components/posts/rich-text-editor"
 import { PostContent } from "@/components/posts/post-content"
+import { getDictionary } from "@/lib/i18n/get-dictionary"
+import { defaultLocale, locales, type Locale } from "@/lib/i18n/config"
+import { resolveApiErrorMessage } from "@/lib/api/error-message"
 
 export default function NewPostPage() {
   const router = useRouter()
@@ -84,7 +85,8 @@ export default function NewPostPage() {
 
       if (!res.ok) {
         const data = await res.json()
-        setError(resolveError(data?.error))
+        const message = resolveApiErrorMessage(data, dict)
+        setError(resolveError(message))
         return
       }
 

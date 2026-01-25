@@ -39,6 +39,8 @@ import {
 } from "lucide-react"
 import type { Dictionary } from "@/lib/i18n/get-dictionary"
 import type { Locale } from "@/lib/i18n/config"
+import { ApiErrorKeys } from "@/lib/api/error-keys"
+import { resolveApiErrorMessage } from "@/lib/api/error-message"
 import { preApplicationGroups, preApplicationSources } from "@/lib/pre-application/constants"
 import { EmailWithDomainInput } from "@/components/ui/email-with-domain-input"
 import { useAllowedEmailDomains } from "@/lib/hooks/use-allowed-email-domains"
@@ -344,24 +346,19 @@ export function PreApplicationForm({
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
-        if (res.status === 409) {
-          if (data?.error === "VERSION_CONFLICT") {
-            toast.error(t.versionConflict || "数据已被修改，请刷新后重试")
-            await loadRecord()
-            return
-          }
-          toast.error(t.alreadySubmitted)
+        const message = resolveApiErrorMessage(data, dict) ?? t.submitFailed
+        const errorObject = data?.error
+        const errorCode =
+          errorObject && typeof errorObject === "object" && typeof errorObject.code === "string"
+            ? errorObject.code
+            : undefined
+        if (res.status === 409 && errorCode === ApiErrorKeys.preApplication.versionConflict) {
+          toast.error(message)
+          await loadRecord()
           return
         }
-        if (data?.error === "ESSAY_TOO_SHORT") {
-          toast.error(t.validation.essayTooShort.replace("{min}", String(essayMinChars)))
-          return
-        }
-        if (data?.error === "MAX_RESUBMIT_EXCEEDED") {
-          toast.error(data?.message || t.maxResubmitExceeded)
-          return
-        }
-        throw new Error(data?.error || t.submitFailed)
+        toast.error(message)
+        return
       }
 
       toast.success(method === "PUT" ? t.updateSuccess : t.submitSuccess)

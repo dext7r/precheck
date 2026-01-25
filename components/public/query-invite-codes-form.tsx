@@ -24,7 +24,7 @@ import {
   Sparkles,
   AlertTriangle,
 } from "lucide-react"
-import { getDictionaryEntry } from "@/lib/i18n/get-dictionary-entry"
+import { resolveApiErrorMessage } from "@/lib/api/error-message"
 import type { Dictionary } from "@/lib/i18n/get-dictionary"
 import type { Locale } from "@/lib/i18n/config"
 
@@ -58,13 +58,6 @@ interface QueryInviteCodesFormProps {
   dict: Dictionary
 }
 
-interface ApiErrorPayload {
-  error?: {
-    code?: string
-    message?: string
-  }
-}
-
 export function QueryInviteCodesForm({ locale, dict }: QueryInviteCodesFormProps) {
   const t = dict.queryInviteCodes ?? {}
   const searchParams = useSearchParams()
@@ -77,23 +70,6 @@ export function QueryInviteCodesForm({ locale, dict }: QueryInviteCodesFormProps
   const [error, setError] = useState("")
 
   const getFullUrl = (code: string) => `https://linux.do/invites/${code}`
-
-  const resolveApiErrorMessage = (payload: ApiErrorPayload | null) => {
-    const error = payload?.error
-    if (!error) {
-      return undefined
-    }
-
-    if (typeof error.message === "string" && error.message.trim()) {
-      return error.message
-    }
-
-    if (typeof error.code === "string") {
-      return getDictionaryEntry(dict, error.code)
-    }
-
-    return undefined
-  }
 
   const handleQuery = async (queryToken?: string, queryEmail?: string) => {
     const trimmedToken = (queryToken || token).trim().toUpperCase()
@@ -125,7 +101,7 @@ export function QueryInviteCodesForm({ locale, dict }: QueryInviteCodesFormProps
       const payload = await res.json().catch(() => null)
 
       if (!res.ok || !payload) {
-        const message = resolveApiErrorMessage(payload) ?? t.queryFailed
+        const message = resolveApiErrorMessage(payload, dict) ?? t.queryFailed
         throw new Error(message)
       }
 

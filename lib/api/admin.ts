@@ -1,3 +1,5 @@
+import { resolveApiErrorMessage } from "@/lib/api/error-message"
+
 export interface AdminStats {
   totalUsers: number
   activeUsers: number
@@ -44,8 +46,9 @@ async function fetchAPI<T>(endpoint: string, options?: RequestInit): Promise<T> 
   })
 
   if (!res.ok) {
-    const error = await res.json().catch(() => ({ error: "Request failed" }))
-    throw new Error(error.error || `HTTP ${res.status}`)
+    const payload = await res.json().catch(() => ({}))
+    const message = resolveApiErrorMessage(payload) ?? `HTTP ${res.status}`
+    throw new Error(message)
   }
 
   return res.json()

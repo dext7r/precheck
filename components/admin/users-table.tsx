@@ -38,6 +38,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { ConfirmDialog } from "@/components/admin/confirm-dialog"
+import { resolveApiErrorMessage } from "@/lib/api/error-message"
 import type { Dictionary } from "@/lib/i18n/get-dictionary"
 import type { Locale } from "@/lib/i18n/config"
 
@@ -263,7 +264,8 @@ export function AdminUsersTable({ locale, dict }: AdminUsersTableProps) {
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
-        throw new Error(data?.error || t.actionFailed)
+        const message = resolveApiErrorMessage(data, dict) ?? t.actionFailed
+        throw new Error(message)
       }
 
       const result = await res.json()

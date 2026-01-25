@@ -28,8 +28,8 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Checkbox } from "@/components/ui/checkbox"
 import { toast } from "sonner"
-import { RichTextEditor } from "@/components/posts/rich-text-editor"
 import { PostContent } from "@/components/posts/post-content"
+import { RichTextEditor } from "@/components/posts/rich-text-editor"
 import {
   Mail,
   Send,
@@ -47,6 +47,7 @@ import {
 } from "lucide-react"
 import type { Dictionary } from "@/lib/i18n/get-dictionary"
 import type { Locale } from "@/lib/i18n/config"
+import { resolveApiErrorMessage } from "@/lib/api/error-message"
 
 interface AdminMessageItem {
   id: string
@@ -375,7 +376,8 @@ export function AdminMessagesManager({ locale, dict }: AdminMessagesManagerProps
         })
         if (!res.ok) {
           const data = await res.json()
-          throw new Error(data?.error || "Failed to update message")
+          const message = resolveApiErrorMessage(data, dict) ?? "Failed to update message"
+          throw new Error(message)
         }
       } else {
         const res = await fetch("/api/admin/messages", {
@@ -385,7 +387,8 @@ export function AdminMessagesManager({ locale, dict }: AdminMessagesManagerProps
         })
         if (!res.ok) {
           const data = await res.json()
-          throw new Error(data?.error || "Failed to create message")
+          const message = resolveApiErrorMessage(data, dict) ?? "Failed to create message"
+          throw new Error(message)
         }
       }
 
@@ -412,7 +415,8 @@ export function AdminMessagesManager({ locale, dict }: AdminMessagesManagerProps
       })
       if (!res.ok) {
         const data = await res.json()
-        throw new Error(data?.error || "Failed to revoke message")
+        const message = resolveApiErrorMessage(data, dict) ?? "Failed to revoke message"
+        throw new Error(message)
       }
       toast.success(t.messageRevoked)
       fetchMessages()

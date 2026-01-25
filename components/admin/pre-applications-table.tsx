@@ -71,6 +71,7 @@ import {
 } from "@/components/ui/accordion"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
+import { resolveApiErrorMessage } from "@/lib/api/error-message"
 
 // AI 审核结果类型
 type AIReviewResult = {
@@ -544,7 +545,8 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
       })
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
-        throw new Error(data?.error?.message || t.aiReviewFailed)
+        const message = resolveApiErrorMessage(data, dict) ?? t.aiReviewFailed
+        throw new Error(message)
       }
       const data = await res.json()
       setAIReviewResult(data)
@@ -568,7 +570,8 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
       })
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
-        throw new Error(data?.error?.message || t.duplicateCheckFailed)
+        const message = resolveApiErrorMessage(data, dict) ?? t.duplicateCheckFailed
+        throw new Error(message)
       }
       const data = await res.json()
       setDuplicateCheckResult(data)
@@ -651,7 +654,8 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
-        throw new Error(data?.error || t.actionFailed)
+        const message = resolveApiErrorMessage(data, dict) ?? t.actionFailed
+        throw new Error(message)
       }
 
       toast.success(t.reviewSubmit)
@@ -675,7 +679,8 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
       })
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
-        throw new Error(data?.error || t.actionFailed)
+        const message = resolveApiErrorMessage(data, dict) ?? t.actionFailed
+        throw new Error(message)
       }
       const result = await res.json()
       toast.success(`${t.batchArchiveSuccess || "已归档"} ${result.count} ${t.records || "条记录"}`)

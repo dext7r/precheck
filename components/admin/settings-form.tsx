@@ -35,6 +35,7 @@ import {
 import type { Locale } from "@/lib/i18n/config"
 import type { Dictionary } from "@/lib/i18n/get-dictionary"
 import { cn } from "@/lib/utils"
+import { resolveApiErrorMessage } from "@/lib/api/error-message"
 
 type SiteSettings = {
   siteName: string
@@ -162,7 +163,8 @@ export function AdminSettingsForm({ locale, dict }: AdminSettingsFormProps) {
 
         if (!settingsRes.ok) {
           const data = await settingsRes.json().catch(() => ({}))
-          throw new Error(data?.error || t.settingsLoadFailed)
+          const message = resolveApiErrorMessage(data, dict) ?? t.settingsLoadFailed
+          throw new Error(message)
         }
 
         const settingsData = await settingsRes.json()
@@ -222,12 +224,14 @@ export function AdminSettingsForm({ locale, dict }: AdminSettingsFormProps) {
 
       if (!settingsRes.ok) {
         const data = await settingsRes.json().catch(() => ({}))
-        throw new Error(data?.error || t.settingsSaveFailed)
+        const message = resolveApiErrorMessage(data, dict) ?? t.settingsSaveFailed
+        throw new Error(message)
       }
 
       if (!configRes.ok) {
         const data = await configRes.json().catch(() => ({}))
-        throw new Error(data?.error || t.systemConfigSaveFailed)
+        const message = resolveApiErrorMessage(data, dict) ?? t.systemConfigSaveFailed
+        throw new Error(message)
       }
 
       const updatedSettings = await settingsRes.json()
@@ -251,7 +255,8 @@ export function AdminSettingsForm({ locale, dict }: AdminSettingsFormProps) {
       const res = await fetch("/api/admin/clear-cache", { method: "POST" })
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
-        throw new Error(data?.error || t.clearCacheFailed)
+        const message = resolveApiErrorMessage(data, dict) ?? t.clearCacheFailed
+        throw new Error(message)
       }
       toast.success(t.clearCacheSuccess)
       router.refresh()
@@ -269,7 +274,8 @@ export function AdminSettingsForm({ locale, dict }: AdminSettingsFormProps) {
       const res = await fetch("/api/admin/reset-database", { method: "POST" })
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
-        throw new Error(data?.error || t.resetDatabaseFailed)
+        const message = resolveApiErrorMessage(data, dict) ?? t.resetDatabaseFailed
+        throw new Error(message)
       }
       toast.success(t.resetDatabaseSuccess)
       router.push(`/${locale}/login`)
@@ -374,7 +380,8 @@ export function AdminSettingsForm({ locale, dict }: AdminSettingsFormProps) {
       })
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
-        throw new Error(data?.error || t.systemConfigTestEmailFailed)
+        const message = resolveApiErrorMessage(data, dict) ?? t.systemConfigTestEmailFailed
+        throw new Error(message)
       }
       const result = await res.json()
       toast.success(
@@ -425,7 +432,9 @@ export function AdminSettingsForm({ locale, dict }: AdminSettingsFormProps) {
       })
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
-        throw new Error(data?.error || (isUpdate ? "更新失败" : "创建失败"))
+        const fallback = isUpdate ? "更新失败" : "创建失败"
+        const message = resolveApiErrorMessage(data, dict) ?? fallback
+        throw new Error(message)
       }
       toast.success(isUpdate ? "配置已更新" : "配置已创建")
       setEditingApiConfig(null)
@@ -445,7 +454,8 @@ export function AdminSettingsForm({ locale, dict }: AdminSettingsFormProps) {
       })
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
-        throw new Error(data?.error || "删除失败")
+        const message = resolveApiErrorMessage(data, dict) ?? "删除失败"
+        throw new Error(message)
       }
       toast.success("配置已删除")
       // 如果删除的是当前选中的配置，清除选择

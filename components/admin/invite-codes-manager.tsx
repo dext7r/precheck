@@ -76,6 +76,7 @@ import {
 import type { Dictionary } from "@/lib/i18n/get-dictionary"
 import type { Locale } from "@/lib/i18n/config"
 import { cn } from "@/lib/utils"
+import { resolveApiErrorMessage } from "@/lib/api/error-message"
 
 type InviteCodeRecord = {
   id: string
@@ -414,7 +415,8 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
       })
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
-        throw new Error(data?.error || t.actionFailed)
+        const message = resolveApiErrorMessage(data, dict) ?? t.actionFailed
+        throw new Error(message)
       }
       setCode("")
       setExpiresAt("")
@@ -445,7 +447,8 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
       })
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
-        throw new Error(data?.error || t.actionFailed)
+        const message = resolveApiErrorMessage(data, dict) ?? t.actionFailed
+        throw new Error(message)
       }
       const data = await res.json()
       toast.success(
@@ -486,7 +489,8 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
       })
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
-        throw new Error(data?.error || t.actionFailed)
+        const message = resolveApiErrorMessage(data, dict) ?? t.actionFailed
+        throw new Error(message)
       }
       await fetchRecords()
     } catch (error) {
@@ -544,7 +548,8 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
-        throw new Error(data?.error || t.actionFailed)
+        const message = resolveApiErrorMessage(data, dict) ?? t.actionFailed
+        throw new Error(message)
       }
 
       toast.success(t.inviteCodeIssueSuccess)
@@ -602,7 +607,8 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
       })
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
-        throw new Error(data?.error || t.actionFailed)
+        const message = resolveApiErrorMessage(data, dict) ?? t.actionFailed
+        throw new Error(message)
       }
       toast.success(t.inviteCodeInvalidateSuccess)
       setInvalidateOpen(false)
@@ -639,7 +645,8 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
       })
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
-        throw new Error(data?.error || t.actionFailed)
+        const message = resolveApiErrorMessage(data, dict) ?? t.actionFailed
+        throw new Error(message)
       }
       const data = await res.json()
       const appUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin
@@ -680,7 +687,8 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
       })
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
-        throw new Error(data?.error || t.actionFailed)
+        const message = resolveApiErrorMessage(data, dict) ?? t.actionFailed
+        throw new Error(message)
       }
       toast.success(t.inviteCodeDeleteSuccess || "邀请码已删除")
       setDeleteOpen(false)
@@ -704,7 +712,8 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
       })
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
-        throw new Error(data?.error || t.actionFailed)
+        const message = resolveApiErrorMessage(data, dict) ?? t.actionFailed
+        throw new Error(message)
       }
       const data = await res.json()
       toast.success(
