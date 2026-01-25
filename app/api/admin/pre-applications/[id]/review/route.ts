@@ -30,7 +30,8 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
       return createApiErrorResponse(request, ApiErrorKeys.notAuthenticated, { status: 401 })
     }
 
-    if (user.role !== "ADMIN" && user.role !== "SUPER_ADMIN") {
+    // 预申请审核仅允许 ADMIN 角色，禁止 SUPER_ADMIN
+    if (user.role !== "ADMIN") {
       return createApiErrorResponse(request, ApiErrorKeys.general.forbidden, { status: 403 })
     }
 
