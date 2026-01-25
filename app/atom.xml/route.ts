@@ -193,7 +193,7 @@ ${posts
     <category term="article" label="Article"/>
     <summary type="text">${escapeXml(getExcerpt(post.content, 300))}</summary>
     <content type="html"><![CDATA[${formatContent(post.content)}]]></content>
-  </entry>`
+  </entry>`,
   )
   .join("\n")}
 </feed>`
@@ -251,9 +251,7 @@ function getExcerpt(content: string | null, maxLength = 200): string {
 
 function formatContent(content: string | null): string {
   if (!content) return ""
-  return content
-    .replace(/\n/g, "<br/>")
-    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>')
+  return content.replace(/\n/g, "<br/>").replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>')
 }
 
 function escapeXml(str: string): string {

@@ -2,13 +2,14 @@ import Link from "next/link"
 import { ExternalLink, MessageCircle, Github, Rss, FileCode2 } from "lucide-react"
 import type { Dictionary } from "@/lib/i18n/get-dictionary"
 import type { Locale } from "@/lib/i18n/config"
+import { getQQGroups } from "@/lib/qq-groups"
 
 interface FooterProps {
   dict: Dictionary
   locale: Locale
 }
 
-export function Footer({ dict, locale }: FooterProps) {
+export async function Footer({ dict, locale }: FooterProps) {
   const navLinks = [
     { name: dict.footer.docs, href: `/${locale}/docs` },
     { name: dict.footer.privacy, href: `/${locale}/privacy` },
@@ -24,11 +25,16 @@ export function Footer({ dict, locale }: FooterProps) {
     { name: "LLMs", href: "/llms.txt" },
   ]
 
-  const qqGroups = [
-    { name: dict.footer.qqGroup1, href: "https://qm.qq.com/q/yBh3PibMFG", title: "311795307" },
-    { name: dict.footer.qqGroup2, href: "https://qm.qq.com/q/kAcXh7ovC0", title: "1080464482" },
-    { name: dict.footer.qqGroup3, href: "https://qm.qq.com/q/It6OPlkI8g", title: "915386705" },
-  ]
+  // 从数据库获取 QQ 群配置
+  const qqGroupsData = await getQQGroups()
+  const qqGroups = qqGroupsData.map((group, index) => ({
+    name:
+      group.name ||
+      dict.footer[`qqGroup${index + 1}` as keyof typeof dict.footer] ||
+      `群${index + 1}`,
+    href: group.url,
+    title: group.number,
+  }))
 
   return (
     <footer className="border-t border-border bg-muted/30">

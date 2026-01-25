@@ -31,6 +31,8 @@ import {
   Trash2,
   RefreshCw,
   ChevronDown,
+  Users,
+  Link as LinkIcon,
 } from "lucide-react"
 import type { Locale } from "@/lib/i18n/config"
 import type { Dictionary } from "@/lib/i18n/get-dictionary"
@@ -48,6 +50,14 @@ type SiteSettings = {
   maintenanceMode: boolean
 }
 
+type QQGroupConfig = {
+  id: string
+  name: string
+  number: string
+  url: string
+  enabled: boolean
+}
+
 type SystemConfig = {
   preApplicationEssayHint: string
   allowedEmailDomains: string[]
@@ -55,6 +65,7 @@ type SystemConfig = {
   reviewTemplatesApprove: string[]
   reviewTemplatesReject: string[]
   reviewTemplatesDispute: string[]
+  qqGroups: QQGroupConfig[]
   emailProvider: "env" | "api" | "smtp"
   selectedEmailApiConfigId: string | null
   smtpHost: string | null
@@ -79,7 +90,7 @@ interface AdminSettingsFormProps {
   dict: Dictionary
 }
 
-type TabId = "general" | "security" | "email" | "templates" | "danger"
+type TabId = "general" | "security" | "email" | "qqGroups" | "templates" | "danger"
 
 interface TabItem {
   id: TabId
@@ -130,6 +141,7 @@ export function AdminSettingsForm({ locale, dict }: AdminSettingsFormProps) {
     { id: "general", label: t.tabGeneral || "基础设置", icon: Globe },
     { id: "security", label: t.tabSecurity || "功能开关", icon: ToggleLeft },
     { id: "email", label: t.tabEmail || "邮件配置", icon: Mail },
+    { id: "qqGroups", label: t.tabQQGroups || "QQ群管理", icon: Users },
     { id: "templates", label: t.tabTemplates || "审核模板", icon: MessageSquare },
     {
       id: "danger",
@@ -1282,6 +1294,150 @@ export function AdminSettingsForm({ locale, dict }: AdminSettingsFormProps) {
                     </CardContent>
                   </Card>
                 </div>
+              )}
+
+              {/* QQ 群管理 */}
+              {activeTab === "qqGroups" && systemConfig && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Users className="h-5 w-5" />
+                      {t.qqGroupsTitle || "QQ 群配置"}
+                    </CardTitle>
+                    <CardDescription>
+                      {t.qqGroupsDesc || "管理 QQ 群信息，配置后将在页脚和预申请页面显示"}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-3">
+                      {systemConfig.qqGroups.map((group, index) => (
+                        <div
+                          key={group.id}
+                          className={cn(
+                            "flex flex-col gap-3 p-4 rounded-lg border",
+                            group.enabled
+                              ? "border-primary/30 bg-primary/5"
+                              : "border-border bg-muted/30 opacity-60",
+                          )}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <Switch
+                                checked={group.enabled}
+                                onCheckedChange={(v) => {
+                                  const newGroups = [...systemConfig.qqGroups]
+                                  newGroups[index] = { ...group, enabled: v }
+                                  setSystemConfig({ ...systemConfig, qqGroups: newGroups })
+                                }}
+                              />
+                              <span className="font-medium">{group.name || `群 ${index + 1}`}</span>
+                              <Badge variant="secondary" className="text-xs">
+                                {group.number}
+                              </Badge>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                const newGroups = systemConfig.qqGroups.filter(
+                                  (_, i) => i !== index,
+                                )
+                                setSystemConfig({ ...systemConfig, qqGroups: newGroups })
+                              }}
+                              className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                          <div className="grid gap-3 sm:grid-cols-3">
+                            <div className="space-y-1">
+                              <Label className="text-xs text-muted-foreground">
+                                {t.qqGroupName || "群名称"}
+                              </Label>
+                              <Input
+                                value={group.name}
+                                onChange={(e) => {
+                                  const newGroups = [...systemConfig.qqGroups]
+                                  newGroups[index] = { ...group, name: e.target.value }
+                                  setSystemConfig({ ...systemConfig, qqGroups: newGroups })
+                                }}
+                                placeholder="一群"
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <Label className="text-xs text-muted-foreground">
+                                {t.qqGroupNumber || "群号"}
+                              </Label>
+                              <Input
+                                value={group.number}
+                                onChange={(e) => {
+                                  const newGroups = [...systemConfig.qqGroups]
+                                  newGroups[index] = { ...group, number: e.target.value }
+                                  setSystemConfig({ ...systemConfig, qqGroups: newGroups })
+                                }}
+                                placeholder="123456789"
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <Label className="text-xs text-muted-foreground">
+                                {t.qqGroupUrl || "加群链接"}
+                              </Label>
+                              <div className="flex gap-1">
+                                <Input
+                                  value={group.url}
+                                  onChange={(e) => {
+                                    const newGroups = [...systemConfig.qqGroups]
+                                    newGroups[index] = { ...group, url: e.target.value }
+                                    setSystemConfig({ ...systemConfig, qqGroups: newGroups })
+                                  }}
+                                  placeholder="https://qm.qq.com/..."
+                                />
+                                {group.url && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="shrink-0 px-2"
+                                    onClick={() => window.open(group.url, "_blank")}
+                                  >
+                                    <LinkIcon className="h-4 w-4" />
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {systemConfig.qqGroups.length === 0 && (
+                      <p className="text-sm text-muted-foreground py-4 text-center">
+                        {t.qqGroupsEmpty || "暂无 QQ 群配置，请点击下方按钮添加"}
+                      </p>
+                    )}
+
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        const newId = `GROUP_${Date.now()}`
+                        const newGroup: QQGroupConfig = {
+                          id: newId,
+                          name: `群 ${systemConfig.qqGroups.length + 1}`,
+                          number: "",
+                          url: "",
+                          enabled: true,
+                        }
+                        setSystemConfig({
+                          ...systemConfig,
+                          qqGroups: [...systemConfig.qqGroups, newGroup],
+                        })
+                      }}
+                      className="w-full"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      {t.qqGroupAdd || "添加 QQ 群"}
+                    </Button>
+                  </CardContent>
+                </Card>
               )}
 
               {/* 审核模板 */}

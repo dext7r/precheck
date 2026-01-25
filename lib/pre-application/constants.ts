@@ -35,3 +35,36 @@ export const preApplicationGroups = [
   { value: "GROUP_TWO", labelKey: "preApplication.groups.groupTwo" },
   { value: "GROUP_THREE", labelKey: "preApplication.groups.groupThree" },
 ] as const
+
+// QQ 群默认配置
+export type QQGroupConfig = {
+  id: string
+  name: string
+  number: string
+  url: string
+  enabled: boolean
+}
+
+export const defaultQQGroups: QQGroupConfig[] = [
+  {
+    id: "GROUP_ONE",
+    name: "一群",
+    number: "311795307",
+    url: "https://qm.qq.com/q/yBh3PibMFG",
+    enabled: true,
+  },
+  {
+    id: "GROUP_TWO",
+    name: "二群",
+    number: "1080464482",
+    url: "https://qm.qq.com/q/kAcXh7ovC0",
+    enabled: true,
+  },
+  {
+    id: "GROUP_THREE",
+    name: "三群",
+    number: "915386705",
+    url: "https://qm.qq.com/q/It6OPlkI8g",
+    enabled: true,
+  },
+]

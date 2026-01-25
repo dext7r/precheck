@@ -4,9 +4,21 @@ import { db } from "@/lib/db"
 import { getCurrentUser } from "@/lib/auth/session"
 import { isAdmin, isSuperAdmin } from "@/lib/auth/permissions"
 import { writeAuditLog } from "@/lib/audit"
-import { allowedEmailDomains as defaultEmailDomains } from "@/lib/pre-application/constants"
+import {
+  allowedEmailDomains as defaultEmailDomains,
+  defaultQQGroups,
+} from "@/lib/pre-application/constants"
 import { createApiErrorResponse } from "@/lib/api/error-response"
 import { ApiErrorKeys } from "@/lib/api/error-keys"
+
+// QQ 群配置 schema
+const qqGroupSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  number: z.string().min(5),
+  url: z.string().url(),
+  enabled: z.boolean(),
+})
 
 const systemConfigSchema = z.object({
   preApplicationEssayHint: z.string().min(10).max(500),
@@ -15,6 +27,8 @@ const systemConfigSchema = z.object({
   reviewTemplatesApprove: z.array(z.string()).optional(),
   reviewTemplatesReject: z.array(z.string()).optional(),
   reviewTemplatesDispute: z.array(z.string()).optional(),
+  // QQ 群配置
+  qqGroups: z.array(qqGroupSchema).optional(),
   // 邮件配置
   emailProvider: z.enum(["env", "api", "smtp"]).optional(),
   selectedEmailApiConfigId: z.string().optional().nullable(),
@@ -47,6 +61,7 @@ export async function GET(request: NextRequest) {
         reviewTemplatesApprove: true,
         reviewTemplatesReject: true,
         reviewTemplatesDispute: true,
+        qqGroups: true,
         emailProvider: true,
         selectedEmailApiConfigId: true,
         smtpHost: true,
@@ -65,6 +80,7 @@ export async function GET(request: NextRequest) {
         reviewTemplatesApprove: [],
         reviewTemplatesReject: [],
         reviewTemplatesDispute: [],
+        qqGroups: defaultQQGroups,
         emailProvider: "env",
         selectedEmailApiConfigId: null,
         smtpHost: null,
@@ -90,6 +106,7 @@ export async function GET(request: NextRequest) {
       reviewTemplatesDispute: Array.isArray(settings.reviewTemplatesDispute)
         ? settings.reviewTemplatesDispute
         : [],
+      qqGroups: Array.isArray(settings.qqGroups) ? settings.qqGroups : defaultQQGroups,
       emailProvider: settings.emailProvider ?? "env",
       selectedEmailApiConfigId: settings.selectedEmailApiConfigId,
       smtpHost: settings.smtpHost,
@@ -139,6 +156,7 @@ export async function PUT(request: NextRequest) {
         reviewTemplatesApprove: data.reviewTemplatesApprove ?? [],
         reviewTemplatesReject: data.reviewTemplatesReject ?? [],
         reviewTemplatesDispute: data.reviewTemplatesDispute ?? [],
+        qqGroups: data.qqGroups ?? defaultQQGroups,
         emailProvider: data.emailProvider ?? "env",
         selectedEmailApiConfigId: data.selectedEmailApiConfigId ?? null,
         smtpHost: data.smtpHost ?? null,
@@ -160,6 +178,7 @@ export async function PUT(request: NextRequest) {
         ...(data.reviewTemplatesDispute !== undefined && {
           reviewTemplatesDispute: data.reviewTemplatesDispute,
         }),
+        ...(data.qqGroups !== undefined && { qqGroups: data.qqGroups }),
         ...(data.emailProvider !== undefined && { emailProvider: data.emailProvider }),
         ...(data.selectedEmailApiConfigId !== undefined && {
           selectedEmailApiConfigId: data.selectedEmailApiConfigId,
@@ -187,6 +206,7 @@ export async function PUT(request: NextRequest) {
           "reviewTemplatesApprove",
           "reviewTemplatesReject",
           "reviewTemplatesDispute",
+          "qqGroups",
           "emailProvider",
           "selectedEmailApiConfigId",
           "smtpHost",
@@ -205,6 +225,7 @@ export async function PUT(request: NextRequest) {
       reviewTemplatesApprove: updated.reviewTemplatesApprove,
       reviewTemplatesReject: updated.reviewTemplatesReject,
       reviewTemplatesDispute: updated.reviewTemplatesDispute,
+      qqGroups: updated.qqGroups,
       emailProvider: updated.emailProvider,
       selectedEmailApiConfigId: updated.selectedEmailApiConfigId,
       smtpHost: updated.smtpHost,

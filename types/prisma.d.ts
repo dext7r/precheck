@@ -222,6 +222,7 @@ export interface SiteSettings {
   reviewTemplatesApprove: Prisma.JsonValue
   reviewTemplatesReject: Prisma.JsonValue
   reviewTemplatesDispute: Prisma.JsonValue
+  qqGroups: Prisma.JsonValue
   emailProvider: string
   selectedEmailApiConfigId: string | null
   smtpHost: string | null

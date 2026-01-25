@@ -312,6 +312,8 @@ model SiteSettings {
   reviewTemplatesApprove  Json   @default("[]")
   reviewTemplatesReject   Json   @default("[]")
   reviewTemplatesDispute  Json   @default("[]")
+  // QQ 群配置 [{id, name, number, url, enabled}]
+  qqGroups                Json   @default("[]")
   // 邮件配置
   emailProvider           String   @default("env")  // "env" | "api" | "smtp"
   selectedEmailApiConfigId String?
