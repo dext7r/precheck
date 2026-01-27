@@ -200,7 +200,7 @@ ${posts
 
   return new Response(atom, {
     headers: {
-      "Content-Type": "application/atom+xml; charset=utf-8",
+      "Content-Type": "application/xml; charset=utf-8",
       "Cache-Control": "public, max-age=3600, s-maxage=3600",
       "X-Content-Type-Options": "nosniff",
     },
