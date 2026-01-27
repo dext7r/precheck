@@ -56,7 +56,7 @@ export function CTASection({ dict, locale }: CTASectionProps) {
             className="inline-flex items-center gap-2 mb-6 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-sm font-medium text-primary"
           >
             <Sparkles className="h-4 w-4" />
-            <span>开启您的 linux.do 之旅</span>
+            <span>开启您的社区之旅</span>
           </motion.div>
 
           <h2 className="text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl mb-6 bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient">

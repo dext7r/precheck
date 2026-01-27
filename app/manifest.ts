@@ -38,7 +38,7 @@ export default function manifest(): MetadataRoute.Manifest {
       {
         name: "预申请",
         short_name: "预申请",
-        description: "提交 linux.do 社区预申请",
+        description: "提交 社区预申请",
         url: "/zh/pre-application",
       },
       {

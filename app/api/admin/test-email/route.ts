@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
     // 发送测试邮件
     await sendEmail({
       to: data.to,
-      subject: "【linux.do】邮件服务测试",
+      subject: "【预申请系统】邮件服务测试",
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <h2 style="color: #10b981;">✅ 邮件服务测试成功</h2>

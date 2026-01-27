@@ -53,7 +53,7 @@ export function Header({ locale, dict, user, authEnabled = true }: HeaderProps) 
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
             <span className="text-sm font-bold text-primary-foreground">L</span>
           </div>
-          <span className="text-lg font-semibold">linux.do</span>
+          <span className="text-lg font-semibold">{dict.metadata?.title || "预申请系统"}</span>
         </Link>
 
         <div className="hidden items-center gap-1 md:flex">
@@ -69,10 +69,10 @@ export function Header({ locale, dict, user, authEnabled = true }: HeaderProps) 
         <div className="flex items-center gap-2">
           <LocaleSwitcher currentLocale={locale} />
           <ThemeToggle dict={dict} />
-          <Button variant="ghost" size="icon" asChild className="hidden sm:flex">
-            <a href="https://linux.do" target="_blank" rel="noopener noreferrer">
+          <Button asChild variant="ghost" className="hidden sm:flex">
+            <a href="https://github.com/dext7r/precheck" target="_blank" rel="noopener noreferrer">
               <ExternalLink className="h-5 w-5" />
-              <span className="sr-only">linux.do</span>
+              <span className="sr-only">GitHub</span>
             </a>
           </Button>
 

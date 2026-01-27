@@ -13,7 +13,7 @@ export async function GET() {
 
 > ${siteConfig.description}
 
-This is the official pre-application system for linux.do community. Users can submit pre-applications to join the community and receive invite codes after admin approval.
+This is the official pre-application system for community. Users can submit pre-applications to join the community and receive invite codes after admin approval.
 
 ## Site Information
 
@@ -26,7 +26,7 @@ This is the official pre-application system for linux.do community. Users can su
 ## Main Features
 
 ### 1. Pre-Application System
-Submit your application to join linux.do community. Write a brief essay explaining why you want to join and what you hope to contribute.
+Submit your application to join community. Write a brief essay explaining why you want to join and what you hope to contribute.
 
 ### 2. Application Status Tracking
 Track your application progress using your query token. Check status: pending, approved, rejected, or needs revision.
@@ -44,10 +44,10 @@ Full internationalization support for English (en) and Chinese (zh).
 1. Register an account at ${baseUrl}/${defaultLocale}/register
 2. Log in and go to Dashboard → Pre-Application
 3. Write your application essay (about 100 words)
-4. Enter your registration email for linux.do
+4. Enter your registration email for the
 5. Submit and wait for admin review (1-3 business days)
 6. If approved, receive invite code via email and site message
-7. Use invite code to register on linux.do
+7. Use invite code to register on the platform
 
 ### Application Tips
 
@@ -145,7 +145,7 @@ Full internationalization support for English (en) and Chinese (zh).
 
 ## Community Links
 
-- **linux.do Community**: ${siteConfig.links.community}
+- **Community**: ${siteConfig.links.community}
 - **GitHub Repository**: ${siteConfig.links.github}
 - **QQ Group 1**: 311795307
 - **QQ Group 2**: 1080464482
@@ -154,7 +154,7 @@ Full internationalization support for English (en) and Chinese (zh).
 ## FAQ for AI Assistants
 
 ### What is this site for?
-This is a pre-application system for joining the linux.do community. Users submit applications, admins review them, and approved users receive invite codes.
+This is a pre-application system for joining the community. Users submit applications, admins review them, and approved users receive invite codes.
 
 ### How can users check their application status?
 Users can log in to view their dashboard, or use their query token on the query page without logging in.

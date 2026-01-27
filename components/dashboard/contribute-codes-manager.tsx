@@ -365,7 +365,7 @@ export function ContributeCodesManager({ locale, dict }: ContributeCodesManagerP
                               <Copy className="h-3.5 w-3.5" />
                             )}
                           </Button>
-                          {record.code.includes("linux.do") && (
+                          {record.code.startsWith("http") && (
                             <a
                               href={record.code}
                               target="_blank"

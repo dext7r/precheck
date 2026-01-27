@@ -53,7 +53,7 @@ export function SoftwareApplicationJsonLd({ locale }: JsonLdProps) {
     },
     author: {
       "@type": "Organization",
-      name: "linux.do",
+      name: "预申请系统",
       url: siteConfig.links.community,
     },
     featureList: [
@@ -101,11 +101,11 @@ export function OrganizationJsonLd() {
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Organization",
-    name: "linux.do",
+    name: "预申请系统",
     alternateName: siteConfig.name,
     url: siteConfig.links.community,
     logo: `${baseUrl}${siteConfig.logo}`,
-    description: "linux.do 开发者技术社区",
+    description: "社区",
     contactPoint: {
       "@type": "ContactPoint",
       contactType: "Customer Service",

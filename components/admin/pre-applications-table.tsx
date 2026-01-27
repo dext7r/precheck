@@ -259,9 +259,10 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
   const [inviteOptionsLoading, setInviteOptionsLoading] = useState(false)
   const [reviewTemplates, setReviewTemplates] = useState<{
     approve: string[]
+    approveNoCode: string[]
     reject: string[]
     dispute: string[]
-  }>({ approve: [], reject: [], dispute: [] })
+  }>({ approve: [], approveNoCode: [], reject: [], dispute: [] })
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [batchArchiving, setBatchArchiving] = useState(false)
 
@@ -290,12 +291,14 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
 
     const templates =
       reviewAction === "APPROVE"
-        ? reviewTemplates.approve
+        ? !inviteCode.trim()
+          ? reviewTemplates.approveNoCode
+          : reviewTemplates.approve
         : reviewAction === "REJECT"
           ? reviewTemplates.reject
           : reviewTemplates.dispute
     setGuidance(templates[0] || "")
-  }, [reviewAction, selected?.status, selected?.id, reviewTemplates])
+  }, [reviewAction, selected?.status, selected?.id, reviewTemplates, inviteCode])
 
   useEffect(() => {
     if (!dialogOpen || reviewAction === "REJECT") return
@@ -491,6 +494,7 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
       const data = await res.json()
       setReviewTemplates({
         approve: data.reviewTemplatesApprove ?? [],
+        approveNoCode: data.reviewTemplatesApproveNoCode ?? [],
         reject: data.reviewTemplatesReject ?? [],
         dispute: data.reviewTemplatesDispute ?? [],
       })
@@ -500,7 +504,11 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
   }
 
   const getCurrentTemplates = () => {
-    if (reviewAction === "APPROVE") return reviewTemplates.approve
+    if (reviewAction === "APPROVE") {
+      // 当审核通过但没有选择邀请码时，使用"通过无码"模板
+      if (!inviteCode.trim()) return reviewTemplates.approveNoCode
+      return reviewTemplates.approve
+    }
     if (reviewAction === "REJECT") return reviewTemplates.reject
     return reviewTemplates.dispute
   }

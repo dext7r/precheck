@@ -44,14 +44,14 @@ export async function GET() {
 
   <!-- 作者信息 -->
   <author>
-    <name>linux.do</name>
+    <name>community</name>
     <uri>${siteConfig.links.community}</uri>
-    <email>admin@linux.do</email>
+    <email>noreply@example.com</email>
   </author>
 
   <!-- 贡献者 -->
   <contributor>
-    <name>linux.do Community</name>
+    <name>Community</name>
     <uri>${siteConfig.links.community}</uri>
   </contributor>
 
@@ -74,10 +74,10 @@ ${categories.map((cat) => `  <category term="${cat.term}" label="${cat.label}"/>
     <published>${new Date("2025-01-25").toISOString()}</published>
     <updated>${new Date("2025-01-25").toISOString()}</updated>
     <author>
-      <name>linux.do</name>
+      <name>community</name>
     </author>
     <category term="documentation" label="Documentation"/>
-    <summary type="text">完整的 linux.do 预申请系统使用指南，包含注册、申请、查询和使用邀请码的详细步骤。</summary>
+    <summary type="text">完整的 预申请系统使用指南，包含注册、申请、查询和使用邀请码的详细步骤。</summary>
     <content type="html"><![CDATA[
       <h2>流程概览</h2>
       <ol>
@@ -85,7 +85,7 @@ ${categories.map((cat) => `  <category term="${cat.term}" label="${cat.label}"/>
         <li>填写并提交预申请表单</li>
         <li>等待管理员审核（通常 1-3 个工作日）</li>
         <li>审核通过后获取邀请码</li>
-        <li>使用邀请码在 linux.do 注册</li>
+        <li>使用邀请码注册</li>
       </ol>
       <p><a href="${baseUrl}/zh/docs">查看完整指南 →</a></p>
     ]]></content>
@@ -99,11 +99,11 @@ ${categories.map((cat) => `  <category term="${cat.term}" label="${cat.label}"/>
     <published>${new Date("2025-01-25").toISOString()}</published>
     <updated>${new Date("2025-01-25").toISOString()}</updated>
     <author>
-      <name>linux.do</name>
+      <name>community</name>
     </author>
     <category term="documentation" label="Documentation"/>
     <category term="api" label="API"/>
-    <summary type="text">linux.do 预申请系统 API 文档，包含接口说明和使用示例。</summary>
+    <summary type="text">预申请系统 API 文档，包含接口说明和使用示例。</summary>
   </entry>
 
   <entry>
@@ -114,7 +114,7 @@ ${categories.map((cat) => `  <category term="${cat.term}" label="${cat.label}"/>
     <published>${new Date("2025-01-25").toISOString()}</published>
     <updated>${new Date("2025-01-25").toISOString()}</updated>
     <author>
-      <name>linux.do</name>
+      <name>community</name>
     </author>
     <category term="documentation" label="Documentation"/>
     <category term="examples" label="Examples"/>
@@ -129,7 +129,7 @@ ${categories.map((cat) => `  <category term="${cat.term}" label="${cat.label}"/>
     <published>${new Date("2025-01-25").toISOString()}</published>
     <updated>${new Date("2025-01-25").toISOString()}</updated>
     <author>
-      <name>linux.do</name>
+      <name>community</name>
     </author>
     <category term="feature" label="Feature"/>
     <summary type="text">使用查询码查看申请状态、审核意见和邀请码。</summary>
@@ -143,7 +143,7 @@ ${categories.map((cat) => `  <category term="${cat.term}" label="${cat.label}"/>
     <published>${new Date("2025-01-01").toISOString()}</published>
     <updated>${new Date("2025-01-01").toISOString()}</updated>
     <author>
-      <name>linux.do</name>
+      <name>community</name>
     </author>
     <category term="legal" label="Legal"/>
     <summary type="text">我们如何收集、使用和保护您的数据。</summary>
@@ -157,7 +157,7 @@ ${categories.map((cat) => `  <category term="${cat.term}" label="${cat.label}"/>
     <published>${new Date("2025-01-01").toISOString()}</published>
     <updated>${new Date("2025-01-01").toISOString()}</updated>
     <author>
-      <name>linux.do</name>
+      <name>community</name>
     </author>
     <category term="legal" label="Legal"/>
     <summary type="text">使用我们服务的条款和条件。</summary>
@@ -171,7 +171,7 @@ ${categories.map((cat) => `  <category term="${cat.term}" label="${cat.label}"/>
     <published>${new Date("2025-01-01").toISOString()}</published>
     <updated>${new Date("2025-01-01").toISOString()}</updated>
     <author>
-      <name>linux.do</name>
+      <name>community</name>
     </author>
     <category term="legal" label="Legal"/>
     <summary type="text">MIT 许可证 - 开源且免费使用。</summary>
@@ -188,7 +188,7 @@ ${posts
     <published>${new Date(post.createdAt).toISOString()}</published>
     <updated>${new Date(post.updatedAt).toISOString()}</updated>
     <author>
-      <name>${escapeXml(post.author?.name || "linux.do")}</name>
+      <name>${escapeXml(post.author?.name || "预申请系统")}</name>
     </author>
     <category term="article" label="Article"/>
     <summary type="text">${escapeXml(getExcerpt(post.content, 300))}</summary>

@@ -31,8 +31,8 @@ export async function GET() {
     <copyright>Copyright ${currentYear} ${escapeXml(siteConfig.name)}. All rights reserved.</copyright>
 
     <!-- 管理信息 -->
-    <managingEditor>admin@linux.do (linux.do Admin)</managingEditor>
-    <webMaster>admin@linux.do (linux.do Webmaster)</webMaster>
+    <managingEditor>noreply@example.com (System Admin)</managingEditor>
+    <webMaster>noreply@example.com (System Webmaster)</webMaster>
 
     <!-- 时间信息 -->
     <pubDate>${buildDate}</pubDate>
@@ -79,9 +79,9 @@ ${categories.map((cat) => `    <category>${cat}</category>`).join("\n")}
       <link>${baseUrl}/zh/docs</link>
       <guid isPermaLink="true">${baseUrl}/zh/docs</guid>
       <pubDate>${new Date("2025-01-25").toUTCString()}</pubDate>
-      <description>完整的 linux.do 预申请系统使用指南，包含注册、申请、查询和使用邀请码的详细步骤。</description>
+      <description>完整的 预申请系统使用指南，包含注册、申请、查询和使用邀请码的详细步骤。</description>
       <category>Documentation</category>
-      <dc:creator>linux.do</dc:creator>
+      <dc:creator>community</dc:creator>
     </item>
 
     <item>
@@ -89,10 +89,10 @@ ${categories.map((cat) => `    <category>${cat}</category>`).join("\n")}
       <link>${baseUrl}/zh/docs/api</link>
       <guid isPermaLink="true">${baseUrl}/zh/docs/api</guid>
       <pubDate>${new Date("2025-01-25").toUTCString()}</pubDate>
-      <description>linux.do 预申请系统 API 文档，包含接口说明和使用示例。</description>
+      <description>预申请系统 API 文档，包含接口说明和使用示例。</description>
       <category>Documentation</category>
       <category>API</category>
-      <dc:creator>linux.do</dc:creator>
+      <dc:creator>community</dc:creator>
     </item>
 
     <item>
@@ -103,7 +103,7 @@ ${categories.map((cat) => `    <category>${cat}</category>`).join("\n")}
       <description>实用的代码示例和最佳实践指南。</description>
       <category>Documentation</category>
       <category>Examples</category>
-      <dc:creator>linux.do</dc:creator>
+      <dc:creator>community</dc:creator>
     </item>
 
     <!-- 动态文章 -->
@@ -114,7 +114,7 @@ ${posts
       <link>${baseUrl}/zh/posts/${post.id}</link>
       <guid isPermaLink="true">${baseUrl}/zh/posts/${post.id}</guid>
       <pubDate>${new Date(post.createdAt).toUTCString()}</pubDate>
-      <dc:creator>${escapeXml(post.author?.name || "linux.do")}</dc:creator>
+      <dc:creator>${escapeXml(post.author?.name || "预申请系统")}</dc:creator>
       <description>${escapeXml(getExcerpt(post.content, 300))}</description>
       <content:encoded><![CDATA[${formatContent(post.content)}]]></content:encoded>
       <category>Article</category>

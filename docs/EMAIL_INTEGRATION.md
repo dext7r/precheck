@@ -77,7 +77,7 @@ await sendEmail({
   html: "<p>这是 HTML 格式邮件</p>",
   text: "这是纯文本格式邮件",
   from: "noreply@example.com",
-  fromName: "linux.do 社区", // 收件箱显示为 "linux.do 社区 <noreply@example.com>"
+  fromName: "预申请系统", // 收件箱显示为 "预申请系统 <noreply@example.com>"
 })
 ```
 
@@ -96,7 +96,7 @@ import { getDictionary } from "@/lib/i18n/get-dictionary"
 
 const dict = await getDictionary("zh")
 const emailContent = buildPreApplicationReviewEmail({
-  appName: "linux.do 预申请系统",
+  appName: "预申请系统",
   dictionary: dict,
   status: "APPROVED",
   reviewerName: "管理员",

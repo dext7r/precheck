@@ -77,6 +77,7 @@ import type { Dictionary } from "@/lib/i18n/get-dictionary"
 import type { Locale } from "@/lib/i18n/config"
 import { cn } from "@/lib/utils"
 import { resolveApiErrorMessage } from "@/lib/api/error-message"
+import { formatInviteCodeUrl, parseBulkInviteCodes, extractPureCode } from "@/lib/invite-code/utils"
 
 type InviteCodeRecord = {
   id: string
@@ -222,50 +223,28 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
   const [deleting, setDeleting] = useState(false)
   const [batchDeleteOpen, setBatchDeleteOpen] = useState(false)
   const [batchDeleting, setBatchDeleting] = useState(false)
+  const [urlPrefix, setUrlPrefix] = useState("")
 
-  const inviteCodePattern = /(?:https?:\/\/linux\.do)?\/?invites\/([A-Za-z0-9_-]{4,64})/i
+  // 获取邀请码链接配置
+  useEffect(() => {
+    fetch("/api/public/invite-code-config")
+      .then((res) => res.json())
+      .then((data) => setUrlPrefix(data.inviteCodeUrlPrefix || ""))
+      .catch(() => setUrlPrefix(""))
+  }, [])
 
   // 将任何格式的输入转换为完整 URL
   const normalizeInviteCode = (input: string): string => {
-    const trimmed = input.trim()
-    const match = trimmed.match(inviteCodePattern)
-    if (match?.[1]) {
-      return `https://linux.do/invites/${match[1]}`
+    const pureCode = extractPureCode(input)
+    if (pureCode) {
+      return formatInviteCodeUrl(pureCode, urlPrefix)
     }
-    if (/^[A-Za-z0-9_-]{4,64}$/.test(trimmed)) {
-      return `https://linux.do/invites/${trimmed}`
-    }
-    return trimmed
+    return input.trim()
   }
 
   const bulkSummary = useMemo(() => {
-    const lines = bulkInput.split(/\r?\n/)
-    const matches: string[] = []
-    let invalidCount = 0
-    let totalCount = 0
-
-    for (const rawLine of lines) {
-      const line = rawLine.trim()
-      if (!line) continue
-      totalCount += 1
-      const match = line.match(inviteCodePattern)
-      if (match?.[1]) {
-        matches.push(`https://linux.do/invites/${match[1]}`)
-      } else if (/^[A-Za-z0-9_-]{4,64}$/.test(line)) {
-        matches.push(`https://linux.do/invites/${line}`)
-      } else {
-        invalidCount += 1
-      }
-    }
-
-    const unique = Array.from(new Set(matches))
-    return {
-      totalCount,
-      invalidCount,
-      duplicates: Math.max(0, matches.length - unique.length),
-      codes: unique,
-    }
-  }, [bulkInput])
+    return parseBulkInviteCodes(bulkInput, urlPrefix)
+  }, [bulkInput, urlPrefix])
 
   useEffect(() => {
     const interval = setInterval(() => setNow(Date.now()), 60000)

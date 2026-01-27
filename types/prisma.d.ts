@@ -218,9 +218,11 @@ export interface SiteSettings {
   preApplicationEssayHint: string
   allowedEmailDomains: Prisma.JsonValue
   reviewTemplatesApprove: Prisma.JsonValue
+  reviewTemplatesApproveNoCode: Prisma.JsonValue
   reviewTemplatesReject: Prisma.JsonValue
   reviewTemplatesDispute: Prisma.JsonValue
   qqGroups: Prisma.JsonValue
+  inviteCodeUrlPrefix: string
   emailProvider: string
   selectedEmailApiConfigId: string | null
   smtpHost: string | null

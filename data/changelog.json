@@ -1,24 +1,20 @@
 {
   "versions": [
     {
-      "version": "1.2.0",
-      "date": "2025-01-27",
-      "changes": [
-        { "type": "added", "content": "用户可贡献邀请码（单条或批量）" },
-        { "type": "added", "content": "用户可删除自己贡献的未使用邀请码" },
-        { "type": "added", "content": "删除限制：已使用/已分配/已领取的邀请码会显示详细信息" },
-        { "type": "changed", "content": "控制台侧边栏新增「贡献邀请码」入口" }
-      ]
-    },
-    {
       "version": "1.1.0",
       "date": "2025-01-27",
       "changes": [
         { "type": "added", "content": "支持审核通过但不发放邀请码（适用于缺码场景）" },
         { "type": "added", "content": "用户可在申请页面自行领取邀请码，优先领取最近过期的有效码" },
         { "type": "added", "content": "管理后台新增更新日志页面" },
+        { "type": "added", "content": "设置页面新增「通过无码模板」配置，支持自定义审核通过但无码时的指导意见" },
         { "type": "changed", "content": "管理员审核通过时邀请码改为可选" },
-        { "type": "changed", "content": "站内信通知支持无码通过场景，提示用户稍后领取" }
+        { "type": "changed", "content": "站内信通知支持无码通过场景，提示用户稍后领取" },
+        { "type": "changed", "content": "审核页面根据是否选择邀请码自动切换模板" },
+        { "type": "added", "content": "用户可贡献邀请码（单条或批量）" },
+        { "type": "added", "content": "用户可删除自己贡献的未使用邀请码" },
+        { "type": "added", "content": "删除限制：已使用/已分配/已领取的邀请码会显示详细信息" },
+        { "type": "changed", "content": "控制台侧边栏新增「贡献邀请码」入口" }
       ]
     },
     {

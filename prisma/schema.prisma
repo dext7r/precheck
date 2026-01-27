@@ -305,10 +305,13 @@ model SiteSettings {
   preApplicationEssayHint String @default("建议 100 字左右,避免夸赞社区与版主,只说明你的目的与需求。")
   allowedEmailDomains     Json   @default("[]")
   reviewTemplatesApprove  Json   @default("[]")
+  reviewTemplatesApproveNoCode Json @default("[]") // 审核通过但无邀请码时的模板
   reviewTemplatesReject   Json   @default("[]")
   reviewTemplatesDispute  Json   @default("[]")
   // QQ 群配置 [{id, name, number, url, enabled}]
   qqGroups                Json   @default("[]")
+  // 邀请码链接前缀，如 "https://example.com/invites/"
+  inviteCodeUrlPrefix     String @default("")
   // 邮件配置
   emailProvider           String   @default("env")  // "env" | "api" | "smtp"
   selectedEmailApiConfigId String?

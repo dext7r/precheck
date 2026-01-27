@@ -64,6 +64,7 @@ type SystemConfig = {
   allowedEmailDomains: string[]
   auditLogEnabled: boolean
   reviewTemplatesApprove: string[]
+  reviewTemplatesApproveNoCode: string[]
   reviewTemplatesReject: string[]
   reviewTemplatesDispute: string[]
   qqGroups: QQGroupConfig[]
@@ -117,6 +118,7 @@ export function AdminSettingsForm({ locale, dict }: AdminSettingsFormProps) {
 
   const [newDomain, setNewDomain] = useState("")
   const [newTemplateApprove, setNewTemplateApprove] = useState("")
+  const [newTemplateApproveNoCode, setNewTemplateApproveNoCode] = useState("")
   const [newTemplateReject, setNewTemplateReject] = useState("")
   const [newTemplateDispute, setNewTemplateDispute] = useState("")
   const [testingEmail, setTestingEmail] = useState(false)
@@ -329,7 +331,7 @@ export function AdminSettingsForm({ locale, dict }: AdminSettingsFormProps) {
   }
 
   const handleAddTemplate = (
-    type: "approve" | "reject" | "dispute",
+    type: "approve" | "approveNoCode" | "reject" | "dispute",
     value: string,
     setValue: (v: string) => void,
   ) => {
@@ -342,6 +344,12 @@ export function AdminSettingsForm({ locale, dict }: AdminSettingsFormProps) {
       setSystemConfig({
         ...systemConfig,
         reviewTemplatesApprove: [...systemConfig.reviewTemplatesApprove, text],
+      })
+    } else if (type === "approveNoCode") {
+      if (systemConfig.reviewTemplatesApproveNoCode.includes(text)) return
+      setSystemConfig({
+        ...systemConfig,
+        reviewTemplatesApproveNoCode: [...systemConfig.reviewTemplatesApproveNoCode, text],
       })
     } else if (type === "reject") {
       if (systemConfig.reviewTemplatesReject.includes(text)) return
@@ -359,12 +367,22 @@ export function AdminSettingsForm({ locale, dict }: AdminSettingsFormProps) {
     setValue("")
   }
 
-  const handleRemoveTemplate = (type: "approve" | "reject" | "dispute", text: string) => {
+  const handleRemoveTemplate = (
+    type: "approve" | "approveNoCode" | "reject" | "dispute",
+    text: string,
+  ) => {
     if (!systemConfig) return
     if (type === "approve") {
       setSystemConfig({
         ...systemConfig,
         reviewTemplatesApprove: systemConfig.reviewTemplatesApprove.filter((t) => t !== text),
+      })
+    } else if (type === "approveNoCode") {
+      setSystemConfig({
+        ...systemConfig,
+        reviewTemplatesApproveNoCode: systemConfig.reviewTemplatesApproveNoCode.filter(
+          (t) => t !== text,
+        ),
       })
     } else if (type === "reject") {
       setSystemConfig({
@@ -1494,6 +1512,50 @@ export function AdminSettingsForm({ locale, dict }: AdminSettingsFormProps) {
                         onRemove={(text) => handleRemoveTemplate("approve", text)}
                         emptyText={t.reviewTemplatesEmpty}
                         colorClass="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200/50 dark:border-emerald-800/30"
+                      />
+                    </CardContent>
+                  </Card>
+
+                  {/* 通过无码模板 */}
+                  <Card className="border-sky-200/50 dark:border-sky-800/30">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-sky-100 dark:bg-sky-900/40">
+                          <CheckCircle className="h-4 w-4 text-sky-600 dark:text-sky-400" />
+                        </div>
+                        {t.reviewTemplatesApproveNoCode}
+                      </CardTitle>
+                      <CardDescription>{t.reviewTemplatesApproveNoCodeDesc}</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="flex gap-2">
+                        <Textarea
+                          value={newTemplateApproveNoCode}
+                          onChange={(e) => setNewTemplateApproveNoCode(e.target.value)}
+                          placeholder={t.reviewTemplatePlaceholder}
+                          rows={2}
+                          className="flex-1"
+                        />
+                        <Button
+                          onClick={() =>
+                            handleAddTemplate(
+                              "approveNoCode",
+                              newTemplateApproveNoCode,
+                              setNewTemplateApproveNoCode,
+                            )
+                          }
+                          type="button"
+                          className="shrink-0 self-end"
+                        >
+                          <Plus className="h-4 w-4 mr-1" />
+                          {t.reviewTemplateAdd}
+                        </Button>
+                      </div>
+                      <TemplateList
+                        items={systemConfig.reviewTemplatesApproveNoCode}
+                        onRemove={(text) => handleRemoveTemplate("approveNoCode", text)}
+                        emptyText={t.reviewTemplatesEmpty}
+                        colorClass="bg-sky-50 dark:bg-sky-900/20 border border-sky-200/50 dark:border-sky-800/30"
                       />
                     </CardContent>
                   </Card>

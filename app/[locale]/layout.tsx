@@ -37,13 +37,9 @@ export async function generateMetadata({
     },
     description: dict.metadata.description,
     keywords: [
-      "linux.do",
       "预申请",
       "邀请码",
       "社区注册",
-      "Linux社区",
-      "开发者社区",
-      "技术社区",
       "邀请码管理",
       "community",
       "invite code",

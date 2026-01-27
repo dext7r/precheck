@@ -45,18 +45,9 @@ export async function Footer({ dict, locale }: FooterProps) {
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
                 <span className="text-sm font-bold text-primary-foreground">L</span>
               </div>
-              <span className="text-lg font-semibold">linux.do</span>
+              <span className="text-lg font-semibold">{dict.metadata?.title || "预申请系统"}</span>
             </Link>
             <p className="text-sm text-muted-foreground">{dict.footer.description}</p>
-            <a
-              href="https://linux.do"
-              className="inline-flex items-center gap-1.5 text-sm text-primary transition-colors hover:text-primary/80"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              {dict.footer.visitCommunity}
-              <ExternalLink className="h-3.5 w-3.5" />
-            </a>
           </div>
 
           {/* 导航链接 */}
@@ -138,7 +129,8 @@ export async function Footer({ dict, locale }: FooterProps) {
         <div className="mt-8 border-t border-border pt-6">
           <div className="flex flex-col items-center gap-3">
             <p className="text-center text-sm text-muted-foreground">
-              &copy; {new Date().getFullYear()} linux.do. {dict.footer.copyright}
+              &copy; {new Date().getFullYear()} {dict.metadata?.title || "预申请系统"}.{" "}
+              {dict.footer.copyright}
             </p>
             <BuildInfoDisplay locale={locale} />
           </div>

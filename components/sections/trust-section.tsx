@@ -14,7 +14,7 @@ const features = [{ icon: Heart }, { icon: Smile }, { icon: Users }, { icon: Awa
 
 export function TrustSection({ dict }: TrustSectionProps) {
   const t = dict.homepage.trust ?? {
-    title: "为什么选择 linux.do",
+    title: "为什么选择我们",
     subtitle: "一个专注于技术与开源的高质量社区",
     items: [
       { title: "严格准入", description: "保证社区质量，杜绝垃圾信息" },

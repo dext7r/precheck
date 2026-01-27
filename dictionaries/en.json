@@ -1,7 +1,7 @@
 {
   "metadata": {
-    "title": "linux.do Pre-Application System",
-    "description": "linux.do community pre-application and invite code management system"
+    "title": "Pre-Application System",
+    "description": "Community pre-application and invite code management system"
   },
   "nav": {
     "features": "Features",
@@ -266,9 +266,9 @@
     }
   },
   "hero": {
-    "badge": "linux.do Community",
+    "badge": "Community",
     "title": "Welcome to",
-    "titleHighlight": "linux.do Pre-Application",
+    "titleHighlight": "Pre-Application",
     "description": "Submit your pre-application here. Once approved by admin, you'll receive an invite code to join the community.",
     "cta": "Apply Now",
     "viewGithub": "Learn More",
@@ -278,7 +278,7 @@
     "actions": {
       "apply": {
         "title": "Submit Application",
-        "description": "Fill out the form to apply for linux.do community"
+        "description": "Fill out the form to apply for the community community"
       },
       "query": {
         "title": "Check Status",
@@ -352,7 +352,7 @@
     }
   },
   "footer": {
-    "description": "linux.do community pre-application and invite code management system",
+    "description": "Community pre-application and invite code management system",
     "visitCommunity": "Visit Community",
     "privacy": "Privacy",
     "terms": "Terms",
@@ -372,7 +372,7 @@
   },
   "docs": {
     "title": "User Guide",
-    "description": "Complete guide to applying for linux.do community membership",
+    "description": "Complete guide to applying for the community community membership",
     "backHome": "Back to Home",
     "envTitle": "Environment Variables",
     "envDescription": "Required configuration for your application",
@@ -425,13 +425,13 @@
     "userGuide": {
       "overview": {
         "title": "Overview",
-        "description": "Welcome to the linux.do pre-application system! This guide will walk you through the entire process from registration to joining the community.",
+        "description": "Welcome to the community pre-application system! This guide will walk you through the entire process from registration to joining the community.",
         "steps": [
           "Register an account on this platform",
           "Fill out and submit your pre-application",
           "Wait for admin review (typically 1-3 business days)",
           "Receive your invite code upon approval",
-          "Use the invite code to register on linux.do"
+          "Use the invite code to register on the community"
         ]
       },
       "register": {
@@ -459,8 +459,8 @@
         "items": [
           "Log in and go to Dashboard → Pre-Application",
           "Write your application essay (about 100 words recommended)",
-          "Enter your registration email (the email you'll use for linux.do)",
-          "Select where you heard about linux.do (optional)",
+          "Enter your registration email (the email you'll use for the community)",
+          "Select where you heard about the community (optional)",
           "Set a query token for checking status (optional)",
           "Click \"Submit for Review\""
         ],
@@ -494,14 +494,14 @@
       },
       "inviteCode": {
         "title": "Step 4: Get & Use Invite Code",
-        "description": "Receive and use your invite code to join linux.do",
+        "description": "Receive and use your invite code to join the community",
         "items": [
           "Once approved, your invite code will appear in your dashboard",
           "You'll also receive it via email and site message",
           "Copy the invite code carefully",
-          "Go to linux.do registration page",
+          "Go to community registration page",
           "Paste the invite code in the registration form",
-          "Complete your linux.do account setup"
+          "Complete your community account setup"
         ],
         "warnings": {
           "title": "Important Notes",
@@ -905,7 +905,7 @@
     "contributeClaimedBy": "Claimed by"
   },
   "preApplication": {
-    "title": "linux.do Pre-Application",
+    "title": "Pre-Application",
     "description": "Submit the pre-review form. Admins will provide guidance and decide approval.",
     "submit": "Submit for Review",
     "update": "Save Changes",
@@ -1028,10 +1028,10 @@
       "approvedTitle": "Pre-application approved",
       "rejectedTitle": "Pre-application rejected",
       "disputedTitle": "Pre-application needs revision",
-      "approvedIntro": "Your linux.do pre-application has been approved.",
-      "approvedNoCodeIntro": "Your linux.do pre-application has been approved, but no invite codes are available yet.",
-      "rejectedIntro": "Your linux.do pre-application has been rejected.",
-      "disputedIntro": "Your linux.do pre-application needs additional information. Please revise according to the guidance and resubmit.",
+      "approvedIntro": "Your community pre-application has been approved.",
+      "approvedNoCodeIntro": "Your community pre-application has been approved, but no invite codes are available yet.",
+      "rejectedIntro": "Your community pre-application has been rejected.",
+      "disputedIntro": "Your community pre-application needs additional information. Please revise according to the guidance and resubmit.",
       "reviewerLabel": "Reviewer: ",
       "guidanceLabel": "Guidance: ",
       "essayLabel": "Your application: ",
@@ -1044,7 +1044,7 @@
       "approved": {
         "subject": "{appName} pre-application approved",
         "title": "🎉 Pre-application approved",
-        "intro": "Congratulations! Your linux.do pre-application is approved. Follow the guidance to proceed.",
+        "intro": "Congratulations! Your community pre-application is approved. Follow the guidance to proceed.",
         "essayTitle": "Your Application",
         "reviewer": "Reviewer: {reviewer}",
         "guidance": "Guidance: {guidance}",
@@ -1055,7 +1055,7 @@
       "rejected": {
         "subject": "{appName} pre-application rejected",
         "title": "Pre-application rejected",
-        "intro": "Your linux.do pre-application was not approved. Please adjust based on guidance.",
+        "intro": "Your community pre-application was not approved. Please adjust based on guidance.",
         "essayTitle": "Your Application",
         "reviewer": "Reviewer: {reviewer}",
         "guidance": "Guidance: {guidance}",
@@ -1066,7 +1066,7 @@
       "disputed": {
         "subject": "{appName} pre-application needs revision",
         "title": "Pre-application needs revision",
-        "intro": "Your linux.do pre-application needs additional information. Please revise according to the guidance and resubmit.",
+        "intro": "Your community pre-application needs additional information. Please revise according to the guidance and resubmit.",
         "essayTitle": "Your Application",
         "reviewer": "Reviewer: {reviewer}",
         "guidance": "Guidance: {guidance}",
@@ -1140,7 +1140,7 @@
     "pendingTitle": "Application Under Review",
     "pendingMessage": "We are carefully reviewing your application. Please be patient. Reviews are typically completed within 1-3 business days.",
     "approvedTitle": "Congratulations, Approved!",
-    "approvedMessage": "Welcome to the linux.do community! Use the invite code below to complete your registration.",
+    "approvedMessage": "Welcome to the community community! Use the invite code below to complete your registration.",
     "rejectedTitle": "Application Not Approved",
     "rejectedMessage": "Unfortunately, your application was not approved. Please review the guidance for details.",
     "disputedTitle": "Application Under Dispute",
@@ -1335,7 +1335,7 @@
     "inviteCodeBatchDeleteSuccess": "Deleted {count} invite codes",
     "inviteCodeIssuedByAdmin": "Issued manually",
     "inviteCodeImportTitle": "Bulk Import",
-    "inviteCodeImportDesc": "Paste or upload a TXT file. One link per line, e.g. https://linux.do/invites/XXXX or invites/XXXX",
+    "inviteCodeImportDesc": "Paste or upload a TXT file. One invite code or link per line.",
     "inviteCodeImportPlaceholder": "Paste invite links here...",
     "inviteCodeImportExpiresAt": "Expiry for imported codes (optional)",
     "inviteCodeImportFile": "Upload TXT file",
@@ -1702,6 +1702,8 @@
     "smtpSecure": "Use SSL/TLS",
     "reviewTemplatesApprove": "Approval Templates",
     "reviewTemplatesApproveDesc": "Message templates for approval reviews",
+    "reviewTemplatesApproveNoCode": "Approval (No Code) Templates",
+    "reviewTemplatesApproveNoCodeDesc": "Message templates when approved but no invite code available",
     "reviewTemplatesReject": "Rejection Templates",
     "reviewTemplatesRejectDesc": "Message templates for rejection reviews",
     "reviewTemplatesDispute": "Dispute Templates",
@@ -1877,13 +1879,13 @@
   },
   "homepage": {
     "stats": {
-      "members": "Members",
-      "activeDaily": "Daily Active",
-      "topics": "Topics",
-      "posts": "Posts"
+      "members": "Users",
+      "applications": "Applications",
+      "approved": "Approved",
+      "inviteCodes": "Invite Codes"
     },
     "trust": {
-      "title": "Why LINUX DO",
+      "title": "Why Pre-Application System",
       "subtitle": "Sincere, Friendly, United, Professional - Building a community we're proud of",
       "items": [
         { "title": "Sincere", "description": "Be genuine and honest, reject deception" },
@@ -1912,7 +1914,7 @@
     },
     "process": {
       "title": "Application Process",
-      "subtitle": "Four simple steps to join linux.do community",
+      "subtitle": "Four simple steps to join the community community",
       "steps": [
         {
           "title": "Submit Application",
@@ -1928,7 +1930,7 @@
         },
         {
           "title": "Join Community",
-          "description": "Use invite code to register your linux.do account"
+          "description": "Use invite code to register your community account"
         }
       ]
     },
@@ -1959,7 +1961,7 @@
       ]
     },
     "cta": {
-      "title": "Ready to Join linux.do?",
+      "title": "Ready to Join community?",
       "subtitle": "Submit your pre-application now and start your open-source journey",
       "applyButton": "Apply Now",
       "queryButton": "Check Status",

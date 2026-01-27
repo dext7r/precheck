@@ -33,8 +33,8 @@ async function main() {
     where: { id: "global" },
     create: {
       id: "global",
-      siteName: "linux.do 预申请系统",
-      siteDescription: "linux.do 社区预申请与邀请码管理系统",
+      siteName: "预申请系统",
+      siteDescription: "社区预申请与邀请码管理系统",
       contactEmail: "admin@example.com",
       preApplicationEssayHint: "建议 100 字左右,避免夸赞社区与版主,只说明你的目的与需求。",
       allowedEmailDomains: allowedEmailDomains,

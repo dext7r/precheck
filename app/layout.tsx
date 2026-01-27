@@ -8,13 +8,13 @@ const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono"
 
 export const metadata: Metadata = {
   title: {
-    default: "linux.do 预申请系统",
-    template: "%s | linux.do",
+    default: "预申请系统",
+    template: "%s | 预申请系统",
   },
-  description: "linux.do 社区官方预申请与邀请码管理平台，快速获取社区注册邀请码",
-  keywords: ["linux.do", "预申请", "邀请码", "社区注册", "Linux社区", "开发者社区"],
-  authors: [{ name: "linux.do" }],
-  creator: "linux.do",
+  description: "社区预申请与邀请码管理平台",
+  keywords: ["预申请", "邀请码", "社区注册", "邀请码管理"],
+  authors: [{ name: "precheck" }],
+  creator: "precheck",
   icons: {
     icon: [
       { url: "/icon.svg", type: "image/svg+xml" },

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
-import { Users, Activity, MessageSquare, FileText } from "lucide-react"
+import { Users, FileCheck, CheckCircle, Ticket } from "lucide-react"
 import type { Dictionary } from "@/lib/i18n/get-dictionary"
 import type { Locale } from "@/lib/i18n/config"
 
@@ -13,9 +13,9 @@ interface StatsBannerProps {
 
 interface Stats {
   users_count: number
-  active_users_last_day: number
-  topics_count: number
-  posts_count: number
+  applications_count: number
+  approved_count: number
+  invite_codes_count: number
 }
 
 function formatNumber(num: number): string {
@@ -32,22 +32,22 @@ export function StatsBanner({ dict }: StatsBannerProps) {
   const [stats, setStats] = useState<Stats | null>(null)
 
   const t = dict.homepage.stats ?? {
-    members: "社区成员",
-    activeDaily: "日活用户",
-    topics: "话题数量",
-    posts: "帖子数量",
+    members: "注册用户",
+    applications: "申请总数",
+    approved: "已通过",
+    inviteCodes: "邀请码",
   }
 
   useEffect(() => {
-    fetch("/api/linux-do-stats")
+    fetch("/api/system-stats")
       .then((res) => res.json())
       .then(setStats)
       .catch(() => {
         setStats({
-          users_count: 85000,
-          active_users_last_day: 25000,
-          topics_count: 360000,
-          posts_count: 12700000,
+          users_count: 0,
+          applications_count: 0,
+          approved_count: 0,
+          invite_codes_count: 0,
         })
       })
   }, [])
@@ -56,22 +56,22 @@ export function StatsBanner({ dict }: StatsBannerProps) {
     {
       icon: Users,
       value: stats ? formatNumber(stats.users_count) : "—",
-      label: t.members ?? "社区成员",
+      label: t.members ?? "注册用户",
     },
     {
-      icon: Activity,
-      value: stats ? formatNumber(stats.active_users_last_day) : "—",
-      label: t.activeDaily ?? "日活用户",
+      icon: FileCheck,
+      value: stats ? formatNumber(stats.applications_count) : "—",
+      label: t.applications ?? "申请总数",
     },
     {
-      icon: FileText,
-      value: stats ? formatNumber(stats.topics_count) : "—",
-      label: t.topics ?? "话题数量",
+      icon: CheckCircle,
+      value: stats ? formatNumber(stats.approved_count) : "—",
+      label: t.approved ?? "已通过",
     },
     {
-      icon: MessageSquare,
-      value: stats ? formatNumber(stats.posts_count) : "—",
-      label: t.posts ?? "帖子数量",
+      icon: Ticket,
+      value: stats ? formatNumber(stats.invite_codes_count) : "—",
+      label: t.inviteCodes ?? "邀请码",
     },
   ]
 

@@ -25,6 +25,7 @@ import {
   AlertTriangle,
 } from "lucide-react"
 import { resolveApiErrorMessage } from "@/lib/api/error-message"
+import { formatInviteCodeUrl } from "@/lib/invite-code/utils"
 import type { Dictionary } from "@/lib/i18n/get-dictionary"
 import type { Locale } from "@/lib/i18n/config"
 
@@ -68,13 +69,19 @@ export function QueryInviteCodesForm({ locale, dict }: QueryInviteCodesFormProps
   const [queried, setQueried] = useState(false)
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null)
   const [error, setError] = useState("")
+  const [urlPrefix, setUrlPrefix] = useState("")
 
   const getFullUrl = (code: string) => {
-    // 如果 code 已经是完整 URL，提取纯代码部分
-    const match = code.match(/(?:https?:\/\/linux\.do)?\/invites\/([A-Za-z0-9_-]+)/i)
-    const pureCode = match?.[1] || code
-    return `https://linux.do/invites/${pureCode}`
+    return formatInviteCodeUrl(code, urlPrefix)
   }
+
+  // 获取邀请码链接配置
+  useEffect(() => {
+    fetch("/api/public/invite-code-config")
+      .then((res) => res.json())
+      .then((data) => setUrlPrefix(data.inviteCodeUrlPrefix || ""))
+      .catch(() => setUrlPrefix(""))
+  }, [])
 
   const handleQuery = async (queryToken?: string, queryEmail?: string) => {
     const trimmedToken = (queryToken || token).trim().toUpperCase()
@@ -275,7 +282,7 @@ export function QueryInviteCodesForm({ locale, dict }: QueryInviteCodesFormProps
         iconBg: "bg-emerald-100 dark:bg-emerald-900/40",
         iconClass: "text-emerald-600 dark:text-emerald-400",
         title: t.approvedTitle || "恭喜，申请已通过！",
-        message: t.approvedMessage || "欢迎加入 linux.do 社区！请使用下方的邀请码完成注册。",
+        message: t.approvedMessage || "请使用下方的邀请码完成注册。",
       },
       REJECTED: {
         bgClass:

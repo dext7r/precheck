@@ -26,6 +26,7 @@ const systemConfigSchema = z.object({
   allowedEmailDomains: z.array(z.string().regex(/^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/)).min(1),
   auditLogEnabled: z.boolean().optional(),
   reviewTemplatesApprove: z.array(z.string()).optional(),
+  reviewTemplatesApproveNoCode: z.array(z.string()).optional(),
   reviewTemplatesReject: z.array(z.string()).optional(),
   reviewTemplatesDispute: z.array(z.string()).optional(),
   // QQ 群配置
@@ -60,6 +61,7 @@ export async function GET(request: NextRequest) {
         allowedEmailDomains: true,
         auditLogEnabled: true,
         reviewTemplatesApprove: true,
+        reviewTemplatesApproveNoCode: true,
         reviewTemplatesReject: true,
         reviewTemplatesDispute: true,
         qqGroups: true,
@@ -79,6 +81,7 @@ export async function GET(request: NextRequest) {
         allowedEmailDomains: defaultEmailDomains,
         auditLogEnabled: false,
         reviewTemplatesApprove: [],
+        reviewTemplatesApproveNoCode: [],
         reviewTemplatesReject: [],
         reviewTemplatesDispute: [],
         qqGroups: defaultQQGroups,
@@ -100,6 +103,9 @@ export async function GET(request: NextRequest) {
       auditLogEnabled: settings.auditLogEnabled ?? false,
       reviewTemplatesApprove: Array.isArray(settings.reviewTemplatesApprove)
         ? settings.reviewTemplatesApprove
+        : [],
+      reviewTemplatesApproveNoCode: Array.isArray(settings.reviewTemplatesApproveNoCode)
+        ? settings.reviewTemplatesApproveNoCode
         : [],
       reviewTemplatesReject: Array.isArray(settings.reviewTemplatesReject)
         ? settings.reviewTemplatesReject
@@ -148,13 +154,14 @@ export async function PUT(request: NextRequest) {
       where: { id: "global" },
       create: {
         id: "global",
-        siteName: "linux.do 预申请系统",
-        siteDescription: "linux.do 社区预申请与邀请码管理系统",
+        siteName: "预申请系统",
+        siteDescription: "社区预申请与邀请码管理系统",
         contactEmail: "admin@example.com",
         preApplicationEssayHint: data.preApplicationEssayHint,
         allowedEmailDomains: data.allowedEmailDomains,
         auditLogEnabled: data.auditLogEnabled ?? false,
         reviewTemplatesApprove: data.reviewTemplatesApprove ?? [],
+        reviewTemplatesApproveNoCode: data.reviewTemplatesApproveNoCode ?? [],
         reviewTemplatesReject: data.reviewTemplatesReject ?? [],
         reviewTemplatesDispute: data.reviewTemplatesDispute ?? [],
         qqGroups: data.qqGroups ?? defaultQQGroups,
@@ -172,6 +179,9 @@ export async function PUT(request: NextRequest) {
         ...(data.auditLogEnabled !== undefined && { auditLogEnabled: data.auditLogEnabled }),
         ...(data.reviewTemplatesApprove !== undefined && {
           reviewTemplatesApprove: data.reviewTemplatesApprove,
+        }),
+        ...(data.reviewTemplatesApproveNoCode !== undefined && {
+          reviewTemplatesApproveNoCode: data.reviewTemplatesApproveNoCode,
         }),
         ...(data.reviewTemplatesReject !== undefined && {
           reviewTemplatesReject: data.reviewTemplatesReject,
@@ -205,6 +215,7 @@ export async function PUT(request: NextRequest) {
           "allowedEmailDomains",
           "auditLogEnabled",
           "reviewTemplatesApprove",
+          "reviewTemplatesApproveNoCode",
           "reviewTemplatesReject",
           "reviewTemplatesDispute",
           "qqGroups",
@@ -224,6 +235,7 @@ export async function PUT(request: NextRequest) {
       allowedEmailDomains: updated.allowedEmailDomains,
       auditLogEnabled: updated.auditLogEnabled,
       reviewTemplatesApprove: updated.reviewTemplatesApprove,
+      reviewTemplatesApproveNoCode: updated.reviewTemplatesApproveNoCode,
       reviewTemplatesReject: updated.reviewTemplatesReject,
       reviewTemplatesDispute: updated.reviewTemplatesDispute,
       qqGroups: updated.qqGroups,
