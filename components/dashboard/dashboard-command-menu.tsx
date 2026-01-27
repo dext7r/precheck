@@ -2,7 +2,15 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { LayoutDashboard, Search, Clock, Mail, ChevronRight, ClipboardList } from "lucide-react"
+import {
+  LayoutDashboard,
+  Search,
+  Clock,
+  Mail,
+  ChevronRight,
+  ClipboardList,
+  Gift,
+} from "lucide-react"
 import { motion } from "framer-motion"
 import {
   CommandDialog,
@@ -112,6 +120,13 @@ export function DashboardCommandMenu({ locale }: DashboardCommandMenuProps) {
       path: `/${locale}/dashboard/pre-application`,
       icon: ClipboardList,
       shortcut: "⌘3",
+    },
+    {
+      id: "contribute",
+      label: dict.dashboard.contribute,
+      path: `/${locale}/dashboard/contribute`,
+      icon: Gift,
+      shortcut: "⌘4",
     },
   ]
 

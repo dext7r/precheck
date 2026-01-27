@@ -150,6 +150,17 @@ export const ApiErrorKeys = {
     account: {
       failedToDelete: "apiErrors.dashboard.account.failedToDelete",
     },
+    inviteCodes: {
+      failedToFetch: "apiErrors.dashboard.inviteCodes.failedToFetch",
+      failedToContribute: "apiErrors.dashboard.inviteCodes.failedToContribute",
+      failedToDelete: "apiErrors.dashboard.inviteCodes.failedToDelete",
+      noValid: "apiErrors.dashboard.inviteCodes.noValid",
+      notFound: "apiErrors.dashboard.inviteCodes.notFound",
+      notOwner: "apiErrors.dashboard.inviteCodes.notOwner",
+      cannotDeleteUsed: "apiErrors.dashboard.inviteCodes.cannotDeleteUsed",
+      cannotDeleteAssigned: "apiErrors.dashboard.inviteCodes.cannotDeleteAssigned",
+      cannotDeleteClaimed: "apiErrors.dashboard.inviteCodes.cannotDeleteClaimed",
+    },
   },
   preApplication: {
     failedToFetch: "apiErrors.preApplication.failedToFetch",

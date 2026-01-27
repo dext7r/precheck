@@ -149,14 +149,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
       }
     }
 
-    // 通过必须有邀请码
-    if (isApproved && !inviteCodeData) {
-      return createApiErrorResponse(
-        request,
-        ApiErrorKeys.admin.preApplications.inviteCodeRequired,
-        { status: 400 },
-      )
-    }
+    // 通过时邀请码可选（缺码时允许无码通过，用户后续自行领取）
 
     if (isDisputed) {
       // 标记为有争议，可选发码，发送通知给用户
@@ -280,14 +273,18 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
 
     if (isApproved) {
       inviteCodeRecord = await db.$transaction(async (tx) => {
-        const inviteCode = await tx.inviteCode.update({
-          where: { id: inviteCodeData!.id },
-          data: {
-            expiresAt: inviteCodeData!.expiresAt,
-            assignedAt: new Date(),
-            assignedById: user.id,
-          },
-        })
+        let inviteCode = null as { id: string; code: string; expiresAt: Date | null } | null
+
+        if (inviteCodeData) {
+          inviteCode = await tx.inviteCode.update({
+            where: { id: inviteCodeData.id },
+            data: {
+              expiresAt: inviteCodeData.expiresAt,
+              assignedAt: new Date(),
+              assignedById: user.id,
+            },
+          })
+        }
 
         const updated = await tx.preApplication.update({
           where: { id: record.id },
@@ -296,7 +293,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
             guidance,
             reviewedAt: new Date(),
             reviewedBy: { connect: { id: user.id } },
-            inviteCode: { connect: { id: inviteCode.id } },
+            ...(inviteCode && { inviteCode: { connect: { id: inviteCode.id } } }),
           },
           include: {
             reviewedBy: { select: { id: true, name: true, email: true } },
@@ -323,8 +320,8 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
           reviewerName,
           guidance,
           essay: record.essay,
-          inviteCode: inviteCode.code,
-          inviteExpiresAt: inviteCode.expiresAt,
+          inviteCode: inviteCode?.code,
+          inviteExpiresAt: inviteCode?.expiresAt,
           locale: currentLocale,
         })
 
@@ -346,21 +343,23 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
           after: updated,
           metadata: {
             guidance,
-            inviteCode: inviteCode.code,
-            inviteExpiresAt: inviteCode.expiresAt?.toISOString() ?? null,
+            inviteCode: inviteCode?.code ?? null,
+            inviteExpiresAt: inviteCode?.expiresAt?.toISOString() ?? null,
           },
           request,
         })
 
-        await writeAuditLog(tx, {
-          action: "INVITE_CODE_ASSIGN",
-          entityType: "INVITE_CODE",
-          entityId: inviteCode.id,
-          actor: user,
-          after: inviteCode,
-          metadata: { preApplicationId: record.id },
-          request,
-        })
+        if (inviteCode) {
+          await writeAuditLog(tx, {
+            action: "INVITE_CODE_ASSIGN",
+            entityType: "INVITE_CODE",
+            entityId: inviteCode.id,
+            actor: user,
+            after: inviteCode,
+            metadata: { preApplicationId: record.id },
+            request,
+          })
+        }
 
         await writeAuditLog(tx, {
           action: "MESSAGE_CREATE",

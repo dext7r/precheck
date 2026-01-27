@@ -11,6 +11,7 @@ import {
   Mail,
   ClipboardList,
   Shield,
+  Gift,
 } from "lucide-react"
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
@@ -56,6 +57,11 @@ export function DashboardSidebar({ locale, dict, user }: DashboardSidebarProps) 
       name: dict.dashboard.preApplication,
       href: `/${locale}/dashboard/pre-application`,
       icon: ClipboardList,
+    },
+    {
+      name: dict.dashboard.contribute,
+      href: `/${locale}/dashboard/contribute`,
+      icon: Gift,
     },
   ]
 

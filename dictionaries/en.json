@@ -230,6 +230,17 @@
       },
       "account": {
         "failedToDelete": "Failed to delete account"
+      },
+      "inviteCodes": {
+        "failedToFetch": "Failed to fetch invite codes",
+        "failedToContribute": "Failed to contribute invite codes",
+        "failedToDelete": "Failed to delete invite code",
+        "noValid": "No valid invite codes",
+        "notFound": "Invite code not found",
+        "notOwner": "You can only delete your own contributed codes",
+        "cannotDeleteUsed": "Cannot delete: this code has been used",
+        "cannotDeleteAssigned": "Cannot delete: this code has been assigned",
+        "cannotDeleteClaimed": "Cannot delete: this code has been claimed"
       }
     },
     "preApplication": {
@@ -247,7 +258,11 @@
       "noPreApplicationFound": "No pre-application found",
       "failedToUpdate": "Failed to update pre-application",
       "versionConflict": "Record has been modified; please refresh and try again",
-      "resubmitLimitExceeded": "Maximum resubmit attempts reached"
+      "resubmitLimitExceeded": "Maximum resubmit attempts reached",
+      "notApproved": "Application not approved yet",
+      "alreadyHasCode": "Already has an invite code",
+      "noAvailableCode": "No invite codes available, please try again later",
+      "claimCodeFailed": "Failed to claim invite code"
     }
   },
   "hero": {
@@ -860,7 +875,34 @@
     "deleteAccountConfirmDesc": "This will permanently delete your account and all content.",
     "confirmDelete": "Delete Account",
     "accountDeleted": "Account deleted",
-    "accountDeleteFailed": "Failed to delete account"
+    "accountDeleteFailed": "Failed to delete account",
+    "contribute": "Contribute Codes",
+    "contributeDesc": "Share your invite codes to help the community grow",
+    "contributeSingle": "Single",
+    "contributeBatch": "Batch",
+    "contributePlaceholder": "Enter invite code or full URL",
+    "contributeBatchPlaceholder": "One invite code per line",
+    "contributeSubmit": "Submit",
+    "contributeSubmitting": "Submitting...",
+    "contributeList": "My Contributions",
+    "contributeEmpty": "No contributions yet",
+    "contributeSuccess": "Successfully contributed {count} invite code(s)",
+    "contributePartial": "Created {created}, skipped {skipped} (existed), invalid {invalid}",
+    "contributeStatus": {
+      "available": "Available",
+      "used": "Used",
+      "expired": "Expired",
+      "assigned": "Assigned",
+      "claimed": "Claimed"
+    },
+    "contributeDelete": "Delete",
+    "contributeDeleteTitle": "Delete Invite Code",
+    "contributeDeleteDesc": "Are you sure you want to delete this invite code? This action cannot be undone.",
+    "contributeDeleteSuccess": "Invite code deleted",
+    "contributeUsedBy": "Used by",
+    "contributeUsedAt": "Used at",
+    "contributeAssignedAt": "Assigned at",
+    "contributeClaimedBy": "Claimed by"
   },
   "preApplication": {
     "title": "linux.do Pre-Application",
@@ -935,6 +977,12 @@
       "used": "Used",
       "unused": "Unused"
     },
+    "noCodeYetTitle": "No Invite Code Yet",
+    "noCodeYetDesc": "Your application is approved, but no invite codes are available. You can try to claim one; if none available, please try again later.",
+    "claimCode": "Claim Invite Code",
+    "claiming": "Claiming...",
+    "claimCodeSuccess": "Invite code claimed successfully",
+    "claimCodeFailed": "Failed to claim code",
     "queryTokenCopied": "Query code copied",
     "maxResubmitExceeded": "Maximum resubmission limit reached",
     "versionConflict": "Data has been modified, please refresh and try again",
@@ -981,6 +1029,7 @@
       "rejectedTitle": "Pre-application rejected",
       "disputedTitle": "Pre-application needs revision",
       "approvedIntro": "Your linux.do pre-application has been approved.",
+      "approvedNoCodeIntro": "Your linux.do pre-application has been approved, but no invite codes are available yet.",
       "rejectedIntro": "Your linux.do pre-application has been rejected.",
       "disputedIntro": "Your linux.do pre-application needs additional information. Please revise according to the guidance and resubmit.",
       "reviewerLabel": "Reviewer: ",
@@ -988,6 +1037,7 @@
       "essayLabel": "Your application: ",
       "inviteCodeLabel": "Invite code: ",
       "inviteExpiresLabel": "Expires at: ",
+      "claimCodeHint": "No invite codes available yet. Please claim one from the application page later.",
       "footer": "If you have questions, please contact an admin."
     },
     "emailTemplate": {
@@ -1138,6 +1188,8 @@
     "delete": "Delete",
     "messages": "Messages",
     "messagesDesc": "Manage messages and track reads",
+    "changelog": "Changelog",
+    "changelogDesc": "View system update history",
     "sendMessage": "Send Message",
     "editMessage": "Edit Message",
     "messageTitle": "Title",

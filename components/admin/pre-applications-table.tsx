@@ -627,10 +627,7 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
       toast.error(t.reviewGuidanceRequired)
       return
     }
-    if (reviewAction === "APPROVE" && !inviteCode.trim()) {
-      toast.error(t.inviteCodeRequired)
-      return
-    }
+    // 审核通过时邀请码可选（缺码时允许无码通过）
     setSubmitting(true)
     try {
       const payload: Record<string, string> = {
@@ -639,7 +636,7 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
         locale,
       }
 
-      if (reviewAction === "APPROVE") {
+      if (reviewAction === "APPROVE" && inviteCode.trim()) {
         payload.inviteCode = inviteCode
         if (inviteExpiresAt) {
           payload.inviteExpiresAt = new Date(inviteExpiresAt).toISOString()

@@ -17,6 +17,7 @@ import {
   ChevronRight,
   Home,
   Send,
+  History,
 } from "lucide-react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
@@ -66,6 +67,12 @@ export function AdminSidebar({ locale, dict, user }: AdminSidebarProps) {
       name: dict.admin.messages,
       href: `/${locale}/admin/messages`,
       icon: Mail,
+      superAdminOnly: false,
+    },
+    {
+      name: ((dict.admin as Record<string, unknown>).changelog as string) || "更新日志",
+      href: `/${locale}/admin/changelog`,
+      icon: History,
       superAdminOnly: false,
     },
     {

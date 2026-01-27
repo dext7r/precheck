@@ -38,6 +38,7 @@ import {
   Heart,
   Sparkles,
   Trash2,
+  Gift,
 } from "lucide-react"
 import type { Dictionary } from "@/lib/i18n/get-dictionary"
 import type { Locale } from "@/lib/i18n/config"
@@ -163,6 +164,9 @@ export function PreApplicationForm({
   const [loading, setLoading] = useState(!initialRecords)
   const [submitting, setSubmitting] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [claiming, setClaiming] = useState(false)
+  const [hasAvailableCode, setHasAvailableCode] = useState<boolean | null>(null)
+  const [checkingCode, setCheckingCode] = useState(false)
   const [records, setRecords] = useState<PreApplicationRecord[]>(initialRecords || [])
   const [maxResubmitCount, setMaxResubmitCount] = useState(initialMaxResubmit)
   const [tokenCopied, setTokenCopied] = useState(false)
@@ -256,6 +260,34 @@ export function PreApplicationForm({
     }
   }
 
+  // 领取邀请码
+  const handleClaimCode = async () => {
+    setClaiming(true)
+    try {
+      const res = await fetch("/api/pre-application/claim-code", { method: "POST" })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        const message =
+          resolveApiErrorMessage(data, dict) ??
+          ((t as Record<string, unknown>).claimCodeFailed as string) ??
+          "领取失败"
+        toast.error(message)
+        return
+      }
+      toast.success(((t as Record<string, unknown>).claimCodeSuccess as string) ?? "邀请码领取成功")
+      await loadRecord()
+      router.refresh()
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : (((t as Record<string, unknown>).claimCodeFailed as string) ?? "领取失败"),
+      )
+    } finally {
+      setClaiming(false)
+    }
+  }
+
   const loadRecord = async () => {
     setLoading(true)
     try {
@@ -281,9 +313,32 @@ export function PreApplicationForm({
     }
   }
 
+  // 检查是否有可用邀请码
+  const checkAvailableCode = async () => {
+    setCheckingCode(true)
+    try {
+      const res = await fetch("/api/pre-application/check-available-code")
+      if (res.ok) {
+        const data = await res.json()
+        setHasAvailableCode(data.hasAvailableCode)
+      }
+    } catch {
+      setHasAvailableCode(false)
+    } finally {
+      setCheckingCode(false)
+    }
+  }
+
   useEffect(() => {
     if (!initialRecords) loadRecord()
   }, [])
+
+  // 审核通过但无码时，自动检查是否有可用邀请码
+  useEffect(() => {
+    if (latest?.status === "APPROVED" && !latest?.inviteCode) {
+      checkAvailableCode()
+    }
+  }, [latest?.status, latest?.inviteCode])
 
   useEffect(() => {
     const loadSystemConfig = async () => {
@@ -809,6 +864,62 @@ export function PreApplicationForm({
                       <p className="font-medium text-emerald-700 dark:text-emerald-300">
                         {latest.inviteCode.usedAt ? t.invite.used : t.invite.unused}
                       </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* 审核通过但无码时显示领取按钮 */}
+                {latest.status === "APPROVED" && !latest.inviteCode && (
+                  <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                      <div className="space-y-1">
+                        <p className="font-medium text-amber-800 dark:text-amber-200">
+                          {((t as Record<string, unknown>).noCodeYetTitle as string) ??
+                            "暂无邀请码"}
+                        </p>
+                        <p className="text-sm text-amber-700 dark:text-amber-300">
+                          {hasAvailableCode === false
+                            ? (((t as Record<string, unknown>).noCodeAvailableDesc as string) ??
+                              "当前暂无可用邀请码，请稍后再来查看。")
+                            : (((t as Record<string, unknown>).noCodeYetDesc as string) ??
+                              "审核已通过，但暂无可用邀请码。您可以尝试领取，如无可用码请稍后再试。")}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        {hasAvailableCode === false && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={checkAvailableCode}
+                            disabled={checkingCode}
+                            className="text-amber-700 border-amber-300 hover:bg-amber-100 dark:text-amber-300 dark:border-amber-700 dark:hover:bg-amber-900/50"
+                          >
+                            {checkingCode ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              (((t as Record<string, unknown>).refreshStatus as string) ??
+                              "刷新状态")
+                            )}
+                          </Button>
+                        )}
+                        <Button
+                          onClick={handleClaimCode}
+                          disabled={claiming || checkingCode || hasAvailableCode === false}
+                          className="bg-amber-600 hover:bg-amber-700 text-white disabled:opacity-50"
+                        >
+                          {claiming ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              {((t as Record<string, unknown>).claiming as string) ?? "领取中..."}
+                            </>
+                          ) : (
+                            <>
+                              <Gift className="mr-2 h-4 w-4" />
+                              {((t as Record<string, unknown>).claimCode as string) ?? "领取邀请码"}
+                            </>
+                          )}
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 )}

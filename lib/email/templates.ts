@@ -247,6 +247,24 @@ export function buildPreApplicationReviewEmail({
     </table>`
       : ""
 
+  // 审核通过但无码时的提示
+  const noCodeHintBlock =
+    isApproved && !inviteCode
+      ? `
+    <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:24px 0;">
+      <tr>
+        <td style="background:#fef3c7;border:1px solid #fcd34d;border-radius:12px;padding:20px;text-align:center;">
+          <p style="margin:0 0 8px;font-size:14px;font-weight:600;color:#92400e;">
+            &#9888; ${locale === "zh" ? "暂无可用邀请码" : "No Invite Code Available Yet"}
+          </p>
+          <p style="margin:0;font-size:13px;color:#a16207;line-height:1.5;">
+            ${locale === "zh" ? "审核已通过，但目前暂无可用邀请码。请登录后在申请页面领取。" : "Your application is approved, but no invite codes are available yet. Please log in and claim one from the application page."}
+          </p>
+        </td>
+      </tr>
+    </table>`
+      : ""
+
   const essayBlock = essay
     ? `
     <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 24px;">
@@ -297,9 +315,18 @@ export function buildPreApplicationReviewEmail({
       </tr>
     </table>
     ${inviteCodeBlock}
+    ${noCodeHintBlock}
     <p style="${baseStyles.footer}">${footer}</p>`
 
   const html = wrapEmailHtml(subject, appName, accentColor, content)
+
+  // 无码提示的纯文本
+  const noCodeHintText =
+    isApproved && !inviteCode
+      ? locale === "zh"
+        ? "暂无可用邀请码，请登录后在申请页面领取。"
+        : "No invite codes available yet. Please log in and claim one from the application page."
+      : ""
 
   const textLines = [
     title,
@@ -311,6 +338,7 @@ export function buildPreApplicationReviewEmail({
     guidanceLine,
     ...(inviteCodeLine ? [inviteCodeLine] : []),
     ...(inviteExpiresLine ? [inviteExpiresLine] : []),
+    ...(noCodeHintText ? ["", noCodeHintText] : []),
     "",
     footer,
   ]

@@ -228,6 +228,17 @@
       },
       "account": {
         "failedToDelete": "删除账户失败"
+      },
+      "inviteCodes": {
+        "failedToFetch": "获取邀请码失败",
+        "failedToContribute": "贡献邀请码失败",
+        "failedToDelete": "删除邀请码失败",
+        "noValid": "没有有效的邀请码",
+        "notFound": "未找到邀请码",
+        "notOwner": "您只能删除自己贡献的邀请码",
+        "cannotDeleteUsed": "该邀请码已被使用，无法删除",
+        "cannotDeleteAssigned": "该邀请码已被分配，无法删除",
+        "cannotDeleteClaimed": "该邀请码已被领取，无法删除"
       }
     },
     "preApplication": {
@@ -245,7 +256,11 @@
       "noPreApplicationFound": "未找到预申请",
       "failedToUpdate": "更新预申请失败",
       "versionConflict": "数据已被修改，请刷新后重试",
-      "resubmitLimitExceeded": "已达到最大重新提交次数限制"
+      "resubmitLimitExceeded": "已达到最大重新提交次数限制",
+      "notApproved": "申请未通过审核",
+      "alreadyHasCode": "已有邀请码",
+      "noAvailableCode": "暂无可用邀请码，请稍后再试",
+      "claimCodeFailed": "领取邀请码失败"
     }
   },
   "hero": {
@@ -854,7 +869,34 @@
     "deleteAccountConfirmDesc": "此操作将永久删除你的账户和内容。",
     "confirmDelete": "确认删除",
     "accountDeleted": "账户已删除",
-    "accountDeleteFailed": "删除账户失败"
+    "accountDeleteFailed": "删除账户失败",
+    "contribute": "贡献邀请码",
+    "contributeDesc": "分享您的邀请码帮助社区成长",
+    "contributeSingle": "单个添加",
+    "contributeBatch": "批量添加",
+    "contributePlaceholder": "输入邀请码或完整链接",
+    "contributeBatchPlaceholder": "每行一个邀请码",
+    "contributeSubmit": "提交",
+    "contributeSubmitting": "提交中...",
+    "contributeList": "我的贡献",
+    "contributeEmpty": "暂无贡献记录",
+    "contributeSuccess": "成功贡献 {count} 个邀请码",
+    "contributePartial": "成功 {created} 个，跳过 {skipped} 个（已存在），无效 {invalid} 个",
+    "contributeStatus": {
+      "available": "可用",
+      "used": "已使用",
+      "expired": "已过期",
+      "assigned": "已分配",
+      "claimed": "已领取"
+    },
+    "contributeDelete": "删除",
+    "contributeDeleteTitle": "删除邀请码",
+    "contributeDeleteDesc": "确定要删除此邀请码吗？此操作不可撤销。",
+    "contributeDeleteSuccess": "邀请码已删除",
+    "contributeUsedBy": "使用者",
+    "contributeUsedAt": "使用时间",
+    "contributeAssignedAt": "分配时间",
+    "contributeClaimedBy": "领取者"
   },
   "preApplication": {
     "title": "linux.do 预申请",
@@ -929,6 +971,14 @@
       "used": "已使用",
       "unused": "未使用"
     },
+    "noCodeYetTitle": "暂无邀请码",
+    "noCodeYetDesc": "审核已通过，但暂无可用邀请码。您可以尝试领取，如无可用码请稍后再试。",
+    "noCodeAvailableDesc": "当前暂无可用邀请码，请稍后再来查看。",
+    "refreshStatus": "刷新状态",
+    "claimCode": "领取邀请码",
+    "claiming": "领取中...",
+    "claimCodeSuccess": "邀请码领取成功",
+    "claimCodeFailed": "领取失败",
     "queryTokenCopied": "查询码已复制",
     "maxResubmitExceeded": "已达到最大重新提交次数限制",
     "versionConflict": "数据已被修改，请刷新后重试",
@@ -975,6 +1025,7 @@
       "rejectedTitle": "预申请已驳回",
       "disputedTitle": "预申请待补充",
       "approvedIntro": "你的 linux.do 预申请已通过。",
+      "approvedNoCodeIntro": "你的 linux.do 预申请已通过，但目前暂无可用邀请码。",
       "rejectedIntro": "你的 linux.do 预申请已驳回。",
       "disputedIntro": "你的 linux.do 预申请需要补充信息，请根据指导意见修改后重新提交。",
       "reviewerLabel": "审核管理员：",
@@ -982,6 +1033,7 @@
       "essayLabel": "申请内容：",
       "inviteCodeLabel": "邀请码：",
       "inviteExpiresLabel": "有效期至：",
+      "claimCodeHint": "暂无可用邀请码，请稍后在申请页面领取。",
       "footer": "如有疑问，请联系管理员。"
     },
     "emailTemplate": {
@@ -1132,6 +1184,8 @@
     "delete": "删除",
     "messages": "站内信",
     "messagesDesc": "管理站内信并追踪阅读情况",
+    "changelog": "更新日志",
+    "changelogDesc": "查看系统更新记录",
     "sendMessage": "发送站内信",
     "editMessage": "编辑站内信",
     "messageTitle": "标题",

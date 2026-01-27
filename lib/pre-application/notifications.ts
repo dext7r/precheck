@@ -31,7 +31,8 @@ export function buildPreApplicationMessage({
 
   if (isApproved) {
     title = t.approvedTitle
-    intro = t.approvedIntro
+    // 无码时使用不同的提示语
+    intro = inviteCode ? t.approvedIntro : (t.approvedNoCodeIntro ?? t.approvedIntro)
   } else if (isDisputed) {
     title = t.disputedTitle ?? "预申请待补充"
     intro = t.disputedIntro ?? "你的预申请需要补充信息。"
@@ -53,6 +54,9 @@ export function buildPreApplicationMessage({
     if (inviteExpiresAt) {
       lines.push(`${t.inviteExpiresLabel}${inviteExpiresAt.toLocaleString(locale)}`)
     }
+  } else if (isApproved && !inviteCode) {
+    // 通过但无码时，提示用户稍后领取
+    lines.push(t.claimCodeHint ?? "暂无可用邀请码，请稍后在申请页面领取。")
   }
 
   lines.push(t.footer)

@@ -14,6 +14,7 @@ import {
   ClipboardList,
   Key,
   ScrollText,
+  History,
 } from "lucide-react"
 import { motion } from "framer-motion"
 import {
@@ -145,6 +146,13 @@ export function CommandMenu({ locale }: CommandMenuProps) {
       path: `/${locale}/admin/audit-logs`,
       icon: ScrollText,
       shortcut: "⌘6",
+    },
+    {
+      id: "changelog",
+      label: ((dict.admin as Record<string, unknown>).changelog as string) || "Changelog",
+      path: `/${locale}/admin/changelog`,
+      icon: History,
+      shortcut: "⌘7",
     },
     {
       id: "settings",
