@@ -1,9 +1,9 @@
 "use client"
 
-import { useState, useEffect } from "react"
 import { Moon, Sun, Check, Monitor } from "lucide-react"
 import { useTheme } from "next-themes"
 import { Button } from "@/components/ui/button"
+import { useMounted } from "@/lib/hooks/use-mounted"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,13 +33,9 @@ interface ThemeToggleProps {
 }
 
 export function ThemeToggle({ dict }: ThemeToggleProps) {
-  const [mounted, setMounted] = useState(false)
+  const mounted = useMounted()
   const { theme, setTheme } = useTheme()
   const { colorTheme, setColorTheme } = useColorTheme()
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
 
   // 避免 SSR hydration mismatch
   if (!mounted) {

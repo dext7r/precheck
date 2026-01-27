@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useMounted } from "@/lib/hooks/use-mounted"
 import { Bell, Menu, LogOut, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ThemeToggle } from "@/components/ui/theme-toggle"
@@ -26,12 +26,8 @@ interface AdminHeaderProps {
 }
 
 export function AdminHeader({ locale, dict, user, onMenuClick }: AdminHeaderProps) {
-  const [mounted, setMounted] = useState(false)
+  const mounted = useMounted()
   const router = useRouter()
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
 
   const handleLogout = async () => {
     try {

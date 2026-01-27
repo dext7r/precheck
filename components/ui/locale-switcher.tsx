@@ -1,9 +1,9 @@
 "use client"
 
-import { useState, useEffect } from "react"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { Globe } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { useMounted } from "@/lib/hooks/use-mounted"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,14 +17,10 @@ interface LocaleSwitcherProps {
 }
 
 export function LocaleSwitcher({ currentLocale }: LocaleSwitcherProps) {
-  const [mounted, setMounted] = useState(false)
+  const mounted = useMounted()
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
 
   const switchLocale = (newLocale: Locale) => {
     const segments = pathname.split("/")
