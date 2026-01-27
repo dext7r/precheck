@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { Globe } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -16,18 +17,31 @@ interface LocaleSwitcherProps {
 }
 
 export function LocaleSwitcher({ currentLocale }: LocaleSwitcherProps) {
+  const [mounted, setMounted] = useState(false)
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
 
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
   const switchLocale = (newLocale: Locale) => {
-    // Remove current locale from pathname
     const segments = pathname.split("/")
     segments[1] = newLocale
     const newPath = segments.join("/")
-    // 保留查询参数
     const search = searchParams.toString()
     router.push(search ? `${newPath}?${search}` : newPath)
+  }
+
+  // 避免 SSR hydration mismatch
+  if (!mounted) {
+    return (
+      <Button variant="ghost" size="icon">
+        <Globe className="h-5 w-5" />
+        <span className="sr-only">Switch language</span>
+      </Button>
+    )
   }
 
   return (

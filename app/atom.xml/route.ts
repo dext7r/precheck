@@ -1,6 +1,6 @@
 import { db } from "@/lib/db"
 import { getBaseUrl, siteConfig } from "@/lib/seo"
-import { defaultLocale, locales } from "@/lib/i18n/config"
+import { defaultLocale } from "@/lib/i18n/config"
 
 export const revalidate = 3600
 

@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { Bell, Menu, LogOut, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ThemeToggle } from "@/components/ui/theme-toggle"
@@ -25,7 +26,12 @@ interface AdminHeaderProps {
 }
 
 export function AdminHeader({ locale, dict, user, onMenuClick }: AdminHeaderProps) {
+  const [mounted, setMounted] = useState(false)
   const router = useRouter()
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const handleLogout = async () => {
     try {
@@ -57,40 +63,52 @@ export function AdminHeader({ locale, dict, user, onMenuClick }: AdminHeaderProp
         <LocaleSwitcher currentLocale={locale} />
         <ThemeToggle dict={dict} />
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button className="ml-2 flex items-center gap-3 rounded-lg border border-border px-3 py-1.5 transition-colors hover:bg-accent">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-destructive text-sm font-medium text-destructive-foreground">
-                {user.name?.[0]?.toUpperCase() || user.email[0].toUpperCase()}
-              </div>
-              <div className="hidden sm:block text-left">
-                <p className="text-sm font-medium">{user.name || user.email.split("@")[0]}</p>
-                <p className="text-xs text-muted-foreground">{user.role}</p>
-              </div>
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuLabel>
-              <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium">{user.name || user.email.split("@")[0]}</p>
-                <p className="text-xs text-muted-foreground">{user.email}</p>
-              </div>
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => router.push(`/${locale}/admin/settings`)}>
-              <User className="mr-2 h-4 w-4" />
-              <span>{dict.dashboard.settings}</span>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={handleLogout}
-              className="text-destructive focus:text-destructive"
-            >
-              <LogOut className="mr-2 h-4 w-4" />
-              <span>{dict.nav.logout}</span>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {mounted ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="ml-2 flex items-center gap-3 rounded-lg border border-border px-3 py-1.5 transition-colors hover:bg-accent">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-destructive text-sm font-medium text-destructive-foreground">
+                  {user.name?.[0]?.toUpperCase() || user.email[0].toUpperCase()}
+                </div>
+                <div className="hidden sm:block text-left">
+                  <p className="text-sm font-medium">{user.name || user.email.split("@")[0]}</p>
+                  <p className="text-xs text-muted-foreground">{user.role}</p>
+                </div>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>
+                <div className="flex flex-col space-y-1">
+                  <p className="text-sm font-medium">{user.name || user.email.split("@")[0]}</p>
+                  <p className="text-xs text-muted-foreground">{user.email}</p>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => router.push(`/${locale}/admin/settings`)}>
+                <User className="mr-2 h-4 w-4" />
+                <span>{dict.dashboard.settings}</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={handleLogout}
+                className="text-destructive focus:text-destructive"
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>{dict.nav.logout}</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : (
+          <button className="ml-2 flex items-center gap-3 rounded-lg border border-border px-3 py-1.5">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-destructive text-sm font-medium text-destructive-foreground">
+              {user.name?.[0]?.toUpperCase() || user.email[0].toUpperCase()}
+            </div>
+            <div className="hidden sm:block text-left">
+              <p className="text-sm font-medium">{user.name || user.email.split("@")[0]}</p>
+              <p className="text-xs text-muted-foreground">{user.role}</p>
+            </div>
+          </button>
+        )}
       </div>
     </header>
   )
