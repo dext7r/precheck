@@ -41,13 +41,16 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const data = sendCodeSchema.parse(body)
 
-    // 验证 Turnstile token
-    const clientIp = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
-    if (!(await verifyTurnstileToken(data.turnstileToken || "", clientIp))) {
-      return createApiErrorResponse(request, ApiErrorKeys.general.invalid, {
-        status: 400,
-        meta: { detail: "Turnstile verification failed" },
-      })
+    // 验证 Turnstile token（如果提供）
+    if (data.turnstileToken) {
+      const clientIp = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
+      const isValid = await verifyTurnstileToken(data.turnstileToken, clientIp)
+      if (!isValid) {
+        return createApiErrorResponse(request, ApiErrorKeys.general.invalid, {
+          status: 400,
+          meta: { detail: "Turnstile verification failed" },
+        })
+      }
     }
 
     // 登录验证码：检查邮箱是否存在
