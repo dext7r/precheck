@@ -243,6 +243,9 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
       const settings = await getSiteSettings()
       const shouldSendEmail = features.email && settings.emailNotifications
 
+      let emailSent = false
+      let emailError: string | undefined
+
       if (shouldSendEmail) {
         const emailContent = buildPreApplicationReviewEmail({
           appName: settings.siteName || dict.metadata?.title || "App",
@@ -263,12 +266,14 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
             html: emailContent.html,
             text: emailContent.text,
           })
+          emailSent = true
         } catch (sendError) {
           console.error("Pre-application disputed email failed:", sendError)
+          emailError = sendError instanceof Error ? sendError.message : String(sendError)
         }
       }
 
-      return NextResponse.json({ success: true })
+      return NextResponse.json({ success: true, emailSent, emailError })
     }
 
     if (isApproved) {
@@ -476,6 +481,9 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
     const settings = await getSiteSettings()
     const shouldSendEmail = features.email && settings.emailNotifications
 
+    let emailSent = false
+    let emailError: string | undefined
+
     if (shouldSendEmail) {
       const emailContent = buildPreApplicationReviewEmail({
         appName: settings.siteName || dict.metadata?.title || "App",
@@ -496,12 +504,18 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
           html: emailContent.html,
           text: emailContent.text,
         })
+        emailSent = true
       } catch (sendError) {
         console.error("Pre-application email failed:", sendError)
+        emailError = sendError instanceof Error ? sendError.message : String(sendError)
       }
     }
 
-    return NextResponse.json({ success: true })
+    return NextResponse.json({
+      success: true,
+      emailSent,
+      emailError,
+    })
   } catch (error) {
     if (error instanceof z.ZodError) {
       return createApiErrorResponse(request, ApiErrorKeys.general.invalid, {

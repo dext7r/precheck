@@ -87,6 +87,12 @@ export function LoginForm({ locale, dict, oauthProviders }: LoginFormProps) {
   const handleSendCode = async () => {
     if (!formData.email || countdown > 0) return
 
+    // Turnstile 启用时需要先验证
+    if (TURNSTILE_ENABLED && !turnstileToken) {
+      setError(dict.errors?.turnstileRequired || "Please complete the verification")
+      return
+    }
+
     setSendingCode(true)
     setError("")
 
@@ -94,7 +100,12 @@ export function LoginForm({ locale, dict, oauthProviders }: LoginFormProps) {
       const res = await fetch("/api/auth/send-verification-code", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: formData.email, purpose: "login", locale }),
+        body: JSON.stringify({
+          email: formData.email,
+          purpose: "login",
+          locale,
+          turnstileToken: TURNSTILE_ENABLED ? turnstileToken : undefined,
+        }),
       })
 
       const data = await res.json()
@@ -310,7 +321,13 @@ export function LoginForm({ locale, dict, oauthProviders }: LoginFormProps) {
                 type="button"
                 variant="outline"
                 onClick={handleSendCode}
-                disabled={!formData.email || countdown > 0 || sendingCode || isLoading}
+                disabled={
+                  !formData.email ||
+                  countdown > 0 ||
+                  sendingCode ||
+                  isLoading ||
+                  (TURNSTILE_ENABLED && !turnstileToken)
+                }
                 className="shrink-0 min-w-[100px]"
               >
                 {sendingCode ? (

@@ -663,7 +663,16 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
         throw new Error(message)
       }
 
-      toast.success(t.reviewSubmit)
+      const result = await res.json()
+
+      if (result.emailError) {
+        toast.warning(
+          `${t.reviewSubmit}${t.emailSendFailed ? `, ${t.emailSendFailed}` : ""}: ${result.emailError}`,
+        )
+      } else {
+        toast.success(t.reviewSubmit)
+      }
+
       setDialogOpen(false)
       await fetchRecords()
     } catch (error) {

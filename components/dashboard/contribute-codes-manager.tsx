@@ -102,11 +102,10 @@ export function ContributeCodesManager({ locale, dict }: ContributeCodesManagerP
       if (res.ok) {
         const data = await res.json()
         if (data.createdCount > 0) {
-          if (data.skippedCount > 0 || data.invalidCount > 0) {
+          if (data.invalidCount > 0) {
             toast.success(
-              t.contributePartial
+              t.contributePartialInvalid
                 .replace("{created}", String(data.createdCount))
-                .replace("{skipped}", String(data.skippedCount))
                 .replace("{invalid}", String(data.invalidCount)),
             )
           } else {
@@ -116,12 +115,7 @@ export function ContributeCodesManager({ locale, dict }: ContributeCodesManagerP
           setBatchCodes("")
           fetchRecords()
         } else {
-          toast.info(
-            t.contributePartial
-              .replace("{created}", "0")
-              .replace("{skipped}", String(data.skippedCount))
-              .replace("{invalid}", String(data.invalidCount)),
-          )
+          toast.info(t.contributeAllInvalid.replace("{invalid}", String(data.invalidCount)))
         }
       } else {
         const error = await res.json()

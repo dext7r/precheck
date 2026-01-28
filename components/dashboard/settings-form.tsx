@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { ConfirmDialog } from "@/components/admin/confirm-dialog"
+import { Shield } from "lucide-react"
 import type { Locale } from "@/lib/i18n/config"
 import type { Dictionary } from "@/lib/i18n/get-dictionary"
 import { resolveApiErrorMessage } from "@/lib/api/error-message"
@@ -18,6 +19,7 @@ type SettingsUser = {
   name?: string | null
   email: string
   avatar?: string | null
+  role: string
 }
 
 interface SettingsFormProps {
@@ -46,6 +48,11 @@ export function SettingsForm({ locale, dict, user, hasPassword }: SettingsFormPr
 
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [deleteLoading, setDeleteLoading] = useState(false)
+
+  const [applyAdminOpen, setApplyAdminOpen] = useState(false)
+  const [applyAdminLoading, setApplyAdminLoading] = useState(false)
+
+  const isAdmin = user.role === "ADMIN" || user.role === "SUPER_ADMIN"
 
   const initials = useMemo(() => {
     if (profile.name) {
@@ -145,6 +152,29 @@ export function SettingsForm({ locale, dict, user, hasPassword }: SettingsFormPr
     } finally {
       setDeleteLoading(false)
       setDeleteOpen(false)
+    }
+  }
+
+  const handleApplyAdmin = async () => {
+    setApplyAdminLoading(true)
+    try {
+      const res = await fetch("/api/dashboard/apply-admin", {
+        method: "POST",
+      })
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        const message = resolveApiErrorMessage(data, dict) ?? t.applyAdminFailed
+        toast.error(message)
+        return
+      }
+
+      toast.success(t.applyAdminSuccess)
+    } catch {
+      toast.error(t.applyAdminFailed)
+    } finally {
+      setApplyAdminLoading(false)
+      setApplyAdminOpen(false)
     }
   }
 
@@ -274,6 +304,23 @@ export function SettingsForm({ locale, dict, user, hasPassword }: SettingsFormPr
           </CardContent>
         </Card>
 
+        {!isAdmin && (
+          <Card className="border-primary/50">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="h-5 w-5 text-primary" />
+                {t.applyAdmin}
+              </CardTitle>
+              <CardDescription>{t.applyAdminDesc}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button variant="outline" onClick={() => setApplyAdminOpen(true)}>
+                {t.applyAdminBtn}
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
         <Card className="border-destructive/50">
           <CardHeader>
             <CardTitle className="text-destructive">{t.dangerZone}</CardTitle>
@@ -297,6 +344,17 @@ export function SettingsForm({ locale, dict, user, hasPassword }: SettingsFormPr
         onConfirm={handleDeleteAccount}
         confirming={deleteLoading}
         destructive
+      />
+
+      <ConfirmDialog
+        open={applyAdminOpen}
+        onOpenChange={setApplyAdminOpen}
+        title={t.applyAdminConfirmTitle}
+        description={t.applyAdminConfirmDesc}
+        confirmLabel={t.applyAdminConfirm}
+        cancelLabel={t.cancel}
+        onConfirm={handleApplyAdmin}
+        confirming={applyAdminLoading}
       />
     </div>
   )

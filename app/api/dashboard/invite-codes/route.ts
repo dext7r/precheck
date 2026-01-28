@@ -121,34 +121,34 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    const [existingRecords, createdRecords] = await db.$transaction(async (tx) => {
-      const existing = await tx.inviteCode.findMany({
-        where: { code: { in: uniqueCodes } },
-        select: { code: true },
-      })
-      const existingSet = new Set(existing.map((record) => record.code))
-      const newCodes = uniqueCodes.filter((code) => !existingSet.has(code))
-
-      if (newCodes.length > 0) {
-        await tx.inviteCode.createMany({
-          data: newCodes.map((code) => ({
-            code,
-            createdById: user.id,
-          })),
-          skipDuplicates: true,
-        })
-      }
-
-      const created = newCodes.length
-        ? await tx.inviteCode.findMany({
-            where: { code: { in: newCodes }, createdById: user.id },
-          })
-        : []
-
-      return [existing, created] as const
+    // 先检查是否有已存在的邀请码
+    const existingRecords = await db.inviteCode.findMany({
+      where: { code: { in: uniqueCodes } },
+      select: { code: true },
     })
 
-    const skippedCount = existingRecords.length
+    if (existingRecords.length > 0) {
+      const existingCodes = existingRecords.map((r) => r.code)
+      return createApiErrorResponse(request, ApiErrorKeys.dashboard.inviteCodes.alreadyExists, {
+        status: 400,
+        meta: { existingCodes },
+      })
+    }
+
+    const createdRecords = await db.$transaction(async (tx) => {
+      await tx.inviteCode.createMany({
+        data: uniqueCodes.map((code) => ({
+          code,
+          createdById: user.id,
+        })),
+        skipDuplicates: true,
+      })
+
+      return tx.inviteCode.findMany({
+        where: { code: { in: uniqueCodes }, createdById: user.id },
+      })
+    })
+
     const createdCount = createdRecords.length
 
     await writeAuditLog(db, {
@@ -162,7 +162,6 @@ export async function POST(request: NextRequest) {
         invalid: invalidCount,
         duplicates: duplicatesCount,
         created: createdCount,
-        skippedExisting: skippedCount,
       },
       request,
     })
@@ -181,7 +180,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       createdCount,
-      skippedCount,
       invalidCount,
       duplicatesCount,
       total: data.codes.length,

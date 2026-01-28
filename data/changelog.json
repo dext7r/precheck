@@ -1,6 +1,19 @@
 {
   "versions": [
     {
+      "version": "1.2.0",
+      "date": "2025-01-28",
+      "changes": [
+        { "type": "added", "content": "控制台首页新增贡献邀请码与设置的快速导航" },
+        { "type": "added", "content": "控制台侧边栏与快捷菜单新增设置页入口（⌘5）" },
+        { "type": "added", "content": "普通用户可在设置页申请成为管理员" },
+        { "type": "added", "content": "发送验证码需先通过 Cloudflare Turnstile 人机验证" },
+        { "type": "changed", "content": "首页统计指标展示可用邀请码数量（排除已使用和已过期）" },
+        { "type": "changed", "content": "贡献邀请码时检测已存在的邀请码并提示错误" },
+        { "type": "changed", "content": "预申请审核后邮件发送失败时向管理员显示详细错误信息" }
+      ]
+    },
+    {
       "version": "1.1.0",
       "date": "2025-01-27",
       "changes": [

@@ -20,7 +20,7 @@ export default async function SettingsPage({ params }: SettingsPageProps) {
     <SettingsForm
       locale={locale}
       dict={dict}
-      user={{ name: user.name, email: user.email, avatar: user.avatar }}
+      user={{ name: user.name, email: user.email, avatar: user.avatar, role: user.role }}
       hasPassword={!!user.password}
     />
   )

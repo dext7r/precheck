@@ -16,6 +16,8 @@ import {
   Clock,
   AlertCircle,
   Inbox,
+  Gift,
+  Settings,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -97,6 +99,24 @@ export default function DashboardPage({ params }: DashboardPageProps) {
       iconBg: "bg-violet-500/10",
       iconColor: "text-violet-600 dark:text-violet-400",
     },
+    {
+      href: `/${locale}/dashboard/contribute`,
+      icon: Gift,
+      title: dict.dashboard.contribute,
+      description: dict.dashboard.contributeDesc,
+      gradient: "from-emerald-500/10 via-emerald-500/5 to-transparent",
+      iconBg: "bg-emerald-500/10",
+      iconColor: "text-emerald-600 dark:text-emerald-400",
+    },
+    {
+      href: `/${locale}/dashboard/settings`,
+      icon: Settings,
+      title: dict.dashboard.settings,
+      description: dict.dashboard.manageSettings,
+      gradient: "from-slate-500/10 via-slate-500/5 to-transparent",
+      iconBg: "bg-slate-500/10",
+      iconColor: "text-slate-600 dark:text-slate-400",
+    },
   ]
 
   return (
@@ -132,7 +152,7 @@ export default function DashboardPage({ params }: DashboardPageProps) {
           <BookOpen className="h-5 w-5 text-muted-foreground" />
           {dict.dashboard.quickNav}
         </h2>
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {quickNavItems.map((navItem, index) => (
             <Link key={navItem.href} href={navItem.href} className="group">
               <motion.div

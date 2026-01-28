@@ -160,6 +160,12 @@ export const ApiErrorKeys = {
       cannotDeleteUsed: "apiErrors.dashboard.inviteCodes.cannotDeleteUsed",
       cannotDeleteAssigned: "apiErrors.dashboard.inviteCodes.cannotDeleteAssigned",
       cannotDeleteClaimed: "apiErrors.dashboard.inviteCodes.cannotDeleteClaimed",
+      alreadyExists: "apiErrors.dashboard.inviteCodes.alreadyExists",
+    },
+    applyAdmin: {
+      failed: "apiErrors.dashboard.applyAdmin.failed",
+      alreadyAdmin: "apiErrors.dashboard.applyAdmin.alreadyAdmin",
+      noSuperAdmin: "apiErrors.dashboard.applyAdmin.noSuperAdmin",
     },
   },
   preApplication: {

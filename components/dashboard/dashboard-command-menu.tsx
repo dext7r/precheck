@@ -10,6 +10,7 @@ import {
   ChevronRight,
   ClipboardList,
   Gift,
+  Settings,
 } from "lucide-react"
 import { motion } from "framer-motion"
 import {
@@ -127,6 +128,13 @@ export function DashboardCommandMenu({ locale }: DashboardCommandMenuProps) {
       path: `/${locale}/dashboard/contribute`,
       icon: Gift,
       shortcut: "⌘4",
+    },
+    {
+      id: "settings",
+      label: dict.dashboard.settings,
+      path: `/${locale}/dashboard/settings`,
+      icon: Settings,
+      shortcut: "⌘5",
     },
   ]
 

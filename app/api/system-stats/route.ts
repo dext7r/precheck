@@ -14,11 +14,18 @@ export async function GET() {
       })
     }
 
+    const now = new Date()
     const [usersCount, applicationsCount, approvedCount, inviteCodesCount] = await Promise.all([
       db.user.count(),
       db.preApplication.count(),
       db.preApplication.count({ where: { status: "APPROVED" } }),
-      db.inviteCode.count({ where: { deletedAt: null } }),
+      db.inviteCode.count({
+        where: {
+          deletedAt: null,
+          usedAt: null,
+          OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
+        },
+      }),
     ])
 
     return NextResponse.json({

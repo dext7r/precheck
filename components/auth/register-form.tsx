@@ -153,6 +153,12 @@ export function RegisterForm({ locale, dict, oauthProviders }: RegisterFormProps
       return
     }
 
+    // Turnstile 启用时需要先验证
+    if (TURNSTILE_ENABLED && !turnstileToken) {
+      setError(dict.errors?.turnstileRequired || "Please complete the verification")
+      return
+    }
+
     setSendingCode(true)
     setError("")
 
@@ -160,7 +166,12 @@ export function RegisterForm({ locale, dict, oauthProviders }: RegisterFormProps
       const res = await fetch("/api/auth/send-verification-code", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: formData.email, purpose: "register", locale }),
+        body: JSON.stringify({
+          email: formData.email,
+          purpose: "register",
+          locale,
+          turnstileToken: TURNSTILE_ENABLED ? turnstileToken : undefined,
+        }),
       })
 
       const data = await res.json()
@@ -343,7 +354,9 @@ export function RegisterForm({ locale, dict, oauthProviders }: RegisterFormProps
                 type="button"
                 variant="outline"
                 onClick={handleSendCode}
-                disabled={sendingCode || countdown > 0 || isLoading}
+                disabled={
+                  sendingCode || countdown > 0 || isLoading || (TURNSTILE_ENABLED && !turnstileToken)
+                }
                 className="whitespace-nowrap"
               >
                 {sendingCode ? (

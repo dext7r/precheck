@@ -240,7 +240,13 @@
         "notOwner": "You can only delete your own contributed codes",
         "cannotDeleteUsed": "Cannot delete: this code has been used",
         "cannotDeleteAssigned": "Cannot delete: this code has been assigned",
-        "cannotDeleteClaimed": "Cannot delete: this code has been claimed"
+        "cannotDeleteClaimed": "Cannot delete: this code has been claimed",
+        "alreadyExists": "Invite code already exists"
+      },
+      "applyAdmin": {
+        "failed": "Failed to submit admin application",
+        "alreadyAdmin": "You are already an administrator",
+        "noSuperAdmin": "No super admin found to receive your application"
       }
     },
     "preApplication": {
@@ -887,7 +893,8 @@
     "contributeList": "My Contributions",
     "contributeEmpty": "No contributions yet",
     "contributeSuccess": "Successfully contributed {count} invite code(s)",
-    "contributePartial": "Created {created}, skipped {skipped} (existed), invalid {invalid}",
+    "contributePartialInvalid": "Created {created}, invalid {invalid}",
+    "contributeAllInvalid": "No valid codes, {invalid} invalid",
     "contributeStatus": {
       "available": "Available",
       "used": "Used",
@@ -902,7 +909,15 @@
     "contributeUsedBy": "Used by",
     "contributeUsedAt": "Used at",
     "contributeAssignedAt": "Assigned at",
-    "contributeClaimedBy": "Claimed by"
+    "contributeClaimedBy": "Claimed by",
+    "applyAdmin": "Apply for Admin",
+    "applyAdminDesc": "Submit an application to become an administrator and help manage the community",
+    "applyAdminBtn": "Apply Now",
+    "applyAdminConfirmTitle": "Apply for Admin?",
+    "applyAdminConfirmDesc": "Your application will be sent to super administrators for review. Make sure you understand the responsibilities of an admin before applying.",
+    "applyAdminConfirm": "Submit Application",
+    "applyAdminSuccess": "Application submitted successfully",
+    "applyAdminFailed": "Failed to submit application"
   },
   "preApplication": {
     "title": "Pre-Application",
@@ -1238,6 +1253,7 @@
     "inviteCode": "Invite Code",
     "inviteExpiresAt": "Expiry",
     "reviewSubmit": "Submit Review",
+    "emailSendFailed": "but email failed to send",
     "reviewCancel": "Cancel",
     "statusAll": "All statuses",
     "preApplicationUser": "User",

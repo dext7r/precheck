@@ -6,12 +6,14 @@ import { isRedisAvailable } from "@/lib/redis"
 import { createApiErrorResponse } from "@/lib/api/error-response"
 import { ApiErrorKeys } from "@/lib/api/error-keys"
 import { db } from "@/lib/db"
+import { verifyTurnstileToken } from "@/lib/turnstile"
 import type { Locale } from "@/lib/i18n/config"
 
 const sendCodeSchema = z.object({
   email: z.string().email("Invalid email address"),
   purpose: z.enum(["register", "reset-password", "change-email", "login"]).default("register"),
   locale: z.enum(["zh", "en"]).optional(),
+  turnstileToken: z.string().optional(),
 })
 
 /**
@@ -38,6 +40,15 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
     const data = sendCodeSchema.parse(body)
+
+    // 验证 Turnstile token
+    const clientIp = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
+    if (!(await verifyTurnstileToken(data.turnstileToken || "", clientIp))) {
+      return createApiErrorResponse(request, ApiErrorKeys.general.invalid, {
+        status: 400,
+        meta: { detail: "Turnstile verification failed" },
+      })
+    }
 
     // 登录验证码：检查邮箱是否存在
     if (data.purpose === "login" && db) {
