@@ -77,7 +77,7 @@ export async function getGitHubProfile(code: string): Promise<OAuthProfile | nul
 }
 
 // Linux.do OAuth (Discourse-based)
-export async function getLinuxDoAuthUrl(): Promise<string | null> {
+export async function getLinuxDoAuthUrl(state?: string): Promise<string | null> {
   if (!features.oauth.linuxdo) {
     return null
   }
@@ -87,6 +87,9 @@ export async function getLinuxDoAuthUrl(): Promise<string | null> {
     response_type: "code",
     scope: "read",
   })
+  if (state) {
+    params.set("state", state)
+  }
   return `https://connect.linux.do/oauth2/authorize?${params}`
 }
 
@@ -273,4 +276,71 @@ export async function handleOAuthSignIn(
   })
 
   return newUser
+}
+
+// 绑定 OAuth 账号到已登录用户
+export async function handleOAuthBind(
+  provider: OAuthProvider,
+  profile: OAuthProfile,
+  userId: string,
+  request?: Request,
+) {
+  if (!db) {
+    throw new Error("Database not configured")
+  }
+
+  // 检查用户是否存在
+  const user = await db.user.findUnique({ where: { id: userId } })
+  if (!user) {
+    throw new Error("User not found")
+  }
+
+  // 检查该 OAuth 账号是否已被其他用户绑定
+  const existingAccount = await db.account.findUnique({
+    where: {
+      provider_providerAccountId: {
+        provider,
+        providerAccountId: profile.id,
+      },
+    },
+  })
+
+  if (existingAccount) {
+    if (existingAccount.userId === userId) {
+      // 已绑定到当前用户，直接返回
+      return user
+    }
+    throw new Error("This account is already linked to another user")
+  }
+
+  // 检查用户是否已绑定该提供商的其他账号
+  const userExistingAccount = await db.account.findFirst({
+    where: { userId, provider },
+  })
+
+  if (userExistingAccount) {
+    throw new Error("You have already linked a " + provider + " account")
+  }
+
+  // 创建绑定
+  const account = await db.account.create({
+    data: {
+      userId,
+      type: "oauth",
+      provider,
+      providerAccountId: profile.id,
+    },
+  })
+
+  await writeAuditLog(db, {
+    action: "OAUTH_ACCOUNT_LINK",
+    entityType: "ACCOUNT",
+    entityId: account.id,
+    actor: user,
+    after: account,
+    metadata: { provider, mode: "bind" },
+    request,
+  })
+
+  return user
 }

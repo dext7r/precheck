@@ -351,7 +351,7 @@ export function ContributeCodesManager({ locale, dict }: ContributeCodesManagerP
             <span>{t.contributeLinuxdoRequiredDesc}</span>
             <Button asChild variant="outline" size="sm" className="shrink-0">
               {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
-              <a href="/api/auth/linuxdo">
+              <a href="/api/auth/linuxdo?mode=bind">
                 <Link2 className="mr-2 h-4 w-4" />
                 {t.contributeLinuxdoLink}
               </a>

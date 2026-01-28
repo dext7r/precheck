@@ -943,11 +943,16 @@
     "applyAdmin": "Apply for Admin",
     "applyAdminDesc": "Submit an application to become an administrator and help manage the community",
     "applyAdminBtn": "Apply Now",
-    "applyAdminConfirmTitle": "Apply for Admin?",
+    "applyAdminConfirmTitle": "Apply for Admin",
     "applyAdminConfirmDesc": "Your application will be sent to super administrators for review. Make sure you understand the responsibilities of an admin before applying.",
     "applyAdminConfirm": "Submit Application",
-    "applyAdminSuccess": "Application submitted successfully",
-    "applyAdminFailed": "Failed to submit application"
+    "applyAdminSuccess": "Application submitted, please wait for review",
+    "applyAdminFailed": "Failed to submit application",
+    "applyAdminAlreadyApplied": "You have already applied, please wait for review",
+    "applyAdminReasonLabel": "Application Reason",
+    "applyAdminReasonPlaceholder": "Please explain why you want to become an admin and what you can contribute to the community...",
+    "applyAdminReasonRequired": "Please fill in the application reason",
+    "submitting": "Submitting..."
   },
   "preApplication": {
     "title": "Pre-Application",

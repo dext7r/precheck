@@ -1,16 +1,25 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useMemo, useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { ConfirmDialog } from "@/components/admin/confirm-dialog"
-import { Shield } from "lucide-react"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Shield, CheckCircle2, Loader2 } from "lucide-react"
 import type { Locale } from "@/lib/i18n/config"
 import type { Dictionary } from "@/lib/i18n/get-dictionary"
 import { resolveApiErrorMessage } from "@/lib/api/error-message"
@@ -51,8 +60,27 @@ export function SettingsForm({ locale, dict, user, hasPassword }: SettingsFormPr
 
   const [applyAdminOpen, setApplyAdminOpen] = useState(false)
   const [applyAdminLoading, setApplyAdminLoading] = useState(false)
+  const [applyAdminReason, setApplyAdminReason] = useState("")
+  const [hasApplied, setHasApplied] = useState<boolean | null>(null)
 
   const isAdmin = user.role === "ADMIN" || user.role === "SUPER_ADMIN"
+
+  // 检查是否已经申请过管理员
+  useEffect(() => {
+    if (isAdmin) return
+    async function checkApplied() {
+      try {
+        const res = await fetch("/api/dashboard/apply-admin/status")
+        if (res.ok) {
+          const data = await res.json()
+          setHasApplied(data.hasApplied)
+        }
+      } catch {
+        setHasApplied(false)
+      }
+    }
+    checkApplied()
+  }, [isAdmin])
 
   const initials = useMemo(() => {
     if (profile.name) {
@@ -156,10 +184,16 @@ export function SettingsForm({ locale, dict, user, hasPassword }: SettingsFormPr
   }
 
   const handleApplyAdmin = async () => {
+    if (!applyAdminReason.trim()) {
+      toast.error(t.applyAdminReasonRequired)
+      return
+    }
     setApplyAdminLoading(true)
     try {
       const res = await fetch("/api/dashboard/apply-admin", {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason: applyAdminReason.trim() }),
       })
 
       if (!res.ok) {
@@ -170,11 +204,13 @@ export function SettingsForm({ locale, dict, user, hasPassword }: SettingsFormPr
       }
 
       toast.success(t.applyAdminSuccess)
+      setHasApplied(true)
     } catch {
       toast.error(t.applyAdminFailed)
     } finally {
       setApplyAdminLoading(false)
       setApplyAdminOpen(false)
+      setApplyAdminReason("")
     }
   }
 
@@ -314,9 +350,21 @@ export function SettingsForm({ locale, dict, user, hasPassword }: SettingsFormPr
               <CardDescription>{t.applyAdminDesc}</CardDescription>
             </CardHeader>
             <CardContent>
-              <Button variant="outline" onClick={() => setApplyAdminOpen(true)}>
-                {t.applyAdminBtn}
-              </Button>
+              {hasApplied ? (
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <CheckCircle2 className="h-4 w-4 text-green-500" />
+                  <span>{t.applyAdminAlreadyApplied}</span>
+                </div>
+              ) : (
+                <Button
+                  variant="outline"
+                  onClick={() => setApplyAdminOpen(true)}
+                  disabled={hasApplied === null}
+                >
+                  {hasApplied === null ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                  {t.applyAdminBtn}
+                </Button>
+              )}
             </CardContent>
           </Card>
         )}
@@ -346,16 +394,65 @@ export function SettingsForm({ locale, dict, user, hasPassword }: SettingsFormPr
         destructive
       />
 
-      <ConfirmDialog
+      <Dialog
         open={applyAdminOpen}
-        onOpenChange={setApplyAdminOpen}
-        title={t.applyAdminConfirmTitle}
-        description={t.applyAdminConfirmDesc}
-        confirmLabel={t.applyAdminConfirm}
-        cancelLabel={t.cancel}
-        onConfirm={handleApplyAdmin}
-        confirming={applyAdminLoading}
-      />
+        onOpenChange={(open) => {
+          if (!open) {
+            setApplyAdminReason("")
+          }
+          setApplyAdminOpen(open)
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t.applyAdminConfirmTitle}</DialogTitle>
+            <DialogDescription>{t.applyAdminConfirmDesc}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="applyReason">
+                {t.applyAdminReasonLabel} <span className="text-destructive">*</span>
+              </Label>
+              <Textarea
+                id="applyReason"
+                value={applyAdminReason}
+                onChange={(e) => setApplyAdminReason(e.target.value.slice(0, 500))}
+                placeholder={t.applyAdminReasonPlaceholder}
+                rows={5}
+                maxLength={500}
+              />
+              <p className="text-xs text-muted-foreground text-right">
+                {applyAdminReason.length}/500
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setApplyAdminOpen(false)
+                setApplyAdminReason("")
+              }}
+              disabled={applyAdminLoading}
+            >
+              {t.cancel}
+            </Button>
+            <Button
+              onClick={handleApplyAdmin}
+              disabled={applyAdminLoading || !applyAdminReason.trim()}
+            >
+              {applyAdminLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  {t.submitting}
+                </>
+              ) : (
+                t.applyAdminConfirm
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

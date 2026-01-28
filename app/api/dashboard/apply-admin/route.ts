@@ -1,10 +1,15 @@
 import { type NextRequest, NextResponse } from "next/server"
+import { z } from "zod"
 import { db } from "@/lib/db"
 import { getCurrentUser } from "@/lib/auth/session"
 import { writeAuditLog } from "@/lib/audit"
 import { createApiErrorResponse } from "@/lib/api/error-response"
 import { ApiErrorKeys } from "@/lib/api/error-keys"
 import { sendEmail, isEmailConfigured } from "@/lib/email/mailer"
+
+const applySchema = z.object({
+  reason: z.string().min(1).max(500),
+})
 
 export async function POST(request: NextRequest) {
   try {
@@ -39,26 +44,29 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // 查找所有管理员和超级管理员
-    const admins = await db.user.findMany({
-      where: { role: { in: ["ADMIN", "SUPER_ADMIN"] } },
+    const body = await request.json()
+    const data = applySchema.parse(body)
+
+    // 只查找超级管理员
+    const superAdmins = await db.user.findMany({
+      where: { role: "SUPER_ADMIN" },
       select: { id: true, email: true, name: true },
     })
 
-    if (admins.length === 0) {
+    if (superAdmins.length === 0) {
       return createApiErrorResponse(request, ApiErrorKeys.dashboard.applyAdmin.noSuperAdmin, {
         status: 500,
       })
     }
 
-    // 创建站内信通知管理员
+    // 创建站内信通知超级管理员
     const message = await db.message.create({
       data: {
         title: `管理员申请：${user.name || user.email}`,
-        content: `用户 ${user.name || ""} (${user.email}) 申请成为管理员。\n\n请在用户管理页面审核并处理此申请。`,
+        content: `用户 ${user.name || ""} (${user.email}) 申请成为管理员。\n\n**申请说明：**\n${data.reason}\n\n请在用户管理页面审核并处理此申请。`,
         createdById: user.id,
         recipients: {
-          create: admins.map((admin) => ({
+          create: superAdmins.map((admin) => ({
             userId: admin.id,
           })),
         },
@@ -68,14 +76,16 @@ export async function POST(request: NextRequest) {
     // 发送邮件通知（不阻塞响应）
     const emailConfigured = await isEmailConfigured()
     if (emailConfigured) {
-      const emailPromises = admins.map((admin) =>
+      const emailPromises = superAdmins.map((admin) =>
         sendEmail({
           to: admin.email,
           subject: `[管理员申请] ${user.name || user.email} 申请成为管理员`,
-          text: `用户 ${user.name || ""} (${user.email}) 申请成为管理员。\n\n请登录管理后台的用户管理页面审核并处理此申请。`,
+          text: `用户 ${user.name || ""} (${user.email}) 申请成为管理员。\n\n申请说明：\n${data.reason}\n\n请登录管理后台的用户管理页面审核并处理此申请。`,
           html: `
             <h2>管理员申请通知</h2>
             <p>用户 <strong>${user.name || ""}</strong> (${user.email}) 申请成为管理员。</p>
+            <h3>申请说明：</h3>
+            <p style="background: #f5f5f5; padding: 12px; border-radius: 4px;">${data.reason.replace(/\n/g, "<br>")}</p>
             <p>请登录管理后台的用户管理页面审核并处理此申请。</p>
           `,
         }).catch((err) => {
@@ -94,7 +104,8 @@ export async function POST(request: NextRequest) {
       metadata: {
         applicantId: user.id,
         applicantEmail: user.email,
-        recipientCount: admins.length,
+        reason: data.reason,
+        recipientCount: superAdmins.length,
         emailSent: emailConfigured,
       },
       request,
@@ -102,6 +113,12 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true })
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return createApiErrorResponse(request, ApiErrorKeys.general.invalid, {
+        status: 400,
+        meta: { detail: error.errors[0].message },
+      })
+    }
     console.error("Apply admin error:", error)
     return createApiErrorResponse(request, ApiErrorKeys.dashboard.applyAdmin.failed, {
       status: 500,

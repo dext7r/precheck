@@ -937,11 +937,16 @@
     "applyAdmin": "申请管理员",
     "applyAdminDesc": "提交申请成为管理员，帮助管理社区",
     "applyAdminBtn": "立即申请",
-    "applyAdminConfirmTitle": "申请成为管理员？",
+    "applyAdminConfirmTitle": "申请成为管理员",
     "applyAdminConfirmDesc": "您的申请将发送给超级管理员审核。申请前请确保您了解管理员的职责。",
     "applyAdminConfirm": "提交申请",
-    "applyAdminSuccess": "申请已提交",
-    "applyAdminFailed": "申请提交失败"
+    "applyAdminSuccess": "申请已提交，请等待审核",
+    "applyAdminFailed": "申请提交失败",
+    "applyAdminAlreadyApplied": "您已提交申请，请等待审核",
+    "applyAdminReasonLabel": "申请说明",
+    "applyAdminReasonPlaceholder": "请说明您申请成为管理员的原因，以及您能为社区做出的贡献...",
+    "applyAdminReasonRequired": "请填写申请说明",
+    "submitting": "提交中..."
   },
   "preApplication": {
     "title": "预申请",
