@@ -104,6 +104,7 @@ export interface MessageRecipient {
   messageId: string
   userId: string
   readAt: Date | null
+  deletedAt: Date | null
   createdAt: Date
   message: Message
   user: User

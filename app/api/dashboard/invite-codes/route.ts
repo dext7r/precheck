@@ -19,6 +19,7 @@ const validateInviteCode = (code: string): boolean => {
 
 const contributeSchema = z.object({
   codes: z.array(z.string().min(1).max(128)).min(1).max(100),
+  expiresAt: z.string().datetime(),
 })
 
 // GET: 获取当前用户贡献的邀请码列表
@@ -140,6 +141,7 @@ export async function POST(request: NextRequest) {
         data: uniqueCodes.map((code) => ({
           code,
           createdById: user.id,
+          expiresAt: new Date(data.expiresAt),
         })),
         skipDuplicates: true,
       })

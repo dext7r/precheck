@@ -79,6 +79,17 @@ import { cn } from "@/lib/utils"
 import { resolveApiErrorMessage } from "@/lib/api/error-message"
 import { formatInviteCodeUrl, parseBulkInviteCodes, extractPureCode } from "@/lib/invite-code/utils"
 
+// 获取默认有效期（当前时间 + 23小时），格式为 datetime-local 输入格式
+function getDefaultExpiresAt(): string {
+  const date = new Date(Date.now() + 23 * 60 * 60 * 1000)
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, "0")
+  const day = String(date.getDate()).padStart(2, "0")
+  const hours = String(date.getHours()).padStart(2, "0")
+  const minutes = String(date.getMinutes()).padStart(2, "0")
+  return `${year}-${month}-${day}T${hours}:${minutes}`
+}
+
 type InviteCodeRecord = {
   id: string
   code: string
@@ -187,9 +198,9 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
   const [expiringWithin, setExpiringWithin] = useState("all")
   const [creating, setCreating] = useState(false)
   const [code, setCode] = useState("")
-  const [expiresAt, setExpiresAt] = useState("")
+  const [expiresAt, setExpiresAt] = useState(() => getDefaultExpiresAt())
   const [bulkInput, setBulkInput] = useState("")
-  const [bulkExpiresAt, setBulkExpiresAt] = useState("")
+  const [bulkExpiresAt, setBulkExpiresAt] = useState(() => getDefaultExpiresAt())
   const [importing, setImporting] = useState(false)
   const [issueOpen, setIssueOpen] = useState(false)
   const [issueRecord, setIssueRecord] = useState<InviteCodeRecord | null>(null)
@@ -383,9 +394,9 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
     setCreating(true)
     try {
       const normalizedCode = normalizeInviteCode(code)
-      const payload: { code: string; expiresAt?: string } = { code: normalizedCode }
-      if (expiresAt) {
-        payload.expiresAt = new Date(expiresAt).toISOString()
+      const payload: { code: string; expiresAt: string } = {
+        code: normalizedCode,
+        expiresAt: new Date(expiresAt).toISOString(),
       }
       const res = await fetch("/api/admin/invite-codes", {
         method: "POST",
@@ -398,7 +409,7 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
         throw new Error(message)
       }
       setCode("")
-      setExpiresAt("")
+      setExpiresAt(getDefaultExpiresAt())
       toast.success(t.inviteCodeCreateButton)
       await fetchRecords()
     } catch (error) {
@@ -415,9 +426,9 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
     }
     setImporting(true)
     try {
-      const payload: { codes: string[]; expiresAt?: string } = { codes: bulkSummary.codes }
-      if (bulkExpiresAt) {
-        payload.expiresAt = new Date(bulkExpiresAt).toISOString()
+      const payload: { codes: string[]; expiresAt: string } = {
+        codes: bulkSummary.codes,
+        expiresAt: new Date(bulkExpiresAt).toISOString(),
       }
       const res = await fetch("/api/admin/invite-codes/import", {
         method: "POST",
@@ -436,7 +447,7 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
           .replace("{skipped}", String(data?.skippedCount ?? 0)),
       )
       setBulkInput("")
-      setBulkExpiresAt("")
+      setBulkExpiresAt(getDefaultExpiresAt())
       await fetchRecords()
     } catch (error) {
       toast.error(error instanceof Error ? error.message : t.actionFailed)
@@ -961,6 +972,7 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
                     type="datetime-local"
                     value={bulkExpiresAt}
                     onChange={(event) => setBulkExpiresAt(event.target.value)}
+                    required
                   />
                 </div>
                 <div className="space-y-2">
@@ -1040,6 +1052,7 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
               type="datetime-local"
               value={expiresAt}
               onChange={(event) => setExpiresAt(event.target.value)}
+              required
             />
           </div>
           <Button

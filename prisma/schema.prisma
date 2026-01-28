@@ -126,12 +126,14 @@ model MessageRecipient {
   messageId String
   userId    String
   readAt    DateTime?
+  deletedAt DateTime?
   createdAt DateTime @default(now())
   message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([messageId, userId])
   @@index([userId, readAt])
+  @@index([userId, deletedAt])
 }
 
 model PreApplication {

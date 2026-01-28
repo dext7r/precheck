@@ -213,6 +213,7 @@
         "failedToFetch": "Failed to fetch messages",
         "failedToFetchSingle": "Failed to fetch message",
         "failedToMarkAsRead": "Failed to mark message as read",
+        "failedToDelete": "Failed to delete message",
         "summary": {
           "failedToFetch": "Failed to fetch summary"
         }
@@ -241,11 +242,19 @@
         "cannotDeleteUsed": "Cannot delete: this code has been used",
         "cannotDeleteAssigned": "Cannot delete: this code has been assigned",
         "cannotDeleteClaimed": "Cannot delete: this code has been claimed",
-        "alreadyExists": "Invite code already exists"
+        "alreadyExists": "Invite code already exists",
+        "failedToSend": "Failed to send invite code",
+        "alreadyUsed": "Invite code has been used",
+        "alreadyClaimed": "Invite code has been claimed",
+        "alreadySent": "Invite code has been sent to another user",
+        "expired": "Invite code has expired",
+        "userNotFound": "User not found",
+        "cannotSendToSelf": "Cannot send to yourself"
       },
       "applyAdmin": {
         "failed": "Failed to submit admin application",
         "alreadyAdmin": "You are already an administrator",
+        "alreadyApplied": "You have already applied. Please wait for admin review",
         "noSuperAdmin": "No super admin found to receive your application"
       }
     },
@@ -795,6 +804,10 @@
     "unreadCount": "{count} unread",
     "back": "Back",
     "messageNotFound": "Message not found",
+    "deleteMessage": "Delete",
+    "deleteMessageConfirmTitle": "Confirm Delete Message",
+    "deleteMessageConfirmDesc": "Are you sure you want to delete this message? It will no longer appear in your inbox.",
+    "deleteMessageSuccess": "Message deleted",
     "selectMessageToView": "Select a message to view",
     "fetchFailed": "Failed to fetch data",
     "recent": "Recent",
@@ -891,6 +904,7 @@
     "contributeSubmit": "Submit",
     "contributeSubmitting": "Submitting...",
     "contributeList": "My Contributions",
+    "contributeExpiresAt": "Expiry Date",
     "contributeEmpty": "No contributions yet",
     "contributeSuccess": "Successfully contributed {count} invite code(s)",
     "contributePartialInvalid": "Created {created}, invalid {invalid}",
@@ -906,6 +920,16 @@
     "contributeDeleteTitle": "Delete Invite Code",
     "contributeDeleteDesc": "Are you sure you want to delete this invite code? This action cannot be undone.",
     "contributeDeleteSuccess": "Invite code deleted",
+    "contributeSend": "Send",
+    "contributeSendTitle": "Send Invite Code",
+    "contributeSendDesc": "Send this invite code to a specific user. They will receive a notification and email",
+    "contributeSendUserId": "User ID",
+    "contributeSendUserIdPlaceholder": "Enter user ID",
+    "contributeSendNote": "Note (optional)",
+    "contributeSendNotePlaceholder": "Add a note",
+    "contributeSendSubmit": "Send",
+    "contributeSending": "Sending...",
+    "contributeSendSuccess": "Invite code sent",
     "contributeUsedBy": "Used by",
     "contributeUsedAt": "Used at",
     "contributeAssignedAt": "Assigned at",

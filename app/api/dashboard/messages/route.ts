@@ -23,6 +23,7 @@ export async function GET(request: NextRequest) {
 
     const where = {
       userId: user.id,
+      deletedAt: null,
       message: { revokedAt: null },
     }
 

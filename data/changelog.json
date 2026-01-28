@@ -4,50 +4,154 @@
       "version": "1.2.0",
       "date": "2025-01-28",
       "changes": [
-        { "type": "added", "content": "管理后台新增系统状态监控页面，实时检测各依赖服务健康状态" },
+        {
+          "type": "added",
+          "content": "管理后台新增系统状态监控页面，实时检测各依赖服务健康状态"
+        },
         {
           "type": "added",
           "content": "增强 /api/health 接口，返回数据库、Redis、邮件、OAuth 等服务状态"
         },
-        { "type": "added", "content": "控制台首页新增贡献邀请码与设置的快速导航" },
-        { "type": "added", "content": "控制台侧边栏与快捷菜单新增设置页入口（⌘5）" },
-        { "type": "added", "content": "普通用户可在设置页申请成为管理员" },
-        { "type": "added", "content": "发送验证码需先通过 Cloudflare Turnstile 人机验证" },
-        { "type": "changed", "content": "首页统计指标展示可用邀请码数量（排除已使用和已过期）" },
-        { "type": "changed", "content": "贡献邀请码时检测已存在的邀请码并提示错误" },
-        { "type": "changed", "content": "预申请审核后邮件发送失败时向管理员显示详细错误信息" }
+        {
+          "type": "added",
+          "content": "控制台首页新增贡献邀请码与设置的快速导航"
+        },
+        {
+          "type": "added",
+          "content": "控制台侧边栏与快捷菜单新增设置页入口（⌘5）"
+        },
+        {
+          "type": "added",
+          "content": "普通用户可在设置页申请成为管理员"
+        },
+        {
+          "type": "added",
+          "content": "发送验证码需先通过 Cloudflare Turnstile 人机验证"
+        },
+        {
+          "type": "changed",
+          "content": "首页统计指标展示可用邀请码数量（排除已使用和已过期）"
+        },
+        {
+          "type": "changed",
+          "content": "贡献邀请码时检测已存在的邀请码并提示错误"
+        },
+        {
+          "type": "changed",
+          "content": "预申请审核后邮件发送失败时向管理员显示详细错误信息"
+        },
+        {
+          "type": "added",
+          "content": "贡献邀请码页面支持向指定用户发送邀请码，同时发送站内信和邮件通知"
+        },
+        {
+          "type": "added",
+          "content": "贡献邀请码页面支持分页浏览"
+        },
+        {
+          "type": "added",
+          "content": "站内信支持软删除，用户可删除不需要的消息"
+        },
+        {
+          "type": "added",
+          "content": "站内信列表支持分页"
+        },
+        {
+          "type": "added",
+          "content": "管理员申请限制为每用户仅一次，申请通知发送给所有管理员"
+        },
+        {
+          "type": "added",
+          "content": "管理员申请同时发送邮件通知"
+        },
+        {
+          "type": "changed",
+          "content": "贡献邀请码时必须填写有效期，默认 23 小时"
+        },
+        {
+          "type": "changed",
+          "content": "更新日志页面对所有用户可见"
+        }
       ]
     },
     {
       "version": "1.1.0",
       "date": "2025-01-27",
       "changes": [
-        { "type": "added", "content": "支持审核通过但不发放邀请码（适用于缺码场景）" },
-        { "type": "added", "content": "用户可在申请页面自行领取邀请码，优先领取最近过期的有效码" },
-        { "type": "added", "content": "管理后台新增更新日志页面" },
+        {
+          "type": "added",
+          "content": "支持审核通过但不发放邀请码（适用于缺码场景）"
+        },
+        {
+          "type": "added",
+          "content": "用户可在申请页面自行领取邀请码，优先领取最近过期的有效码"
+        },
+        {
+          "type": "added",
+          "content": "管理后台新增更新日志页面"
+        },
         {
           "type": "added",
           "content": "设置页面新增「通过无码模板」配置，支持自定义审核通过但无码时的指导意见"
         },
-        { "type": "changed", "content": "管理员审核通过时邀请码改为可选" },
-        { "type": "changed", "content": "站内信通知支持无码通过场景，提示用户稍后领取" },
-        { "type": "changed", "content": "审核页面根据是否选择邀请码自动切换模板" },
-        { "type": "added", "content": "用户可贡献邀请码（单条或批量）" },
-        { "type": "added", "content": "用户可删除自己贡献的未使用邀请码" },
-        { "type": "added", "content": "删除限制：已使用/已分配/已领取的邀请码会显示详细信息" },
-        { "type": "changed", "content": "控制台侧边栏新增「贡献邀请码」入口" }
+        {
+          "type": "changed",
+          "content": "管理员审核通过时邀请码改为可选"
+        },
+        {
+          "type": "changed",
+          "content": "站内信通知支持无码通过场景，提示用户稍后领取"
+        },
+        {
+          "type": "changed",
+          "content": "审核页面根据是否选择邀请码自动切换模板"
+        },
+        {
+          "type": "added",
+          "content": "用户可贡献邀请码（单条或批量）"
+        },
+        {
+          "type": "added",
+          "content": "用户可删除自己贡献的未使用邀请码"
+        },
+        {
+          "type": "added",
+          "content": "删除限制：已使用/已分配/已领取的邀请码会显示详细信息"
+        },
+        {
+          "type": "changed",
+          "content": "控制台侧边栏新增「贡献邀请码」入口"
+        }
       ]
     },
     {
       "version": "1.0.0",
       "date": "2025-01-20",
       "changes": [
-        { "type": "added", "content": "预申请系统上线" },
-        { "type": "added", "content": "邀请码管理功能" },
-        { "type": "added", "content": "站内信系统" },
-        { "type": "added", "content": "AI 预审检测" },
-        { "type": "added", "content": "多语言支持（中/英）" },
-        { "type": "added", "content": "深色模式支持" }
+        {
+          "type": "added",
+          "content": "预申请系统上线"
+        },
+        {
+          "type": "added",
+          "content": "邀请码管理功能"
+        },
+        {
+          "type": "added",
+          "content": "站内信系统"
+        },
+        {
+          "type": "added",
+          "content": "AI 预审检测"
+        },
+        {
+          "type": "added",
+          "content": "多语言支持（中/英）"
+        },
+        {
+          "type": "added",
+          "content": "深色模式支持"
+        }
       ]
     }
   ]

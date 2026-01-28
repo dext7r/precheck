@@ -37,7 +37,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
       },
     })
 
-    if (!record || record.message.revokedAt) {
+    if (!record || record.message.revokedAt || record.deletedAt) {
       return createApiErrorResponse(request, ApiErrorKeys.dashboard.messages.failedToFetchSingle, {
         status: 404,
       })
@@ -53,6 +53,53 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
   } catch (error) {
     console.error("Get dashboard message API error:", error)
     return createApiErrorResponse(request, ApiErrorKeys.dashboard.messages.failedToFetchSingle, {
+      status: 500,
+    })
+  }
+}
+
+export async function DELETE(request: NextRequest, context: { params: Promise<{ id: string }> }) {
+  try {
+    const user = await getCurrentUser()
+
+    if (!user) {
+      return createApiErrorResponse(request, ApiErrorKeys.notAuthenticated, { status: 401 })
+    }
+
+    if (!db) {
+      return createApiErrorResponse(request, ApiErrorKeys.databaseNotConfigured, { status: 503 })
+    }
+
+    const { id } = await context.params
+    const record = await db.messageRecipient.findUnique({
+      where: {
+        messageId_userId: {
+          messageId: id,
+          userId: user.id,
+        },
+      },
+    })
+
+    if (!record) {
+      return createApiErrorResponse(request, ApiErrorKeys.dashboard.messages.failedToDelete, {
+        status: 404,
+      })
+    }
+
+    await db.messageRecipient.update({
+      where: {
+        messageId_userId: {
+          messageId: id,
+          userId: user.id,
+        },
+      },
+      data: { deletedAt: new Date() },
+    })
+
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error("Delete dashboard message API error:", error)
+    return createApiErrorResponse(request, ApiErrorKeys.dashboard.messages.failedToDelete, {
       status: 500,
     })
   }

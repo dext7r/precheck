@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -20,6 +21,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import {
   Loader2,
@@ -32,11 +41,25 @@ import {
   Copy,
   Check,
   ExternalLink,
+  ChevronLeft,
+  ChevronRight,
+  Send,
 } from "lucide-react"
 import type { Dictionary } from "@/lib/i18n/get-dictionary"
 import type { Locale } from "@/lib/i18n/config"
 import { resolveApiErrorMessage } from "@/lib/api/error-message"
 import { cn } from "@/lib/utils"
+
+// 获取默认有效期（当前时间 + 23小时），格式为 datetime-local 输入格式
+function getDefaultExpiresAt(): string {
+  const date = new Date(Date.now() + 23 * 60 * 60 * 1000)
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, "0")
+  const day = String(date.getDate()).padStart(2, "0")
+  const hours = String(date.getHours()).padStart(2, "0")
+  const minutes = String(date.getMinutes()).padStart(2, "0")
+  return `${year}-${month}-${day}T${hours}:${minutes}`
+}
 
 type InviteCodeRecord = {
   id: string
@@ -65,17 +88,29 @@ export function ContributeCodesManager({ locale, dict }: ContributeCodesManagerP
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [singleCode, setSingleCode] = useState("")
+  const [singleExpiresAt, setSingleExpiresAt] = useState(() => getDefaultExpiresAt())
   const [batchCodes, setBatchCodes] = useState("")
+  const [batchExpiresAt, setBatchExpiresAt] = useState(() => getDefaultExpiresAt())
   const [deleteTarget, setDeleteTarget] = useState<InviteCodeRecord | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const [sendTarget, setSendTarget] = useState<InviteCodeRecord | null>(null)
+  const [sendUserId, setSendUserId] = useState("")
+  const [sendNote, setSendNote] = useState("")
+  const [sending, setSending] = useState(false)
   const [copiedId, setCopiedId] = useState<string | null>(null)
+  const [page, setPage] = useState(1)
+  const [total, setTotal] = useState(0)
+  const pageSize = 20
 
-  const fetchRecords = useCallback(async () => {
+  const totalPages = Math.max(1, Math.ceil(total / pageSize))
+
+  const fetchRecords = useCallback(async (p: number = 1) => {
     try {
-      const res = await fetch("/api/dashboard/invite-codes?pageSize=100")
+      const res = await fetch(`/api/dashboard/invite-codes?page=${p}&pageSize=${pageSize}`)
       if (res.ok) {
         const data = await res.json()
         setRecords(data.records || [])
+        setTotal(data.total ?? 0)
       }
     } catch (error) {
       console.error("Failed to fetch contributed codes:", error)
@@ -85,10 +120,10 @@ export function ContributeCodesManager({ locale, dict }: ContributeCodesManagerP
   }, [])
 
   useEffect(() => {
-    fetchRecords()
-  }, [fetchRecords])
+    fetchRecords(page)
+  }, [fetchRecords, page])
 
-  const handleSubmit = async (codes: string[]) => {
+  const handleSubmit = async (codes: string[], expiresAt: string) => {
     if (codes.length === 0) return
 
     setSubmitting(true)
@@ -96,7 +131,7 @@ export function ContributeCodesManager({ locale, dict }: ContributeCodesManagerP
       const res = await fetch("/api/dashboard/invite-codes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ codes }),
+        body: JSON.stringify({ codes, expiresAt: new Date(expiresAt).toISOString() }),
       })
 
       if (res.ok) {
@@ -113,7 +148,10 @@ export function ContributeCodesManager({ locale, dict }: ContributeCodesManagerP
           }
           setSingleCode("")
           setBatchCodes("")
-          fetchRecords()
+          setSingleExpiresAt(getDefaultExpiresAt())
+          setBatchExpiresAt(getDefaultExpiresAt())
+          setPage(1)
+          fetchRecords(1)
         } else {
           toast.info(t.contributeAllInvalid.replace("{invalid}", String(data.invalidCount)))
         }
@@ -132,7 +170,7 @@ export function ContributeCodesManager({ locale, dict }: ContributeCodesManagerP
   const handleSingleSubmit = () => {
     const code = singleCode.trim()
     if (code) {
-      handleSubmit([code])
+      handleSubmit([code], singleExpiresAt)
     }
   }
 
@@ -142,7 +180,7 @@ export function ContributeCodesManager({ locale, dict }: ContributeCodesManagerP
       .map((line) => line.trim())
       .filter(Boolean)
     if (codes.length > 0) {
-      handleSubmit(codes)
+      handleSubmit(codes, batchExpiresAt)
     }
   }
 
@@ -157,7 +195,12 @@ export function ContributeCodesManager({ locale, dict }: ContributeCodesManagerP
 
       if (res.ok) {
         toast.success(t.contributeDeleteSuccess)
-        setRecords((prev) => prev.filter((r) => r.id !== deleteTarget.id))
+        // 如果当前页只有一条记录且不是第一页，回到上一页
+        if (records.length === 1 && page > 1) {
+          setPage(page - 1)
+        } else {
+          fetchRecords(page)
+        }
       } else {
         const error = await res.json()
         toast.error(resolveApiErrorMessage(error, dict))
@@ -234,6 +277,48 @@ export function ContributeCodesManager({ locale, dict }: ContributeCodesManagerP
     return match ? match[1] : code
   }
 
+  // 只有可用状态的邀请码才能发送
+  const canSend = (record: InviteCodeRecord) => {
+    if (record.usedAt) return false
+    if (record.preApplication) return false
+    if (record.assignedAt) return false
+    if (record.expiresAt && new Date(record.expiresAt) < new Date()) return false
+    return true
+  }
+
+  const handleSend = async () => {
+    if (!sendTarget || !sendUserId.trim()) return
+
+    setSending(true)
+    try {
+      const res = await fetch(`/api/dashboard/invite-codes/${sendTarget.id}/send`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: sendUserId.trim(),
+          note: sendNote.trim() || undefined,
+          locale,
+        }),
+      })
+
+      if (res.ok) {
+        toast.success(t.contributeSendSuccess)
+        setSendTarget(null)
+        setSendUserId("")
+        setSendNote("")
+        fetchRecords(page)
+      } else {
+        const error = await res.json()
+        toast.error(resolveApiErrorMessage(error, dict))
+      }
+    } catch (error) {
+      console.error("Send code error:", error)
+      toast.error(dict.errors?.["500"]?.title || "Failed")
+    } finally {
+      setSending(false)
+    }
+  }
+
   return (
     <div className="space-y-6">
       {/* 贡献表单 */}
@@ -274,6 +359,15 @@ export function ContributeCodesManager({ locale, dict }: ContributeCodesManagerP
                   )}
                 </Button>
               </div>
+              <div className="space-y-2">
+                <Label className="text-sm">{t.contributeExpiresAt}</Label>
+                <Input
+                  type="datetime-local"
+                  value={singleExpiresAt}
+                  onChange={(e) => setSingleExpiresAt(e.target.value)}
+                  required
+                />
+              </div>
             </TabsContent>
 
             <TabsContent value="batch" className="space-y-4">
@@ -284,6 +378,15 @@ export function ContributeCodesManager({ locale, dict }: ContributeCodesManagerP
                 rows={6}
                 className="font-mono text-sm"
               />
+              <div className="space-y-2">
+                <Label className="text-sm">{t.contributeExpiresAt}</Label>
+                <Input
+                  type="datetime-local"
+                  value={batchExpiresAt}
+                  onChange={(e) => setBatchExpiresAt(e.target.value)}
+                  required
+                />
+              </div>
               <Button
                 onClick={handleBatchSubmit}
                 disabled={submitting || !batchCodes.trim()}
@@ -392,6 +495,25 @@ export function ContributeCodesManager({ locale, dict }: ContributeCodesManagerP
 
                       <div className="flex items-center gap-2">
                         {getStatusBadge(status)}
+                        {canSend(record) && (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 text-primary hover:bg-primary/10 hover:text-primary"
+                                  onClick={() => setSendTarget(record)}
+                                >
+                                  <Send className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>{t.contributeSend}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
                         <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>
@@ -419,6 +541,34 @@ export function ContributeCodesManager({ locale, dict }: ContributeCodesManagerP
                   )
                 })}
               </AnimatePresence>
+              {/* 分页 */}
+              {totalPages > 1 && (
+                <div className="mt-4 flex items-center justify-between border-t pt-4">
+                  <span className="text-sm text-muted-foreground">
+                    {locale === "zh"
+                      ? `共 ${total} 条，第 ${page}/${totalPages} 页`
+                      : `${total} total, page ${page} of ${totalPages}`}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPage((p) => Math.max(1, p - 1))}
+                      disabled={page <= 1 || loading}
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                      disabled={page >= totalPages || loading}
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </CardContent>
@@ -450,6 +600,69 @@ export function ContributeCodesManager({ locale, dict }: ContributeCodesManagerP
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* 发送邀请码对话框 */}
+      <Dialog
+        open={!!sendTarget}
+        onOpenChange={(open) => {
+          if (!open) {
+            setSendTarget(null)
+            setSendUserId("")
+            setSendNote("")
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t.contributeSendTitle}</DialogTitle>
+            <DialogDescription>{t.contributeSendDesc}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="sendUserId">{t.contributeSendUserId}</Label>
+              <Input
+                id="sendUserId"
+                value={sendUserId}
+                onChange={(e) => setSendUserId(e.target.value)}
+                placeholder={t.contributeSendUserIdPlaceholder}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="sendNote">{t.contributeSendNote}</Label>
+              <Textarea
+                id="sendNote"
+                value={sendNote}
+                onChange={(e) => setSendNote(e.target.value)}
+                placeholder={t.contributeSendNotePlaceholder}
+                rows={3}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setSendTarget(null)
+                setSendUserId("")
+                setSendNote("")
+              }}
+              disabled={sending}
+            >
+              {t.cancel}
+            </Button>
+            <Button onClick={handleSend} disabled={sending || !sendUserId.trim()}>
+              {sending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  {t.contributeSending}
+                </>
+              ) : (
+                t.contributeSendSubmit
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
