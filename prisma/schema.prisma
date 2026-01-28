@@ -303,6 +303,7 @@ model SiteSettings {
   emailNotifications Boolean @default(true)
   postModeration    Boolean  @default(false)
   maintenanceMode   Boolean  @default(false)
+  adminApplicationEnabled Boolean @default(true)
   auditLogEnabled   Boolean  @default(false)
   preApplicationEssayHint String @default("建议 100 字左右,避免夸赞社区与版主,只说明你的目的与需求。")
   allowedEmailDomains     Json   @default("[]")

@@ -257,7 +257,8 @@
         "failed": "Failed to submit admin application",
         "alreadyAdmin": "You are already an administrator",
         "alreadyApplied": "You have already applied. Please wait for admin review",
-        "noSuperAdmin": "No super admin found to receive your application"
+        "noSuperAdmin": "No super admin found to receive your application",
+        "disabled": "Admin application is currently disabled"
       }
     },
     "preApplication": {
@@ -1541,6 +1542,8 @@
     "siteUrlPlaceholder": "https://example.com",
     "maintenanceMode": "Maintenance Mode",
     "maintenanceModeDescription": "Enable to temporarily disable the site",
+    "adminApplicationEnabled": "Allow Admin Applications",
+    "adminApplicationEnabledDesc": "Allow regular users to apply to become administrators",
     "smtpHost": "SMTP Host",
     "smtpHostPlaceholder": "smtp.example.com",
     "smtpPort": "SMTP Port",

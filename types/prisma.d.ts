@@ -215,6 +215,7 @@ export interface SiteSettings {
   emailNotifications: boolean
   postModeration: boolean
   maintenanceMode: boolean
+  adminApplicationEnabled: boolean
   auditLogEnabled: boolean
   preApplicationEssayHint: string
   allowedEmailDomains: Prisma.JsonValue

@@ -255,7 +255,8 @@
         "failed": "申请提交失败",
         "alreadyAdmin": "您已经是管理员",
         "alreadyApplied": "您已经提交过申请，请等待管理员审核",
-        "noSuperAdmin": "没有超级管理员可以接收您的申请"
+        "noSuperAdmin": "没有超级管理员可以接收您的申请",
+        "disabled": "管理员申请功能已关闭"
       }
     },
     "preApplication": {
@@ -1537,6 +1538,8 @@
     "siteUrlPlaceholder": "https://example.com",
     "maintenanceMode": "维护模式",
     "maintenanceModeDescription": "启用后将暂时禁用网站访问",
+    "adminApplicationEnabled": "允许申请管理员",
+    "adminApplicationEnabledDesc": "允许普通用户申请成为管理员",
     "smtpHost": "SMTP 主机",
     "smtpHostPlaceholder": "smtp.example.com",
     "smtpPort": "SMTP 端口",

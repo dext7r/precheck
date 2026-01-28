@@ -177,6 +177,7 @@ export const ApiErrorKeys = {
       alreadyAdmin: "apiErrors.dashboard.applyAdmin.alreadyAdmin",
       alreadyApplied: "apiErrors.dashboard.applyAdmin.alreadyApplied",
       noSuperAdmin: "apiErrors.dashboard.applyAdmin.noSuperAdmin",
+      disabled: "apiErrors.dashboard.applyAdmin.disabled",
     },
   },
   preApplication: {

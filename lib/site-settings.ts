@@ -11,6 +11,7 @@ export type SiteSettings = {
   emailNotifications: boolean
   postModeration: boolean
   maintenanceMode: boolean
+  adminApplicationEnabled: boolean
 }
 
 const defaultSettings: SiteSettings = {
@@ -22,6 +23,7 @@ const defaultSettings: SiteSettings = {
   emailNotifications: true,
   postModeration: false,
   maintenanceMode: false,
+  adminApplicationEnabled: true,
 }
 
 export async function getSiteSettings(): Promise<SiteSettings> {
@@ -43,6 +45,7 @@ export async function getSiteSettings(): Promise<SiteSettings> {
       emailNotifications: existing.emailNotifications,
       postModeration: existing.postModeration,
       maintenanceMode: existing.maintenanceMode,
+      adminApplicationEnabled: existing.adminApplicationEnabled,
     }
   }
 
@@ -70,6 +73,7 @@ export async function getSiteSettings(): Promise<SiteSettings> {
     emailNotifications: created.emailNotifications,
     postModeration: created.postModeration,
     maintenanceMode: created.maintenanceMode,
+    adminApplicationEnabled: created.adminApplicationEnabled,
   }
 }
 
@@ -88,6 +92,7 @@ export async function updateSiteSettings(updates: Partial<SiteSettings>): Promis
     emailNotifications: updates.emailNotifications ?? current.emailNotifications,
     postModeration: updates.postModeration ?? current.postModeration,
     maintenanceMode: updates.maintenanceMode ?? current.maintenanceMode,
+    adminApplicationEnabled: updates.adminApplicationEnabled ?? current.adminApplicationEnabled,
   }
 
   const saved = await db.siteSettings.upsert({
@@ -108,5 +113,6 @@ export async function updateSiteSettings(updates: Partial<SiteSettings>): Promis
     emailNotifications: saved.emailNotifications,
     postModeration: saved.postModeration,
     maintenanceMode: saved.maintenanceMode,
+    adminApplicationEnabled: saved.adminApplicationEnabled,
   }
 }
