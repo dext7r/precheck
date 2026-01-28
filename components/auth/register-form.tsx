@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { motion } from "framer-motion"
@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Turnstile } from "@/components/ui/turnstile"
+import { Turnstile, type TurnstileRef } from "@/components/ui/turnstile"
 import { OAuthButtons } from "./oauth-buttons"
 import { EmailWithDomainInput } from "@/components/ui/email-with-domain-input"
 import { getDictionaryEntry } from "@/lib/i18n/get-dictionary-entry"
@@ -39,6 +39,7 @@ export function RegisterForm({ locale, dict, oauthProviders }: RegisterFormProps
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState("")
   const [turnstileToken, setTurnstileToken] = useState("")
+  const turnstileRef = useRef<TurnstileRef>(null)
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -197,6 +198,9 @@ export function RegisterForm({ locale, dict, oauthProviders }: RegisterFormProps
 
       setCountdown(60)
       setError("")
+      // 重置 Turnstile 获取新 token（因为每个 token 只能使用一次）
+      setTurnstileToken("")
+      turnstileRef.current?.reset()
     } catch {
       setError(t.sendCodeError)
     } finally {
@@ -520,6 +524,7 @@ export function RegisterForm({ locale, dict, oauthProviders }: RegisterFormProps
 
         {TURNSTILE_ENABLED && (
           <Turnstile
+            ref={turnstileRef}
             siteKey={TURNSTILE_SITE_KEY}
             onVerify={(token) => setTurnstileToken(token)}
             onError={() => setTurnstileToken("")}

@@ -2,7 +2,7 @@
 
 import { Turnstile as ReactTurnstile, type TurnstileInstance } from "@marsidev/react-turnstile"
 import { useTheme } from "next-themes"
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState, useImperativeHandle, forwardRef } from "react"
 
 interface TurnstileProps {
   siteKey: string
@@ -12,51 +12,65 @@ interface TurnstileProps {
   className?: string
 }
 
-export function Turnstile({ siteKey, onVerify, onError, onExpire, className }: TurnstileProps) {
-  const { resolvedTheme } = useTheme()
-  const [mounted, setMounted] = useState(false)
-  const turnstileRef = useRef<TurnstileInstance>(null)
+export interface TurnstileRef {
+  reset: () => void
+}
 
-  useEffect(() => {
-    const frame = requestAnimationFrame(() => {
-      setMounted(true)
-    })
+export const Turnstile = forwardRef<TurnstileRef, TurnstileProps>(
+  ({ siteKey, onVerify, onError, onExpire, className }, ref) => {
+    const { resolvedTheme } = useTheme()
+    const [mounted, setMounted] = useState(false)
+    const turnstileRef = useRef<TurnstileInstance>(null)
 
-    return () => {
-      cancelAnimationFrame(frame)
+    useImperativeHandle(ref, () => ({
+      reset: () => {
+        turnstileRef.current?.reset()
+      },
+    }))
+
+    useEffect(() => {
+      const frame = requestAnimationFrame(() => {
+        setMounted(true)
+      })
+
+      return () => {
+        cancelAnimationFrame(frame)
+      }
+    }, [])
+
+    // 主题变化时重置 Turnstile
+    useEffect(() => {
+      if (mounted && turnstileRef.current) {
+        turnstileRef.current.reset()
+      }
+    }, [resolvedTheme, mounted])
+
+    if (!mounted) {
+      return (
+        <div
+          className={`flex h-[65px] items-center justify-center rounded-md border bg-muted ${className || ""}`}
+        >
+          <span className="text-sm text-muted-foreground">Loading verification...</span>
+        </div>
+      )
     }
-  }, [])
 
-  // 主题变化时重置 Turnstile
-  useEffect(() => {
-    if (mounted && turnstileRef.current) {
-      turnstileRef.current.reset()
-    }
-  }, [resolvedTheme, mounted])
-
-  if (!mounted) {
     return (
-      <div
-        className={`flex h-[65px] items-center justify-center rounded-md border bg-muted ${className || ""}`}
-      >
-        <span className="text-sm text-muted-foreground">Loading verification...</span>
+      <div className={className}>
+        <ReactTurnstile
+          ref={turnstileRef}
+          siteKey={siteKey}
+          onSuccess={onVerify}
+          onError={onError}
+          onExpire={onExpire}
+          options={{
+            theme: resolvedTheme === "dark" ? "dark" : "light",
+            size: "normal",
+          }}
+        />
       </div>
     )
-  }
+  },
+)
 
-  return (
-    <div className={className}>
-      <ReactTurnstile
-        ref={turnstileRef}
-        siteKey={siteKey}
-        onSuccess={onVerify}
-        onError={onError}
-        onExpire={onExpire}
-        options={{
-          theme: resolvedTheme === "dark" ? "dark" : "light",
-          size: "normal",
-        }}
-      />
-    </div>
-  )
-}
+Turnstile.displayName = "Turnstile"
