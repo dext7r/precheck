@@ -4,6 +4,11 @@
       "version": "1.2.0",
       "date": "2025-01-28",
       "changes": [
+        { "type": "added", "content": "管理后台新增系统状态监控页面，实时检测各依赖服务健康状态" },
+        {
+          "type": "added",
+          "content": "增强 /api/health 接口，返回数据库、Redis、邮件、OAuth 等服务状态"
+        },
         { "type": "added", "content": "控制台首页新增贡献邀请码与设置的快速导航" },
         { "type": "added", "content": "控制台侧边栏与快捷菜单新增设置页入口（⌘5）" },
         { "type": "added", "content": "普通用户可在设置页申请成为管理员" },

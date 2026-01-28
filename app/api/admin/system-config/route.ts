@@ -31,6 +31,8 @@ const systemConfigSchema = z.object({
   reviewTemplatesDispute: z.array(z.string()).optional(),
   // QQ 群配置
   qqGroups: z.array(qqGroupSchema).optional(),
+  // 邀请码 URL 前缀
+  inviteCodeUrlPrefix: z.string().optional(),
   // 邮件配置
   emailProvider: z.enum(["env", "api", "smtp"]).optional(),
   selectedEmailApiConfigId: z.string().optional().nullable(),
@@ -65,6 +67,7 @@ export async function GET(request: NextRequest) {
         reviewTemplatesReject: true,
         reviewTemplatesDispute: true,
         qqGroups: true,
+        inviteCodeUrlPrefix: true,
         emailProvider: true,
         selectedEmailApiConfigId: true,
         smtpHost: true,
@@ -85,6 +88,7 @@ export async function GET(request: NextRequest) {
         reviewTemplatesReject: [],
         reviewTemplatesDispute: [],
         qqGroups: defaultQQGroups,
+        inviteCodeUrlPrefix: "",
         emailProvider: "env",
         selectedEmailApiConfigId: null,
         smtpHost: null,
@@ -114,6 +118,7 @@ export async function GET(request: NextRequest) {
         ? settings.reviewTemplatesDispute
         : [],
       qqGroups: Array.isArray(settings.qqGroups) ? settings.qqGroups : defaultQQGroups,
+      inviteCodeUrlPrefix: settings.inviteCodeUrlPrefix ?? "",
       emailProvider: settings.emailProvider ?? "env",
       selectedEmailApiConfigId: settings.selectedEmailApiConfigId,
       smtpHost: settings.smtpHost,
@@ -165,6 +170,7 @@ export async function PUT(request: NextRequest) {
         reviewTemplatesReject: data.reviewTemplatesReject ?? [],
         reviewTemplatesDispute: data.reviewTemplatesDispute ?? [],
         qqGroups: data.qqGroups ?? defaultQQGroups,
+        inviteCodeUrlPrefix: data.inviteCodeUrlPrefix ?? "",
         emailProvider: data.emailProvider ?? "env",
         selectedEmailApiConfigId: data.selectedEmailApiConfigId ?? null,
         smtpHost: data.smtpHost ?? null,
@@ -190,6 +196,9 @@ export async function PUT(request: NextRequest) {
           reviewTemplatesDispute: data.reviewTemplatesDispute,
         }),
         ...(data.qqGroups !== undefined && { qqGroups: data.qqGroups }),
+        ...(data.inviteCodeUrlPrefix !== undefined && {
+          inviteCodeUrlPrefix: data.inviteCodeUrlPrefix,
+        }),
         ...(data.emailProvider !== undefined && { emailProvider: data.emailProvider }),
         ...(data.selectedEmailApiConfigId !== undefined && {
           selectedEmailApiConfigId: data.selectedEmailApiConfigId,
@@ -219,6 +228,7 @@ export async function PUT(request: NextRequest) {
           "reviewTemplatesReject",
           "reviewTemplatesDispute",
           "qqGroups",
+          "inviteCodeUrlPrefix",
           "emailProvider",
           "selectedEmailApiConfigId",
           "smtpHost",
@@ -239,6 +249,7 @@ export async function PUT(request: NextRequest) {
       reviewTemplatesReject: updated.reviewTemplatesReject,
       reviewTemplatesDispute: updated.reviewTemplatesDispute,
       qqGroups: updated.qqGroups,
+      inviteCodeUrlPrefix: updated.inviteCodeUrlPrefix,
       emailProvider: updated.emailProvider,
       selectedEmailApiConfigId: updated.selectedEmailApiConfigId,
       smtpHost: updated.smtpHost,

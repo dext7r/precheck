@@ -18,6 +18,7 @@ import {
   Home,
   Send,
   History,
+  Activity,
 } from "lucide-react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
@@ -74,6 +75,12 @@ export function AdminSidebar({ locale, dict, user }: AdminSidebarProps) {
       href: `/${locale}/admin/changelog`,
       icon: History,
       superAdminOnly: false,
+    },
+    {
+      name: ((dict.admin as Record<string, unknown>).status as string) || "系统状态",
+      href: `/${locale}/admin/status`,
+      icon: Activity,
+      superAdminOnly: true, // 仅超管
     },
     {
       name: dict.admin.emailLogs,

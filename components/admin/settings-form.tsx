@@ -68,6 +68,7 @@ type SystemConfig = {
   reviewTemplatesReject: string[]
   reviewTemplatesDispute: string[]
   qqGroups: QQGroupConfig[]
+  inviteCodeUrlPrefix: string
   emailProvider: "env" | "api" | "smtp"
   selectedEmailApiConfigId: string | null
   smtpHost: string | null
@@ -803,6 +804,31 @@ export function AdminSettingsForm({ locale, dict }: AdminSettingsFormProps) {
                         />
                         <p className="mt-1.5 text-xs text-muted-foreground">
                           {t.systemConfigEssayHintDesc}
+                        </p>
+                      </div>
+                    )}
+
+                    {systemConfig && (
+                      <div className="pt-6 border-t">
+                        <div className="flex items-center gap-2 mb-3">
+                          <LinkIcon className="h-4 w-4 text-muted-foreground" />
+                          <Label>{t.inviteCodeUrlPrefix || "邀请码链接前缀"}</Label>
+                        </div>
+                        <Input
+                          value={systemConfig.inviteCodeUrlPrefix}
+                          onChange={(e) =>
+                            setSystemConfig({
+                              ...systemConfig,
+                              inviteCodeUrlPrefix: e.target.value,
+                            })
+                          }
+                          placeholder={
+                            t.inviteCodeUrlPrefixPlaceholder || "https://example.com/register?code="
+                          }
+                        />
+                        <p className="mt-1.5 text-xs text-muted-foreground">
+                          {t.inviteCodeUrlPrefixDesc ||
+                            "邀请码展示时会自动拼接此前缀，方便用户点击直接跳转注册"}
                         </p>
                       </div>
                     )}

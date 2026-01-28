@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server"
 import { readFileSync } from "fs"
 import { join } from "path"
+import { db } from "@/lib/db"
+import { isRedisAvailable } from "@/lib/redis"
+import { isEmailConfigured } from "@/lib/email/mailer"
+import { features } from "@/lib/features"
+import { getSession } from "@/lib/auth/session"
 
 export const runtime = "nodejs"
 
@@ -30,11 +35,122 @@ function getBuildInfo() {
   }
 }
 
+type ServiceStatus = "up" | "down" | "degraded" | "unconfigured"
+
+interface ServiceInfo {
+  status: ServiceStatus
+  latency?: number
+}
+
+// 检测数据库状态
+async function checkDatabase(): Promise<ServiceInfo> {
+  if (!db) {
+    return { status: "unconfigured" }
+  }
+  const start = Date.now()
+  try {
+    await db.$queryRaw`SELECT 1`
+    return { status: "up", latency: Date.now() - start }
+  } catch {
+    return { status: "down" }
+  }
+}
+
+// 检测 Redis 状态
+async function checkRedis(): Promise<ServiceInfo> {
+  if (!features.redis) {
+    return { status: "unconfigured" }
+  }
+  const start = Date.now()
+  try {
+    const available = await isRedisAvailable()
+    return { status: available ? "up" : "down", latency: Date.now() - start }
+  } catch {
+    return { status: "down" }
+  }
+}
+
+// 检测邮件服务状态
+async function checkEmail(): Promise<ServiceInfo> {
+  try {
+    const configured = await isEmailConfigured()
+    return { status: configured ? "up" : "unconfigured" }
+  } catch {
+    return { status: "down" }
+  }
+}
+
+// 检测 Turnstile 配置
+function checkTurnstile(): ServiceInfo {
+  const configured = !!process.env.TURNSTILE_SECRET_KEY
+  return { status: configured ? "up" : "unconfigured" }
+}
+
+// 检测 OAuth GitHub
+function checkOAuthGitHub(): ServiceInfo {
+  return { status: features.oauth.github ? "up" : "unconfigured" }
+}
+
+// 检测 OAuth Google
+function checkOAuthGoogle(): ServiceInfo {
+  return { status: features.oauth.google ? "up" : "unconfigured" }
+}
+
+// 检测 Cloudflare AI
+function checkCloudflareAI(): ServiceInfo {
+  return { status: features.cloudflareAI ? "up" : "unconfigured" }
+}
+
+// 检测文件上传
+function checkFileUpload(): ServiceInfo {
+  return { status: features.fileUpload ? "up" : "unconfigured" }
+}
+
+// 计算整体状态
+function computeOverallStatus(services: Record<string, ServiceInfo>): "ok" | "degraded" | "down" {
+  const statuses = Object.values(services)
+  // 核心服务
+  const coreServices = ["database"]
+  const coreDown = coreServices.some((key) => services[key]?.status === "down")
+  if (coreDown) return "down"
+
+  // 任意服务 down 则 degraded
+  const anyDown = statuses.some((s) => s.status === "down")
+  if (anyDown) return "degraded"
+
+  return "ok"
+}
+
 export async function GET() {
   const buildInfo = getBuildInfo()
 
-  return NextResponse.json({
-    status: "ok",
+  // 检测所有服务
+  const [database, redis, email] = await Promise.all([checkDatabase(), checkRedis(), checkEmail()])
+
+  const services: Record<string, ServiceInfo> = {
+    database,
+    redis,
+    email,
+    turnstile: checkTurnstile(),
+    oauthGithub: checkOAuthGitHub(),
+    oauthGoogle: checkOAuthGoogle(),
+    cloudflareAI: checkCloudflareAI(),
+    fileUpload: checkFileUpload(),
+  }
+
+  const overallStatus = computeOverallStatus(services)
+
+  // 检查是否是管理员（仅管理员可见服务详情）
+  let isAdminUser = false
+  try {
+    const session = await getSession()
+    isAdminUser = session?.user?.role === "ADMIN" || session?.user?.role === "SUPER_ADMIN"
+  } catch {
+    // 非管理员
+  }
+
+  const baseResponse = {
+    status: overallStatus,
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
     environment: process.env.NODE_ENV,
@@ -51,5 +167,15 @@ export async function GET() {
         branch: buildInfo.git.branch,
       },
     },
-  })
+  }
+
+  // 管理员可见完整服务详情
+  if (isAdminUser) {
+    return NextResponse.json({
+      ...baseResponse,
+      services,
+    })
+  }
+
+  return NextResponse.json(baseResponse)
 }

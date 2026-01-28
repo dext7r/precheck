@@ -355,7 +355,10 @@ export function RegisterForm({ locale, dict, oauthProviders }: RegisterFormProps
                 variant="outline"
                 onClick={handleSendCode}
                 disabled={
-                  sendingCode || countdown > 0 || isLoading || (TURNSTILE_ENABLED && !turnstileToken)
+                  sendingCode ||
+                  countdown > 0 ||
+                  isLoading ||
+                  (TURNSTILE_ENABLED && !turnstileToken)
                 }
                 className="whitespace-nowrap"
               >
