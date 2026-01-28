@@ -1416,6 +1416,7 @@
     "inviteCodeExpiring2h": "2 小时内",
     "inviteCodeExpiring1h": "1 小时内",
     "inviteCodeAssignedTo": "分配给",
+    "inviteCodeCreatedBy": "提交人",
     "inviteCodeUsedBy": "使用记录",
     "inviteCodeUsedAt": "使用时间",
     "inviteCodeCreatedAt": "创建时间",

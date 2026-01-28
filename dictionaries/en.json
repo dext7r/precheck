@@ -1420,6 +1420,7 @@
     "inviteCodeExpiring2h": "Within 2 hours",
     "inviteCodeExpiring1h": "Within 1 hour",
     "inviteCodeAssignedTo": "Assigned To",
+    "inviteCodeCreatedBy": "Created By",
     "inviteCodeUsedBy": "Usage",
     "inviteCodeUsedAt": "Used At",
     "inviteCodeCreatedAt": "Created At",

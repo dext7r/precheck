@@ -41,6 +41,7 @@ import {
   Ticket,
   Key,
   Users,
+  UserPlus,
   Clock,
   AlertTriangle,
   Search,
@@ -107,6 +108,7 @@ type InviteCodeRecord = {
   } | null
   assignedBy: { id: string; name: string | null; email: string } | null
   usedBy: { id: string; name: string | null; email: string } | null
+  createdBy: { id: string; name: string | null; email: string } | null
   issuedToUser: { id: string; name: string | null; email: string } | null
 }
 
@@ -773,7 +775,7 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
       {
         key: "usedAt",
         label: t.inviteCodeUsedAt || "使用时间",
-        width: "16%",
+        width: "14%",
         sortable: true,
         render: (record) =>
           record.usedAt ? (
@@ -786,9 +788,25 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
           ),
       },
       {
+        key: "createdBy",
+        label: t.inviteCodeCreatedBy || "提交人",
+        width: "12%",
+        render: (record) =>
+          record.createdBy ? (
+            <div className="flex items-center gap-1.5">
+              <UserPlus className="h-3.5 w-3.5 text-muted-foreground" />
+              <span className="truncate text-xs text-muted-foreground">
+                {record.createdBy.name || record.createdBy.email}
+              </span>
+            </div>
+          ) : (
+            <span className="text-xs text-muted-foreground">-</span>
+          ),
+      },
+      {
         key: "assignedTo",
         label: t.inviteCodeAssignedTo,
-        width: "20%",
+        width: "14%",
         render: (record) =>
           record.preApplication ? (
             <div className="min-w-0">

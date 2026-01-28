@@ -13,6 +13,7 @@ import {
   XCircle,
   AlertTriangle,
   User,
+  UserCheck,
   Mail,
   FileText,
   Eye,
@@ -775,7 +776,7 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
       {
         key: "createdAt",
         label: t.preApplicationCreatedAt,
-        width: "20%",
+        width: "15%",
         sortable: true,
         render: (record) => (
           <div className="flex items-center gap-1.5">
@@ -787,9 +788,25 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
         ),
       },
       {
+        key: "reviewedBy",
+        label: t.preApplicationReviewer,
+        width: "12%",
+        render: (record) =>
+          record.reviewedBy ? (
+            <div className="flex items-center gap-1.5">
+              <UserCheck className="h-3.5 w-3.5 text-muted-foreground" />
+              <span className="truncate text-xs text-muted-foreground">
+                {record.reviewedBy.name || record.reviewedBy.email}
+              </span>
+            </div>
+          ) : (
+            <span className="text-xs text-muted-foreground">-</span>
+          ),
+      },
+      {
         key: "actions",
         label: t.actions,
-        width: "14%",
+        width: "12%",
         render: (record) => (
           <Button
             variant={
