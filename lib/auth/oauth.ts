@@ -76,6 +76,60 @@ export async function getGitHubProfile(code: string): Promise<OAuthProfile | nul
   }
 }
 
+// Linux.do OAuth (Discourse-based)
+export async function getLinuxDoAuthUrl(): Promise<string | null> {
+  if (!features.oauth.linuxdo) {
+    return null
+  }
+  const params = new URLSearchParams({
+    client_id: authConfig.providers.linuxdo.clientId,
+    redirect_uri: `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/callback/linuxdo`,
+    response_type: "code",
+    scope: "read",
+  })
+  return `https://connect.linux.do/oauth2/authorize?${params}`
+}
+
+export async function getLinuxDoProfile(code: string): Promise<OAuthProfile | null> {
+  if (!features.oauth.linuxdo) {
+    return null
+  }
+  try {
+    // 获取 access token
+    const tokenRes = await fetch("https://connect.linux.do/oauth2/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        client_id: authConfig.providers.linuxdo.clientId,
+        client_secret: authConfig.providers.linuxdo.clientSecret,
+        code,
+        grant_type: "authorization_code",
+        redirect_uri: `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/callback/linuxdo`,
+      }),
+    })
+    const tokenData = await tokenRes.json()
+
+    if (!tokenData.access_token) return null
+
+    // 获取用户信息
+    const userRes = await fetch("https://connect.linux.do/api/user", {
+      headers: {
+        Authorization: `Bearer ${tokenData.access_token}`,
+      },
+    })
+    const userData = await userRes.json()
+
+    return {
+      id: String(userData.id),
+      email: userData.email,
+      name: userData.name || userData.username,
+      avatar: userData.avatar_url,
+    }
+  } catch {
+    return null
+  }
+}
+
 // Google OAuth
 export async function getGoogleAuthUrl(): Promise<string | null> {
   if (!features.oauth.google) {

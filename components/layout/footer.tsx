@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { ExternalLink, MessageCircle, Github, Rss, FileCode2 } from "lucide-react"
+import { ExternalLink, MessageCircle, Github, Rss, FileCode2, History } from "lucide-react"
 import type { Dictionary } from "@/lib/i18n/get-dictionary"
 import type { Locale } from "@/lib/i18n/config"
 import { getQQGroups } from "@/lib/qq-groups"
@@ -13,6 +13,7 @@ interface FooterProps {
 export async function Footer({ dict, locale }: FooterProps) {
   const navLinks = [
     { name: dict.footer.docs, href: `/${locale}/docs` },
+    { name: dict.footer.changelog, href: `/${locale}/changelog` },
     { name: dict.footer.privacy, href: `/${locale}/privacy` },
     { name: dict.footer.terms, href: `/${locale}/terms` },
     { name: dict.footer.license, href: `/${locale}/license` },
@@ -24,6 +25,7 @@ export async function Footer({ dict, locale }: FooterProps) {
     { name: "Atom", href: "/atom.xml" },
     { name: "Robots", href: "/robots.txt" },
     { name: "LLMs", href: "/llms.txt" },
+    { name: dict.footer.changelog, href: `/${locale}/changelog`, icon: "history" },
   ]
 
   // 从数据库获取 QQ 群配置，根据语言显示对应名称
@@ -109,11 +111,19 @@ export async function Footer({ dict, locale }: FooterProps) {
                 <a
                   key={link.name}
                   href={link.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  target={
+                    link.href.startsWith("/") && !link.href.includes(".") ? undefined : "_blank"
+                  }
+                  rel={
+                    link.href.startsWith("/") && !link.href.includes(".")
+                      ? undefined
+                      : "noopener noreferrer"
+                  }
                   className="inline-flex items-center gap-1 rounded-md border border-border bg-background px-2 py-1 text-xs text-muted-foreground transition-colors hover:border-primary hover:text-primary"
                 >
-                  {link.name === "RSS" || link.name === "Atom" ? (
+                  {"icon" in link && link.icon === "history" ? (
+                    <History className="h-3 w-3" />
+                  ) : link.name === "RSS" || link.name === "Atom" ? (
                     <Rss className="h-3 w-3" />
                   ) : (
                     <FileCode2 className="h-3 w-3" />

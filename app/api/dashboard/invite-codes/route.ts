@@ -84,7 +84,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST: 用户贡献邀请码（单个或批量）
+// POST: 用户贡献邀请码（单个或批量）- 仅 Linux.do 用户
 export async function POST(request: NextRequest) {
   try {
     const user = await getCurrentUser()
@@ -95,6 +95,16 @@ export async function POST(request: NextRequest) {
 
     if (!db) {
       return createApiErrorResponse(request, ApiErrorKeys.databaseNotConfigured, { status: 503 })
+    }
+
+    // 检查用户是否绑定了 Linux.do 账号
+    const linuxdoAccount = await db.account.findFirst({
+      where: { userId: user.id, provider: "linuxdo" },
+    })
+    if (!linuxdoAccount) {
+      return createApiErrorResponse(request, ApiErrorKeys.dashboard.inviteCodes.linuxdoRequired, {
+        status: 403,
+      })
     }
 
     const body = await request.json()

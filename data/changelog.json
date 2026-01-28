@@ -6,6 +6,14 @@
       "changes": [
         {
           "type": "added",
+          "content": "新增 Linux.do OAuth 登录支持，可直接登录、绑定现有账号或创建新用户"
+        },
+        {
+          "type": "changed",
+          "content": "贡献邀请码功能仅对绑定 Linux.do 账号的用户开放"
+        },
+        {
+          "type": "added",
           "content": "管理后台新增系统状态监控页面，实时检测各依赖服务健康状态"
         },
         {

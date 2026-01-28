@@ -8,6 +8,7 @@ export const features = {
   oauth: {
     github: !!(process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET),
     google: !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET),
+    linuxdo: !!(process.env.LINUXDO_CLIENT_ID && process.env.LINUXDO_CLIENT_SECRET),
   },
   // 数据库
   database: !!process.env.DATABASE_URL,
@@ -31,13 +32,16 @@ export function getEnabledOAuthProviders() {
   if (features.oauth.google) {
     providers.push({ id: "google", name: "Google" })
   }
+  if (features.oauth.linuxdo) {
+    providers.push({ id: "linuxdo", name: "Linux.do" })
+  }
 
   return providers
 }
 
 // 检查是否有任何 OAuth 提供商启用
 export function hasAnyOAuthProvider() {
-  return features.oauth.github || features.oauth.google
+  return features.oauth.github || features.oauth.google || features.oauth.linuxdo
 }
 
 // 检查认证功能是否完整可用

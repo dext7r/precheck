@@ -1,13 +1,33 @@
 import { db } from "@/lib/db"
 import { getBaseUrl, siteConfig } from "@/lib/seo"
 import { defaultLocale, locales } from "@/lib/i18n/config"
+import { readFile } from "fs/promises"
+import { join } from "path"
 
 export const revalidate = 3600
+
+interface ChangelogVersion {
+  version: string
+  date: string | null
+  changes: Array<{ type: string; content: string }>
+}
+
+async function getChangelog(): Promise<ChangelogVersion[]> {
+  try {
+    const filePath = join(process.cwd(), "data/changelog.json")
+    const content = await readFile(filePath, "utf-8")
+    const data = JSON.parse(content)
+    return data.versions || []
+  } catch {
+    return []
+  }
+}
 
 // RSS 2.0 规范完整实现
 export async function GET() {
   const baseUrl = getBaseUrl()
   const posts = await getPublishedPosts()
+  const changelog = await getChangelog()
   const buildDate = new Date().toUTCString()
   const currentYear = new Date().getFullYear()
 
@@ -105,6 +125,36 @@ ${categories.map((cat) => `    <category>${cat}</category>`).join("\n")}
       <category>Examples</category>
       <dc:creator>community</dc:creator>
     </item>
+
+    <item>
+      <title>更新日志 - Changelog</title>
+      <link>${baseUrl}/zh/changelog</link>
+      <guid isPermaLink="true">${baseUrl}/zh/changelog</guid>
+      <pubDate>${changelog[0]?.date ? new Date(changelog[0].date).toUTCString() : buildDate}</pubDate>
+      <description>查看系统更新记录，了解新功能和改进。当前版本：${changelog[0]?.version || "1.0.0"}</description>
+      <category>Changelog</category>
+      <dc:creator>community</dc:creator>
+    </item>
+
+    <!-- 更新日志版本 -->
+${changelog
+  .slice(0, 5)
+  .map(
+    (v) => `    <item>
+      <title>版本 ${v.version} - Version ${v.version}</title>
+      <link>${baseUrl}/zh/changelog#${v.version}</link>
+      <guid isPermaLink="true">${baseUrl}/zh/changelog#${v.version}</guid>
+      <pubDate>${v.date ? new Date(v.date).toUTCString() : buildDate}</pubDate>
+      <description>${v.changes
+        .slice(0, 3)
+        .map((c) => `[${c.type}] ${c.content}`)
+        .join("; ")}${v.changes.length > 3 ? "..." : ""}</description>
+      <category>Changelog</category>
+      <category>Release</category>
+      <dc:creator>community</dc:creator>
+    </item>`,
+  )
+  .join("\n")}
 
     <!-- 动态文章 -->
 ${posts

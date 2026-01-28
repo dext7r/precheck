@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -44,6 +45,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Send,
+  AlertCircle,
+  Link2,
 } from "lucide-react"
 import type { Dictionary } from "@/lib/i18n/get-dictionary"
 import type { Locale } from "@/lib/i18n/config"
@@ -100,9 +103,27 @@ export function ContributeCodesManager({ locale, dict }: ContributeCodesManagerP
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(0)
+  const [hasLinuxdo, setHasLinuxdo] = useState<boolean | null>(null)
   const pageSize = 20
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize))
+
+  // 检查用户是否绑定了 Linux.do 账号
+  useEffect(() => {
+    async function checkLinuxdo() {
+      try {
+        const res = await fetch("/api/auth/me")
+        if (res.ok) {
+          const data = await res.json()
+          const linked = data.user?.linkedProviders || []
+          setHasLinuxdo(linked.includes("linuxdo"))
+        }
+      } catch {
+        setHasLinuxdo(false)
+      }
+    }
+    checkLinuxdo()
+  }, [])
 
   const fetchRecords = useCallback(async (p: number = 1) => {
     try {
@@ -321,8 +342,26 @@ export function ContributeCodesManager({ locale, dict }: ContributeCodesManagerP
 
   return (
     <div className="space-y-6">
+      {/* Linux.do 绑定提示 */}
+      {hasLinuxdo === false && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>{t.contributeLinuxdoRequired}</AlertTitle>
+          <AlertDescription className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <span>{t.contributeLinuxdoRequiredDesc}</span>
+            <Button asChild variant="outline" size="sm" className="shrink-0">
+              {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+              <a href="/api/auth/linuxdo">
+                <Link2 className="mr-2 h-4 w-4" />
+                {t.contributeLinuxdoLink}
+              </a>
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* 贡献表单 */}
-      <Card>
+      <Card className={hasLinuxdo === false ? "opacity-50 pointer-events-none" : ""}>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Gift className="h-5 w-5" />

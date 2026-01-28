@@ -1,13 +1,33 @@
 import { db } from "@/lib/db"
 import { getBaseUrl, siteConfig } from "@/lib/seo"
 import { defaultLocale } from "@/lib/i18n/config"
+import { readFile } from "fs/promises"
+import { join } from "path"
 
 export const revalidate = 3600
+
+interface ChangelogVersion {
+  version: string
+  date: string | null
+  changes: Array<{ type: string; content: string }>
+}
+
+async function getChangelog(): Promise<ChangelogVersion[]> {
+  try {
+    const filePath = join(process.cwd(), "data/changelog.json")
+    const content = await readFile(filePath, "utf-8")
+    const data = JSON.parse(content)
+    return data.versions || []
+  } catch {
+    return []
+  }
+}
 
 // Atom 1.0 规范完整实现
 export async function GET() {
   const baseUrl = getBaseUrl()
   const posts = await getPublishedPosts()
+  const changelog = await getChangelog()
   const staticPages = getStaticPages(baseUrl)
   const allEntries = [...staticPages, ...posts]
   const updated = allEntries[0]?.updatedAt || new Date()
@@ -176,6 +196,43 @@ ${categories.map((cat) => `  <category term="${cat.term}" label="${cat.label}"/>
     <category term="legal" label="Legal"/>
     <summary type="text">MIT 许可证 - 开源且免费使用。</summary>
   </entry>
+
+  <entry>
+    <id>${baseUrl}/zh/changelog</id>
+    <title type="text">更新日志 - Changelog</title>
+    <link href="${baseUrl}/zh/changelog" rel="alternate" type="text/html"/>
+    <link href="${baseUrl}/en/changelog" rel="alternate" type="text/html" hreflang="en"/>
+    <published>${changelog[0]?.date ? new Date(changelog[0].date).toISOString() : new Date().toISOString()}</published>
+    <updated>${changelog[0]?.date ? new Date(changelog[0].date).toISOString() : new Date().toISOString()}</updated>
+    <author>
+      <name>community</name>
+    </author>
+    <category term="changelog" label="Changelog"/>
+    <summary type="text">查看系统更新记录，了解新功能和改进。当前版本：${changelog[0]?.version || "1.0.0"}</summary>
+  </entry>
+
+  <!-- 更新日志版本条目 -->
+${changelog
+  .slice(0, 5)
+  .map(
+    (v) => `  <entry>
+    <id>${baseUrl}/zh/changelog#${v.version}</id>
+    <title type="text">版本 ${v.version} - Version ${v.version}</title>
+    <link href="${baseUrl}/zh/changelog#${v.version}" rel="alternate" type="text/html"/>
+    <published>${v.date ? new Date(v.date).toISOString() : new Date().toISOString()}</published>
+    <updated>${v.date ? new Date(v.date).toISOString() : new Date().toISOString()}</updated>
+    <author>
+      <name>community</name>
+    </author>
+    <category term="changelog" label="Changelog"/>
+    <category term="release" label="Release"/>
+    <summary type="text">${v.changes
+      .slice(0, 3)
+      .map((c) => `[${c.type}] ${c.content}`)
+      .join("; ")}${v.changes.length > 3 ? "..." : ""}</summary>
+  </entry>`,
+  )
+  .join("\n")}
 
   <!-- 动态文章条目 -->
 ${posts

@@ -15,6 +15,10 @@ export const authConfig = {
       clientId: process.env.GOOGLE_CLIENT_ID || "",
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
     },
+    linuxdo: {
+      clientId: process.env.LINUXDO_CLIENT_ID || "",
+      clientSecret: process.env.LINUXDO_CLIENT_SECRET || "",
+    },
   },
   // 密码配置
   password: {
@@ -38,6 +42,11 @@ export const oauthProviders = [
     id: "google",
     name: "Google",
     icon: "google",
+  },
+  {
+    id: "linuxdo",
+    name: "Linux.do",
+    icon: "linuxdo",
   },
 ] as const
 

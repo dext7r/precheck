@@ -13,6 +13,7 @@ export const ApiErrorKeys = {
       failedToGenerateUrl: "apiErrors.auth.oauth.failedToGenerateUrl",
       githubNotConfigured: "apiErrors.auth.oauth.githubNotConfigured",
       googleNotConfigured: "apiErrors.auth.oauth.googleNotConfigured",
+      linuxdoNotConfigured: "apiErrors.auth.oauth.linuxdoNotConfigured",
     },
     logout: {
       failed: "apiErrors.auth.logout.failed",
@@ -169,6 +170,7 @@ export const ApiErrorKeys = {
       expired: "apiErrors.dashboard.inviteCodes.expired",
       userNotFound: "apiErrors.dashboard.inviteCodes.userNotFound",
       cannotSendToSelf: "apiErrors.dashboard.inviteCodes.cannotSendToSelf",
+      linuxdoRequired: "apiErrors.dashboard.inviteCodes.linuxdoRequired",
     },
     applyAdmin: {
       failed: "apiErrors.dashboard.applyAdmin.failed",

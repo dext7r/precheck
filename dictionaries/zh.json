@@ -78,7 +78,8 @@
         "disabled": "OAuth 登录已禁用",
         "failedToGenerateUrl": "生成认证地址失败",
         "githubNotConfigured": "未配置 GitHub OAuth",
-        "googleNotConfigured": "未配置 Google OAuth"
+        "googleNotConfigured": "未配置 Google OAuth",
+        "linuxdoNotConfigured": "未配置 Linux.do OAuth"
       },
       "logout": {
         "failed": "登出失败"
@@ -247,7 +248,8 @@
         "alreadySent": "邀请码已发送给其他用户",
         "expired": "邀请码已过期",
         "userNotFound": "未找到目标用户",
-        "cannotSendToSelf": "不能发送给自己"
+        "cannotSendToSelf": "不能发送给自己",
+        "linuxdoRequired": "仅 Linux.do 用户可以贡献邀请码，请先绑定 Linux.do 账号"
       },
       "applyAdmin": {
         "failed": "申请提交失败",
@@ -378,6 +380,7 @@
     "examples": "示例",
     "license": "许可协议",
     "docs": "文档",
+    "changelog": "更新日志",
     "sitemap": "站点地图",
     "navigation": "导航",
     "community": "社区",
@@ -891,6 +894,9 @@
     "accountDeleteFailed": "删除账户失败",
     "contribute": "贡献邀请码",
     "contributeDesc": "分享您的邀请码帮助社区成长",
+    "contributeLinuxdoRequired": "需要绑定 Linux.do 账号",
+    "contributeLinuxdoRequiredDesc": "仅 Linux.do 用户可以贡献邀请码，请先绑定您的 Linux.do 账号。",
+    "contributeLinuxdoLink": "绑定 Linux.do",
     "contributeSingle": "单个添加",
     "contributeBatch": "批量添加",
     "contributePlaceholder": "输入邀请码或完整链接",

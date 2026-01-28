@@ -80,7 +80,8 @@
         "disabled": "OAuth login is disabled",
         "failedToGenerateUrl": "Failed to generate auth URL",
         "githubNotConfigured": "GitHub OAuth not configured",
-        "googleNotConfigured": "Google OAuth not configured"
+        "googleNotConfigured": "Google OAuth not configured",
+        "linuxdoNotConfigured": "Linux.do OAuth not configured"
       },
       "logout": {
         "failed": "Logout failed"
@@ -249,7 +250,8 @@
         "alreadySent": "Invite code has been sent to another user",
         "expired": "Invite code has expired",
         "userNotFound": "User not found",
-        "cannotSendToSelf": "Cannot send to yourself"
+        "cannotSendToSelf": "Cannot send to yourself",
+        "linuxdoRequired": "Only Linux.do users can contribute invite codes. Please link your Linux.do account first"
       },
       "applyAdmin": {
         "failed": "Failed to submit admin application",
@@ -380,6 +382,7 @@
     "examples": "Examples",
     "license": "License",
     "docs": "Docs",
+    "changelog": "Changelog",
     "sitemap": "Sitemap",
     "navigation": "Navigation",
     "community": "Community",
@@ -897,6 +900,9 @@
     "accountDeleteFailed": "Failed to delete account",
     "contribute": "Contribute Codes",
     "contributeDesc": "Share your invite codes to help the community grow",
+    "contributeLinuxdoRequired": "Linux.do Account Required",
+    "contributeLinuxdoRequiredDesc": "Only Linux.do users can contribute invite codes. Please link your Linux.do account first.",
+    "contributeLinuxdoLink": "Link Linux.do",
     "contributeSingle": "Single",
     "contributeBatch": "Batch",
     "contributePlaceholder": "Enter invite code or full URL",

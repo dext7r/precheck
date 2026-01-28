@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { Github, Mail, Loader2 } from "lucide-react"
+import { Github, Mail, Loader2, MessageCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 interface OAuthButtonsProps {
@@ -17,6 +17,7 @@ interface OAuthButtonsProps {
 const providerIcons: Record<string, React.ComponentType<{ className?: string }>> = {
   github: Github,
   google: Mail,
+  linuxdo: MessageCircle,
 }
 
 export function OAuthButtons({ providers, isLoading, onOAuth, dict }: OAuthButtonsProps) {
