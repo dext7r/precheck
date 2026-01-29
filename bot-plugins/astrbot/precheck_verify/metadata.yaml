@@ -1,0 +1,5 @@
+name: precheck_verify
+desc: QQ群验证码生成插件 - 用户发送 /验证码 获取网站访问验证码
+version: 1.0.0
+author: precheck
+repo: ""
