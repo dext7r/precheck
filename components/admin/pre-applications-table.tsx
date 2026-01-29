@@ -647,7 +647,11 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
       toast.error(t.reviewGuidanceRequired)
       return
     }
-    // 审核通过时邀请码可选（缺码时允许无码通过）
+    // 审核通过时必须填写邀请码
+    if (reviewAction === "APPROVE" && !inviteCode.trim()) {
+      toast.error(t.inviteCodeRequired || "通过审核需要填写邀请码")
+      return
+    }
     setSubmitting(true)
     try {
       const payload: Record<string, string> = {

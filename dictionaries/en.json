@@ -1291,6 +1291,7 @@
     "archived": "Archived",
     "guidance": "Guidance",
     "reviewGuidanceRequired": "Guidance is required",
+    "inviteCodeRequired": "Invite code is required for approval",
     "inviteCode": "Invite Code",
     "inviteExpiresAt": "Expiry",
     "reviewSubmit": "Submit Review",
