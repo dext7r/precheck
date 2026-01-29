@@ -84,7 +84,7 @@ type PreApplicationRecord = {
   registerEmail: string
   queryToken: string | null
   group: string
-  status: "PENDING" | "APPROVED" | "REJECTED" | "DISPUTED" | "ARCHIVED"
+  status: "PENDING" | "APPROVED" | "REJECTED" | "DISPUTED" | "ARCHIVED" | "PENDING_REVIEW" | "ON_HOLD"
   guidance: string | null
   reviewedAt: string | null
   updatedAt: string
@@ -427,6 +427,18 @@ export function PreApplicationForm({
       icon: Clock,
       color: "text-slate-600 dark:text-slate-400",
       bg: "bg-slate-500/10",
+    },
+    PENDING_REVIEW: {
+      label: t.status.pendingReview || "待复核",
+      icon: Clock,
+      color: "text-blue-600 dark:text-blue-400",
+      bg: "bg-blue-500/10",
+    },
+    ON_HOLD: {
+      label: t.status.onHold || "暂缓处理",
+      icon: Clock,
+      color: "text-purple-600 dark:text-purple-400",
+      bg: "bg-purple-500/10",
     },
   }
 

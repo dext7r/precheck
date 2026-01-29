@@ -14,7 +14,7 @@ export const getQQGroups = cache(async (): Promise<QQGroupConfig[]> => {
       select: { qqGroups: true },
     })
 
-    if (!settings?.qqGroups || !Array.isArray(settings.qqGroups)) {
+    if (!settings?.qqGroups || !Array.isArray(settings.qqGroups) || settings.qqGroups.length === 0) {
       return defaultQQGroups.filter((g) => g.enabled)
     }
 
@@ -24,3 +24,6 @@ export const getQQGroups = cache(async (): Promise<QQGroupConfig[]> => {
     return defaultQQGroups.filter((g) => g.enabled)
   }
 })
+
+// 别名导出供其他模块使用
+export const fetchQQGroups = getQQGroups

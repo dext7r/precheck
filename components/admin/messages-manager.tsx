@@ -456,7 +456,7 @@ export function AdminMessagesManager({ locale, dict }: AdminMessagesManagerProps
           <div className="min-w-0">
             <p className="truncate font-medium">{item.title}</p>
             <p className="truncate text-xs text-muted-foreground">
-              {item.createdBy.name || item.createdBy.email}
+              {item.createdBy?.name || item.createdBy?.email}
             </p>
           </div>
         </div>
@@ -700,7 +700,7 @@ export function AdminMessagesManager({ locale, dict }: AdminMessagesManagerProps
                       <div className="min-w-0">
                         <p className="truncate font-medium">{item.title}</p>
                         <p className="text-xs text-muted-foreground">
-                          {item.createdBy.name || item.createdBy.email}
+                          {item.createdBy?.name || item.createdBy?.email}
                         </p>
                       </div>
                       <div

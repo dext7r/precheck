@@ -10,7 +10,8 @@ interface DuplicateRecord {
   id: string
   similarity: number
   essay: string
-  user: { name: string | null; email: string }
+  user: { name: string | null; email: string } | null
+  registerEmail: string
   createdAt: Date
   status: string
   aiReason?: string
@@ -56,6 +57,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
         essay: true,
         createdAt: true,
         status: true,
+        registerEmail: true,
         user: {
           select: {
             name: true,
@@ -114,6 +116,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
           similarity: Math.round(finalSimilarity),
           essay: record.essay.slice(0, 200) + (record.essay.length > 200 ? "..." : ""),
           user: record.user,
+          registerEmail: record.registerEmail,
           createdAt: record.createdAt,
           status: record.status,
           aiReason,

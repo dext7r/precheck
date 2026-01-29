@@ -984,7 +984,9 @@
       "approved": "已通过",
       "rejected": "已驳回",
       "disputed": "待补充",
-      "archived": "已归档"
+      "archived": "已归档",
+      "pendingReview": "待复核",
+      "onHold": "暂缓处理"
     },
     "fields": {
       "essay": "申请小作文",
@@ -1277,7 +1279,11 @@
     "reviewApprove": "通过",
     "reviewReject": "驳回",
     "reviewDispute": "标记有争议",
+    "reviewPendingReview": "提交复核",
+    "reviewOnHold": "暂缓处理",
     "disputed": "有争议",
+    "pendingReview": "待复核",
+    "onHold": "暂缓处理",
     "archived": "已归档",
     "guidance": "指导意见",
     "reviewGuidanceRequired": "请输入指导意见",
@@ -2051,5 +2057,75 @@
         "friendly": "友好社区"
       }
     }
+  },
+  "qqVerify": {
+    "title": "QQ 群验证",
+    "description": "请先在 QQ 群获取验证码，验证后即可提交预申请",
+    "qqNumber": "QQ 号",
+    "code": "验证码",
+    "submit": "验证",
+    "submitting": "验证中...",
+    "success": "验证成功，即将跳转...",
+    "howToGetCode": "如何获取验证码？",
+    "step1": "加入任意一个 QQ 群",
+    "step2": "在群内发送 /验证码",
+    "step3": "将机器人回复的验证码填入下方",
+    "errors": {
+      "invalidQQ": "请输入有效的 QQ 号",
+      "invalidCode": "请输入 6 位验证码",
+      "failed": "验证失败，请重试"
+    }
+  },
+  "guestApply": {
+    "title": "预申请",
+    "description": "填写以下信息提交预申请",
+    "fields": {
+      "essay": "申请小作文",
+      "essayHint": "建议 100 字左右，避免夸赞社区与版主，只说明你的目的与需求。",
+      "source": "来源",
+      "sourceOptional": "请选择来源（可选）",
+      "sourceDetail": "其他平台",
+      "registerEmail": "注册邮箱",
+      "registerEmailHint": "请使用常用邮箱，审核结果将发送到此邮箱",
+      "group": "选择 QQ 群"
+    },
+    "sources": {
+      "tieba": "贴吧",
+      "bilibili": "B站",
+      "douyin": "抖音",
+      "xiaohongshu": "小红书",
+      "other": "其他平台"
+    },
+    "submit": "提交申请",
+    "submitting": "提交中...",
+    "submitSuccess": "提交成功",
+    "submitFailed": "提交失败",
+    "alreadySubmitted": "你已经提交过申请",
+    "allowedDomainsTitle": "允许的邮箱域名",
+    "emailSuffixPlaceholder": "选择邮箱后缀",
+    "validation": {
+      "sourceDetailRequired": "请填写来源说明"
+    },
+    "status": {
+      "pending": "待审核",
+      "approved": "已通过",
+      "rejected": "已驳回",
+      "disputed": "待补充"
+    },
+    "reviewInfoTitle": "申请状态",
+    "submittedAt": "提交时间",
+    "review": {
+      "reviewer": "审核管理员",
+      "reviewedAt": "审核时间",
+      "guidance": "指导意见"
+    },
+    "invite": {
+      "code": "邀请码",
+      "expiresAt": "有效期",
+      "used": "已使用",
+      "unused": "未使用"
+    },
+    "queryToken": "查询凭证",
+    "queryTokenCopied": "查询链接已复制"
   }
 }
