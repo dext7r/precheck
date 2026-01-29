@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
 import { motion } from "framer-motion"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
@@ -259,6 +260,8 @@ export function GuestApplyForm({ locale, qqNumber, dict }: GuestApplyFormProps) 
     ON_HOLD: { label: status.onHold || "On Hold", icon: Clock, color: "text-purple-600 dark:text-purple-400", bg: "bg-purple-500/10" },
   }
 
+  const isValidEmail = formData.registerEmail.includes("@") && formData.registerEmail.split("@")[1]?.length > 0
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-16">
@@ -463,11 +466,11 @@ export function GuestApplyForm({ locale, qqNumber, dict }: GuestApplyFormProps) 
                   </SelectContent>
                 </Select>
                 {formData.source === "OTHER" && (
-                  <input
+                  <Input
                     value={formData.sourceDetail}
                     onChange={(e) => setFormData({ ...formData, sourceDetail: e.target.value })}
                     placeholder={dict.fields.sourceDetail}
-                    className="flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
+                    className="rounded-lg"
                   />
                 )}
               </div>
@@ -513,7 +516,7 @@ export function GuestApplyForm({ locale, qqNumber, dict }: GuestApplyFormProps) 
 
             <Button
               type="submit"
-              disabled={submitting || formData.essay.length < essayMinChars}
+              disabled={submitting || formData.essay.length < essayMinChars || !isValidEmail}
               className="w-full sm:w-auto"
               size="lg"
             >

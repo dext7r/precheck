@@ -57,7 +57,13 @@ export function QQVerifyForm({ locale, redirectUrl, dict }: QQVerifyFormProps) {
         body: JSON.stringify(formData),
       })
 
-      const data = await res.json()
+      let data
+      try {
+        data = await res.json()
+      } catch {
+        setError(dict.errors.failed)
+        return
+      }
 
       if (!res.ok) {
         setError(data.error || dict.errors.failed)
