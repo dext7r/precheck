@@ -1287,7 +1287,7 @@
     "archived": "已归档",
     "guidance": "指导意见",
     "reviewGuidanceRequired": "请输入指导意见",
-    "inviteCodeRequired": "通过审核需要填写邀请码",
+    "inviteCodeRequiredForApproval": "通过审核需要填写邀请码",
     "inviteCode": "邀请码",
     "inviteExpiresAt": "有效期",
     "reviewSubmit": "提交审核",

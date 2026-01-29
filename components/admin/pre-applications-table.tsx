@@ -649,7 +649,7 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
     }
     // 审核通过时必须填写邀请码
     if (reviewAction === "APPROVE" && !inviteCode.trim()) {
-      toast.error(t.inviteCodeRequired || "通过审核需要填写邀请码")
+      toast.error(t.inviteCodeRequiredForApproval || "通过审核需要填写邀请码")
       return
     }
     setSubmitting(true)

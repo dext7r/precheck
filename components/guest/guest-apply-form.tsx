@@ -155,8 +155,13 @@ export function GuestApplyForm({ locale, qqNumber, dict }: GuestApplyFormProps) 
         if (res.ok) {
           const data: QQGroupConfig[] = await res.json()
           setQqGroups(data)
-          if (data.length > 0 && !data.some((g) => g.id === formData.group)) {
-            setFormData((prev) => ({ ...prev, group: data[0].id }))
+          if (data.length > 0) {
+            setFormData((prev) => {
+              if (!data.some((g) => g.id === prev.group)) {
+                return { ...prev, group: data[0].id }
+              }
+              return prev
+            })
           }
         }
       } catch (error) {
