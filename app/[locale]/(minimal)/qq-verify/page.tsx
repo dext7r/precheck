@@ -11,9 +11,16 @@ interface QQVerifyPageProps {
   searchParams: Promise<{ redirect?: string }>
 }
 
+function isValidRedirectUrl(url: string | undefined): boolean {
+  if (!url) return false
+  // 只允许相对路径，防止开放重定向攻击
+  return url.startsWith('/') && !url.startsWith('//')
+}
+
 export default async function QQVerifyPage({ params, searchParams }: QQVerifyPageProps) {
   const { locale } = await params
   const { redirect: redirectUrl } = await searchParams
+  const safeRedirectUrl = isValidRedirectUrl(redirectUrl) ? redirectUrl : `/${locale}/guest/apply`
 
   const cookieStore = await cookies()
   const token = cookieStore.get(QQ_VERIFY_CONFIG.cookieName)?.value
@@ -21,7 +28,7 @@ export default async function QQVerifyPage({ params, searchParams }: QQVerifyPag
   if (token) {
     const { valid } = await validateAccessToken(token)
     if (valid) {
-      redirect(redirectUrl || `/${locale}/guest/apply`)
+      redirect(safeRedirectUrl)
     }
   }
 
@@ -29,7 +36,7 @@ export default async function QQVerifyPage({ params, searchParams }: QQVerifyPag
 
   return (
     <AuthLayout>
-      <QQVerifyForm locale={locale} redirectUrl={redirectUrl} dict={dict.qqVerify} />
+      <QQVerifyForm locale={locale} redirectUrl={safeRedirectUrl} dict={dict.qqVerify} />
     </AuthLayout>
   )
 }

@@ -67,49 +67,58 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "无效的群组" }, { status: 400 })
     }
 
-    const existing = await db.preApplication.count({ where: { qqNumber } })
-    if (existing > 0) {
-      return NextResponse.json({ error: "该 QQ 号已经提交过申请" }, { status: 409 })
-    }
-
     const queryToken = await generateUniqueQueryToken()
 
-    const record = await db.$transaction(async (tx) => {
-      const preApp = await tx.preApplication.create({
-        data: {
-          qqNumber,
-          essay,
-          source: data.source ?? null,
-          sourceDetail: data.source === "OTHER" ? data.sourceDetail?.trim() || null : null,
-          registerEmail,
-          queryToken,
-          group: data.group,
-          version: 1,
-          resubmitCount: 0,
-        },
-        include: {
-          reviewedBy: { select: { id: true, name: true, email: true } },
-          inviteCode: {
-            select: { id: true, code: true, expiresAt: true, usedAt: true, assignedAt: true },
+    let record
+    try {
+      record = await db.$transaction(async (tx) => {
+        // 在事务中检查，防止竞态条件
+        const existing = await tx.preApplication.count({ where: { qqNumber } })
+        if (existing > 0) {
+          throw new Error("DUPLICATE_QQ")
+        }
+
+        const preApp = await tx.preApplication.create({
+          data: {
+            qqNumber,
+            essay,
+            source: data.source ?? null,
+            sourceDetail: data.source === "OTHER" ? data.sourceDetail?.trim() || null : null,
+            registerEmail,
+            queryToken,
+            group: data.group,
+            version: 1,
+            resubmitCount: 0,
           },
-        },
-      })
+          include: {
+            reviewedBy: { select: { id: true, name: true, email: true } },
+            inviteCode: {
+              select: { id: true, code: true, expiresAt: true, usedAt: true, assignedAt: true },
+            },
+          },
+        })
 
-      await tx.preApplicationVersion.create({
-        data: {
-          preApplicationId: preApp.id,
-          version: 1,
-          essay,
-          source: data.source ?? null,
-          sourceDetail: data.source === "OTHER" ? data.sourceDetail?.trim() || null : null,
-          registerEmail,
-          group: data.group,
-          status: "PENDING",
-        },
-      })
+        await tx.preApplicationVersion.create({
+          data: {
+            preApplicationId: preApp.id,
+            version: 1,
+            essay,
+            source: data.source ?? null,
+            sourceDetail: data.source === "OTHER" ? data.sourceDetail?.trim() || null : null,
+            registerEmail,
+            group: data.group,
+            status: "PENDING",
+          },
+        })
 
-      return preApp
-    })
+        return preApp
+      })
+    } catch (err) {
+      if (err instanceof Error && err.message === "DUPLICATE_QQ") {
+        return NextResponse.json({ error: "该 QQ 号已经提交过申请" }, { status: 409 })
+      }
+      throw err
+    }
 
     await writeAuditLog(db, {
       action: "GUEST_PRE_APPLICATION_SUBMIT",

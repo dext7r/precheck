@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createQQVerifyCode } from "@/lib/qq-verify"
 
-const BOT_SECRET = process.env.QQ_BOT_SECRET || "precheck-bot-secret-2024"
+const BOT_SECRET = process.env.QQ_BOT_SECRET
 
 /**
  * POST /api/qq-bot/generate-code
@@ -9,6 +9,11 @@ const BOT_SECRET = process.env.QQ_BOT_SECRET || "precheck-bot-secret-2024"
  */
 export async function POST(request: NextRequest) {
   try {
+    if (!BOT_SECRET) {
+      console.error("QQ_BOT_SECRET environment variable is not configured")
+      return NextResponse.json({ error: "Bot service not configured" }, { status: 503 })
+    }
+
     const botSecret = request.headers.get("X-Bot-Secret")
     if (botSecret !== BOT_SECRET) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
