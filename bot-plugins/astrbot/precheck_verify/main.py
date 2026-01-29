@@ -3,6 +3,7 @@ AstrBot 插件：QQ 群验证码生成器
 用户发送 /验证码 即可获取访问网站的验证码
 """
 
+import asyncio
 import os
 import aiohttp
 from astrbot.api.event import filter, AstrMessageEvent
@@ -43,11 +44,8 @@ class PrecheckVerifyPlugin(Star):
         sender_qq = str(event.get_sender_id())
         sender_name = event.get_sender_name() or sender_qq
 
-        # 尝试获取群ID，如果失败则使用 "private"
-        try:
-            group_id = str(event.message_obj.group_id) if hasattr(event.message_obj, 'group_id') and event.message_obj.group_id else "private"
-        except:
-            group_id = "private"
+        # 获取群ID
+        group_id = str(getattr(event.message_obj, 'group_id', None) or "private")
 
         try:
             async with aiohttp.ClientSession() as session:
@@ -87,9 +85,11 @@ class PrecheckVerifyPlugin(Star):
                     else:
                         yield event.plain_result("验证码生成失败，请稍后再试")
 
-        except aiohttp.ClientError as e:
-            self.context.logger.error(f"API 请求失败: {e}")
+        except asyncio.CancelledError:
+            raise
+        except aiohttp.ClientError:
+            self.context.logger.exception("API 请求失败")
             yield event.plain_result("服务暂时不可用，请稍后再试")
-        except Exception as e:
-            self.context.logger.error(f"处理消息时出错: {e}")
+        except Exception:
+            self.context.logger.exception("处理消息时出错")
             yield event.plain_result("发生错误，请稍后再试")

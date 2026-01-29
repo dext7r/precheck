@@ -14,16 +14,16 @@
 
 ## 配置
 
-| 环境变量 | 说明 | 示例 |
-|---------|------|------|
-| `PRECHECK_API_URL` | Precheck 网站的验证码 API 地址 | `https://example.com/api/qq-bot/generate-code` |
-| `PRECHECK_BOT_SECRET` | 与网站 `QQ_BOT_SECRET` 环境变量保持一致 | `your-secret-key` |
+| 环境变量             | 说明                                    | 示例                                              |
+| -------------------- | --------------------------------------- | ------------------------------------------------- |
+| `PRECHECK_API_URL`   | Precheck 网站的验证码 API 地址          | `https://example.com/api/qq-bot/generate-code`    |
+| `PRECHECK_BOT_SECRET`| 与网站 `QQ_BOT_SECRET` 环境变量保持一致 | `your-secret-key`                                 |
 
 ## 使用
 
 在 QQ 群中发送：
 
-```
+```text
 /验证码
 ```
 
