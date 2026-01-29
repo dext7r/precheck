@@ -46,8 +46,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Database not configured" }, { status: 503 })
     }
 
-    const body = await request.json()
-    const data = guestApplicationSchema.parse(body)
+    let body
+    try {
+      body = await request.json()
+    } catch {
+      return NextResponse.json({ error: "无效的请求数据" }, { status: 400 })
+    }
+
+    let data
+    try {
+      data = guestApplicationSchema.parse(body)
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        return NextResponse.json({ error: "数据格式错误", detail: err.errors[0].message }, { status: 400 })
+      }
+      throw err
+    }
+
     const registerEmail = normalizeEmail(data.registerEmail)
     const essay = data.essay.trim()
 
