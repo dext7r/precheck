@@ -327,6 +327,7 @@ export function RegisterForm({ locale, dict, oauthProviders }: RegisterFormProps
               inputPlaceholder={t.emailPlaceholder}
               disabled={isLoading}
             />
+            <p className="text-xs text-muted-foreground">{t.eduEmailHint}</p>
           </div>
 
           {verificationAvailable && (

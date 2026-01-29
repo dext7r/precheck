@@ -610,6 +610,7 @@
       "namePlaceholder": "输入您的姓名",
       "email": "邮箱",
       "emailPlaceholder": "输入您的邮箱",
+      "eduEmailHint": "支持教育邮箱 @*.edu.cn，请先输入用户名，再从后缀列表选择「其他」手动输入完整后缀",
       "password": "密码",
       "passwordPlaceholder": "创建密码",
       "confirmPassword": "确认密码",

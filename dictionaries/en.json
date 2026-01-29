@@ -611,6 +611,7 @@
       "namePlaceholder": "Enter your name",
       "email": "Email",
       "emailPlaceholder": "Enter your email",
+      "eduEmailHint": "Edu emails (@*.edu.cn) supported: enter username first, then select \"Other\" from suffix list to input full domain",
       "password": "Password",
       "passwordPlaceholder": "Create a password",
       "confirmPassword": "Confirm Password",

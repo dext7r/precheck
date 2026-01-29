@@ -6,6 +6,22 @@
       "changes": [
         {
           "type": "added",
+          "content": "注册页面支持教育邮箱 @*.edu.cn，并新增使用说明提示"
+        },
+        {
+          "type": "added",
+          "content": "管理后台预申请列表新增审核人列"
+        },
+        {
+          "type": "added",
+          "content": "管理后台邀请码列表新增提交人列"
+        },
+        {
+          "type": "fixed",
+          "content": "修复管理后台邀请码统计遗漏已删除记录过滤条件的问题"
+        },
+        {
+          "type": "added",
           "content": "新增 Linux.do OAuth 登录支持，可直接登录、绑定现有账号或创建新用户"
         },
         {

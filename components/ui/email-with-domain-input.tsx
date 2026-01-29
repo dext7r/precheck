@@ -107,7 +107,30 @@ export function EmailWithDomainInput({
   }
 
   const handleLocalChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const sanitizedLocal = normalizeLocalPart(event.target.value)
+    const inputValue = event.target.value
+
+    // 用户粘贴完整邮箱时处理
+    if (inputValue.includes("@")) {
+      const [rawLocal, ...domainParts] = inputValue.split("@")
+      const pastedDomain = domainParts.join("@").trim()
+      const sanitizedLocal = normalizeLocalPart(rawLocal || "")
+
+      setLocalPart(sanitizedLocal)
+
+      // 域名在允许列表中时自动选择
+      if (pastedDomain && domainOptions.includes(pastedDomain)) {
+        setUseCustomDomain(false)
+        setCustomDomain("")
+        setSelectedDomain(pastedDomain)
+        commitValue(sanitizedLocal, pastedDomain, "", false)
+      } else {
+        // 域名不在列表中，只保留用户名
+        commitValue(sanitizedLocal, selectedDomain, customDomain, useCustomDomain)
+      }
+      return
+    }
+
+    const sanitizedLocal = normalizeLocalPart(inputValue)
     setLocalPart(sanitizedLocal)
     commitValue(sanitizedLocal, selectedDomain, customDomain, useCustomDomain)
   }
@@ -225,6 +248,22 @@ export function EmailWithDomainInput({
                         {domain}
                       </CommandItem>
                     ))}
+                    <CommandItem
+                      key={CUSTOM_DOMAIN_VALUE}
+                      value="other"
+                      onSelect={() => {
+                        handleDomainChange(CUSTOM_DOMAIN_VALUE)
+                        setOpen(false)
+                      }}
+                    >
+                      <Check
+                        className={cn(
+                          "mr-2 h-4 w-4",
+                          currentSelectValue === CUSTOM_DOMAIN_VALUE ? "opacity-100" : "opacity-0",
+                        )}
+                      />
+                      其他
+                    </CommandItem>
                   </CommandGroup>
                 </CommandList>
               </Command>
