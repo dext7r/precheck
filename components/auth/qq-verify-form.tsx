@@ -32,6 +32,14 @@ interface QQVerifyFormProps {
   }
 }
 
+function getSafeRedirectUrl(url: string | undefined, locale: string): string {
+  // 双重验证：只允许相对路径，防止开放重定向攻击
+  if (url && url.startsWith('/') && !url.startsWith('//')) {
+    return url
+  }
+  return `/${locale}/guest/apply`
+}
+
 export function QQVerifyForm({ locale, redirectUrl, dict }: QQVerifyFormProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
@@ -58,7 +66,7 @@ export function QQVerifyForm({ locale, redirectUrl, dict }: QQVerifyFormProps) {
 
       toast.success(dict.success)
       setTimeout(() => {
-        window.location.href = redirectUrl || `/${locale}/guest/apply`
+        window.location.href = getSafeRedirectUrl(redirectUrl, locale)
       }, 500)
     } catch {
       setError(dict.errors.failed)

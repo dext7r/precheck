@@ -19,7 +19,14 @@ export const getQQGroups = cache(async (): Promise<QQGroupConfig[]> => {
     }
 
     const qqGroups = settings.qqGroups as QQGroupConfig[]
-    return qqGroups.filter((g) => g.enabled)
+    const enabledGroups = qqGroups.filter((g) => g.enabled)
+
+    // 如果启用的群为空，也使用默认值
+    if (enabledGroups.length === 0) {
+      return defaultQQGroups.filter((g) => g.enabled)
+    }
+
+    return enabledGroups
   } catch {
     return defaultQQGroups.filter((g) => g.enabled)
   }

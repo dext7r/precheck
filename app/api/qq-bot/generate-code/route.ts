@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const qqNumber = body.qqNumber
 
-    if (!qqNumber || !/^\d{5,15}$/.test(qqNumber)) {
+    if (!qqNumber || !/^\d{5,11}$/.test(qqNumber)) {
       return NextResponse.json({ error: "Invalid QQ number" }, { status: 400 })
     }
 

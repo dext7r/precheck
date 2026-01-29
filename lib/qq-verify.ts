@@ -1,4 +1,5 @@
 import { getRedisClient } from "./redis"
+import { randomBytes, randomInt } from "crypto"
 
 /**
  * QQ 群验证码配置
@@ -16,18 +17,17 @@ export const QQ_VERIFY_CONFIG = {
 }
 
 /**
- * 生成随机数字验证码
+ * 生成随机数字验证码（使用加密安全随机数）
  */
 export function generateQQVerifyCode(length: number = QQ_VERIFY_CONFIG.codeLength): string {
-  return Array.from({ length }, () => Math.floor(Math.random() * 10)).join("")
+  return Array.from({ length }, () => randomInt(10)).join("")
 }
 
 /**
- * 生成访问凭证 Token
+ * 生成访问凭证 Token（使用加密安全随机数）
  */
 export function generateAccessToken(): string {
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
-  return Array.from({ length: 32 }, () => chars[Math.floor(Math.random() * chars.length)]).join("")
+  return randomBytes(24).toString("base64url").slice(0, 32)
 }
 
 /**
@@ -102,7 +102,8 @@ export async function verifyQQCode(
 
     if (!data) return { valid: false, error: "验证码已过期或不存在" }
 
-    const { code, attempts } = JSON.parse(data)
+    const parsed = JSON.parse(data)
+    const { code, attempts, createdAt } = parsed
 
     if (attempts >= QQ_VERIFY_CONFIG.maxAttempts) {
       await redis.del(key)
@@ -114,7 +115,7 @@ export async function verifyQQCode(
       await redis.setex(
         key,
         ttl > 0 ? ttl : QQ_VERIFY_CONFIG.codeExpiryMinutes * 60,
-        JSON.stringify({ code, attempts: attempts + 1, createdAt: JSON.parse(data).createdAt })
+        JSON.stringify({ code, attempts: attempts + 1, createdAt })
       )
       return { valid: false, error: "验证码错误" }
     }
