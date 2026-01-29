@@ -31,7 +31,7 @@ export function generateAccessToken(): string {
 }
 
 /**
- * 检查 QQ 号请求频率限制
+ * 检查 QQ 号请求频率限制（使用原子操作避免竞态条件）
  */
 export async function checkQQRateLimit(qqNumber: string): Promise<{ allowed: boolean; waitSeconds?: number }> {
   const redis = getRedisClient()
@@ -39,15 +39,17 @@ export async function checkQQRateLimit(qqNumber: string): Promise<{ allowed: boo
 
   try {
     const key = `${QQ_VERIFY_CONFIG.rateLimitPrefix}${qqNumber}`
-    const exists = await redis.exists(key)
+    // 使用原子 SET NX EX 操作：只有 key 不存在时才设置
+    const result = await redis.set(key, "1", "EX", QQ_VERIFY_CONFIG.rateLimitSeconds, "NX")
 
-    if (exists) {
-      const ttl = await redis.ttl(key)
-      return { allowed: false, waitSeconds: ttl }
+    if (result === "OK") {
+      // 设置成功，允许请求
+      return { allowed: true }
     }
 
-    await redis.setex(key, QQ_VERIFY_CONFIG.rateLimitSeconds, "1")
-    return { allowed: true }
+    // key 已存在，获取剩余时间
+    const ttl = await redis.ttl(key)
+    return { allowed: false, waitSeconds: ttl > 0 ? ttl : QQ_VERIFY_CONFIG.rateLimitSeconds }
   } catch (error) {
     console.error("Failed to check QQ rate limit:", error)
     return { allowed: true }

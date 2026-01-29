@@ -2111,7 +2111,10 @@
       "pending": "待审核",
       "approved": "已通过",
       "rejected": "已驳回",
-      "disputed": "待补充"
+      "disputed": "待补充",
+      "archived": "已归档",
+      "pendingReview": "待复核",
+      "onHold": "暂缓处理"
     },
     "reviewInfoTitle": "申请状态",
     "submittedAt": "提交时间",

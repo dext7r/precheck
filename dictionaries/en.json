@@ -2115,7 +2115,10 @@
       "pending": "Pending",
       "approved": "Approved",
       "rejected": "Rejected",
-      "disputed": "Needs Info"
+      "disputed": "Needs Info",
+      "archived": "Archived",
+      "pendingReview": "Pending Review",
+      "onHold": "On Hold"
     },
     "reviewInfoTitle": "Application Status",
     "submittedAt": "Submitted at",

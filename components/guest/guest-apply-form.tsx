@@ -248,14 +248,15 @@ export function GuestApplyForm({ locale, qqNumber, dict }: GuestApplyFormProps) 
     return dict.sources[key] || value
   }
 
+  const status = dict.status as Record<string, string>
   const statusConfig: Record<string, { label: string; icon: typeof Clock; color: string; bg: string }> = {
-    PENDING: { label: dict.status.pending, icon: Clock, color: "text-amber-600 dark:text-amber-400", bg: "bg-amber-500/10" },
-    APPROVED: { label: dict.status.approved, icon: CheckCircle2, color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-500/10" },
-    REJECTED: { label: dict.status.rejected, icon: XCircle, color: "text-rose-600 dark:text-rose-400", bg: "bg-rose-500/10" },
-    DISPUTED: { label: dict.status.disputed, icon: HelpCircle, color: "text-orange-600 dark:text-orange-400", bg: "bg-orange-500/10" },
-    ARCHIVED: { label: "已归档", icon: Clock, color: "text-slate-600 dark:text-slate-400", bg: "bg-slate-500/10" },
-    PENDING_REVIEW: { label: "待复核", icon: Clock, color: "text-blue-600 dark:text-blue-400", bg: "bg-blue-500/10" },
-    ON_HOLD: { label: "暂缓处理", icon: Clock, color: "text-purple-600 dark:text-purple-400", bg: "bg-purple-500/10" },
+    PENDING: { label: status.pending, icon: Clock, color: "text-amber-600 dark:text-amber-400", bg: "bg-amber-500/10" },
+    APPROVED: { label: status.approved, icon: CheckCircle2, color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-500/10" },
+    REJECTED: { label: status.rejected, icon: XCircle, color: "text-rose-600 dark:text-rose-400", bg: "bg-rose-500/10" },
+    DISPUTED: { label: status.disputed, icon: HelpCircle, color: "text-orange-600 dark:text-orange-400", bg: "bg-orange-500/10" },
+    ARCHIVED: { label: status.archived || "Archived", icon: Clock, color: "text-slate-600 dark:text-slate-400", bg: "bg-slate-500/10" },
+    PENDING_REVIEW: { label: status.pendingReview || "Pending Review", icon: Clock, color: "text-blue-600 dark:text-blue-400", bg: "bg-blue-500/10" },
+    ON_HOLD: { label: status.onHold || "On Hold", icon: Clock, color: "text-purple-600 dark:text-purple-400", bg: "bg-purple-500/10" },
   }
 
   if (loading) {
