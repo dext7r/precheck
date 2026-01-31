@@ -19,6 +19,7 @@ import {
   Send,
   History,
   Activity,
+  Ticket,
 } from "lucide-react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
@@ -68,6 +69,12 @@ export function AdminSidebar({ locale, dict, user }: AdminSidebarProps) {
       name: dict.admin.messages,
       href: `/${locale}/admin/messages`,
       icon: Mail,
+      superAdminOnly: false,
+    },
+    {
+      name: ((dict.admin as Record<string, unknown>).tickets as string) || "工单管理",
+      href: `/${locale}/admin/tickets`,
+      icon: Ticket,
       superAdminOnly: false,
     },
     {

@@ -45,7 +45,10 @@ model User {
   inviteCodesIssued      InviteCode[] @relation("InviteCodesIssued")
   queryTokensCreated     InviteCodeQueryToken[] @relation("QueryTokensCreated")
   auditLogs              AuditLog[] @relation("AuditActor")
-  
+  tickets                Ticket[] @relation("UserTickets")
+  ticketMessages         TicketMessage[] @relation("TicketMessageAuthor")
+  chatMessages           ChatMessage[] @relation("ChatMessageSender")
+
   // 密码重置
   resetToken       String?   @unique
   resetTokenExpiry DateTime?
@@ -159,6 +162,7 @@ model PreApplication {
   reviewedBy User?                     @relation("ReviewedPreApplications", fields: [reviewedById], references: [id])
   inviteCode InviteCode?               @relation("PreApplicationInviteCode", fields: [inviteCodeId], references: [id])
   versions   PreApplicationVersion[]   // 版本历史
+  tickets    Ticket[]                  // 工单
 
   @@index([status, createdAt])
   @@index([userId, createdAt])
@@ -364,4 +368,59 @@ enum EmailLogStatus {
   PENDING
   SUCCESS
   FAILED
+}
+
+// 工单状态
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+// 工单
+model Ticket {
+  id                 String        @id @default(cuid())
+  preApplicationId   String
+  userId             String
+  subject            String
+  status             TicketStatus  @default(OPEN)
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  resolvedAt         DateTime?
+
+  preApplication     PreApplication @relation(fields: [preApplicationId], references: [id], onDelete: Cascade)
+  user               User           @relation("UserTickets", fields: [userId], references: [id], onDelete: Cascade)
+  messages           TicketMessage[]
+
+  @@index([status])
+  @@index([userId])
+  @@index([preApplicationId])
+}
+
+// 工单消息
+model TicketMessage {
+  id         String   @id @default(cuid())
+  ticketId   String
+  authorId   String
+  content    String
+  createdAt  DateTime @default(now())
+
+  ticket     Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  author     User     @relation("TicketMessageAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([ticketId, createdAt])
+}
+
+// 聊天消息
+model ChatMessage {
+  id         String   @id @default(cuid())
+  content    String
+  senderId   String
+  createdAt  DateTime @default(now())
+
+  sender     User     @relation("ChatMessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([createdAt])
+  @@index([senderId])
 }
