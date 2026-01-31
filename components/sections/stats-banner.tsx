@@ -32,10 +32,10 @@ export function StatsBanner({ dict }: StatsBannerProps) {
   const [stats, setStats] = useState<Stats | null>(null)
 
   const t = dict.homepage.stats ?? {
-    members: "注册用户",
-    applications: "申请总数",
-    approved: "已通过",
-    inviteCodes: "邀请码",
+    members: "Members",
+    applications: "Applications",
+    approved: "Approved",
+    inviteCodes: "Invite Codes",
   }
 
   useEffect(() => {
@@ -56,22 +56,22 @@ export function StatsBanner({ dict }: StatsBannerProps) {
     {
       icon: Users,
       value: stats ? formatNumber(stats.users_count) : "—",
-      label: t.members ?? "注册用户",
+      label: t.members ?? "Members",
     },
     {
       icon: FileCheck,
       value: stats ? formatNumber(stats.applications_count) : "—",
-      label: t.applications ?? "申请总数",
+      label: t.applications ?? "Applications",
     },
     {
       icon: CheckCircle,
       value: stats ? formatNumber(stats.approved_count) : "—",
-      label: t.approved ?? "已通过",
+      label: t.approved ?? "Approved",
     },
     {
       icon: Ticket,
       value: stats ? formatNumber(stats.invite_codes_count) : "—",
-      label: t.inviteCodes ?? "邀请码",
+      label: t.inviteCodes ?? "Invite Codes",
     },
   ]
 

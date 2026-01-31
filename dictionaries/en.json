@@ -2127,6 +2127,7 @@
       ]
     },
     "cta": {
+      "badge": "Start Your Community Journey",
       "title": "Ready to Join community?",
       "subtitle": "Submit your pre-application now and start your open-source journey",
       "applyButton": "Apply Now",
