@@ -91,7 +91,7 @@ export function TicketList({ locale, dict }: TicketListProps) {
       const res = await fetch("/api/pre-application")
       if (!res.ok) return
       const data = await res.json()
-      if (data.record) setPreApp({ id: data.record.id, status: data.record.status })
+      if (data.latest) setPreApp({ id: data.latest.id, status: data.latest.status })
     } catch {
       /* ignore */
     }
