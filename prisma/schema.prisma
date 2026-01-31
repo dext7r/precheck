@@ -48,6 +48,9 @@ model User {
   tickets                Ticket[] @relation("UserTickets")
   ticketMessages         TicketMessage[] @relation("TicketMessageAuthor")
   chatMessages           ChatMessage[] @relation("ChatMessageSender")
+  privateChatsAsUser     PrivateChat[] @relation("PrivateChatUser")
+  privateChatsAsAdmin    PrivateChat[] @relation("PrivateChatAdmin")
+  privateChatMessages    PrivateChatMessage[] @relation("PrivateChatMessageSender")
 
   // 密码重置
   resetToken       String?   @unique
@@ -428,4 +431,37 @@ model ChatMessage {
   @@index([createdAt])
   @@index([senderId])
   @@index([replyToId])
+}
+
+// 私信会话（用户与管理员之间）
+model PrivateChat {
+  id          String    @id @default(cuid())
+  userId      String
+  adminId     String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  user        User      @relation("PrivateChatUser", fields: [userId], references: [id], onDelete: Cascade)
+  admin       User      @relation("PrivateChatAdmin", fields: [adminId], references: [id], onDelete: Cascade)
+  messages    PrivateChatMessage[]
+
+  @@unique([userId, adminId])
+  @@index([userId])
+  @@index([adminId])
+  @@index([updatedAt])
+}
+
+model PrivateChatMessage {
+  id         String    @id @default(cuid())
+  chatId     String
+  senderId   String
+  content    String
+  createdAt  DateTime  @default(now())
+  readAt     DateTime?
+
+  chat       PrivateChat @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  sender     User        @relation("PrivateChatMessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([chatId, createdAt])
+  @@index([senderId])
 }

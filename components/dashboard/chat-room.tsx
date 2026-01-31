@@ -1,8 +1,9 @@
 "use client"
 
 import { useState, useEffect, useRef, useCallback } from "react"
+import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
-import { Send, Shield, MessageCircle, Reply, X, Copy, Trash2 } from "lucide-react"
+import { Send, Shield, MessageCircle, Reply, X, Copy, Trash2, MessageSquare } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -48,7 +49,8 @@ type ChatMsg = {
   } | null
 }
 
-export function ChatRoom({ dict, currentUser }: ChatRoomProps) {
+export function ChatRoom({ locale, dict, currentUser }: ChatRoomProps) {
+  const router = useRouter()
   const [messages, setMessages] = useState<ChatMsg[]>([])
   const [input, setInput] = useState("")
   const [sending, setSending] = useState(false)
@@ -148,7 +150,31 @@ export function ChatRoom({ dict, currentUser }: ChatRoomProps) {
     }
   }
 
+  const handlePrivateMessage = async (msg: ChatMsg) => {
+    if (msg.sender.role === "USER") {
+      toast.error("只能私信管理员")
+      return
+    }
+    try {
+      const res = await fetch("/api/private-chats", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ adminId: msg.sender.id }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error?.message || "创建会话失败")
+      router.push(`/${locale}/dashboard/private-chats/${data.chatId}`)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "创建会话失败"
+      toast.error(message)
+    }
+  }
+
   const canRecall = (msg: ChatMsg) => {
+    const isCurrentUserAdmin = currentUser.role === "ADMIN" || currentUser.role === "SUPER_ADMIN"
+    // 管理员可撤回任意消息
+    if (isCurrentUserAdmin) return true
+    // 普通用户只能撤回自己 2 分钟内的消息
     if (msg.sender.id !== currentUser.id) return false
     const twoMinutesAgo = Date.now() - 2 * 60 * 1000
     return new Date(msg.createdAt).getTime() > twoMinutesAgo
@@ -302,7 +328,9 @@ export function ChatRoom({ dict, currentUser }: ChatRoomProps) {
                               {/* 引用显示 */}
                               {msg.replyTo && (
                                 <div
-                                  onClick={() => !msg.replyTo?.deletedAt && scrollToMessage(msg.replyTo!.id)}
+                                  onClick={() =>
+                                    !msg.replyTo?.deletedAt && scrollToMessage(msg.replyTo!.id)
+                                  }
                                   className={cn(
                                     "mb-2 rounded-md px-2 py-1.5 text-xs border-l-2",
                                     msg.replyTo.deletedAt
@@ -335,6 +363,12 @@ export function ChatRoom({ dict, currentUser }: ChatRoomProps) {
                           <Copy className="mr-2 h-4 w-4" />
                           复制
                         </ContextMenuItem>
+                        {!isMe && isAdmin && (
+                          <ContextMenuItem onClick={() => handlePrivateMessage(msg)}>
+                            <MessageSquare className="mr-2 h-4 w-4" />
+                            私信
+                          </ContextMenuItem>
+                        )}
                         {showRecall && (
                           <>
                             <ContextMenuSeparator />

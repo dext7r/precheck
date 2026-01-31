@@ -4,6 +4,7 @@ import { db } from "@/lib/db"
 import { getCurrentUser } from "@/lib/auth/session"
 import { createApiErrorResponse } from "@/lib/api/error-response"
 import { ApiErrorKeys } from "@/lib/api/error-keys"
+import { isAdmin } from "@/lib/auth/permissions"
 
 const sendMessageSchema = z.object({
   content: z.string().min(1).max(2000),
@@ -83,7 +84,10 @@ export async function POST(request: NextRequest) {
         where: { id: data.replyToId, deletedAt: null },
       })
       if (!replyTarget) {
-        return NextResponse.json({ error: { message: "引用的消息不存在或已被撤回" } }, { status: 400 })
+        return NextResponse.json(
+          { error: { message: "引用的消息不存在或已被撤回" } },
+          { status: 400 },
+        )
       }
     }
 
@@ -147,14 +151,22 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: { message: "消息已被撤回" } }, { status: 400 })
     }
 
-    if (message.senderId !== user.id) {
+    const userIsAdmin = isAdmin(user.role)
+
+    // 管理员可撤回任意消息，普通用户只能撤回自己的消息
+    if (message.senderId !== user.id && !userIsAdmin) {
       return NextResponse.json({ error: { message: "只能撤回自己的消息" } }, { status: 403 })
     }
 
-    // 2 分钟内可撤回
-    const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000)
-    if (message.createdAt < twoMinutesAgo) {
-      return NextResponse.json({ error: { message: "超过 2 分钟的消息无法撤回" } }, { status: 400 })
+    // 普通用户 2 分钟内可撤回，管理员无时间限制
+    if (!userIsAdmin) {
+      const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000)
+      if (message.createdAt < twoMinutesAgo) {
+        return NextResponse.json(
+          { error: { message: "超过 2 分钟的消息无法撤回" } },
+          { status: 400 },
+        )
+      }
     }
 
     await db.chatMessage.update({

@@ -44,6 +44,9 @@ export interface User {
   tickets: Ticket[]
   ticketMessages: TicketMessage[]
   chatMessages: ChatMessage[]
+  privateChatsAsUser: PrivateChat[]
+  privateChatsAsAdmin: PrivateChat[]
+  privateChatMessages: PrivateChatMessage[]
   resetToken: string | null
   resetTokenExpiry: Date | null
 }
@@ -300,4 +303,26 @@ export interface ChatMessage {
   sender: User
   replyTo: ChatMessage | null
   replies: ChatMessage[]
+}
+
+export interface PrivateChat {
+  id: string
+  userId: string
+  adminId: string
+  createdAt: Date
+  updatedAt: Date
+  user: User
+  admin: User
+  messages: PrivateChatMessage[]
+}
+
+export interface PrivateChatMessage {
+  id: string
+  chatId: string
+  senderId: string
+  content: string
+  createdAt: Date
+  readAt: Date | null
+  chat: PrivateChat
+  sender: User
 }
