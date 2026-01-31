@@ -12,6 +12,7 @@ export type SiteSettings = {
   postModeration: boolean
   maintenanceMode: boolean
   adminApplicationEnabled: boolean
+  inviteCodeUrlPrefix: string
 }
 
 const defaultSettings: SiteSettings = {
@@ -24,6 +25,7 @@ const defaultSettings: SiteSettings = {
   postModeration: false,
   maintenanceMode: false,
   adminApplicationEnabled: true,
+  inviteCodeUrlPrefix: "",
 }
 
 export async function getSiteSettings(): Promise<SiteSettings> {
@@ -46,6 +48,7 @@ export async function getSiteSettings(): Promise<SiteSettings> {
       postModeration: existing.postModeration,
       maintenanceMode: existing.maintenanceMode,
       adminApplicationEnabled: existing.adminApplicationEnabled,
+      inviteCodeUrlPrefix: existing.inviteCodeUrlPrefix ?? "",
     }
   }
 
@@ -74,6 +77,7 @@ export async function getSiteSettings(): Promise<SiteSettings> {
     postModeration: created.postModeration,
     maintenanceMode: created.maintenanceMode,
     adminApplicationEnabled: created.adminApplicationEnabled,
+    inviteCodeUrlPrefix: created.inviteCodeUrlPrefix ?? "",
   }
 }
 
@@ -93,6 +97,7 @@ export async function updateSiteSettings(updates: Partial<SiteSettings>): Promis
     postModeration: updates.postModeration ?? current.postModeration,
     maintenanceMode: updates.maintenanceMode ?? current.maintenanceMode,
     adminApplicationEnabled: updates.adminApplicationEnabled ?? current.adminApplicationEnabled,
+    inviteCodeUrlPrefix: updates.inviteCodeUrlPrefix ?? current.inviteCodeUrlPrefix,
   }
 
   const saved = await db.siteSettings.upsert({
@@ -114,5 +119,6 @@ export async function updateSiteSettings(updates: Partial<SiteSettings>): Promis
     postModeration: saved.postModeration,
     maintenanceMode: saved.maintenanceMode,
     adminApplicationEnabled: saved.adminApplicationEnabled,
+    inviteCodeUrlPrefix: saved.inviteCodeUrlPrefix ?? "",
   }
 }

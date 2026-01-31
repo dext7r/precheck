@@ -1,5 +1,7 @@
 import type { Dictionary } from "@/lib/i18n/get-dictionary"
 
+import { formatInviteCodeUrl } from "@/lib/invite-code/utils"
+
 type ResetPasswordEmailOptions = {
   appName: string
   resetUrl: string
@@ -27,6 +29,7 @@ type InviteCodeIssueEmailOptions = {
   expiresAt?: Date | null
   note?: string
   locale: string
+  inviteCodeUrlPrefix?: string
 }
 
 type VerificationCodeEmailOptions = {
@@ -354,14 +357,16 @@ export function buildInviteCodeIssueEmail({
   expiresAt,
   note,
   locale,
+  inviteCodeUrlPrefix,
 }: InviteCodeIssueEmailOptions) {
   const t = dictionary.inviteCode.emailTemplate.issue
   const expiresAtText = expiresAt ? expiresAt.toLocaleString(locale) : ""
+  const displayCode = formatInviteCodeUrl(code, inviteCodeUrlPrefix ?? "")
 
   const tokens = {
     "{appName}": appName,
     "{issuer}": issuerName,
-    "{code}": code,
+    "{code}": displayCode,
     "{expiresAt}": expiresAtText,
     "{note}": note ?? "",
   }
@@ -384,7 +389,7 @@ export function buildInviteCodeIssueEmail({
             ${locale === "zh" ? "你的邀请码" : "Your Invite Code"}
           </p>
           <p style="margin:0 0 12px;font-size:28px;font-weight:bold;color:#ffffff;letter-spacing:3px;font-family:monospace;">
-            ${code}
+            ${displayCode}
           </p>
           ${
             expiresAt
@@ -430,7 +435,7 @@ export function buildInviteCodeIssueEmail({
     "",
     intro,
     "",
-    `${locale === "zh" ? "邀请码" : "Invite Code"}: ${code}`,
+    `${locale === "zh" ? "邀请码" : "Invite Code"}: ${displayCode}`,
     ...detailLines,
     "",
     footer,

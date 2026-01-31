@@ -49,6 +49,7 @@ type SiteSettings = {
   postModeration: boolean
   maintenanceMode: boolean
   adminApplicationEnabled: boolean
+  inviteCodeUrlPrefix: string
 }
 
 type QQGroupConfig = {
