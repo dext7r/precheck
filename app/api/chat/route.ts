@@ -6,7 +6,7 @@ import { createApiErrorResponse } from "@/lib/api/error-response"
 import { ApiErrorKeys } from "@/lib/api/error-keys"
 
 const sendMessageSchema = z.object({
-  content: z.string().min(1).max(1000),
+  content: z.string().min(1).max(2000),
 })
 
 export async function GET(request: NextRequest) {
