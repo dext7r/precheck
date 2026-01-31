@@ -1,5 +1,7 @@
 import type { Dictionary } from "@/lib/i18n/get-dictionary"
 
+import { formatInviteCodeUrl } from "@/lib/invite-code/utils"
+
 interface InviteCodeIssueNotificationInput {
   dict: Dictionary
   code: string
@@ -7,6 +9,7 @@ interface InviteCodeIssueNotificationInput {
   issuedBy: string
   note?: string
   locale: string
+  inviteCodeUrlPrefix?: string
 }
 
 export function buildInviteCodeIssueMessage({
@@ -16,9 +19,15 @@ export function buildInviteCodeIssueMessage({
   issuedBy,
   note,
   locale,
+  inviteCodeUrlPrefix,
 }: InviteCodeIssueNotificationInput) {
   const t = dict.inviteCode.notifications
-  const lines = [t.issueIntro, `${t.issuedByLabel}${issuedBy}`, `${t.inviteCodeLabel}${code}`]
+  const formattedCode = formatInviteCodeUrl(code, inviteCodeUrlPrefix ?? "")
+  const lines = [
+    t.issueIntro,
+    `${t.issuedByLabel}${issuedBy}`,
+    `${t.inviteCodeLabel}${formattedCode}`,
+  ]
 
   if (expiresAt) {
     lines.push(`${t.inviteExpiresLabel}${expiresAt.toLocaleString(locale)}`)

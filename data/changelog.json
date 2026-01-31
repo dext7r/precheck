@@ -1,9 +1,63 @@
 {
   "versions": [
     {
+      "version": "1.3.0",
+      "date": "2025-01-31",
+      "changes": [
+        {
+          "type": "added",
+          "content": "工单系统：用户在预申请被拒绝后可发起申诉工单"
+        },
+        {
+          "type": "added",
+          "content": "工单系统：管理员可在后台处理工单、回复消息、变更状态"
+        },
+        {
+          "type": "added",
+          "content": "公共聊天室：微信风格 UI，支持角色徽章显示"
+        },
+        {
+          "type": "added",
+          "content": "聊天室消息实时轮询更新，支持时间分组显示"
+        },
+        {
+          "type": "added",
+          "content": "聊天室支持右键回复消息、复制内容"
+        },
+        {
+          "type": "added",
+          "content": "用户可在 2 分钟内撤回自己的消息"
+        },
+        {
+          "type": "added",
+          "content": "私信功能：用户可通过聊天室右键管理员消息发起私聊"
+        },
+        {
+          "type": "added",
+          "content": "管理员可撤回任意用户的消息"
+        }
+      ]
+    },
+    {
       "version": "1.2.0",
       "date": "2025-01-28",
       "changes": [
+        {
+          "type": "added",
+          "content": "注册页面支持教育邮箱 @*.edu.cn，并新增使用说明提示"
+        },
+        {
+          "type": "added",
+          "content": "管理后台预申请列表新增审核人列"
+        },
+        {
+          "type": "added",
+          "content": "管理后台邀请码列表新增提交人列"
+        },
+        {
+          "type": "fixed",
+          "content": "修复管理后台邀请码统计遗漏已删除记录过滤条件的问题"
+        },
         {
           "type": "added",
           "content": "新增 Linux.do OAuth 登录支持，可直接登录、绑定现有账号或创建新用户"

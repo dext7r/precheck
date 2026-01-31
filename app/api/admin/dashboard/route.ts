@@ -157,11 +157,14 @@ export async function GET(request: NextRequest) {
       db.preApplication.count({
         where: { createdAt: { gte: rangeStart, lte: rangeEnd } },
       }),
-      db.inviteCode.count(),
-      db.inviteCode.count({ where: { assignedAt: { not: null } } }),
-      db.inviteCode.count({ where: { expiresAt: { not: null, lte: now } } }),
+      db.inviteCode.count({ where: { deletedAt: null } }),
+      db.inviteCode.count({ where: { deletedAt: null, assignedAt: { not: null } } }),
+      db.inviteCode.count({
+        where: { deletedAt: null, usedAt: null, expiresAt: { not: null, lte: now } },
+      }),
       db.inviteCode.count({
         where: {
+          deletedAt: null,
           assignedAt: null,
           usedAt: null,
           OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
@@ -169,13 +172,16 @@ export async function GET(request: NextRequest) {
       }),
       db.inviteCode.count({
         where: {
+          deletedAt: null,
           usedAt: null,
           OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
         },
       }),
-      db.inviteCode.count({ where: { usedAt: { not: null } } }),
+      db.inviteCode.count({ where: { deletedAt: null, usedAt: { not: null } } }),
       db.inviteCode.count({
         where: {
+          deletedAt: null,
+          usedAt: null,
           expiresAt: {
             gt: now,
             lte: new Date(now.getTime() + 24 * 60 * 60 * 1000),
@@ -184,6 +190,7 @@ export async function GET(request: NextRequest) {
       }),
       db.inviteCode.count({
         where: {
+          deletedAt: null,
           usedAt: null,
           expiresAt: { not: null, lte: now },
         },
@@ -214,7 +221,8 @@ export async function GET(request: NextRequest) {
       db.$queryRaw<Array<{ bucket: Date; count: number }>>`
         SELECT ${dateTrunc("assignedAt")} AS bucket, COUNT(*)::int AS count
         FROM "InviteCode"
-        WHERE "assignedAt" IS NOT NULL
+        WHERE "deletedAt" IS NULL
+          AND "assignedAt" IS NOT NULL
           AND "assignedAt" >= ${rangeStart}
           AND "assignedAt" <= ${rangeEnd}
         GROUP BY bucket
@@ -223,7 +231,8 @@ export async function GET(request: NextRequest) {
       db.$queryRaw<Array<{ bucket: Date; count: number }>>`
         SELECT ${dateTrunc("usedAt")} AS bucket, COUNT(*)::int AS count
         FROM "InviteCode"
-        WHERE "usedAt" IS NOT NULL
+        WHERE "deletedAt" IS NULL
+          AND "usedAt" IS NOT NULL
           AND "usedAt" >= ${rangeStart}
           AND "usedAt" <= ${rangeEnd}
         GROUP BY bucket
@@ -232,7 +241,9 @@ export async function GET(request: NextRequest) {
       db.$queryRaw<Array<{ bucket: Date; count: number }>>`
         SELECT ${dateTrunc("expiresAt")} AS bucket, COUNT(*)::int AS count
         FROM "InviteCode"
-        WHERE "expiresAt" IS NOT NULL
+        WHERE "deletedAt" IS NULL
+          AND "usedAt" IS NULL
+          AND "expiresAt" IS NOT NULL
           AND "expiresAt" >= ${rangeStart}
           AND "expiresAt" <= ${rangeEnd}
         GROUP BY bucket
@@ -245,6 +256,7 @@ export async function GET(request: NextRequest) {
       }),
       db.inviteCode.count({
         where: {
+          deletedAt: null,
           assignedAt: { not: null },
           usedAt: null,
           OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],

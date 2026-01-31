@@ -37,45 +37,54 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit
 
     const now = new Date()
-    const where: Record<string, unknown> = {
-      deletedAt: null,
-    }
+
+    // 使用 AND 数组来组合条件，避免 OR/AND 键冲突
+    const conditions: Record<string, unknown>[] = [{ deletedAt: null }]
 
     if (search) {
-      where.code = { contains: search, mode: "insensitive" }
+      conditions.push({ code: { contains: search, mode: "insensitive" } })
     }
 
+    // 状态筛选 - 与统计逻辑保持一致
     if (status === "used") {
-      where.usedAt = { not: null }
-    }
-    if (status === "unused") {
-      where.usedAt = null
-    }
-    if (status === "expired") {
-      where.expiresAt = { not: null, lte: now }
+      conditions.push({ usedAt: { not: null } })
+    } else if (status === "unused") {
+      // 未使用 = usedAt: null 且 未过期
+      conditions.push({ usedAt: null })
+      conditions.push({ OR: [{ expiresAt: null }, { expiresAt: { gt: now } }] })
+    } else if (status === "expired") {
+      // 已过期 = usedAt: null 且 已过期（未使用但已过期）
+      conditions.push({ usedAt: null })
+      conditions.push({ expiresAt: { not: null, lte: now } })
     }
 
+    // 分配筛选
     if (assignment === "assigned") {
-      where.OR = [
-        { preApplication: { isNot: null } },
-        { issuedToEmail: { not: null } },
-        { issuedToUserId: { not: null } },
-      ]
-    }
-    if (assignment === "unassigned") {
-      where.AND = [
-        { preApplication: { is: null } },
-        { issuedToEmail: null },
-        { issuedToUserId: null },
-      ]
+      conditions.push({
+        OR: [
+          { preApplication: { isNot: null } },
+          { issuedToEmail: { not: null } },
+          { issuedToUserId: { not: null } },
+        ],
+      })
+    } else if (assignment === "unassigned") {
+      conditions.push({
+        AND: [{ preApplication: { is: null } }, { issuedToEmail: null }, { issuedToUserId: null }],
+      })
     }
 
+    // 即将过期筛选
     if (expiringWithin === 1 || expiringWithin === 2) {
-      where.expiresAt = {
-        gt: now,
-        lte: new Date(now.getTime() + expiringWithin * 60 * 60 * 1000),
-      }
+      conditions.push({
+        usedAt: null,
+        expiresAt: {
+          gt: now,
+          lte: new Date(now.getTime() + expiringWithin * 60 * 60 * 1000),
+        },
+      })
     }
+
+    const where = { AND: conditions }
 
     // 计算2小时内过期的时间点
     const twoHoursLater = new Date(now.getTime() + 2 * 60 * 60 * 1000)
@@ -108,6 +117,10 @@ export async function GET(request: NextRequest) {
             deletedAt: null,
             usedAt: null,
             OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
+            // 未分配：没有关联申请、没有发送给用户
+            preApplication: { is: null },
+            issuedToUserId: null,
+            issuedToEmail: null,
           },
         }),
         // 已使用

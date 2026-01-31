@@ -12,6 +12,8 @@ export type PreApplicationSource = "TIEBA" | "BILIBILI" | "DOUYIN" | "XIAOHONGSH
 
 export type EmailLogStatus = "PENDING" | "SUCCESS" | "FAILED"
 
+export type TicketStatus = "OPEN" | "IN_PROGRESS" | "RESOLVED" | "CLOSED"
+
 export interface User {
   id: string
   email: string
@@ -39,6 +41,12 @@ export interface User {
   inviteCodesIssued: InviteCode[]
   queryTokensCreated: InviteCodeQueryToken[]
   auditLogs: AuditLog[]
+  tickets: Ticket[]
+  ticketMessages: TicketMessage[]
+  chatMessages: ChatMessage[]
+  privateChatsAsUser: PrivateChat[]
+  privateChatsAsAdmin: PrivateChat[]
+  privateChatMessages: PrivateChatMessage[]
   resetToken: string | null
   resetTokenExpiry: Date | null
 }
@@ -134,6 +142,7 @@ export interface PreApplication {
   reviewedBy: User | null
   inviteCode: InviteCode | null
   versions: PreApplicationVersion[]
+  tickets: Ticket[]
 }
 
 export interface PreApplicationVersion {
@@ -217,6 +226,7 @@ export interface SiteSettings {
   emailNotifications: boolean
   postModeration: boolean
   maintenanceMode: boolean
+  adminApplicationEnabled: boolean
   auditLogEnabled: boolean
   preApplicationEssayHint: string
   allowedEmailDomains: Prisma.JsonValue
@@ -259,4 +269,62 @@ export interface EmailLog {
   errorMessage: string | null
   metadata: Prisma.JsonValue | null
   createdAt: Date
+}
+
+export interface Ticket {
+  id: string
+  preApplicationId: string
+  userId: string
+  subject: string
+  status: TicketStatus
+  createdAt: Date
+  updatedAt: Date
+  resolvedAt: Date | null
+  preApplication: PreApplication
+  user: User
+  messages: TicketMessage[]
+}
+
+export interface TicketMessage {
+  id: string
+  ticketId: string
+  authorId: string
+  content: string
+  createdAt: Date
+  ticket: Ticket
+  author: User
+}
+
+export interface ChatMessage {
+  id: string
+  content: string
+  senderId: string
+  replyToId: string | null
+  createdAt: Date
+  deletedAt: Date | null
+  sender: User
+  replyTo: ChatMessage | null
+  replies: ChatMessage[]
+}
+
+export interface PrivateChat {
+  id: string
+  userId: string
+  adminId: string
+  createdAt: Date
+  updatedAt: Date
+  user: User
+  admin: User
+  messages: PrivateChatMessage[]
+}
+
+export interface PrivateChatMessage {
+  id: string
+  chatId: string
+  senderId: string
+  content: string
+  createdAt: Date
+  readAt: Date | null
+  chat: PrivateChat
+  sender: User
 }

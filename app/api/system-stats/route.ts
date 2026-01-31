@@ -19,11 +19,16 @@ export async function GET() {
       db.user.count(),
       db.preApplication.count(),
       db.preApplication.count({ where: { status: "APPROVED" } }),
+      // 可用邀请码：未删除、未使用、未过期、未分配给任何人
       db.inviteCode.count({
         where: {
           deletedAt: null,
           usedAt: null,
           OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
+          // 排除已分配/已发送的邀请码
+          preApplication: { is: null },
+          issuedToUserId: null,
+          issuedToEmail: null,
         },
       }),
     ])

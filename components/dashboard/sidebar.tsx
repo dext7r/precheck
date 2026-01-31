@@ -13,6 +13,9 @@ import {
   Shield,
   Gift,
   Settings,
+  Ticket,
+  MessageCircle,
+  MessageSquare,
 } from "lucide-react"
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
@@ -58,6 +61,22 @@ export function DashboardSidebar({ locale, dict, user }: DashboardSidebarProps) 
       name: dict.dashboard.preApplication,
       href: `/${locale}/dashboard/pre-application`,
       icon: ClipboardList,
+    },
+    {
+      name: ((dict.dashboard as unknown as Record<string, unknown>).tickets as string) || "工单",
+      href: `/${locale}/dashboard/tickets`,
+      icon: Ticket,
+    },
+    {
+      name: ((dict.dashboard as unknown as Record<string, unknown>).chat as string) || "聊天室",
+      href: `/${locale}/dashboard/chat`,
+      icon: MessageCircle,
+    },
+    {
+      name:
+        ((dict.dashboard as unknown as Record<string, unknown>).privateChats as string) || "私信",
+      href: `/${locale}/dashboard/private-chats`,
+      icon: MessageSquare,
     },
     {
       name: dict.dashboard.contribute,

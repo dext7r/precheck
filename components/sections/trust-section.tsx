@@ -14,13 +14,13 @@ const features = [{ icon: Heart }, { icon: Smile }, { icon: Users }, { icon: Awa
 
 export function TrustSection({ dict }: TrustSectionProps) {
   const t = dict.homepage.trust ?? {
-    title: "为什么选择我们",
-    subtitle: "一个专注于技术与开源的高质量社区",
+    title: "Why Pre-Application System",
+    subtitle: "Sincere, Friendly, United, Professional - Building a community we're proud of",
     items: [
-      { title: "严格准入", description: "保证社区质量，杜绝垃圾信息" },
-      { title: "活跃讨论", description: "每日技术话题，思维碰撞" },
-      { title: "独家资源", description: "会员专属资源与福利" },
-      { title: "快速响应", description: "管理团队高效审核处理" },
+      { title: "Sincere", description: "Be genuine and honest, reject deception" },
+      { title: "Friendly", description: "Help every member warmly, reject arrogance" },
+      { title: "United", description: "Build an ideal community together, reject isolation" },
+      { title: "Professional", description: "Pursue excellence, reject mediocrity" },
     ],
   }
 

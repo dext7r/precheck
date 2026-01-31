@@ -6,6 +6,7 @@ import { writeAuditLog } from "@/lib/audit"
 import { createApiErrorResponse } from "@/lib/api/error-response"
 import { ApiErrorKeys } from "@/lib/api/error-keys"
 import { sendEmail, isEmailConfigured } from "@/lib/email/mailer"
+import { getSiteSettings } from "@/lib/site-settings"
 
 const applySchema = z.object({
   reason: z.string().min(1).max(500),
@@ -21,6 +22,14 @@ export async function POST(request: NextRequest) {
 
     if (!db) {
       return createApiErrorResponse(request, ApiErrorKeys.databaseNotConfigured, { status: 503 })
+    }
+
+    // 检查是否允许申请管理员
+    const settings = await getSiteSettings()
+    if (!settings.adminApplicationEnabled) {
+      return createApiErrorResponse(request, ApiErrorKeys.dashboard.applyAdmin.disabled, {
+        status: 403,
+      })
     }
 
     // 已经是管理员不需要申请

@@ -18,6 +18,9 @@ import {
   Inbox,
   Gift,
   Settings,
+  Ticket,
+  MessageCircle,
+  MessageSquare,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -79,6 +82,8 @@ export default function DashboardPage({ params }: DashboardPageProps) {
 
   if (!dict) return null
 
+  const t = dict.dashboard as Record<string, unknown>
+
   const quickNavItems = [
     {
       href: `/${locale}/dashboard/messages`,
@@ -98,6 +103,33 @@ export default function DashboardPage({ params }: DashboardPageProps) {
       gradient: "from-violet-500/10 via-violet-500/5 to-transparent",
       iconBg: "bg-violet-500/10",
       iconColor: "text-violet-600 dark:text-violet-400",
+    },
+    {
+      href: `/${locale}/dashboard/tickets`,
+      icon: Ticket,
+      title: (t.tickets as string) || "Tickets",
+      description: (t.ticketsDesc as string) || "View and manage your support tickets",
+      gradient: "from-orange-500/10 via-orange-500/5 to-transparent",
+      iconBg: "bg-orange-500/10",
+      iconColor: "text-orange-600 dark:text-orange-400",
+    },
+    {
+      href: `/${locale}/dashboard/chat`,
+      icon: MessageCircle,
+      title: (t.chat as string) || "Chat Room",
+      description: (t.chatDesc as string) || "Chat with community members",
+      gradient: "from-cyan-500/10 via-cyan-500/5 to-transparent",
+      iconBg: "bg-cyan-500/10",
+      iconColor: "text-cyan-600 dark:text-cyan-400",
+    },
+    {
+      href: `/${locale}/dashboard/private-chats`,
+      icon: MessageSquare,
+      title: (t.privateChats as string) || "Private Messages",
+      description: (t.privateChatsDesc as string) || "Private conversations with admins",
+      gradient: "from-pink-500/10 via-pink-500/5 to-transparent",
+      iconBg: "bg-pink-500/10",
+      iconColor: "text-pink-600 dark:text-pink-400",
     },
     {
       href: `/${locale}/dashboard/contribute`,
@@ -206,8 +238,8 @@ export default function DashboardPage({ params }: DashboardPageProps) {
         </div>
       </motion.div>
 
-      {/* 预申请指南 - 仅中文 */}
-      {locale === "zh" && dict.dashboard.preApplicationGuide && (
+      {/* 预申请指南 */}
+      {dict.dashboard.preApplicationGuide && (
         <motion.div variants={item}>
           <Card className="border-0 shadow-md overflow-hidden">
             <CardHeader className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30 border-b">

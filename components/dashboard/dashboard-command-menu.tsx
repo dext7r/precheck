@@ -11,6 +11,9 @@ import {
   ClipboardList,
   Gift,
   Settings,
+  Ticket,
+  MessageCircle,
+  MessageSquare,
 } from "lucide-react"
 import { motion } from "framer-motion"
 import {
@@ -123,18 +126,40 @@ export function DashboardCommandMenu({ locale }: DashboardCommandMenuProps) {
       shortcut: "⌘3",
     },
     {
+      id: "tickets",
+      label: ((dict.dashboard as unknown as Record<string, unknown>).tickets as string) || "工单",
+      path: `/${locale}/dashboard/tickets`,
+      icon: Ticket,
+      shortcut: "⌘4",
+    },
+    {
+      id: "chat",
+      label: ((dict.dashboard as unknown as Record<string, unknown>).chat as string) || "聊天室",
+      path: `/${locale}/dashboard/chat`,
+      icon: MessageCircle,
+      shortcut: "⌘5",
+    },
+    {
+      id: "private-chats",
+      label:
+        ((dict.dashboard as unknown as Record<string, unknown>).privateChats as string) || "私信",
+      path: `/${locale}/dashboard/private-chats`,
+      icon: MessageSquare,
+      shortcut: "⌘6",
+    },
+    {
       id: "contribute",
       label: dict.dashboard.contribute,
       path: `/${locale}/dashboard/contribute`,
       icon: Gift,
-      shortcut: "⌘4",
+      shortcut: "⌘7",
     },
     {
       id: "settings",
       label: dict.dashboard.settings,
       path: `/${locale}/dashboard/settings`,
       icon: Settings,
-      shortcut: "⌘5",
+      shortcut: "⌘8",
     },
   ]
 

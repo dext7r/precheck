@@ -48,6 +48,8 @@ type SiteSettings = {
   emailNotifications: boolean
   postModeration: boolean
   maintenanceMode: boolean
+  adminApplicationEnabled: boolean
+  inviteCodeUrlPrefix: string
 }
 
 type QQGroupConfig = {
@@ -876,6 +878,14 @@ export function AdminSettingsForm({ locale, dict }: AdminSettingsFormProps) {
                       description={t.maintenanceModeDescription}
                       checked={settings.maintenanceMode}
                       onCheckedChange={(v) => setSettings({ ...settings, maintenanceMode: v })}
+                    />
+                    <ToggleItem
+                      title={t.adminApplicationEnabled}
+                      description={t.adminApplicationEnabledDesc}
+                      checked={settings.adminApplicationEnabled}
+                      onCheckedChange={(v) =>
+                        setSettings({ ...settings, adminApplicationEnabled: v })
+                      }
                     />
                     {systemConfig && (
                       <ToggleItem

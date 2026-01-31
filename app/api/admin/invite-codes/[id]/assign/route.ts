@@ -127,6 +127,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
     }
 
     const settings = await getSiteSettings()
+    const inviteCodeUrlPrefix = settings.inviteCodeUrlPrefix ?? ""
     const shouldSendEmail = features.email && settings.emailNotifications
 
     if (!recipientUser && !shouldSendEmail) {
@@ -162,6 +163,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
           issuedBy: issuedByName,
           note: note ?? undefined,
           locale: currentLocale,
+          inviteCodeUrlPrefix,
         })
 
         const message = await tx.message.create({
@@ -214,6 +216,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
         expiresAt: result.expiresAt,
         note: note ?? undefined,
         locale: currentLocale,
+        inviteCodeUrlPrefix,
       })
 
       try {

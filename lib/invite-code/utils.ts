@@ -29,9 +29,18 @@ export function extractPureCode(input: string): string | null {
  * @returns 格式化后的完整 URL，如果无法解析则返回原输入
  */
 export function formatInviteCodeUrl(code: string, urlPrefix: string = ""): string {
-  const pureCode = extractPureCode(code)
+  const trimmed = code.trim()
+  if (!trimmed) {
+    return trimmed
+  }
+
+  if (isValidInviteCodeUrl(trimmed)) {
+    return trimmed
+  }
+
+  const pureCode = extractPureCode(trimmed)
   if (!pureCode) {
-    return code
+    return trimmed
   }
   // 如果没有配置前缀，只返回纯码
   if (!urlPrefix) {
