@@ -80,7 +80,8 @@ export async function POST(request: NextRequest) {
           where: { id: data.preApplicationId, userId: user.id },
         })
         if (!preApp) throw new Error("preApp-not-found")
-        if (preApp.status !== "REJECTED") throw new Error("invalid-status")
+        if (preApp.status !== "REJECTED" && preApp.status !== "PENDING")
+          throw new Error("invalid-status")
 
         const existingTicket = await tx.ticket.findFirst({
           where: {

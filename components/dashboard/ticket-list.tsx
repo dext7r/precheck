@@ -3,10 +3,21 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { Ticket, Plus, Clock, CheckCircle, AlertCircle, XCircle } from "lucide-react"
+import { Ticket, Plus, Clock, CheckCircle, AlertCircle, XCircle, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Label } from "@/components/ui/label"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 import { toast } from "sonner"
 import type { Dictionary } from "@/lib/i18n/get-dictionary"
 import type { Locale } from "@/lib/i18n/config"
@@ -31,6 +42,11 @@ type TicketRecord = {
   }>
 }
 
+type PreApp = {
+  id: string
+  status: string
+}
+
 const statusConfig = {
   OPEN: { icon: AlertCircle, color: "bg-yellow-500", label: "open" },
   IN_PROGRESS: { icon: Clock, color: "bg-blue-500", label: "in_progress" },
@@ -38,15 +54,23 @@ const statusConfig = {
   CLOSED: { icon: XCircle, color: "bg-gray-500", label: "closed" },
 }
 
+const ALLOWED_STATUSES = ["REJECTED", "PENDING"]
+
 export function TicketList({ locale, dict }: TicketListProps) {
   const [tickets, setTickets] = useState<TicketRecord[]>([])
   const [loading, setLoading] = useState(true)
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [preApp, setPreApp] = useState<PreApp | null>(null)
+  const [subject, setSubject] = useState("")
+  const [content, setContent] = useState("")
+  const [submitting, setSubmitting] = useState(false)
 
   const t = (dict.dashboard as Record<string, unknown>) || {}
   const statusLabels = (t.ticketStatus as Record<string, string>) || {}
 
   useEffect(() => {
     fetchTickets()
+    fetchPreApp()
   }, [])
 
   const fetchTickets = async () => {
@@ -62,6 +86,46 @@ export function TicketList({ locale, dict }: TicketListProps) {
     }
   }
 
+  const fetchPreApp = async () => {
+    try {
+      const res = await fetch("/api/pre-application")
+      if (!res.ok) return
+      const data = await res.json()
+      if (data.record) setPreApp({ id: data.record.id, status: data.record.status })
+    } catch {
+      /* ignore */
+    }
+  }
+
+  const hasActiveTicket = tickets.some((t) => t.status === "OPEN" || t.status === "IN_PROGRESS")
+  const canCreate = preApp && ALLOWED_STATUSES.includes(preApp.status) && !hasActiveTicket
+
+  const handleCreate = async () => {
+    if (!preApp || !subject.trim() || !content.trim()) return
+    setSubmitting(true)
+    try {
+      const res = await fetch("/api/tickets", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          preApplicationId: preApp.id,
+          subject: subject.trim(),
+          content: content.trim(),
+        }),
+      })
+      if (!res.ok) throw new Error()
+      setDialogOpen(false)
+      setSubject("")
+      setContent("")
+      await fetchTickets()
+      toast.success((t.ticketCreated as string) || "Ticket created")
+    } catch {
+      toast.error((t.ticketCreateFailed as string) || "Failed to create ticket")
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex h-64 items-center justify-center">
@@ -74,19 +138,81 @@ export function TicketList({ locale, dict }: TicketListProps) {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">{(t.tickets as string) || "工单"}</h1>
+          <h1 className="text-2xl font-bold">{(t.tickets as string) || "Tickets"}</h1>
           <p className="text-muted-foreground">
-            {(t.ticketsDesc as string) || "查看和管理您的工单申诉"}
+            {(t.ticketsDesc as string) || "View and manage your support tickets"}
           </p>
         </div>
+        {canCreate && (
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                {(t.createTicket as string) || "Create Ticket"}
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>{(t.createTicket as string) || "Create Ticket"}</DialogTitle>
+                <DialogDescription>
+                  {(t.ticketCreateDesc as string) ||
+                    "Submit a ticket to communicate with the review team"}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 pt-2">
+                <div className="space-y-2">
+                  <Label>{(t.ticketSubject as string) || "Subject"}</Label>
+                  <Input
+                    value={subject}
+                    onChange={(e) => setSubject(e.target.value)}
+                    placeholder={
+                      (t.ticketSubjectPlaceholder as string) || "Briefly describe your issue"
+                    }
+                    maxLength={200}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>{(t.ticketContent as string) || "Description"}</Label>
+                  <Textarea
+                    value={content}
+                    onChange={(e) => setContent(e.target.value)}
+                    placeholder={
+                      (t.ticketContentPlaceholder as string) ||
+                      "Please describe your issue or appeal in detail..."
+                    }
+                    rows={5}
+                    maxLength={2000}
+                  />
+                </div>
+                <Button
+                  onClick={handleCreate}
+                  disabled={submitting || !subject.trim() || !content.trim()}
+                  className="w-full"
+                >
+                  {submitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      {(t.ticketSubmitting as string) || "Submitting..."}
+                    </>
+                  ) : (
+                    (t.ticketSubmit as string) || "Submit Ticket"
+                  )}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
 
       {tickets.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <Ticket className="mb-4 h-12 w-12 text-muted-foreground" />
-            <p className="text-muted-foreground">{(t.noTickets as string) || "暂无工单"}</p>
-            <p className="mt-2 text-sm text-muted-foreground">您可以在预申请被拒绝后发起工单申诉</p>
+            <p className="text-muted-foreground">{(t.noTickets as string) || "No tickets yet"}</p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              {(t.noTicketsHint as string) ||
+                "You can submit a ticket when your application is pending or rejected"}
+            </p>
           </CardContent>
         </Card>
       ) : (
@@ -123,8 +249,8 @@ export function TicketList({ locale, dict }: TicketListProps) {
                       {lastMessage && (
                         <p className="line-clamp-2 text-sm text-muted-foreground">
                           <span className="font-medium">
-                            {lastMessage.author.name || "用户"}
-                            {lastMessage.author.role !== "USER" && " [管理员]"}:
+                            {lastMessage.author.name || "User"}
+                            {lastMessage.author.role !== "USER" && " [Admin]"}:
                           </span>{" "}
                           {lastMessage.content}
                         </p>

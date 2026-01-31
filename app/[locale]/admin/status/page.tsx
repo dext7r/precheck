@@ -22,10 +22,10 @@ export default async function StatusPage({ params }: StatusPageProps) {
         </div>
         <div>
           <h1 className="text-2xl font-bold tracking-tight md:text-3xl">
-            {(t.status as string) || "系统状态"}
+            {(t.systemStatus as string) || "System Status"}
           </h1>
           <p className="text-sm text-muted-foreground">
-            {(t.statusDesc as string) || "监控系统依赖服务的健康状态"}
+            {(t.statusDesc as string) || "Monitor health status of system dependencies"}
           </p>
         </div>
       </div>
