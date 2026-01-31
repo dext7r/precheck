@@ -414,13 +414,18 @@ model TicketMessage {
 
 // 聊天消息
 model ChatMessage {
-  id         String   @id @default(cuid())
+  id         String    @id @default(cuid())
   content    String
   senderId   String
-  createdAt  DateTime @default(now())
+  replyToId  String?
+  createdAt  DateTime  @default(now())
+  deletedAt  DateTime?
 
-  sender     User     @relation("ChatMessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  sender     User         @relation("ChatMessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  replyTo    ChatMessage? @relation("ChatMessageReplies", fields: [replyToId], references: [id], onDelete: SetNull)
+  replies    ChatMessage[] @relation("ChatMessageReplies")
 
   @@index([createdAt])
   @@index([senderId])
+  @@index([replyToId])
 }

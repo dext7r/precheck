@@ -294,6 +294,10 @@ export interface ChatMessage {
   id: string
   content: string
   senderId: string
+  replyToId: string | null
   createdAt: Date
+  deletedAt: Date | null
   sender: User
+  replyTo: ChatMessage | null
+  replies: ChatMessage[]
 }

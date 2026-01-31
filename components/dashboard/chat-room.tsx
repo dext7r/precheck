@@ -2,10 +2,17 @@
 
 import { useState, useEffect, useRef, useCallback } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Send, Shield, MessageCircle } from "lucide-react"
+import { Send, Shield, MessageCircle, Reply, X, Copy, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import type { Dictionary } from "@/lib/i18n/get-dictionary"
@@ -33,6 +40,12 @@ type ChatMsg = {
     role: string
     avatar: string | null
   }
+  replyTo?: {
+    id: string
+    content: string
+    deletedAt?: string | null
+    sender: { id: string; name: string | null; email: string }
+  } | null
 }
 
 export function ChatRoom({ dict, currentUser }: ChatRoomProps) {
@@ -40,6 +53,7 @@ export function ChatRoom({ dict, currentUser }: ChatRoomProps) {
   const [input, setInput] = useState("")
   const [sending, setSending] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [replyTo, setReplyTo] = useState<ChatMsg | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -78,21 +92,74 @@ export function ChatRoom({ dict, currentUser }: ChatRoomProps) {
     if (!content || sending) return
     setSending(true)
     setInput("")
+    const currentReplyTo = replyTo
+    setReplyTo(null)
     try {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content }),
+        body: JSON.stringify({
+          content,
+          replyToId: currentReplyTo?.id,
+        }),
       })
-      if (!res.ok) throw new Error()
-      const msg = await res.json()
-      setMessages((prev) => [...prev, msg])
-    } catch {
-      toast.error("发送失败")
+      const data = await res.json()
+      if (!res.ok) {
+        throw new Error(data.error?.message || "发送失败")
+      }
+      setMessages((prev) => [...prev, data])
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "发送失败"
+      toast.error(message)
       setInput(content)
+      setReplyTo(currentReplyTo)
     } finally {
       setSending(false)
       inputRef.current?.focus()
+    }
+  }
+
+  const handleReply = (msg: ChatMsg) => {
+    setReplyTo(msg)
+    inputRef.current?.focus()
+  }
+
+  const handleCopy = (content: string) => {
+    navigator.clipboard.writeText(content)
+    toast.success("已复制")
+  }
+
+  const handleRecall = async (msg: ChatMsg) => {
+    try {
+      const res = await fetch("/api/chat", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messageId: msg.id }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        throw new Error(data.error?.message || "撤回失败")
+      }
+      setMessages((prev) => prev.filter((m) => m.id !== msg.id))
+      toast.success("消息已撤回")
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "撤回失败"
+      toast.error(message)
+    }
+  }
+
+  const canRecall = (msg: ChatMsg) => {
+    if (msg.sender.id !== currentUser.id) return false
+    const twoMinutesAgo = Date.now() - 2 * 60 * 1000
+    return new Date(msg.createdAt).getTime() > twoMinutesAgo
+  }
+
+  const scrollToMessage = (msgId: string) => {
+    const el = document.getElementById(`msg-${msgId}`)
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" })
+      el.classList.add("bg-primary/10")
+      setTimeout(() => el.classList.remove("bg-primary/10"), 1500)
     }
   }
 
@@ -113,6 +180,10 @@ export function ChatRoom({ dict, currentUser }: ChatRoomProps) {
       " " +
       date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
     )
+  }
+
+  const getSenderName = (sender: { name: string | null; email: string }) => {
+    return sender.name || sender.email.split("@")[0]
   }
 
   if (loading) {
@@ -151,9 +222,10 @@ export function ChatRoom({ dict, currentUser }: ChatRoomProps) {
                 const isMe = msg.sender.id === currentUser.id
                 const isAdmin = msg.sender.role !== "USER"
                 const showTime = shouldShowTime(msg, messages[index - 1])
+                const showRecall = canRecall(msg)
 
                 return (
-                  <div key={msg.id}>
+                  <div key={msg.id} id={`msg-${msg.id}`} className="transition-colors duration-300">
                     {/* 时间分隔 */}
                     {showTime && (
                       <div className="my-3 flex justify-center">
@@ -164,71 +236,119 @@ export function ChatRoom({ dict, currentUser }: ChatRoomProps) {
                     )}
 
                     {/* 消息气泡 */}
-                    <motion.div
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className={cn(
-                        "flex items-start gap-2 py-1",
-                        isMe ? "flex-row-reverse" : "flex-row",
-                      )}
-                    >
-                      {/* 头像 */}
-                      <Avatar className="h-9 w-9 shrink-0 mt-0.5">
-                        <AvatarImage src={msg.sender.avatar || undefined} />
-                        <AvatarFallback
+                    <ContextMenu>
+                      <ContextMenuTrigger asChild>
+                        <motion.div
+                          initial={{ opacity: 0, y: 8 }}
+                          animate={{ opacity: 1, y: 0 }}
                           className={cn(
-                            "text-xs font-medium",
-                            isAdmin
-                              ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
-                              : "",
+                            "flex items-start gap-2 py-1",
+                            isMe ? "flex-row-reverse" : "flex-row",
                           )}
                         >
-                          {(msg.sender.name || msg.sender.email)?.[0]?.toUpperCase() || "U"}
-                        </AvatarFallback>
-                      </Avatar>
-
-                      {/* 消息内容 */}
-                      <div className={cn("max-w-[65%]", isMe ? "items-end" : "items-start")}>
-                        {/* 昵称和角色 */}
-                        {!isMe && (
-                          <div className="mb-0.5 flex items-center gap-1 px-1">
-                            <span
+                          {/* 头像 */}
+                          <Avatar className="h-9 w-9 shrink-0 mt-0.5">
+                            <AvatarImage src={msg.sender.avatar || undefined} />
+                            <AvatarFallback
                               className={cn(
                                 "text-xs font-medium",
                                 isAdmin
-                                  ? "text-blue-600 dark:text-blue-400"
-                                  : "text-muted-foreground",
+                                  ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
+                                  : "",
                               )}
                             >
-                              {msg.sender.name || msg.sender.email.split("@")[0]}
-                            </span>
-                            {isAdmin && (
-                              <Badge
-                                variant="secondary"
-                                className="h-3.5 px-1 text-[9px] font-medium bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 border-0"
-                              >
-                                <Shield className="mr-0.5 h-2 w-2" />
-                                {(t.chatAdmin as string) || "管理员"}
-                              </Badge>
-                            )}
-                          </div>
-                        )}
+                              {(msg.sender.name || msg.sender.email)?.[0]?.toUpperCase() || "U"}
+                            </AvatarFallback>
+                          </Avatar>
 
-                        {/* 气泡 */}
-                        <div
-                          className={cn(
-                            "relative rounded-xl px-3 py-2 text-sm leading-relaxed break-words whitespace-pre-wrap shadow-sm",
-                            isMe
-                              ? "bg-[#95EC69] text-gray-900 dark:bg-[#2B8A3E] dark:text-white rounded-tr-sm"
-                              : isAdmin
-                                ? "bg-white dark:bg-slate-800 border border-blue-100 dark:border-blue-900 rounded-tl-sm"
-                                : "bg-white dark:bg-slate-800 rounded-tl-sm",
-                          )}
-                        >
-                          {msg.content}
-                        </div>
-                      </div>
-                    </motion.div>
+                          {/* 消息内容 */}
+                          <div className={cn("max-w-[65%]", isMe ? "items-end" : "items-start")}>
+                            {/* 昵称和角色 */}
+                            {!isMe && (
+                              <div className="mb-0.5 flex items-center gap-1 px-1">
+                                <span
+                                  className={cn(
+                                    "text-xs font-medium",
+                                    isAdmin
+                                      ? "text-blue-600 dark:text-blue-400"
+                                      : "text-muted-foreground",
+                                  )}
+                                >
+                                  {getSenderName(msg.sender)}
+                                </span>
+                                {isAdmin && (
+                                  <Badge
+                                    variant="secondary"
+                                    className="h-3.5 px-1 text-[9px] font-medium bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 border-0"
+                                  >
+                                    <Shield className="mr-0.5 h-2 w-2" />
+                                    {(t.chatAdmin as string) || "管理员"}
+                                  </Badge>
+                                )}
+                              </div>
+                            )}
+
+                            {/* 气泡 */}
+                            <div
+                              className={cn(
+                                "relative rounded-xl px-3 py-2 text-sm leading-relaxed break-words whitespace-pre-wrap shadow-sm",
+                                isMe
+                                  ? "bg-[#95EC69] text-gray-900 dark:bg-[#2B8A3E] dark:text-white rounded-tr-sm"
+                                  : isAdmin
+                                    ? "bg-white dark:bg-slate-800 border border-blue-100 dark:border-blue-900 rounded-tl-sm"
+                                    : "bg-white dark:bg-slate-800 rounded-tl-sm",
+                              )}
+                            >
+                              {/* 引用显示 */}
+                              {msg.replyTo && (
+                                <div
+                                  onClick={() => !msg.replyTo?.deletedAt && scrollToMessage(msg.replyTo!.id)}
+                                  className={cn(
+                                    "mb-2 rounded-md px-2 py-1.5 text-xs border-l-2",
+                                    msg.replyTo.deletedAt
+                                      ? "opacity-50 cursor-default"
+                                      : "cursor-pointer",
+                                    isMe
+                                      ? "bg-black/10 border-black/30 dark:bg-white/10 dark:border-white/30"
+                                      : "bg-muted/50 border-muted-foreground/30",
+                                  )}
+                                >
+                                  <p className="font-medium opacity-70">
+                                    {getSenderName(msg.replyTo.sender)}
+                                  </p>
+                                  <p className="line-clamp-2 opacity-60">
+                                    {msg.replyTo.deletedAt ? "消息已撤回" : msg.replyTo.content}
+                                  </p>
+                                </div>
+                              )}
+                              {msg.content}
+                            </div>
+                          </div>
+                        </motion.div>
+                      </ContextMenuTrigger>
+                      <ContextMenuContent>
+                        <ContextMenuItem onClick={() => handleReply(msg)}>
+                          <Reply className="mr-2 h-4 w-4" />
+                          回复
+                        </ContextMenuItem>
+                        <ContextMenuItem onClick={() => handleCopy(msg.content)}>
+                          <Copy className="mr-2 h-4 w-4" />
+                          复制
+                        </ContextMenuItem>
+                        {showRecall && (
+                          <>
+                            <ContextMenuSeparator />
+                            <ContextMenuItem
+                              onClick={() => handleRecall(msg)}
+                              className="text-destructive focus:text-destructive"
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              撤回
+                            </ContextMenuItem>
+                          </>
+                        )}
+                      </ContextMenuContent>
+                    </ContextMenu>
                   </div>
                 )
               })}
@@ -237,6 +357,27 @@ export function ChatRoom({ dict, currentUser }: ChatRoomProps) {
           </div>
         )}
       </div>
+
+      {/* 引用预览 */}
+      {replyTo && (
+        <div className="flex items-center gap-2 border-t bg-muted/50 px-4 py-2">
+          <Reply className="h-4 w-4 text-muted-foreground" />
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-medium text-muted-foreground">
+              回复 {getSenderName(replyTo.sender)}
+            </p>
+            <p className="text-xs text-muted-foreground/70 truncate">{replyTo.content}</p>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6 shrink-0"
+            onClick={() => setReplyTo(null)}
+          >
+            <X className="h-3 w-3" />
+          </Button>
+        </div>
+      )}
 
       {/* 输入区域 */}
       <div className="border-t bg-background px-4 py-3">
