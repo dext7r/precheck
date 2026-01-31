@@ -31,6 +31,8 @@ import {
   Copy,
   Check,
   ExternalLink,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -279,6 +281,19 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
     null,
   )
   const [duplicateCheckError, setDuplicateCheckError] = useState<string | null>(null)
+  const [expandedDuplicates, setExpandedDuplicates] = useState<Set<string>>(new Set())
+
+  const toggleDuplicateExpand = (id: string) => {
+    setExpandedDuplicates((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) {
+        next.delete(id)
+      } else {
+        next.add(id)
+      }
+      return next
+    })
+  }
 
   useEffect(() => {
     if (reviewAction === "REJECT") {
@@ -522,6 +537,7 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
     setAIReviewError(null)
     setDuplicateCheckResult(null)
     setDuplicateCheckError(null)
+    setExpandedDuplicates(new Set())
     if (record.status === "PENDING" || record.status === "DISPUTED") {
       setReviewAction("APPROVE")
       setGuidance(record.guidance || "")
@@ -572,6 +588,7 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
     if (!selected) return
     setDuplicateCheckLoading(true)
     setDuplicateCheckError(null)
+    setExpandedDuplicates(new Set())
 
     try {
       const res = await fetch(`/api/admin/pre-applications/${selected.id}/duplicate-check`, {
@@ -1500,59 +1517,96 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
                                 )}
                               </span>
                             </div>
-                            <div className="max-h-48 space-y-2 overflow-y-auto">
-                              {duplicateCheckResult.records.map((record) => (
-                                <div
-                                  key={record.id}
-                                  className="flex items-center justify-between rounded-md border bg-card p-2.5"
-                                >
-                                  <div className="min-w-0 flex-1">
-                                    <div className="flex items-center gap-2">
-                                      <span className="truncate text-sm font-medium">
-                                        {record.user.name || record.user.email}
-                                      </span>
-                                      {statusBadge(record.status as AdminPreApplication["status"])}
-                                    </div>
-                                    <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                                      {record.essay}
-                                    </p>
-                                  </div>
-                                  <div className="ml-3 flex items-center gap-2">
-                                    <Badge
-                                      variant="outline"
-                                      className={cn(
-                                        "font-mono text-xs",
-                                        record.similarity >= 80
-                                          ? "border-red-500/50 text-red-500"
-                                          : record.similarity >= 50
-                                            ? "border-amber-500/50 text-amber-500"
-                                            : "border-muted-foreground/50",
-                                      )}
+                            <div className="max-h-64 space-y-2 overflow-y-auto">
+                              {duplicateCheckResult.records.map((record) => {
+                                const isExpanded = expandedDuplicates.has(record.id)
+                                return (
+                                  <div
+                                    key={record.id}
+                                    className="rounded-md border bg-card overflow-hidden"
+                                  >
+                                    <div
+                                      className="flex items-center justify-between p-2.5 cursor-pointer hover:bg-muted/50 transition-colors"
+                                      onClick={() => toggleDuplicateExpand(record.id)}
                                     >
-                                      {record.similarity}%
-                                    </Badge>
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          className="h-7 w-7 p-0"
-                                          onClick={() => {
-                                            // 查看原申请（打开新记录）
-                                            const original = records.find((r) => r.id === record.id)
-                                            if (original) openDialog(original)
-                                          }}
+                                      <div className="min-w-0 flex-1">
+                                        <div className="flex items-center gap-2">
+                                          <span className="truncate text-sm font-medium">
+                                            {record.user.name || record.user.email}
+                                          </span>
+                                          {statusBadge(
+                                            record.status as AdminPreApplication["status"],
+                                          )}
+                                        </div>
+                                        {!isExpanded && (
+                                          <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                                            {record.essay}
+                                          </p>
+                                        )}
+                                      </div>
+                                      <div className="ml-3 flex items-center gap-2">
+                                        <Badge
+                                          variant="outline"
+                                          className={cn(
+                                            "font-mono text-xs",
+                                            record.similarity >= 80
+                                              ? "border-red-500/50 text-red-500"
+                                              : record.similarity >= 50
+                                                ? "border-amber-500/50 text-amber-500"
+                                                : "border-muted-foreground/50",
+                                          )}
                                         >
-                                          <ExternalLink className="h-3.5 w-3.5" />
-                                        </Button>
-                                      </TooltipTrigger>
-                                      <TooltipContent>
-                                        {t.duplicateCheckViewOriginal}
-                                      </TooltipContent>
-                                    </Tooltip>
+                                          {record.similarity}%
+                                        </Badge>
+                                        <Tooltip>
+                                          <TooltipTrigger asChild>
+                                            <Button
+                                              variant="ghost"
+                                              size="sm"
+                                              className="h-7 w-7 p-0"
+                                              onClick={(e) => {
+                                                e.stopPropagation()
+                                                const original = records.find(
+                                                  (r) => r.id === record.id,
+                                                )
+                                                if (original) openDialog(original)
+                                              }}
+                                            >
+                                              <ExternalLink className="h-3.5 w-3.5" />
+                                            </Button>
+                                          </TooltipTrigger>
+                                          <TooltipContent>
+                                            {t.duplicateCheckViewOriginal}
+                                          </TooltipContent>
+                                        </Tooltip>
+                                        {isExpanded ? (
+                                          <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                                        ) : (
+                                          <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                                        )}
+                                      </div>
+                                    </div>
+                                    {isExpanded && (
+                                      <motion.div
+                                        initial={{ height: 0, opacity: 0 }}
+                                        animate={{ height: "auto", opacity: 1 }}
+                                        exit={{ height: 0, opacity: 0 }}
+                                        className="border-t bg-muted/30 px-3 py-2"
+                                      >
+                                        <p className="text-xs text-muted-foreground whitespace-pre-wrap">
+                                          {record.essay}
+                                        </p>
+                                        {record.aiReason && (
+                                          <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
+                                            <span className="font-medium">AI 分析：</span>
+                                            {record.aiReason}
+                                          </p>
+                                        )}
+                                      </motion.div>
+                                    )}
                                   </div>
-                                </div>
-                              ))}
+                                )
+                              })}
                             </div>
                           </div>
                         )}

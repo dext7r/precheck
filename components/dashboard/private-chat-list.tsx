@@ -48,7 +48,7 @@ export function PrivateChatList({ locale, dict, currentUser }: PrivateChatListPr
       const data = await res.json()
       setChats(data.chats || [])
     } catch {
-      toast.error("获取私信列表失败")
+      toast.error((t.privateChatsFetchFailed as string) || "Failed to fetch private chats")
     } finally {
       setLoading(false)
     }
@@ -62,10 +62,13 @@ export function PrivateChatList({ locale, dict, currentUser }: PrivateChatListPr
     const diffHours = Math.floor(diffMs / 3600000)
     const diffDays = Math.floor(diffMs / 86400000)
 
-    if (diffMins < 1) return "刚刚"
-    if (diffMins < 60) return `${diffMins}分钟前`
-    if (diffHours < 24) return `${diffHours}小时前`
-    if (diffDays < 7) return `${diffDays}天前`
+    if (diffMins < 1) return (t.timeJustNow as string) || "Just now"
+    if (diffMins < 60)
+      return ((t.timeMinutesAgo as string) || "{n} min ago").replace("{n}", String(diffMins))
+    if (diffHours < 24)
+      return ((t.timeHoursAgo as string) || "{n}h ago").replace("{n}", String(diffHours))
+    if (diffDays < 7)
+      return ((t.timeDaysAgo as string) || "{n}d ago").replace("{n}", String(diffDays))
     return date.toLocaleDateString()
   }
 
@@ -80,9 +83,9 @@ export function PrivateChatList({ locale, dict, currentUser }: PrivateChatListPr
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">{(t.privateChats as string) || "私信"}</h1>
+        <h1 className="text-2xl font-bold">{(t.privateChats as string) || "Private Messages"}</h1>
         <p className="text-muted-foreground">
-          {(t.privateChatsDesc as string) || "与管理员的私密对话"}
+          {(t.privateChatsDesc as string) || "Private conversations with admins"}
         </p>
       </div>
 
@@ -90,9 +93,12 @@ export function PrivateChatList({ locale, dict, currentUser }: PrivateChatListPr
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <MessageSquare className="mb-4 h-12 w-12 text-muted-foreground" />
-            <p className="text-muted-foreground">{(t.noPrivateChats as string) || "暂无私信"}</p>
+            <p className="text-muted-foreground">
+              {(t.noPrivateChats as string) || "No private messages"}
+            </p>
             <p className="mt-2 text-sm text-muted-foreground">
-              在聊天室右键点击管理员消息可发起私信
+              {(t.privateChatsHint as string) ||
+                "Right-click an admin's message in chat room to start a private conversation"}
             </p>
           </CardContent>
         </Card>
@@ -101,7 +107,8 @@ export function PrivateChatList({ locale, dict, currentUser }: PrivateChatListPr
           {chats.map((chat, index) => {
             // 显示对方的信息：如果当前用户是 user，显示 admin；否则显示 user
             const other = chat.user.id === currentUser.id ? chat.admin : chat.user
-            const isOtherAdmin = "role" in other && (other.role === "ADMIN" || other.role === "SUPER_ADMIN")
+            const isOtherAdmin =
+              "role" in other && (other.role === "ADMIN" || other.role === "SUPER_ADMIN")
             const lastMsg = chat.messages[0]
 
             return (
@@ -139,7 +146,7 @@ export function PrivateChatList({ locale, dict, currentUser }: PrivateChatListPr
                               className="h-4 px-1 text-[9px] shrink-0 bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
                             >
                               <Shield className="mr-0.5 h-2 w-2" />
-                              管理员
+                              {(t.chatAdmin as string) || "Admin"}
                             </Badge>
                           )}
                         </div>
@@ -152,7 +159,7 @@ export function PrivateChatList({ locale, dict, currentUser }: PrivateChatListPr
                                 : "text-muted-foreground",
                             )}
                           >
-                            {lastMsg.senderId === currentUser.id && "我: "}
+                            {lastMsg.senderId === currentUser.id && `${(t.me as string) || "Me"}: `}
                             {lastMsg.content}
                           </p>
                         )}

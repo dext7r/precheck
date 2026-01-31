@@ -107,11 +107,12 @@ export function ChatRoom({ locale, dict, currentUser }: ChatRoomProps) {
       })
       const data = await res.json()
       if (!res.ok) {
-        throw new Error(data.error?.message || "发送失败")
+        throw new Error(data.error?.message || (t.chatSendFailed as string) || "Failed to send")
       }
       setMessages((prev) => [...prev, data])
     } catch (err) {
-      const message = err instanceof Error ? err.message : "发送失败"
+      const message =
+        err instanceof Error ? err.message : (t.chatSendFailed as string) || "Failed to send"
       toast.error(message)
       setInput(content)
       setReplyTo(currentReplyTo)
@@ -128,7 +129,7 @@ export function ChatRoom({ locale, dict, currentUser }: ChatRoomProps) {
 
   const handleCopy = (content: string) => {
     navigator.clipboard.writeText(content)
-    toast.success("已复制")
+    toast.success((t.chatCopySuccess as string) || "Copied")
   }
 
   const handleRecall = async (msg: ChatMsg) => {
@@ -140,19 +141,20 @@ export function ChatRoom({ locale, dict, currentUser }: ChatRoomProps) {
       })
       const data = await res.json()
       if (!res.ok) {
-        throw new Error(data.error?.message || "撤回失败")
+        throw new Error(data.error?.message || (t.chatRecallFailed as string) || "Failed to recall")
       }
       setMessages((prev) => prev.filter((m) => m.id !== msg.id))
-      toast.success("消息已撤回")
+      toast.success((t.chatRecallSuccess as string) || "Message recalled")
     } catch (err) {
-      const message = err instanceof Error ? err.message : "撤回失败"
+      const message =
+        err instanceof Error ? err.message : (t.chatRecallFailed as string) || "Failed to recall"
       toast.error(message)
     }
   }
 
   const handlePrivateMessage = async (msg: ChatMsg) => {
     if (msg.sender.role === "USER") {
-      toast.error("只能私信管理员")
+      toast.error((t.chatOnlyAdminPrivate as string) || "You can only message admins")
       return
     }
     try {
@@ -162,10 +164,16 @@ export function ChatRoom({ locale, dict, currentUser }: ChatRoomProps) {
         body: JSON.stringify({ adminId: msg.sender.id }),
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error?.message || "创建会话失败")
+      if (!res.ok)
+        throw new Error(
+          data.error?.message || (t.chatCreateChatFailed as string) || "Failed to create chat",
+        )
       router.push(`/${locale}/dashboard/private-chats/${data.chatId}`)
     } catch (err) {
-      const message = err instanceof Error ? err.message : "创建会话失败"
+      const message =
+        err instanceof Error
+          ? err.message
+          : (t.chatCreateChatFailed as string) || "Failed to create chat"
       toast.error(message)
     }
   }
@@ -345,7 +353,9 @@ export function ChatRoom({ locale, dict, currentUser }: ChatRoomProps) {
                                     {getSenderName(msg.replyTo.sender)}
                                   </p>
                                   <p className="line-clamp-2 opacity-60">
-                                    {msg.replyTo.deletedAt ? "消息已撤回" : msg.replyTo.content}
+                                    {msg.replyTo.deletedAt
+                                      ? (t.chatRecalled as string) || "Message recalled"
+                                      : msg.replyTo.content}
                                   </p>
                                 </div>
                               )}
@@ -357,16 +367,16 @@ export function ChatRoom({ locale, dict, currentUser }: ChatRoomProps) {
                       <ContextMenuContent>
                         <ContextMenuItem onClick={() => handleReply(msg)}>
                           <Reply className="mr-2 h-4 w-4" />
-                          回复
+                          {(t.chatReply as string) || "Reply"}
                         </ContextMenuItem>
                         <ContextMenuItem onClick={() => handleCopy(msg.content)}>
                           <Copy className="mr-2 h-4 w-4" />
-                          复制
+                          {(t.chatCopy as string) || "Copy"}
                         </ContextMenuItem>
                         {!isMe && isAdmin && (
                           <ContextMenuItem onClick={() => handlePrivateMessage(msg)}>
                             <MessageSquare className="mr-2 h-4 w-4" />
-                            私信
+                            {(t.chatPrivateMsg as string) || "Private Message"}
                           </ContextMenuItem>
                         )}
                         {showRecall && (
@@ -377,7 +387,7 @@ export function ChatRoom({ locale, dict, currentUser }: ChatRoomProps) {
                               className="text-destructive focus:text-destructive"
                             >
                               <Trash2 className="mr-2 h-4 w-4" />
-                              撤回
+                              {(t.chatRecall as string) || "Recall"}
                             </ContextMenuItem>
                           </>
                         )}
@@ -398,7 +408,7 @@ export function ChatRoom({ locale, dict, currentUser }: ChatRoomProps) {
           <Reply className="h-4 w-4 text-muted-foreground" />
           <div className="flex-1 min-w-0">
             <p className="text-xs font-medium text-muted-foreground">
-              回复 {getSenderName(replyTo.sender)}
+              {(t.chatReply as string) || "Reply"} {getSenderName(replyTo.sender)}
             </p>
             <p className="text-xs text-muted-foreground/70 truncate">{replyTo.content}</p>
           </div>

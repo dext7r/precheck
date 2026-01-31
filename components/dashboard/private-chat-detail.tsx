@@ -67,10 +67,10 @@ export function PrivateChatDetail({ locale, dict, chatId, currentUser }: Private
       const data = await res.json()
       setChat(data)
     } catch {
-      toast.error("获取会话信息失败")
+      toast.error((t.privateChatDetailFetchFailed as string) || "Failed to fetch chat details")
       router.push(`/${locale}/dashboard/private-chats`)
     }
-  }, [chatId, locale, router])
+  }, [chatId, locale, router, t.privateChatDetailFetchFailed])
 
   const fetchMessages = useCallback(async () => {
     try {
@@ -108,10 +108,12 @@ export function PrivateChatDetail({ locale, dict, chatId, currentUser }: Private
         body: JSON.stringify({ content }),
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error?.message || "发送失败")
+      if (!res.ok)
+        throw new Error(data.error?.message || (t.chatSendFailed as string) || "Failed to send")
       setMessages((prev) => [...prev, data])
     } catch (err) {
-      const message = err instanceof Error ? err.message : "发送失败"
+      const message =
+        err instanceof Error ? err.message : (t.chatSendFailed as string) || "Failed to send"
       toast.error(message)
       setInput(content)
     } finally {
@@ -176,7 +178,7 @@ export function PrivateChatDetail({ locale, dict, chatId, currentUser }: Private
                 {"role" in otherParty && (
                   <Badge variant="secondary" className="h-4 px-1 text-[9px]">
                     <Shield className="mr-0.5 h-2 w-2" />
-                    管理员
+                    {(t.chatAdmin as string) || "Admin"}
                   </Badge>
                 )}
               </div>
@@ -193,7 +195,9 @@ export function PrivateChatDetail({ locale, dict, chatId, currentUser }: Private
         {messages.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center text-muted-foreground">
             <MessageSquare className="mb-2 h-10 w-10" />
-            <p className="text-sm">{(t.privateEmpty as string) || "暂无消息，发起对话吧"}</p>
+            <p className="text-sm">
+              {(t.privateChatsEmpty as string) || "No messages yet. Start the conversation!"}
+            </p>
           </div>
         ) : (
           <div className="space-y-1">

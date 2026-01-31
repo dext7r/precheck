@@ -112,7 +112,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
         duplicates.push({
           id: record.id,
           similarity: Math.round(finalSimilarity),
-          essay: record.essay.slice(0, 200) + (record.essay.length > 200 ? "..." : ""),
+          essay: record.essay,
           user: record.user,
           createdAt: record.createdAt,
           status: record.status,
