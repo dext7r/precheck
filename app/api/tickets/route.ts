@@ -16,6 +16,30 @@ const parsePositive = (value: string | null, fallback: number) => {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback
 }
 
+// 发送站内信通知审核人
+async function notifyReviewer(
+  reviewerId: string,
+  senderId: string,
+  ticketSubject: string,
+  userName: string,
+) {
+  if (!db) return
+  try {
+    await db.message.create({
+      data: {
+        title: `新工单提醒：${ticketSubject}`,
+        content: `用户 ${userName} 针对其预申请提交了新工单，请及时处理。\n\n工单主题：${ticketSubject}`,
+        createdById: senderId,
+        recipients: {
+          create: { userId: reviewerId },
+        },
+      },
+    })
+  } catch (e) {
+    console.error("Failed to send ticket notification:", e)
+  }
+}
+
 export async function GET(request: NextRequest) {
   try {
     const user = await getCurrentUser()
@@ -74,10 +98,11 @@ export async function POST(request: NextRequest) {
     const data = createTicketSchema.parse(body)
 
     // 使用事务确保并发安全
-    const ticket = await db
+    const result = await db
       .$transaction(async (tx) => {
         const preApp = await tx.preApplication.findUnique({
           where: { id: data.preApplicationId, userId: user.id },
+          select: { id: true, status: true, reviewedById: true },
         })
         if (!preApp) throw new Error("preApp-not-found")
         if (preApp.status !== "REJECTED" && preApp.status !== "PENDING")
@@ -91,7 +116,7 @@ export async function POST(request: NextRequest) {
         })
         if (existingTicket) throw new Error("active-ticket")
 
-        return tx.ticket.create({
+        const ticket = await tx.ticket.create({
           data: {
             preApplicationId: data.preApplicationId,
             userId: user.id,
@@ -108,6 +133,8 @@ export async function POST(request: NextRequest) {
             preApplication: { select: { id: true, status: true } },
           },
         })
+
+        return { ticket, reviewerId: preApp.reviewedById }
       })
       .catch((err: Error) => {
         if (err.message === "preApp-not-found") {
@@ -119,7 +146,12 @@ export async function POST(request: NextRequest) {
         throw err
       })
 
-    return NextResponse.json(ticket, { status: 201 })
+    // 异步发送通知给审核人（不阻塞响应）
+    if (result.reviewerId) {
+      notifyReviewer(result.reviewerId, user.id, data.subject, user.name || user.email || "用户")
+    }
+
+    return NextResponse.json(result.ticket, { status: 201 })
   } catch (error) {
     if (error instanceof z.ZodError) {
       return createApiErrorResponse(request, ApiErrorKeys.general.invalid, { status: 400 })
