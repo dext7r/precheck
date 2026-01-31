@@ -36,7 +36,6 @@ export function PrivateChatList({ locale, dict, currentUser }: PrivateChatListPr
   const [loading, setLoading] = useState(true)
 
   const t = (dict.dashboard as Record<string, unknown>) || {}
-  const isCurrentUserAdmin = currentUser.role === "ADMIN" || currentUser.role === "SUPER_ADMIN"
 
   useEffect(() => {
     fetchChats()
@@ -100,8 +99,9 @@ export function PrivateChatList({ locale, dict, currentUser }: PrivateChatListPr
       ) : (
         <div className="space-y-2">
           {chats.map((chat, index) => {
-            // 对方用户信息
-            const other = isCurrentUserAdmin ? chat.user : chat.admin
+            // 显示对方的信息：如果当前用户是 user，显示 admin；否则显示 user
+            const other = chat.user.id === currentUser.id ? chat.admin : chat.user
+            const isOtherAdmin = "role" in other && (other.role === "ADMIN" || other.role === "SUPER_ADMIN")
             const lastMsg = chat.messages[0]
 
             return (
@@ -133,7 +133,7 @@ export function PrivateChatList({ locale, dict, currentUser }: PrivateChatListPr
                           <span className="font-medium truncate">
                             {other.name || other.email.split("@")[0]}
                           </span>
-                          {"role" in other && (
+                          {isOtherAdmin && (
                             <Badge
                               variant="secondary"
                               className="h-4 px-1 text-[9px] shrink-0 bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300"

@@ -141,7 +141,8 @@ export function DashboardCommandMenu({ locale }: DashboardCommandMenuProps) {
     },
     {
       id: "private-chats",
-      label: ((dict.dashboard as unknown as Record<string, unknown>).privateChats as string) || "私信",
+      label:
+        ((dict.dashboard as unknown as Record<string, unknown>).privateChats as string) || "私信",
       path: `/${locale}/dashboard/private-chats`,
       icon: MessageSquare,
       shortcut: "⌘6",

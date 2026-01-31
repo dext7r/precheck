@@ -21,9 +21,11 @@ export async function GET(request: NextRequest) {
 
     const isUserAdmin = isAdmin(user.role)
 
-    // 管理员看所有与自己相关的会话，普通用户只看自己发起的
+    // 查询与当前用户相关的所有会话（无论是发起方还是接收方）
     const chats = await db.privateChat.findMany({
-      where: isUserAdmin ? { adminId: user.id } : { userId: user.id },
+      where: {
+        OR: [{ userId: user.id }, { adminId: user.id }],
+      },
       orderBy: { updatedAt: "desc" },
       include: {
         user: { select: { id: true, name: true, email: true, avatar: true } },
