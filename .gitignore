@@ -33,4 +33,4 @@ lib/build-info.json
 next-env.d.ts
 logs/
 scripts/*.js
-scripts/*.txt
+*.tar.gz

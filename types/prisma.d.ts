@@ -6,7 +6,7 @@ export type UserStatus = "ACTIVE" | "INACTIVE" | "BANNED"
 
 export type PostStatus = "DRAFT" | "PUBLISHED" | "PENDING" | "REJECTED"
 
-export type PreApplicationStatus = "PENDING" | "APPROVED" | "REJECTED" | "DISPUTED" | "ARCHIVED"
+export type PreApplicationStatus = "PENDING" | "APPROVED" | "REJECTED" | "DISPUTED" | "ARCHIVED" | "PENDING_REVIEW" | "ON_HOLD"
 
 export type PreApplicationSource = "TIEBA" | "BILIBILI" | "DOUYIN" | "XIAOHONGSHU" | "OTHER"
 
@@ -120,7 +120,8 @@ export interface MessageRecipient {
 
 export interface PreApplication {
   id: string
-  userId: string
+  userId: string | null
+  qqNumber: string | null
   essay: string
   source: PreApplicationSource | null
   sourceDetail: string | null
@@ -136,7 +137,8 @@ export interface PreApplication {
   inviteCodeId: string | null
   createdAt: Date
   updatedAt: Date
-  user: User
+  holdUntil: Date | null
+  user: User | null
   reviewedBy: User | null
   inviteCode: InviteCode | null
   versions: PreApplicationVersion[]

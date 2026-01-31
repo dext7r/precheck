@@ -811,7 +811,7 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
           record.preApplication ? (
             <div className="min-w-0">
               <p className="truncate text-sm">
-                {record.preApplication.user.name || record.preApplication.user.email}
+                {record.preApplication.user?.name || record.preApplication.user?.email || record.preApplication.registerEmail}
               </p>
               <p className="truncate text-xs text-muted-foreground">
                 {record.preApplication.registerEmail}
@@ -820,7 +820,7 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
           ) : record.issuedToUser ? (
             <div className="min-w-0">
               <p className="truncate text-sm">
-                {record.issuedToUser.name || record.issuedToUser.email}
+                {record.issuedToUser?.name || record.issuedToUser?.email}
               </p>
               <p className="text-xs text-muted-foreground">{t.inviteCodeIssuedByAdmin}</p>
             </div>
@@ -831,7 +831,7 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
             </div>
           ) : record.usedBy ? (
             <div className="min-w-0">
-              <p className="truncate text-sm">{record.usedBy.name || record.usedBy.email}</p>
+              <p className="truncate text-sm">{record.usedBy?.name || record.usedBy?.email}</p>
               <p className="text-xs text-muted-foreground">{t.inviteCodeUsedBy}</p>
             </div>
           ) : (
@@ -1361,9 +1361,9 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
                     {(record.preApplication || record.issuedToUser || record.issuedToEmail) && (
                       <p className="mt-2 truncate text-xs text-muted-foreground">
                         {record.preApplication
-                          ? record.preApplication.user.name || record.preApplication.user.email
+                          ? record.preApplication.user?.name || record.preApplication.user?.email || record.preApplication.registerEmail
                           : record.issuedToUser
-                            ? record.issuedToUser.name || record.issuedToUser.email
+                            ? record.issuedToUser?.name || record.issuedToUser?.email
                             : record.issuedToEmail}
                       </p>
                     )}

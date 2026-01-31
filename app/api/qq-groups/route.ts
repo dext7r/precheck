@@ -16,12 +16,18 @@ export async function GET() {
       select: { qqGroups: true },
     })
 
-    if (!settings?.qqGroups || !Array.isArray(settings.qqGroups)) {
+    // 如果没有设置或者是空数组，使用默认值
+    if (!settings?.qqGroups || !Array.isArray(settings.qqGroups) || settings.qqGroups.length === 0) {
       return NextResponse.json(defaultQQGroups.filter((g) => g.enabled))
     }
 
     const qqGroups = settings.qqGroups as QQGroupConfig[]
     const enabledGroups = qqGroups.filter((g) => g.enabled)
+
+    // 如果启用的群为空，也使用默认值
+    if (enabledGroups.length === 0) {
+      return NextResponse.json(defaultQQGroups.filter((g) => g.enabled))
+    }
 
     return NextResponse.json(enabledGroups)
   } catch {

@@ -13,7 +13,6 @@ import {
   XCircle,
   AlertTriangle,
   User,
-  UserCheck,
   Mail,
   FileText,
   Eye,
@@ -31,8 +30,7 @@ import {
   Copy,
   Check,
   ExternalLink,
-  ChevronDown,
-  ChevronUp,
+  PauseCircle,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -95,7 +93,8 @@ type DuplicateRecord = {
   id: string
   similarity: number
   essay: string
-  user: { name: string | null; email: string }
+  user: { name: string | null; email: string } | null
+  registerEmail?: string
   createdAt: string
   status: string
   aiReason?: string
@@ -116,7 +115,7 @@ type AdminPreApplication = {
   registerEmail: string
   queryToken: string | null
   group: string
-  status: "PENDING" | "APPROVED" | "REJECTED" | "DISPUTED" | "ARCHIVED"
+  status: "PENDING" | "APPROVED" | "REJECTED" | "DISPUTED" | "ARCHIVED" | "PENDING_REVIEW" | "ON_HOLD"
   guidance: string | null
   reviewedAt: string | null
   createdAt: string
@@ -135,7 +134,7 @@ type PreApplicationVersion = {
   sourceDetail: string | null
   registerEmail: string
   group: string
-  status: "PENDING" | "APPROVED" | "REJECTED" | "DISPUTED" | "ARCHIVED"
+  status: "PENDING" | "APPROVED" | "REJECTED" | "DISPUTED" | "ARCHIVED" | "PENDING_REVIEW" | "ON_HOLD"
   guidance: string | null
   reviewedAt: string | null
   createdAt: string
@@ -249,7 +248,7 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc")
   const [dialogOpen, setDialogOpen] = useState(false)
   const [selected, setSelected] = useState<AdminPreApplication | null>(null)
-  const [reviewAction, setReviewAction] = useState<"APPROVE" | "REJECT" | "DISPUTE">("APPROVE")
+  const [reviewAction, setReviewAction] = useState<"APPROVE" | "REJECT" | "DISPUTE" | "PENDING_REVIEW" | "ON_HOLD">("APPROVE")
   const [guidance, setGuidance] = useState("")
   const [inviteCode, setInviteCode] = useState("")
   const [inviteExpiresAt, setInviteExpiresAt] = useState("")
@@ -281,29 +280,16 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
     null,
   )
   const [duplicateCheckError, setDuplicateCheckError] = useState<string | null>(null)
-  const [expandedDuplicates, setExpandedDuplicates] = useState<Set<string>>(new Set())
-
-  const toggleDuplicateExpand = (id: string) => {
-    setExpandedDuplicates((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) {
-        next.delete(id)
-      } else {
-        next.add(id)
-      }
-      return next
-    })
-  }
 
   useEffect(() => {
-    if (reviewAction === "REJECT") {
+    if (reviewAction === "REJECT" || reviewAction === "PENDING_REVIEW" || reviewAction === "ON_HOLD") {
       setInviteCode("")
       setInviteExpiresAt("")
     }
   }, [reviewAction])
 
   useEffect(() => {
-    if (selected?.status !== "PENDING" && selected?.status !== "DISPUTED") return
+    if (selected?.status !== "PENDING" && selected?.status !== "DISPUTED" && selected?.status !== "PENDING_REVIEW" && selected?.status !== "ON_HOLD") return
 
     const templates =
       reviewAction === "APPROVE"
@@ -317,8 +303,8 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
   }, [reviewAction, selected?.status, selected?.id, reviewTemplates, inviteCode])
 
   useEffect(() => {
-    if (!dialogOpen || reviewAction === "REJECT") return
-    if (selected?.status !== "PENDING" && selected?.status !== "DISPUTED") return
+    if (!dialogOpen || reviewAction === "REJECT" || reviewAction === "PENDING_REVIEW" || reviewAction === "ON_HOLD") return
+    if (selected?.status !== "PENDING" && selected?.status !== "DISPUTED" && selected?.status !== "PENDING_REVIEW" && selected?.status !== "ON_HOLD") return
     loadInviteOptions()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dialogOpen, reviewAction, selected?.status])
@@ -441,6 +427,16 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
         className: "bg-slate-100 text-slate-700 dark:bg-slate-800/50 dark:text-slate-400",
         icon: Archive,
       },
+      PENDING_REVIEW: {
+        label: t.pendingReview || "待复核",
+        className: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+        icon: Eye,
+      },
+      ON_HOLD: {
+        label: t.onHold || "暂缓处理",
+        className: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
+        icon: PauseCircle,
+      },
     }
     return map[status] || map.PENDING
   }
@@ -537,8 +533,7 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
     setAIReviewError(null)
     setDuplicateCheckResult(null)
     setDuplicateCheckError(null)
-    setExpandedDuplicates(new Set())
-    if (record.status === "PENDING" || record.status === "DISPUTED") {
+    if (record.status === "PENDING" || record.status === "DISPUTED" || record.status === "PENDING_REVIEW" || record.status === "ON_HOLD") {
       setReviewAction("APPROVE")
       setGuidance(record.guidance || "")
       // 保留已有的邀请码
@@ -588,7 +583,6 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
     if (!selected) return
     setDuplicateCheckLoading(true)
     setDuplicateCheckError(null)
-    setExpandedDuplicates(new Set())
 
     try {
       const res = await fetch(`/api/admin/pre-applications/${selected.id}/duplicate-check`, {
@@ -653,7 +647,11 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
       toast.error(t.reviewGuidanceRequired)
       return
     }
-    // 审核通过时邀请码可选（缺码时允许无码通过）
+    // 审核通过时必须填写邀请码
+    if (reviewAction === "APPROVE" && !inviteCode.trim()) {
+      toast.error(t.inviteCodeRequiredForApproval || "通过审核需要填写邀请码")
+      return
+    }
     setSubmitting(true)
     try {
       const payload: Record<string, string> = {
@@ -749,7 +747,7 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
             </div>
             <div className="min-w-0">
               <p className="truncate text-sm font-medium">
-                {record.user.name || record.user.email}
+                {record.user?.name || record.user?.email || record.registerEmail}
               </p>
               <p className="truncate text-xs text-muted-foreground">{record.registerEmail}</p>
             </div>
@@ -793,7 +791,7 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
       {
         key: "createdAt",
         label: t.preApplicationCreatedAt,
-        width: "15%",
+        width: "20%",
         sortable: true,
         render: (record) => (
           <div className="flex items-center gap-1.5">
@@ -805,35 +803,19 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
         ),
       },
       {
-        key: "reviewedBy",
-        label: t.preApplicationReviewer,
-        width: "12%",
-        render: (record) =>
-          record.reviewedBy ? (
-            <div className="flex items-center gap-1.5">
-              <UserCheck className="h-3.5 w-3.5 text-muted-foreground" />
-              <span className="truncate text-xs text-muted-foreground">
-                {record.reviewedBy.name || record.reviewedBy.email}
-              </span>
-            </div>
-          ) : (
-            <span className="text-xs text-muted-foreground">-</span>
-          ),
-      },
-      {
         key: "actions",
         label: t.actions,
-        width: "12%",
+        width: "14%",
         render: (record) => (
           <Button
             variant={
-              record.status === "PENDING" || record.status === "DISPUTED" ? "default" : "outline"
+              record.status === "PENDING" || record.status === "DISPUTED" || record.status === "PENDING_REVIEW" || record.status === "ON_HOLD" ? "default" : "outline"
             }
             size="sm"
             className="h-8 gap-1.5 text-xs"
             onClick={() => openDialog(record)}
           >
-            {record.status === "PENDING" || record.status === "DISPUTED" ? (
+            {record.status === "PENDING" || record.status === "DISPUTED" || record.status === "PENDING_REVIEW" || record.status === "ON_HOLD" ? (
               <>
                 <Pencil className="h-3.5 w-3.5" />
                 {t.preApplicationReviewAction}
@@ -1038,6 +1020,8 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
                   {[
                     { value: "PENDING", label: t.pending },
                     { value: "DISPUTED", label: t.disputed || "有争议" },
+                    { value: "PENDING_REVIEW", label: t.pendingReview || "待复核" },
+                    { value: "ON_HOLD", label: t.onHold || "暂缓处理" },
                     { value: "APPROVED", label: t.approved },
                     { value: "REJECTED", label: t.rejected },
                     { value: "ARCHIVED", label: t.archived || "已归档" },
@@ -1220,7 +1204,7 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
                   <div className="min-w-0 flex-1">
                     <div className="flex items-start justify-between gap-2">
                       <p className="truncate text-sm font-medium">
-                        {record.user.name || record.user.email}
+                        {record.user?.name || record.user?.email || record.registerEmail}
                       </p>
                       <Badge className={cn("shrink-0 gap-1 text-xs", statusConfig.className)}>
                         <StatusIcon className="h-3 w-3" />
@@ -1251,13 +1235,13 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
                     <Button
                       className="mt-3 w-full h-8 gap-1.5 text-xs"
                       variant={
-                        record.status === "PENDING" || record.status === "DISPUTED"
+                        record.status === "PENDING" || record.status === "DISPUTED" || record.status === "PENDING_REVIEW" || record.status === "ON_HOLD"
                           ? "default"
                           : "outline"
                       }
                       onClick={() => openDialog(record)}
                     >
-                      {record.status === "PENDING" || record.status === "DISPUTED" ? (
+                      {record.status === "PENDING" || record.status === "DISPUTED" || record.status === "PENDING_REVIEW" || record.status === "ON_HOLD" ? (
                         <>
                           <Pencil className="h-3.5 w-3.5" />
                           {t.preApplicationReviewAction}
@@ -1278,7 +1262,7 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
       </Card>
 
       {/* 审核抽屉 */}
-      <Drawer open={dialogOpen} onOpenChange={setDialogOpen} direction="right">
+      <Drawer open={dialogOpen} onOpenChange={setDialogOpen} direction="right" dismissible={false}>
         <DrawerContent className="h-full data-[vaul-drawer-direction=right]:w-[92vw] data-[vaul-drawer-direction=right]:sm:max-w-xl">
           <DrawerHeader className="sticky top-0 z-10 border-b bg-background px-4 py-4">
             <div className="flex items-center justify-between">
@@ -1309,7 +1293,7 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
                   <div>
                     <span className="text-xs text-muted-foreground">{t.preApplicationUser}</span>
                     <p className="font-medium truncate">
-                      {selected.user.name || selected.user.email}
+                      {selected.user?.name || selected.user?.email || selected.registerEmail}
                     </p>
                   </div>
                   <div>
@@ -1517,96 +1501,59 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
                                 )}
                               </span>
                             </div>
-                            <div className="max-h-64 space-y-2 overflow-y-auto">
-                              {duplicateCheckResult.records.map((record) => {
-                                const isExpanded = expandedDuplicates.has(record.id)
-                                return (
-                                  <div
-                                    key={record.id}
-                                    className="rounded-md border bg-card overflow-hidden"
-                                  >
-                                    <div
-                                      className="flex items-center justify-between p-2.5 cursor-pointer hover:bg-muted/50 transition-colors"
-                                      onClick={() => toggleDuplicateExpand(record.id)}
-                                    >
-                                      <div className="min-w-0 flex-1">
-                                        <div className="flex items-center gap-2">
-                                          <span className="truncate text-sm font-medium">
-                                            {record.user.name || record.user.email}
-                                          </span>
-                                          {statusBadge(
-                                            record.status as AdminPreApplication["status"],
-                                          )}
-                                        </div>
-                                        {!isExpanded && (
-                                          <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                                            {record.essay}
-                                          </p>
-                                        )}
-                                      </div>
-                                      <div className="ml-3 flex items-center gap-2">
-                                        <Badge
-                                          variant="outline"
-                                          className={cn(
-                                            "font-mono text-xs",
-                                            record.similarity >= 80
-                                              ? "border-red-500/50 text-red-500"
-                                              : record.similarity >= 50
-                                                ? "border-amber-500/50 text-amber-500"
-                                                : "border-muted-foreground/50",
-                                          )}
-                                        >
-                                          {record.similarity}%
-                                        </Badge>
-                                        <Tooltip>
-                                          <TooltipTrigger asChild>
-                                            <Button
-                                              variant="ghost"
-                                              size="sm"
-                                              className="h-7 w-7 p-0"
-                                              onClick={(e) => {
-                                                e.stopPropagation()
-                                                const original = records.find(
-                                                  (r) => r.id === record.id,
-                                                )
-                                                if (original) openDialog(original)
-                                              }}
-                                            >
-                                              <ExternalLink className="h-3.5 w-3.5" />
-                                            </Button>
-                                          </TooltipTrigger>
-                                          <TooltipContent>
-                                            {t.duplicateCheckViewOriginal}
-                                          </TooltipContent>
-                                        </Tooltip>
-                                        {isExpanded ? (
-                                          <ChevronUp className="h-4 w-4 text-muted-foreground" />
-                                        ) : (
-                                          <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                                        )}
-                                      </div>
+                            <div className="max-h-48 space-y-2 overflow-y-auto">
+                              {duplicateCheckResult.records.map((record) => (
+                                <div
+                                  key={record.id}
+                                  className="flex items-center justify-between rounded-md border bg-card p-2.5"
+                                >
+                                  <div className="min-w-0 flex-1">
+                                    <div className="flex items-center gap-2">
+                                      <span className="truncate text-sm font-medium">
+                                        {record.user?.name || record.user?.email || record.registerEmail}
+                                      </span>
+                                      {statusBadge(record.status as AdminPreApplication["status"])}
                                     </div>
-                                    {isExpanded && (
-                                      <motion.div
-                                        initial={{ height: 0, opacity: 0 }}
-                                        animate={{ height: "auto", opacity: 1 }}
-                                        exit={{ height: 0, opacity: 0 }}
-                                        className="border-t bg-muted/30 px-3 py-2"
-                                      >
-                                        <p className="text-xs text-muted-foreground whitespace-pre-wrap">
-                                          {record.essay}
-                                        </p>
-                                        {record.aiReason && (
-                                          <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
-                                            <span className="font-medium">AI 分析：</span>
-                                            {record.aiReason}
-                                          </p>
-                                        )}
-                                      </motion.div>
-                                    )}
+                                    <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                                      {record.essay}
+                                    </p>
                                   </div>
-                                )
-                              })}
+                                  <div className="ml-3 flex items-center gap-2">
+                                    <Badge
+                                      variant="outline"
+                                      className={cn(
+                                        "font-mono text-xs",
+                                        record.similarity >= 80
+                                          ? "border-red-500/50 text-red-500"
+                                          : record.similarity >= 50
+                                            ? "border-amber-500/50 text-amber-500"
+                                            : "border-muted-foreground/50",
+                                      )}
+                                    >
+                                      {record.similarity}%
+                                    </Badge>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          className="h-7 w-7 p-0"
+                                          onClick={() => {
+                                            // 查看原申请（打开新记录）
+                                            const original = records.find((r) => r.id === record.id)
+                                            if (original) openDialog(original)
+                                          }}
+                                        >
+                                          <ExternalLink className="h-3.5 w-3.5" />
+                                        </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        {t.duplicateCheckViewOriginal}
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </div>
+                                </div>
+                              ))}
                             </div>
                           </div>
                         )}
@@ -1705,13 +1652,13 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
                   <Users className="h-4 w-4" />
                   <span>
                     {t.preApplicationReviewer}：
-                    {selected.reviewedBy.name || selected.reviewedBy.email}
+                    {selected.reviewedBy?.name || selected.reviewedBy?.email}
                   </span>
                 </div>
               )}
 
               {/* 审核操作表单 */}
-              {selected.status === "PENDING" || selected.status === "DISPUTED" ? (
+              {selected.status === "PENDING" || selected.status === "DISPUTED" || selected.status === "PENDING_REVIEW" || selected.status === "ON_HOLD" ? (
                 <div className="space-y-4 rounded-xl border bg-gradient-to-br from-muted/30 to-muted/10 p-4">
                   <div className="flex items-center gap-2 text-sm font-medium">
                     <Send className="h-4 w-4 text-primary" />
@@ -1723,7 +1670,7 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
                       <Select
                         value={reviewAction}
                         onValueChange={(value) =>
-                          setReviewAction(value as "APPROVE" | "REJECT" | "DISPUTE")
+                          setReviewAction(value as "APPROVE" | "REJECT" | "DISPUTE" | "PENDING_REVIEW" | "ON_HOLD")
                         }
                       >
                         <SelectTrigger className="h-9">
@@ -1733,10 +1680,12 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
                           <SelectItem value="APPROVE">{t.reviewApprove}</SelectItem>
                           <SelectItem value="REJECT">{t.reviewReject}</SelectItem>
                           <SelectItem value="DISPUTE">{t.reviewDispute || "标记有争议"}</SelectItem>
+                          <SelectItem value="PENDING_REVIEW">{t.reviewPendingReview || "提交复核"}</SelectItem>
+                          <SelectItem value="ON_HOLD">{t.reviewOnHold || "暂缓处理"}</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
-                    {reviewAction !== "REJECT" && (
+                    {(reviewAction === "APPROVE" || reviewAction === "DISPUTE") && (
                       <div className="space-y-1.5">
                         <Label className="text-xs">{t.inviteCode}</Label>
                         <Select
@@ -1773,7 +1722,7 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
                       </div>
                     )}
                   </div>
-                  {reviewAction !== "REJECT" && (
+                  {(reviewAction === "APPROVE" || reviewAction === "DISPUTE") && (
                     <div className="space-y-1.5">
                       <Label className="text-xs">{t.inviteExpiresAt}</Label>
                       <Input
@@ -1846,7 +1795,7 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
               <Button variant="outline" onClick={() => setDialogOpen(false)}>
                 {t.reviewCancel}
               </Button>
-              {(selected?.status === "PENDING" || selected?.status === "DISPUTED") && (
+              {(selected?.status === "PENDING" || selected?.status === "DISPUTED" || selected?.status === "PENDING_REVIEW" || selected?.status === "ON_HOLD") && (
                 <Button onClick={handleReview} disabled={submitting} className="gap-2">
                   {submitting ? (
                     <>

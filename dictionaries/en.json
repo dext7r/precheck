@@ -1052,7 +1052,9 @@
       "approved": "Approved",
       "rejected": "Rejected",
       "disputed": "Needs Review",
-      "archived": "Archived"
+      "archived": "Archived",
+      "pendingReview": "Pending Review",
+      "onHold": "On Hold"
     },
     "fields": {
       "essay": "Application Essay",
@@ -1364,10 +1366,15 @@
     "reviewApprove": "Approve",
     "reviewReject": "Reject",
     "reviewDispute": "Mark as Disputed",
+    "reviewPendingReview": "Submit for Review",
+    "reviewOnHold": "Put on Hold",
     "disputed": "Disputed",
+    "pendingReview": "Pending Review",
+    "onHold": "On Hold",
     "archived": "Archived",
     "guidance": "Guidance",
     "reviewGuidanceRequired": "Guidance is required",
+    "inviteCodeRequiredForApproval": "Invite code is required for approval",
     "inviteCode": "Invite Code",
     "inviteExpiresAt": "Expiry",
     "reviewSubmit": "Submit Review",
@@ -2142,5 +2149,78 @@
         "friendly": "Friendly Community"
       }
     }
+  },
+  "qqVerify": {
+    "title": "QQ Group Verification",
+    "description": "Verify via QQ group before submitting your application",
+    "qqNumber": "QQ Number",
+    "code": "Verification Code",
+    "submit": "Verify",
+    "submitting": "Verifying...",
+    "success": "Verification successful, redirecting...",
+    "howToGetCode": "How to get verification code?",
+    "step1": "Join any QQ group",
+    "step2": "Send /验证码 in the group",
+    "step3": "Enter the code from bot reply below",
+    "errors": {
+      "invalidQQ": "Please enter a valid QQ number",
+      "invalidCode": "Please enter 6-digit verification code",
+      "failed": "Verification failed, please try again"
+    }
+  },
+  "guestApply": {
+    "title": "Pre-Application",
+    "description": "Fill in the following information to submit your application",
+    "fields": {
+      "essay": "Application Essay",
+      "essayHint": "About 100 characters, describe your purpose and needs.",
+      "source": "Source",
+      "sourceOptional": "Select source (optional)",
+      "sourceDetail": "Other platform",
+      "registerEmail": "Registration Email",
+      "registerEmailHint": "Use your regular email, review results will be sent here",
+      "group": "Select QQ Group"
+    },
+    "sources": {
+      "tieba": "Tieba",
+      "bilibili": "Bilibili",
+      "douyin": "Douyin",
+      "xiaohongshu": "Xiaohongshu",
+      "other": "Other"
+    },
+    "submit": "Submit Application",
+    "submitting": "Submitting...",
+    "submitSuccess": "Submitted successfully",
+    "submitFailed": "Submission failed",
+    "alreadySubmitted": "You have already submitted an application",
+    "allowedDomainsTitle": "Allowed email domains",
+    "emailSuffixPlaceholder": "Select email suffix",
+    "validation": {
+      "sourceDetailRequired": "Please fill in the source detail"
+    },
+    "status": {
+      "pending": "Pending",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "disputed": "Needs Info",
+      "archived": "Archived",
+      "pendingReview": "Pending Review",
+      "onHold": "On Hold"
+    },
+    "reviewInfoTitle": "Application Status",
+    "submittedAt": "Submitted at",
+    "review": {
+      "reviewer": "Reviewer",
+      "reviewedAt": "Reviewed at",
+      "guidance": "Guidance"
+    },
+    "invite": {
+      "code": "Invite Code",
+      "expiresAt": "Expires at",
+      "used": "Used",
+      "unused": "Unused"
+    },
+    "queryToken": "Query Token",
+    "queryTokenCopied": "Query link copied"
   }
 }

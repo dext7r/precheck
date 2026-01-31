@@ -15,7 +15,7 @@ import { createApiErrorResponse } from "@/lib/api/error-response"
 import { ApiErrorKeys } from "@/lib/api/error-keys"
 
 const reviewSchema = z.object({
-  action: z.enum(["APPROVE", "REJECT", "DISPUTE"]),
+  action: z.enum(["APPROVE", "REJECT", "DISPUTE", "PENDING_REVIEW", "ON_HOLD"]),
   guidance: z.string().min(1).max(2000),
   inviteCode: z.string().trim().optional(),
   inviteExpiresAt: z.string().optional(),
@@ -69,10 +69,12 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
       return createApiErrorResponse(request, ApiErrorKeys.general.notFound, { status: 404 })
     }
 
-    // PENDING 和 DISPUTED 状态都可以审核
+    // PENDING、DISPUTED、PENDING_REVIEW 和 ON_HOLD 状态都可以审核
     if (
       record.status !== PreApplicationStatus.PENDING &&
-      record.status !== PreApplicationStatus.DISPUTED
+      record.status !== PreApplicationStatus.DISPUTED &&
+      record.status !== PreApplicationStatus.PENDING_REVIEW &&
+      record.status !== PreApplicationStatus.ON_HOLD
     ) {
       return createApiErrorResponse(request, ApiErrorKeys.admin.preApplications.alreadyReviewed, {
         status: 400,
@@ -95,7 +97,58 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
     const guidance = data.guidance.trim()
     const isApproved = data.action === "APPROVE"
     const isDisputed = data.action === "DISPUTE"
+    const isPendingReview = data.action === "PENDING_REVIEW"
+    const isOnHold = data.action === "ON_HOLD"
     const code = data.inviteCode?.trim()
+
+    // 处理待复核和暂缓处理（无需邀请码，直接更新状态）
+    if (isPendingReview || isOnHold) {
+      const newStatus = isPendingReview ? PreApplicationStatus.PENDING_REVIEW : PreApplicationStatus.ON_HOLD
+      const newVersion = record.version + 1
+
+      await db.$transaction(async (tx) => {
+        // 创建新的版本记录来保存本次审核
+        await tx.preApplicationVersion.create({
+          data: {
+            preApplicationId: record.id,
+            version: newVersion,
+            essay: record.essay,
+            source: record.source,
+            sourceDetail: record.sourceDetail,
+            registerEmail: record.registerEmail,
+            group: record.group,
+            status: newStatus,
+            guidance,
+            reviewedAt: new Date(),
+            reviewedById: user.id,
+          },
+        })
+
+        const updated = await tx.preApplication.update({
+          where: { id: record.id },
+          data: {
+            status: newStatus,
+            guidance,
+            version: newVersion,
+            reviewedAt: new Date(),
+            reviewedBy: { connect: { id: user.id } },
+          },
+        })
+
+        await writeAuditLog(tx, {
+          action: isPendingReview ? "PRE_APPLICATION_PENDING_REVIEW" : "PRE_APPLICATION_ON_HOLD",
+          entityType: "PRE_APPLICATION",
+          entityId: record.id,
+          actor: user,
+          before: record,
+          after: updated,
+          metadata: { guidance },
+          request,
+        })
+      })
+
+      return NextResponse.json({ success: true })
+    }
 
     // 处理邀请码（通过和有争议都可以发码）
     let inviteCodeData: { id: string; code: string; expiresAt: Date | null } | null = null
@@ -164,6 +217,8 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
         locale: currentLocale,
       })
 
+      const newVersion = record.version + 1
+
       await db.$transaction(async (tx) => {
         if (inviteCodeData) {
           await tx.inviteCode.update({
@@ -176,20 +231,16 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
           })
         }
 
-        const updated = await tx.preApplication.update({
-          where: { id: record.id },
+        // 创建新的版本记录来保存本次审核
+        await tx.preApplicationVersion.create({
           data: {
-            status: PreApplicationStatus.DISPUTED,
-            guidance,
-            reviewedAt: new Date(),
-            reviewedBy: { connect: { id: user.id } },
-            ...(inviteCodeData && { inviteCode: { connect: { id: inviteCodeData.id } } }),
-          },
-        })
-
-        await tx.preApplicationVersion.updateMany({
-          where: { preApplicationId: record.id, version: record.version },
-          data: {
+            preApplicationId: record.id,
+            version: newVersion,
+            essay: record.essay,
+            source: record.source,
+            sourceDetail: record.sourceDetail,
+            registerEmail: record.registerEmail,
+            group: record.group,
             status: PreApplicationStatus.DISPUTED,
             guidance,
             reviewedAt: new Date(),
@@ -197,14 +248,30 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
           },
         })
 
-        const message = await tx.message.create({
+        const updated = await tx.preApplication.update({
+          where: { id: record.id },
           data: {
-            title: messageContent.title,
-            content: messageContent.content,
-            createdById: user.id,
-            recipients: { create: { userId: record.userId } },
+            status: PreApplicationStatus.DISPUTED,
+            guidance,
+            version: newVersion,
+            reviewedAt: new Date(),
+            reviewedBy: { connect: { id: user.id } },
+            ...(inviteCodeData && { inviteCode: { connect: { id: inviteCodeData.id } } }),
           },
         })
+
+        // 仅当有用户ID时才发送站内信（访客提交时没有用户ID）
+        let message = null
+        if (record.userId) {
+          message = await tx.message.create({
+            data: {
+              title: messageContent.title,
+              content: messageContent.content,
+              createdById: user.id,
+              recipients: { create: { userId: record.userId } },
+            },
+          })
+        }
 
         await writeAuditLog(tx, {
           action: "PRE_APPLICATION_REVIEW_DISPUTE",
@@ -228,15 +295,17 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
           })
         }
 
-        await writeAuditLog(tx, {
-          action: "MESSAGE_CREATE",
-          entityType: "MESSAGE",
-          entityId: message.id,
-          actor: user,
-          after: message,
-          metadata: { recipientUserId: record.userId },
-          request,
-        })
+        if (message) {
+          await writeAuditLog(tx, {
+            action: "MESSAGE_CREATE",
+            entityType: "MESSAGE",
+            entityId: message.id,
+            actor: user,
+            after: message,
+            metadata: { recipientUserId: record.userId },
+            request,
+          })
+        }
       })
 
       // 发送邮件
@@ -277,6 +346,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
     }
 
     if (isApproved) {
+      const newVersion = record.version + 1
       inviteCodeRecord = await db.$transaction(async (tx) => {
         let inviteCode = null as { id: string; code: string; expiresAt: Date | null } | null
 
@@ -291,11 +361,29 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
           })
         }
 
+        // 创建新的版本记录来保存本次审核
+        await tx.preApplicationVersion.create({
+          data: {
+            preApplicationId: record.id,
+            version: newVersion,
+            essay: record.essay,
+            source: record.source,
+            sourceDetail: record.sourceDetail,
+            registerEmail: record.registerEmail,
+            group: record.group,
+            status: PreApplicationStatus.APPROVED,
+            guidance,
+            reviewedAt: new Date(),
+            reviewedById: user.id,
+          },
+        })
+
         const updated = await tx.preApplication.update({
           where: { id: record.id },
           data: {
             status: PreApplicationStatus.APPROVED,
             guidance,
+            version: newVersion,
             reviewedAt: new Date(),
             reviewedBy: { connect: { id: user.id } },
             ...(inviteCode && { inviteCode: { connect: { id: inviteCode.id } } }),
@@ -305,17 +393,6 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
             inviteCode: {
               select: { id: true, code: true, expiresAt: true, usedAt: true, assignedAt: true },
             },
-          },
-        })
-
-        // 更新版本历史记录
-        await tx.preApplicationVersion.updateMany({
-          where: { preApplicationId: record.id, version: record.version },
-          data: {
-            status: PreApplicationStatus.APPROVED,
-            guidance,
-            reviewedAt: new Date(),
-            reviewedById: user.id,
           },
         })
 
@@ -330,14 +407,18 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
           locale: currentLocale,
         })
 
-        const message = await tx.message.create({
-          data: {
-            title: messageContent.title,
-            content: messageContent.content,
-            createdById: user.id,
-            recipients: { create: { userId: record.userId } },
-          },
-        })
+        // 仅当有用户ID时才发送站内信（访客提交时没有用户ID）
+        let message = null
+        if (record.userId) {
+          message = await tx.message.create({
+            data: {
+              title: messageContent.title,
+              content: messageContent.content,
+              createdById: user.id,
+              recipients: { create: { userId: record.userId } },
+            },
+          })
+        }
 
         await writeAuditLog(tx, {
           action: "PRE_APPLICATION_REVIEW_APPROVE",
@@ -366,15 +447,17 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
           })
         }
 
-        await writeAuditLog(tx, {
-          action: "MESSAGE_CREATE",
-          entityType: "MESSAGE",
-          entityId: message.id,
-          actor: user,
-          after: message,
-          metadata: { recipientUserId: record.userId },
-          request,
-        })
+        if (message) {
+          await writeAuditLog(tx, {
+            action: "MESSAGE_CREATE",
+            entityType: "MESSAGE",
+            entityId: message.id,
+            actor: user,
+            after: message,
+            metadata: { recipientUserId: record.userId },
+            request,
+          })
+        }
 
         return inviteCode
       })
@@ -387,6 +470,8 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
         essay: record.essay,
         locale: currentLocale,
       })
+
+      const newVersion = record.version + 1
 
       await db.$transaction(async (tx) => {
         let inviteBefore = null as { id: string } | null
@@ -405,11 +490,29 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
           })
         }
 
+        // 创建新的版本记录来保存本次审核
+        await tx.preApplicationVersion.create({
+          data: {
+            preApplicationId: record.id,
+            version: newVersion,
+            essay: record.essay,
+            source: record.source,
+            sourceDetail: record.sourceDetail,
+            registerEmail: record.registerEmail,
+            group: record.group,
+            status: PreApplicationStatus.REJECTED,
+            guidance,
+            reviewedAt: new Date(),
+            reviewedById: user.id,
+          },
+        })
+
         const updated = await tx.preApplication.update({
           where: { id: record.id },
           data: {
             status: PreApplicationStatus.REJECTED,
             guidance,
+            version: newVersion,
             reviewedAt: new Date(),
             reviewedBy: { connect: { id: user.id } },
             inviteCode: { disconnect: true },
@@ -422,25 +525,18 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
           },
         })
 
-        // 更新版本历史记录
-        await tx.preApplicationVersion.updateMany({
-          where: { preApplicationId: record.id, version: record.version },
-          data: {
-            status: PreApplicationStatus.REJECTED,
-            guidance,
-            reviewedAt: new Date(),
-            reviewedById: user.id,
-          },
-        })
-
-        const message = await tx.message.create({
-          data: {
-            title: messageContent.title,
-            content: messageContent.content,
-            createdById: user.id,
-            recipients: { create: { userId: record.userId } },
-          },
-        })
+        // 仅当有用户ID时才发送站内信（访客提交时没有用户ID）
+        let message = null
+        if (record.userId) {
+          message = await tx.message.create({
+            data: {
+              title: messageContent.title,
+              content: messageContent.content,
+              createdById: user.id,
+              recipients: { create: { userId: record.userId } },
+            },
+          })
+        }
 
         await writeAuditLog(tx, {
           action: "PRE_APPLICATION_REVIEW_REJECT",
@@ -466,15 +562,17 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
           })
         }
 
-        await writeAuditLog(tx, {
-          action: "MESSAGE_CREATE",
-          entityType: "MESSAGE",
-          entityId: message.id,
-          actor: user,
-          after: message,
-          metadata: { recipientUserId: record.userId },
-          request,
-        })
+        if (message) {
+          await writeAuditLog(tx, {
+            action: "MESSAGE_CREATE",
+            entityType: "MESSAGE",
+            entityId: message.id,
+            actor: user,
+            after: message,
+            metadata: { recipientUserId: record.userId },
+            request,
+          })
+        }
       })
     }
 

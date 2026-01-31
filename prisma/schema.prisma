@@ -144,7 +144,8 @@ model MessageRecipient {
 
 model PreApplication {
   id            String                 @id @default(cuid())
-  userId        String
+  userId        String?                // 可选，访客申请时为空
+  qqNumber      String?                // 访客申请时使用 QQ 号
   essay         String
   source        PreApplicationSource?
   sourceDetail  String?
@@ -160,8 +161,9 @@ model PreApplication {
   inviteCodeId  String?                @unique
   createdAt     DateTime               @default(now())
   updatedAt     DateTime               @updatedAt
+  holdUntil     DateTime?              // ON_HOLD 状态的截止时间
 
-  user       User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user       User?                     @relation(fields: [userId], references: [id], onDelete: Cascade)
   reviewedBy User?                     @relation("ReviewedPreApplications", fields: [reviewedById], references: [id])
   inviteCode InviteCode?               @relation("PreApplicationInviteCode", fields: [inviteCodeId], references: [id])
   versions   PreApplicationVersion[]   // 版本历史
@@ -170,6 +172,7 @@ model PreApplication {
   @@index([status, createdAt])
   @@index([userId, createdAt])
   @@index([registerEmail])
+  @@index([qqNumber])
 }
 
 // 预申请版本历史表
@@ -290,6 +293,8 @@ enum PreApplicationStatus {
   REJECTED
   DISPUTED
   ARCHIVED
+  PENDING_REVIEW
+  ON_HOLD
 }
 
 enum PreApplicationSource {
