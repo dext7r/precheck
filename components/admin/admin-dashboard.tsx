@@ -102,7 +102,13 @@ type DashboardData = {
     currentUser: number
     others: number
     total: number
-    breakdown: Array<{ reviewerId: string; name: string; approved: number; rejected: number; total: number }>
+    breakdown: Array<{
+      reviewerId: string
+      name: string
+      approved: number
+      rejected: number
+      total: number
+    }>
   }
 }
 
@@ -451,10 +457,7 @@ export function AdminDashboard({ locale, dict }: AdminDashboardProps) {
       )}
 
       {data?.reviewerStats?.breakdown && data.reviewerStats.breakdown.length > 0 && (
-        <ReviewerStatsSection
-          data={data.reviewerStats.breakdown}
-          dict={dict}
-        />
+        <ReviewerStatsSection data={data.reviewerStats.breakdown} dict={dict} />
       )}
 
       <div className="grid gap-6 xl:grid-cols-3">
@@ -900,13 +903,7 @@ type ReviewerStatsData = {
   total: number
 }
 
-function ReviewerStatsSection({
-  data,
-  dict,
-}: {
-  data: ReviewerStatsData[]
-  dict: Dictionary
-}) {
+function ReviewerStatsSection({ data, dict }: { data: ReviewerStatsData[]; dict: Dictionary }) {
   const t = dict.admin
   const [sortKey, setSortKey] = useState<string>("total")
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc")
@@ -1021,11 +1018,7 @@ function ReviewerStatsSection({
             }}
             className="min-h-[200px]"
           >
-            <BarChart
-              data={sortedData}
-              layout="vertical"
-              margin={{ left: 0, right: 16 }}
-            >
+            <BarChart data={sortedData} layout="vertical" margin={{ left: 0, right: 16 }}>
               <CartesianGrid horizontal={false} />
               <XAxis type="number" allowDecimals={false} />
               <YAxis
@@ -1037,8 +1030,18 @@ function ReviewerStatsSection({
                 tick={{ fontSize: 12 }}
               />
               <ChartTooltip content={<ChartTooltipContent />} />
-              <Bar dataKey="approved" stackId="a" fill="var(--color-approved)" radius={[0, 0, 0, 0]} />
-              <Bar dataKey="rejected" stackId="a" fill="var(--color-rejected)" radius={[0, 4, 4, 0]} />
+              <Bar
+                dataKey="approved"
+                stackId="a"
+                fill="var(--color-approved)"
+                radius={[0, 0, 0, 0]}
+              />
+              <Bar
+                dataKey="rejected"
+                stackId="a"
+                fill="var(--color-rejected)"
+                radius={[0, 4, 4, 0]}
+              />
             </BarChart>
           </ChartContainer>
         </CardContent>

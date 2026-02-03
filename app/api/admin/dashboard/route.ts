@@ -263,7 +263,13 @@ export async function GET(request: NextRequest) {
         },
       }),
       db.$queryRaw<
-        Array<{ reviewedById: string; name: string | null; email: string; status: string; count: number }>
+        Array<{
+          reviewedById: string
+          name: string | null
+          email: string
+          status: string
+          count: number
+        }>
       >`
         SELECT
           p."reviewedById",
