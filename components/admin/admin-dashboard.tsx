@@ -741,7 +741,9 @@ function PreApplicationDetailTable({
       width: "35%",
       render: (record) => (
         <div className="space-y-0.5">
-          <p className="text-sm font-medium truncate">{record.user?.name || record.user?.email || record.registerEmail}</p>
+          <p className="text-sm font-medium truncate">
+            {record.user?.name || record.user?.email || record.registerEmail}
+          </p>
           <p className="text-xs text-muted-foreground truncate">{record.registerEmail}</p>
         </div>
       ),

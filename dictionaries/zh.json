@@ -1008,7 +1008,8 @@
     "timeMinutesAgo": "{n}分钟前",
     "timeHoursAgo": "{n}小时前",
     "timeDaysAgo": "{n}天前",
-    "me": "我"
+    "me": "我",
+    "chatNewMessages": "新消息"
   },
   "preApplication": {
     "title": "预申请",
@@ -1254,7 +1255,19 @@
     "rejectedTitle": "申请未通过",
     "rejectedMessage": "很遗憾，您的申请暂未通过审核。请查看审核意见了解详情。",
     "disputedTitle": "申请存在争议",
-    "disputedMessage": "此申请正在被管理员重新审核，请稍后查看最新状态。"
+    "disputedMessage": "此申请正在被管理员重新审核，请稍后查看最新状态。",
+    "checking": "检测中...",
+    "checkValidity": "检测有效性",
+    "checkFailed": "检测失败",
+    "valid": "有效",
+    "invalid": "无效",
+    "emailRequired": "请输入邮箱",
+    "emailInvalid": "邮箱格式不正确",
+    "singleCodeCheckTitle": "邀请码有效性检测",
+    "singleCodeCheckDesc": "输入邀请码或完整链接检测其有效性",
+    "singleCodePlaceholder": "输入邀请码或完整链接",
+    "codeRequired": "请输入邀请码",
+    "invalidCodeFormat": "无效的邀请码格式"
   },
   "admin": {
     "title": "管理面板",

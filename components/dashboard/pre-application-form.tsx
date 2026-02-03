@@ -84,7 +84,14 @@ type PreApplicationRecord = {
   registerEmail: string
   queryToken: string | null
   group: string
-  status: "PENDING" | "APPROVED" | "REJECTED" | "DISPUTED" | "ARCHIVED" | "PENDING_REVIEW" | "ON_HOLD"
+  status:
+    | "PENDING"
+    | "APPROVED"
+    | "REJECTED"
+    | "DISPUTED"
+    | "ARCHIVED"
+    | "PENDING_REVIEW"
+    | "ON_HOLD"
   guidance: string | null
   reviewedAt: string | null
   updatedAt: string

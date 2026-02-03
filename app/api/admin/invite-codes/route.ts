@@ -96,7 +96,20 @@ export async function GET(request: NextRequest) {
           skip,
           take: limit,
           orderBy: { createdAt: "desc" },
-          include: {
+          select: {
+            id: true,
+            code: true,
+            expiresAt: true,
+            assignedAt: true,
+            usedAt: true,
+            issuedToEmail: true,
+            issuedAt: true,
+            deletedAt: true,
+            checkValid: true,
+            checkMessage: true,
+            checkedAt: true,
+            createdAt: true,
+            updatedAt: true,
             preApplication: {
               select: {
                 id: true,

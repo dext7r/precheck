@@ -17,7 +17,11 @@ export async function GET() {
     })
 
     // 如果没有设置或者是空数组，使用默认值
-    if (!settings?.qqGroups || !Array.isArray(settings.qqGroups) || settings.qqGroups.length === 0) {
+    if (
+      !settings?.qqGroups ||
+      !Array.isArray(settings.qqGroups) ||
+      settings.qqGroups.length === 0
+    ) {
       return NextResponse.json(defaultQQGroups.filter((g) => g.enabled))
     }
 

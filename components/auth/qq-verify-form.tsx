@@ -34,7 +34,7 @@ interface QQVerifyFormProps {
 
 function getSafeRedirectUrl(url: string | undefined, locale: string): string {
   // 双重验证：只允许相对路径，防止开放重定向攻击
-  if (url && url.startsWith('/') && !url.startsWith('//')) {
+  if (url && url.startsWith("/") && !url.startsWith("//")) {
     return url
   }
   return `/${locale}/guest/apply`
@@ -124,7 +124,10 @@ export function QQVerifyForm({ locale, redirectUrl, dict }: QQVerifyFormProps) {
               placeholder=" "
               value={formData.qqNumber}
               onChange={(e) =>
-                setFormData({ ...formData, qqNumber: e.target.value.replace(/\D/g, "").slice(0, 11) })
+                setFormData({
+                  ...formData,
+                  qqNumber: e.target.value.replace(/\D/g, "").slice(0, 11),
+                })
               }
               required
               disabled={isLoading}
@@ -162,7 +165,11 @@ export function QQVerifyForm({ locale, redirectUrl, dict }: QQVerifyFormProps) {
           </div>
         </div>
 
-        <Button type="submit" className="group relative w-full overflow-hidden" disabled={isLoading}>
+        <Button
+          type="submit"
+          className="group relative w-full overflow-hidden"
+          disabled={isLoading}
+        >
           <motion.div
             className="absolute inset-0 bg-gradient-to-r from-primary to-primary/80"
             initial={{ x: "-100%" }}

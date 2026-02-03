@@ -33,6 +33,7 @@ import {
   ChevronDown,
   Users,
   Link as LinkIcon,
+  Key,
 } from "lucide-react"
 import type { Locale } from "@/lib/i18n/config"
 import type { Dictionary } from "@/lib/i18n/get-dictionary"
@@ -78,6 +79,8 @@ type SystemConfig = {
   smtpUser: string | null
   smtpPass: string | null
   smtpSecure: boolean
+  inviteCodeCheckApiUrl: string | null
+  inviteCodeCheckApiKey: string | null
 }
 
 type EmailApiConfig = {
@@ -831,6 +834,50 @@ export function AdminSettingsForm({ locale, dict }: AdminSettingsFormProps) {
                         <p className="mt-1.5 text-xs text-muted-foreground">
                           {t.inviteCodeUrlPrefixDesc ||
                             "邀请码展示时会自动拼接此前缀，方便用户点击直接跳转注册"}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* 邀请码有效期检测 API 配置 */}
+                    {systemConfig && (
+                      <div className="pt-6 border-t">
+                        <div className="flex items-center gap-2 mb-3">
+                          <Key className="h-4 w-4 text-muted-foreground" />
+                          <Label>邀请码有效期检测 API</Label>
+                        </div>
+                        <div className="space-y-4">
+                          <div>
+                            <Label className="text-sm text-muted-foreground">API 地址</Label>
+                            <Input
+                              value={systemConfig.inviteCodeCheckApiUrl || ""}
+                              onChange={(e) =>
+                                setSystemConfig({
+                                  ...systemConfig,
+                                  inviteCodeCheckApiUrl: e.target.value || null,
+                                })
+                              }
+                              placeholder="https://example.com/api/batch-check"
+                              className="mt-1"
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-sm text-muted-foreground">API Key</Label>
+                            <Input
+                              type="password"
+                              value={systemConfig.inviteCodeCheckApiKey || ""}
+                              onChange={(e) =>
+                                setSystemConfig({
+                                  ...systemConfig,
+                                  inviteCodeCheckApiKey: e.target.value || null,
+                                })
+                              }
+                              placeholder="请输入 API Key"
+                              className="mt-1"
+                            />
+                          </div>
+                        </div>
+                        <p className="mt-2 text-xs text-muted-foreground">
+                          配置后可在邀请码管理页面批量检测邀请码有效期
                         </p>
                       </div>
                     )}

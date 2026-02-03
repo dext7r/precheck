@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
       if (result.waitSeconds) {
         return NextResponse.json(
           { error: result.error, retryAfter: result.waitSeconds },
-          { status: 429 }
+          { status: 429 },
         )
       }
       return NextResponse.json({ error: result.error }, { status: 500 })

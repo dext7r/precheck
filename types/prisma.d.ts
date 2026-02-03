@@ -177,6 +177,9 @@ export interface InviteCode {
   issuedAt: Date | null
   queryTokenId: string | null
   deletedAt: Date | null
+  checkValid: boolean | null
+  checkMessage: string | null
+  checkedAt: Date | null
   createdAt: Date
   updatedAt: Date
   assignedBy: User | null
@@ -243,6 +246,8 @@ export interface SiteSettings {
   smtpUser: string | null
   smtpPass: string | null
   smtpSecure: boolean
+  inviteCodeCheckApiUrl: string | null
+  inviteCodeCheckApiKey: string | null
   createdAt: Date
   updatedAt: Date
   selectedEmailApiConfig: EmailApiConfig | null

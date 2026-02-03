@@ -115,7 +115,14 @@ type AdminPreApplication = {
   registerEmail: string
   queryToken: string | null
   group: string
-  status: "PENDING" | "APPROVED" | "REJECTED" | "DISPUTED" | "ARCHIVED" | "PENDING_REVIEW" | "ON_HOLD"
+  status:
+    | "PENDING"
+    | "APPROVED"
+    | "REJECTED"
+    | "DISPUTED"
+    | "ARCHIVED"
+    | "PENDING_REVIEW"
+    | "ON_HOLD"
   guidance: string | null
   reviewedAt: string | null
   createdAt: string
@@ -134,7 +141,14 @@ type PreApplicationVersion = {
   sourceDetail: string | null
   registerEmail: string
   group: string
-  status: "PENDING" | "APPROVED" | "REJECTED" | "DISPUTED" | "ARCHIVED" | "PENDING_REVIEW" | "ON_HOLD"
+  status:
+    | "PENDING"
+    | "APPROVED"
+    | "REJECTED"
+    | "DISPUTED"
+    | "ARCHIVED"
+    | "PENDING_REVIEW"
+    | "ON_HOLD"
   guidance: string | null
   reviewedAt: string | null
   createdAt: string
@@ -248,7 +262,9 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc")
   const [dialogOpen, setDialogOpen] = useState(false)
   const [selected, setSelected] = useState<AdminPreApplication | null>(null)
-  const [reviewAction, setReviewAction] = useState<"APPROVE" | "REJECT" | "DISPUTE" | "PENDING_REVIEW" | "ON_HOLD">("APPROVE")
+  const [reviewAction, setReviewAction] = useState<
+    "APPROVE" | "REJECT" | "DISPUTE" | "PENDING_REVIEW" | "ON_HOLD"
+  >("APPROVE")
   const [guidance, setGuidance] = useState("")
   const [inviteCode, setInviteCode] = useState("")
   const [inviteExpiresAt, setInviteExpiresAt] = useState("")
@@ -282,14 +298,24 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
   const [duplicateCheckError, setDuplicateCheckError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (reviewAction === "REJECT" || reviewAction === "PENDING_REVIEW" || reviewAction === "ON_HOLD") {
+    if (
+      reviewAction === "REJECT" ||
+      reviewAction === "PENDING_REVIEW" ||
+      reviewAction === "ON_HOLD"
+    ) {
       setInviteCode("")
       setInviteExpiresAt("")
     }
   }, [reviewAction])
 
   useEffect(() => {
-    if (selected?.status !== "PENDING" && selected?.status !== "DISPUTED" && selected?.status !== "PENDING_REVIEW" && selected?.status !== "ON_HOLD") return
+    if (
+      selected?.status !== "PENDING" &&
+      selected?.status !== "DISPUTED" &&
+      selected?.status !== "PENDING_REVIEW" &&
+      selected?.status !== "ON_HOLD"
+    )
+      return
 
     const templates =
       reviewAction === "APPROVE"
@@ -303,8 +329,20 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
   }, [reviewAction, selected?.status, selected?.id, reviewTemplates, inviteCode])
 
   useEffect(() => {
-    if (!dialogOpen || reviewAction === "REJECT" || reviewAction === "PENDING_REVIEW" || reviewAction === "ON_HOLD") return
-    if (selected?.status !== "PENDING" && selected?.status !== "DISPUTED" && selected?.status !== "PENDING_REVIEW" && selected?.status !== "ON_HOLD") return
+    if (
+      !dialogOpen ||
+      reviewAction === "REJECT" ||
+      reviewAction === "PENDING_REVIEW" ||
+      reviewAction === "ON_HOLD"
+    )
+      return
+    if (
+      selected?.status !== "PENDING" &&
+      selected?.status !== "DISPUTED" &&
+      selected?.status !== "PENDING_REVIEW" &&
+      selected?.status !== "ON_HOLD"
+    )
+      return
     loadInviteOptions()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dialogOpen, reviewAction, selected?.status])
@@ -533,7 +571,12 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
     setAIReviewError(null)
     setDuplicateCheckResult(null)
     setDuplicateCheckError(null)
-    if (record.status === "PENDING" || record.status === "DISPUTED" || record.status === "PENDING_REVIEW" || record.status === "ON_HOLD") {
+    if (
+      record.status === "PENDING" ||
+      record.status === "DISPUTED" ||
+      record.status === "PENDING_REVIEW" ||
+      record.status === "ON_HOLD"
+    ) {
       setReviewAction("APPROVE")
       setGuidance(record.guidance || "")
       // 保留已有的邀请码
@@ -809,13 +852,21 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
         render: (record) => (
           <Button
             variant={
-              record.status === "PENDING" || record.status === "DISPUTED" || record.status === "PENDING_REVIEW" || record.status === "ON_HOLD" ? "default" : "outline"
+              record.status === "PENDING" ||
+              record.status === "DISPUTED" ||
+              record.status === "PENDING_REVIEW" ||
+              record.status === "ON_HOLD"
+                ? "default"
+                : "outline"
             }
             size="sm"
             className="h-8 gap-1.5 text-xs"
             onClick={() => openDialog(record)}
           >
-            {record.status === "PENDING" || record.status === "DISPUTED" || record.status === "PENDING_REVIEW" || record.status === "ON_HOLD" ? (
+            {record.status === "PENDING" ||
+            record.status === "DISPUTED" ||
+            record.status === "PENDING_REVIEW" ||
+            record.status === "ON_HOLD" ? (
               <>
                 <Pencil className="h-3.5 w-3.5" />
                 {t.preApplicationReviewAction}
@@ -1235,13 +1286,19 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
                     <Button
                       className="mt-3 w-full h-8 gap-1.5 text-xs"
                       variant={
-                        record.status === "PENDING" || record.status === "DISPUTED" || record.status === "PENDING_REVIEW" || record.status === "ON_HOLD"
+                        record.status === "PENDING" ||
+                        record.status === "DISPUTED" ||
+                        record.status === "PENDING_REVIEW" ||
+                        record.status === "ON_HOLD"
                           ? "default"
                           : "outline"
                       }
                       onClick={() => openDialog(record)}
                     >
-                      {record.status === "PENDING" || record.status === "DISPUTED" || record.status === "PENDING_REVIEW" || record.status === "ON_HOLD" ? (
+                      {record.status === "PENDING" ||
+                      record.status === "DISPUTED" ||
+                      record.status === "PENDING_REVIEW" ||
+                      record.status === "ON_HOLD" ? (
                         <>
                           <Pencil className="h-3.5 w-3.5" />
                           {t.preApplicationReviewAction}
@@ -1510,7 +1567,9 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
                                   <div className="min-w-0 flex-1">
                                     <div className="flex items-center gap-2">
                                       <span className="truncate text-sm font-medium">
-                                        {record.user?.name || record.user?.email || record.registerEmail}
+                                        {record.user?.name ||
+                                          record.user?.email ||
+                                          record.registerEmail}
                                       </span>
                                       {statusBadge(record.status as AdminPreApplication["status"])}
                                     </div>
@@ -1658,7 +1717,10 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
               )}
 
               {/* 审核操作表单 */}
-              {selected.status === "PENDING" || selected.status === "DISPUTED" || selected.status === "PENDING_REVIEW" || selected.status === "ON_HOLD" ? (
+              {selected.status === "PENDING" ||
+              selected.status === "DISPUTED" ||
+              selected.status === "PENDING_REVIEW" ||
+              selected.status === "ON_HOLD" ? (
                 <div className="space-y-4 rounded-xl border bg-gradient-to-br from-muted/30 to-muted/10 p-4">
                   <div className="flex items-center gap-2 text-sm font-medium">
                     <Send className="h-4 w-4 text-primary" />
@@ -1670,7 +1732,14 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
                       <Select
                         value={reviewAction}
                         onValueChange={(value) =>
-                          setReviewAction(value as "APPROVE" | "REJECT" | "DISPUTE" | "PENDING_REVIEW" | "ON_HOLD")
+                          setReviewAction(
+                            value as
+                              | "APPROVE"
+                              | "REJECT"
+                              | "DISPUTE"
+                              | "PENDING_REVIEW"
+                              | "ON_HOLD",
+                          )
                         }
                       >
                         <SelectTrigger className="h-9">
@@ -1680,7 +1749,9 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
                           <SelectItem value="APPROVE">{t.reviewApprove}</SelectItem>
                           <SelectItem value="REJECT">{t.reviewReject}</SelectItem>
                           <SelectItem value="DISPUTE">{t.reviewDispute || "标记有争议"}</SelectItem>
-                          <SelectItem value="PENDING_REVIEW">{t.reviewPendingReview || "提交复核"}</SelectItem>
+                          <SelectItem value="PENDING_REVIEW">
+                            {t.reviewPendingReview || "提交复核"}
+                          </SelectItem>
                           <SelectItem value="ON_HOLD">{t.reviewOnHold || "暂缓处理"}</SelectItem>
                         </SelectContent>
                       </Select>
@@ -1795,7 +1866,10 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
               <Button variant="outline" onClick={() => setDialogOpen(false)}>
                 {t.reviewCancel}
               </Button>
-              {(selected?.status === "PENDING" || selected?.status === "DISPUTED" || selected?.status === "PENDING_REVIEW" || selected?.status === "ON_HOLD") && (
+              {(selected?.status === "PENDING" ||
+                selected?.status === "DISPUTED" ||
+                selected?.status === "PENDING_REVIEW" ||
+                selected?.status === "ON_HOLD") && (
                 <Button onClick={handleReview} disabled={submitting} className="gap-2">
                   {submitting ? (
                     <>

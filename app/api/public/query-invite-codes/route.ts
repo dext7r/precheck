@@ -45,6 +45,9 @@ export async function GET(request: NextRequest) {
             id: true,
             code: true,
             expiresAt: true,
+            checkValid: true,
+            checkMessage: true,
+            checkedAt: true,
           },
           orderBy: { expiresAt: "asc" },
         },
@@ -70,6 +73,9 @@ export async function GET(request: NextRequest) {
         inviteCodes: inviteQueryToken.inviteCodes.map((ic) => ({
           code: ic.code,
           expiresAt: ic.expiresAt,
+          checkValid: ic.checkValid,
+          checkMessage: ic.checkMessage,
+          checkedAt: ic.checkedAt,
         })),
         queriedAt: inviteQueryToken.queriedAt || now,
       })
@@ -90,6 +96,9 @@ export async function GET(request: NextRequest) {
             code: true,
             expiresAt: true,
             usedAt: true,
+            checkValid: true,
+            checkMessage: true,
+            checkedAt: true,
           },
         },
       },
@@ -112,6 +121,9 @@ export async function GET(request: NextRequest) {
               code: preApplication.inviteCode.code,
               expiresAt: preApplication.inviteCode.expiresAt,
               used: !!preApplication.inviteCode.usedAt,
+              checkValid: preApplication.inviteCode.checkValid,
+              checkMessage: preApplication.inviteCode.checkMessage,
+              checkedAt: preApplication.inviteCode.checkedAt,
             }
           : null,
       })

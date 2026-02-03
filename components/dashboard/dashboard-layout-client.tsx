@@ -40,7 +40,7 @@ export function DashboardLayoutClient({
         </SheetContent>
       </Sheet>
 
-      <div className="flex flex-1 flex-col">
+      <div className="flex flex-1 flex-col min-w-0">
         <DashboardHeader
           locale={locale}
           dict={dict}

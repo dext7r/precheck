@@ -255,17 +255,56 @@ export function GuestApplyForm({ locale, qqNumber, dict }: GuestApplyFormProps) 
   }
 
   const status = dict.status as Record<string, string>
-  const statusConfig: Record<string, { label: string; icon: typeof Clock; color: string; bg: string }> = {
-    PENDING: { label: status.pending, icon: Clock, color: "text-amber-600 dark:text-amber-400", bg: "bg-amber-500/10" },
-    APPROVED: { label: status.approved, icon: CheckCircle2, color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-500/10" },
-    REJECTED: { label: status.rejected, icon: XCircle, color: "text-rose-600 dark:text-rose-400", bg: "bg-rose-500/10" },
-    DISPUTED: { label: status.disputed, icon: HelpCircle, color: "text-orange-600 dark:text-orange-400", bg: "bg-orange-500/10" },
-    ARCHIVED: { label: status.archived || "Archived", icon: Clock, color: "text-slate-600 dark:text-slate-400", bg: "bg-slate-500/10" },
-    PENDING_REVIEW: { label: status.pendingReview || "Pending Review", icon: Clock, color: "text-blue-600 dark:text-blue-400", bg: "bg-blue-500/10" },
-    ON_HOLD: { label: status.onHold || "On Hold", icon: Clock, color: "text-purple-600 dark:text-purple-400", bg: "bg-purple-500/10" },
+  const statusConfig: Record<
+    string,
+    { label: string; icon: typeof Clock; color: string; bg: string }
+  > = {
+    PENDING: {
+      label: status.pending,
+      icon: Clock,
+      color: "text-amber-600 dark:text-amber-400",
+      bg: "bg-amber-500/10",
+    },
+    APPROVED: {
+      label: status.approved,
+      icon: CheckCircle2,
+      color: "text-emerald-600 dark:text-emerald-400",
+      bg: "bg-emerald-500/10",
+    },
+    REJECTED: {
+      label: status.rejected,
+      icon: XCircle,
+      color: "text-rose-600 dark:text-rose-400",
+      bg: "bg-rose-500/10",
+    },
+    DISPUTED: {
+      label: status.disputed,
+      icon: HelpCircle,
+      color: "text-orange-600 dark:text-orange-400",
+      bg: "bg-orange-500/10",
+    },
+    ARCHIVED: {
+      label: status.archived || "Archived",
+      icon: Clock,
+      color: "text-slate-600 dark:text-slate-400",
+      bg: "bg-slate-500/10",
+    },
+    PENDING_REVIEW: {
+      label: status.pendingReview || "Pending Review",
+      icon: Clock,
+      color: "text-blue-600 dark:text-blue-400",
+      bg: "bg-blue-500/10",
+    },
+    ON_HOLD: {
+      label: status.onHold || "On Hold",
+      icon: Clock,
+      color: "text-purple-600 dark:text-purple-400",
+      bg: "bg-purple-500/10",
+    },
   }
 
-  const isValidEmail = formData.registerEmail.includes("@") && formData.registerEmail.split("@")[1]?.length > 0
+  const isValidEmail =
+    formData.registerEmail.includes("@") && formData.registerEmail.split("@")[1]?.length > 0
 
   if (loading) {
     return (
@@ -296,12 +335,17 @@ export function GuestApplyForm({ locale, qqNumber, dict }: GuestApplyFormProps) 
             <div className="flex items-center justify-between">
               <CardTitle className="flex items-center gap-3 text-lg">
                 {dict.reviewInfoTitle}
-                <Badge variant="secondary" className={cn("gap-1.5 px-2.5 py-1 font-medium", config.bg, config.color)}>
+                <Badge
+                  variant="secondary"
+                  className={cn("gap-1.5 px-2.5 py-1 font-medium", config.bg, config.color)}
+                >
                   <StatusIcon className="h-3.5 w-3.5" />
                   {config.label}
                 </Badge>
               </CardTitle>
-              <CardDescription>{dict.submittedAt}: {formatDate(record.createdAt)}</CardDescription>
+              <CardDescription>
+                {dict.submittedAt}: {formatDate(record.createdAt)}
+              </CardDescription>
             </div>
           </CardHeader>
           <CardContent className="p-6 space-y-6">
@@ -309,7 +353,9 @@ export function GuestApplyForm({ locale, qqNumber, dict }: GuestApplyFormProps) 
               <div className="space-y-1 p-3 rounded-lg bg-muted/30">
                 <p className="text-xs text-muted-foreground">{dict.queryToken}</p>
                 <div className="flex items-center gap-2">
-                  <code className="font-mono font-medium tracking-wider text-sm">{record.queryToken}</code>
+                  <code className="font-mono font-medium tracking-wider text-sm">
+                    {record.queryToken}
+                  </code>
                   <Button
                     variant="ghost"
                     size="icon"
@@ -321,7 +367,9 @@ export function GuestApplyForm({ locale, qqNumber, dict }: GuestApplyFormProps) 
                         setTokenCopied(true)
                         toast.success(dict.queryTokenCopied)
                         setTimeout(() => setTokenCopied(false), 2000)
-                      } catch { /* ignore */ }
+                      } catch {
+                        /* ignore */
+                      }
                     }}
                   >
                     {tokenCopied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
@@ -344,7 +392,9 @@ export function GuestApplyForm({ locale, qqNumber, dict }: GuestApplyFormProps) 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-1 p-3 rounded-lg bg-muted/30">
                   <p className="text-xs text-muted-foreground">{dict.review.reviewer}</p>
-                  <p className="font-medium">{record.reviewedBy?.name || record.reviewedBy?.email || "-"}</p>
+                  <p className="font-medium">
+                    {record.reviewedBy?.name || record.reviewedBy?.email || "-"}
+                  </p>
                 </div>
                 <div className="space-y-1 p-3 rounded-lg bg-muted/30">
                   <p className="text-xs text-muted-foreground">{dict.review.reviewedAt}</p>
@@ -365,16 +415,28 @@ export function GuestApplyForm({ locale, qqNumber, dict }: GuestApplyFormProps) 
             {record.inviteCode && (
               <div className="grid gap-4 sm:grid-cols-3 p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/50">
                 <div className="space-y-1">
-                  <p className="text-xs text-emerald-600 dark:text-emerald-400">{dict.invite.code}</p>
-                  <p className="font-mono font-bold text-emerald-700 dark:text-emerald-300">{record.inviteCode.code}</p>
+                  <p className="text-xs text-emerald-600 dark:text-emerald-400">
+                    {dict.invite.code}
+                  </p>
+                  <p className="font-mono font-bold text-emerald-700 dark:text-emerald-300">
+                    {record.inviteCode.code}
+                  </p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-xs text-emerald-600 dark:text-emerald-400">{dict.invite.expiresAt}</p>
-                  <p className="font-medium text-emerald-700 dark:text-emerald-300">{formatDate(record.inviteCode.expiresAt)}</p>
+                  <p className="text-xs text-emerald-600 dark:text-emerald-400">
+                    {dict.invite.expiresAt}
+                  </p>
+                  <p className="font-medium text-emerald-700 dark:text-emerald-300">
+                    {formatDate(record.inviteCode.expiresAt)}
+                  </p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-xs text-emerald-600 dark:text-emerald-400">{dict.invite.used}</p>
-                  <p className="font-medium text-emerald-700 dark:text-emerald-300">{record.inviteCode.usedAt ? dict.invite.used : dict.invite.unused}</p>
+                  <p className="text-xs text-emerald-600 dark:text-emerald-400">
+                    {dict.invite.used}
+                  </p>
+                  <p className="font-medium text-emerald-700 dark:text-emerald-300">
+                    {record.inviteCode.usedAt ? dict.invite.used : dict.invite.unused}
+                  </p>
                 </div>
               </div>
             )}
@@ -419,19 +481,25 @@ export function GuestApplyForm({ locale, qqNumber, dict }: GuestApplyFormProps) 
         </motion.div>
         <div>
           <h1 className="text-2xl font-bold tracking-tight">{dict.title}</h1>
-          <p className="text-sm text-muted-foreground">{dict.description} · QQ: {qqNumber}</p>
+          <p className="text-sm text-muted-foreground">
+            {dict.description} · QQ: {qqNumber}
+          </p>
         </div>
       </div>
 
       <Card className="border-0 shadow-md">
         <CardHeader>
           <CardTitle className="text-lg">{dict.submit}</CardTitle>
-          <CardDescription>{dict.allowedDomainsTitle}: {allowedDomainsText}</CardDescription>
+          <CardDescription>
+            {dict.allowedDomainsTitle}: {allowedDomainsText}
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="essay" className="text-sm font-medium">{dict.fields.essay}</Label>
+              <Label htmlFor="essay" className="text-sm font-medium">
+                {dict.fields.essay}
+              </Label>
               <Textarea
                 id="essay"
                 value={formData.essay}
@@ -443,7 +511,12 @@ export function GuestApplyForm({ locale, qqNumber, dict }: GuestApplyFormProps) 
               />
               <div className="flex items-center justify-between text-xs text-muted-foreground">
                 <span className="line-clamp-1">{essayHint}</span>
-                <span className={cn("shrink-0 tabular-nums", formData.essay.length >= essayMinChars && "text-emerald-600")}>
+                <span
+                  className={cn(
+                    "shrink-0 tabular-nums",
+                    formData.essay.length >= essayMinChars && "text-emerald-600",
+                  )}
+                >
                   {formData.essay.length}/{essayMinChars}
                 </span>
               </div>
@@ -481,7 +554,9 @@ export function GuestApplyForm({ locale, qqNumber, dict }: GuestApplyFormProps) 
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="registerEmail" className="text-sm font-medium">{dict.fields.registerEmail}</Label>
+                <Label htmlFor="registerEmail" className="text-sm font-medium">
+                  {dict.fields.registerEmail}
+                </Label>
                 <EmailWithDomainInput
                   value={formData.registerEmail}
                   domains={allowedDomains}
@@ -507,11 +582,13 @@ export function GuestApplyForm({ locale, qqNumber, dict }: GuestApplyFormProps) 
                         "flex items-center gap-2 rounded-lg border p-3 cursor-pointer transition-colors",
                         formData.group === group.id
                           ? "border-primary bg-primary/5"
-                          : "border-border hover:bg-muted/50"
+                          : "border-border hover:bg-muted/50",
                       )}
                     >
                       <RadioGroupItem value={group.id} />
-                      <span className="text-sm">{locale === "en" && group.nameEn ? group.nameEn : group.name}</span>
+                      <span className="text-sm">
+                        {locale === "en" && group.nameEn ? group.nameEn : group.name}
+                      </span>
                       <span className="text-xs text-muted-foreground">({group.number})</span>
                     </label>
                   ))}

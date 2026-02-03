@@ -1,6 +1,44 @@
 {
   "versions": [
     {
+      "version": "1.4.0",
+      "date": "2025-02-03",
+      "changes": [
+        {
+          "type": "added",
+          "content": "聊天室智能滚动：仅当用户在底部时才自动滚动，支持新消息提示按钮"
+        },
+        {
+          "type": "added",
+          "content": "邀请码有效性检测：管理员可在后台配置外部检测 API"
+        },
+        {
+          "type": "added",
+          "content": "管理后台邀请码列表支持批量检测并显示有效性状态"
+        },
+        {
+          "type": "added",
+          "content": "检测结果自动保存到数据库，下次查看时直接显示"
+        },
+        {
+          "type": "added",
+          "content": "邀请码脱敏：非 SUPER_ADMIN 只能看到自己创建的邀请码明文"
+        },
+        {
+          "type": "added",
+          "content": "查询页面新增独立邀请码有效性检测功能，支持链接和纯码两种格式"
+        },
+        {
+          "type": "fixed",
+          "content": "修复聊天室移动端容器宽度溢出问题"
+        },
+        {
+          "type": "changed",
+          "content": "聊天室移动端使用 100dvh 优化视口高度适配"
+        }
+      ]
+    },
+    {
       "version": "1.3.0",
       "date": "2025-01-31",
       "changes": [

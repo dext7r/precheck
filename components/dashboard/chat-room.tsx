@@ -3,7 +3,17 @@
 import { useState, useEffect, useRef, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
-import { Send, Shield, MessageCircle, Reply, X, Copy, Trash2, MessageSquare } from "lucide-react"
+import {
+  Send,
+  Shield,
+  MessageCircle,
+  Reply,
+  X,
+  Copy,
+  Trash2,
+  MessageSquare,
+  ChevronDown,
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -56,14 +66,26 @@ export function ChatRoom({ locale, dict, currentUser }: ChatRoomProps) {
   const [sending, setSending] = useState(false)
   const [loading, setLoading] = useState(true)
   const [replyTo, setReplyTo] = useState<ChatMsg | null>(null)
+  const [isNearBottom, setIsNearBottom] = useState(true)
+  const [hasNewMessages, setHasNewMessages] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
+  const prevMessageCountRef = useRef(0)
+  const isInitialLoadRef = useRef(true)
 
   const t = (dict.dashboard as Record<string, unknown>) || {}
 
-  const scrollToBottom = useCallback(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+  const scrollToBottom = useCallback((behavior: ScrollBehavior = "smooth") => {
+    messagesEndRef.current?.scrollIntoView({ behavior })
+    setHasNewMessages(false)
+  }, [])
+
+  const checkIfNearBottom = useCallback(() => {
+    const container = containerRef.current
+    if (!container) return true
+    const threshold = 100
+    return container.scrollHeight - container.scrollTop - container.clientHeight < threshold
   }, [])
 
   const fetchMessages = useCallback(async () => {
@@ -86,8 +108,26 @@ export function ChatRoom({ locale, dict, currentUser }: ChatRoomProps) {
   }, [fetchMessages])
 
   useEffect(() => {
-    scrollToBottom()
-  }, [messages, scrollToBottom])
+    const newCount = messages.length
+    const prevCount = prevMessageCountRef.current
+
+    if (newCount > prevCount) {
+      if (isInitialLoadRef.current) {
+        // 首次加载直接跳到底部
+        scrollToBottom("instant")
+        isInitialLoadRef.current = false
+      } else if (isNearBottom) {
+        scrollToBottom()
+      } else {
+        setHasNewMessages(true)
+      }
+    }
+    prevMessageCountRef.current = newCount
+  }, [messages, isNearBottom, scrollToBottom])
+
+  const handleScroll = useCallback(() => {
+    setIsNearBottom(checkIfNearBottom())
+  }, [checkIfNearBottom])
 
   const sendMessage = async () => {
     const content = input.trim()
@@ -229,19 +269,20 @@ export function ChatRoom({ locale, dict, currentUser }: ChatRoomProps) {
   }
 
   return (
-    <div className="flex flex-col" style={{ height: "calc(100vh - 160px)" }}>
+    <div className="flex flex-col h-[calc(100dvh-120px)] sm:h-[calc(100vh-160px)] min-w-0 overflow-hidden">
       {/* 头部 */}
-      <div className="flex items-center justify-between border-b px-4 py-3">
+      <div className="flex items-center justify-between border-b px-3 py-2 sm:px-4 sm:py-3">
         <div className="flex items-center gap-2">
           <MessageCircle className="h-5 w-5 text-primary" />
-          <h1 className="text-lg font-semibold">{(t.chat as string) || "聊天室"}</h1>
+          <h1 className="text-base sm:text-lg font-semibold">{(t.chat as string) || "聊天室"}</h1>
         </div>
       </div>
 
       {/* 消息区域 */}
       <div
         ref={containerRef}
-        className="flex-1 overflow-y-auto px-4 py-4"
+        onScroll={handleScroll}
+        className="relative flex-1 overflow-y-auto px-2 py-3 sm:px-4 sm:py-4"
         style={{ background: "var(--chat-bg, hsl(var(--muted) / 0.3))" }}
       >
         {messages.length === 0 ? (
@@ -296,7 +337,12 @@ export function ChatRoom({ locale, dict, currentUser }: ChatRoomProps) {
                           </Avatar>
 
                           {/* 消息内容 */}
-                          <div className={cn("max-w-[65%]", isMe ? "items-end" : "items-start")}>
+                          <div
+                            className={cn(
+                              "max-w-[80%] sm:max-w-[65%] min-w-0",
+                              isMe ? "items-end" : "items-start",
+                            )}
+                          >
                             {/* 昵称和角色 */}
                             {!isMe && (
                               <div className="mb-0.5 flex items-center gap-1 px-1">
@@ -325,7 +371,7 @@ export function ChatRoom({ locale, dict, currentUser }: ChatRoomProps) {
                             {/* 气泡 */}
                             <div
                               className={cn(
-                                "relative rounded-xl px-3 py-2 text-sm leading-relaxed break-words whitespace-pre-wrap shadow-sm",
+                                "relative rounded-xl px-3 py-2 text-sm leading-relaxed break-all whitespace-pre-wrap shadow-sm overflow-hidden",
                                 isMe
                                   ? "bg-[#95EC69] text-gray-900 dark:bg-[#2B8A3E] dark:text-white rounded-tr-sm"
                                   : isAdmin
@@ -400,6 +446,27 @@ export function ChatRoom({ locale, dict, currentUser }: ChatRoomProps) {
             <div ref={messagesEndRef} />
           </div>
         )}
+
+        {/* 新消息提示 */}
+        <AnimatePresence>
+          {hasNewMessages && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 10 }}
+              className="sticky bottom-2 flex justify-center"
+            >
+              <Button
+                size="sm"
+                onClick={() => scrollToBottom()}
+                className="rounded-full shadow-lg gap-1 h-8 px-3"
+              >
+                <ChevronDown className="h-4 w-4" />
+                {(t.chatNewMessages as string) || "新消息"}
+              </Button>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* 引用预览 */}
@@ -424,7 +491,7 @@ export function ChatRoom({ locale, dict, currentUser }: ChatRoomProps) {
       )}
 
       {/* 输入区域 */}
-      <div className="border-t bg-background px-4 py-3">
+      <div className="border-t bg-background px-2 py-2 sm:px-4 sm:py-3 pb-safe">
         <div className="flex items-end gap-2">
           <textarea
             ref={inputRef}

@@ -14,9 +14,10 @@ interface QQVerifyPageProps {
 export default async function QQVerifyPage({ params, searchParams }: QQVerifyPageProps) {
   const { locale } = await params
   const { redirect: redirectUrl } = await searchParams
-  const safeRedirectUrl = (redirectUrl && redirectUrl.startsWith('/') && !redirectUrl.startsWith('//'))
-    ? redirectUrl
-    : `/${locale}/guest/apply`
+  const safeRedirectUrl =
+    redirectUrl && redirectUrl.startsWith("/") && !redirectUrl.startsWith("//")
+      ? redirectUrl
+      : `/${locale}/guest/apply`
 
   const cookieStore = await cookies()
   const token = cookieStore.get(QQ_VERIFY_CONFIG.cookieName)?.value

@@ -1014,7 +1014,8 @@
     "timeMinutesAgo": "{n} min ago",
     "timeHoursAgo": "{n}h ago",
     "timeDaysAgo": "{n}d ago",
-    "me": "Me"
+    "me": "Me",
+    "chatNewMessages": "New messages"
   },
   "preApplication": {
     "title": "Pre-Application",
@@ -1258,7 +1259,19 @@
     "rejectedTitle": "Application Not Approved",
     "rejectedMessage": "Unfortunately, your application was not approved. Please review the guidance for details.",
     "disputedTitle": "Application Under Dispute",
-    "disputedMessage": "An administrator marked this submission for additional review. We will update you when there's progress."
+    "disputedMessage": "An administrator marked this submission for additional review. We will update you when there's progress.",
+    "checking": "Checking...",
+    "checkValidity": "Check Validity",
+    "checkFailed": "Check failed",
+    "valid": "Valid",
+    "invalid": "Invalid",
+    "emailRequired": "Please enter email",
+    "emailInvalid": "Invalid email format",
+    "singleCodeCheckTitle": "Invite Code Validity Check",
+    "singleCodeCheckDesc": "Enter an invite code or full link to check its validity",
+    "singleCodePlaceholder": "Enter invite code or full link",
+    "codeRequired": "Please enter an invite code",
+    "invalidCodeFormat": "Invalid invite code format"
   },
   "admin": {
     "title": "Admin Panel",

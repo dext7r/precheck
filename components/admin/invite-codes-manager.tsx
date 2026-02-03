@@ -101,6 +101,9 @@ type InviteCodeRecord = {
   issuedToEmail: string | null
   issuedAt: string | null
   queryTokenId: string | null
+  checkValid: boolean | null
+  checkMessage: string | null
+  checkedAt: string | null
   preApplication: {
     id: string
     registerEmail: string
@@ -237,6 +240,39 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
   const [batchDeleteOpen, setBatchDeleteOpen] = useState(false)
   const [batchDeleting, setBatchDeleting] = useState(false)
   const [urlPrefix, setUrlPrefix] = useState("")
+  const [currentUser, setCurrentUser] = useState<{
+    id: string
+    role: string
+  } | null>(null)
+  const [checkResults, setCheckResults] = useState<
+    Record<string, { valid: boolean | null; message: string }>
+  >({})
+  const [checking, setChecking] = useState(false)
+
+  // 获取当前用户信息
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.user) {
+          setCurrentUser({ id: data.user.id, role: data.user.role })
+        }
+      })
+      .catch(() => {})
+  }, [])
+
+  // 邀请码脱敏：SUPER_ADMIN 看全部，其他只看自己创建的
+  const maskCode = (record: InviteCodeRecord): string => {
+    if (!currentUser) return "****"
+    // SUPER_ADMIN 看全部
+    if (currentUser.role === "SUPER_ADMIN") return record.code
+    // 自己创建的不脱敏
+    if (record.createdBy?.id === currentUser.id) return record.code
+    // 其他脱敏：显示前 3 位 + **** + 后 2 位
+    const code = record.code
+    if (code.length <= 5) return "****"
+    return `${code.slice(0, 3)}****${code.slice(-2)}`
+  }
 
   // 获取邀请码链接配置
   useEffect(() => {
@@ -724,6 +760,71 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
     }
   }
 
+  // 批量检测邀请码有效期
+  const handleBatchCheck = async () => {
+    if (selectedIds.size === 0) return
+    if (selectedIds.size > 5) {
+      toast.error("单次最多检测 5 个邀请码")
+      return
+    }
+    // 只检测 SUPER_ADMIN 或自己创建的（能看到完整码的）
+    const recordsToCheck = records
+      .filter((r) => selectedIds.has(r.id))
+      .filter((r) => {
+        if (!currentUser) return false
+        if (currentUser.role === "SUPER_ADMIN") return true
+        return r.createdBy?.id === currentUser.id
+      })
+
+    if (recordsToCheck.length === 0) {
+      toast.error("没有可检测的邀请码")
+      return
+    }
+
+    // 提取纯邀请码，并建立映射关系
+    const codeMapping: Record<string, string> = {} // pureCode -> originalCode
+    const pureCodes: string[] = []
+    for (const r of recordsToCheck) {
+      const pureCode = extractPureCode(r.code)
+      if (pureCode) {
+        pureCodes.push(pureCode)
+        codeMapping[pureCode] = r.code
+      }
+    }
+
+    if (pureCodes.length === 0) {
+      toast.error("没有有效的邀请码")
+      return
+    }
+
+    setChecking(true)
+    try {
+      const res = await fetch("/api/admin/invite-codes/batch-check", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ codes: pureCodes, codeMapping }),
+      })
+      const data = await res.json()
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || t.actionFailed)
+      }
+      // 更新本地检测结果显示
+      const newResults: Record<string, { valid: boolean | null; message: string }> = {}
+      for (const result of data.results) {
+        const originalCode = codeMapping[result.invite_code] || result.invite_code
+        newResults[originalCode] = { valid: result.valid, message: result.message }
+      }
+      setCheckResults((prev) => ({ ...prev, ...newResults }))
+      toast.success(`检测完成，共检测 ${data.total} 个`)
+      // 刷新数据以显示数据库中的检测结果
+      await fetchRecords()
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t.actionFailed)
+    } finally {
+      setChecking(false)
+    }
+  }
+
   const columns: Column<InviteCodeRecord>[] = useMemo(
     () => [
       {
@@ -746,7 +847,31 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
               <Key className="h-4 w-4" />
             </div>
             <div className="min-w-0">
-              <p className="truncate text-sm font-medium font-mono tracking-wide">{record.code}</p>
+              <div className="flex items-center gap-1.5">
+                <p className="truncate text-sm font-medium font-mono tracking-wide">
+                  {maskCode(record)}
+                </p>
+                {/* 优先显示数据库中的检测结果，其次显示本地检测结果 */}
+                {(record.checkedAt || checkResults[record.code]) && (() => {
+                  const valid = record.checkedAt ? record.checkValid : checkResults[record.code]?.valid
+                  const message = record.checkedAt ? record.checkMessage : checkResults[record.code]?.message
+                  return (
+                    <span
+                      title={message || ""}
+                      className={cn(
+                        "shrink-0 h-4 w-4 rounded-full flex items-center justify-center text-[10px]",
+                        valid === true
+                          ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30"
+                          : valid === false
+                            ? "bg-rose-100 text-rose-600 dark:bg-rose-900/30"
+                            : "bg-amber-100 text-amber-600 dark:bg-amber-900/30",
+                      )}
+                    >
+                      {valid === true ? "✓" : valid === false ? "✗" : "?"}
+                    </span>
+                  )
+                })()}
+              </div>
               <p className="text-xs text-muted-foreground">
                 {formatDateTime(record.createdAt, locale)}
               </p>
@@ -811,7 +936,9 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
           record.preApplication ? (
             <div className="min-w-0">
               <p className="truncate text-sm">
-                {record.preApplication.user?.name || record.preApplication.user?.email || record.preApplication.registerEmail}
+                {record.preApplication.user?.name ||
+                  record.preApplication.user?.email ||
+                  record.preApplication.registerEmail}
               </p>
               <p className="truncate text-xs text-muted-foreground">
                 {record.preApplication.registerEmail}
@@ -1271,6 +1398,19 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
                     {generatingToken ? t.saving : t.queryTokenGenerate || "生成查询码"}
                   </Button>
                   <Button
+                    variant="outline"
+                    onClick={handleBatchCheck}
+                    disabled={checking || selectedIds.size === 0 || selectedIds.size > 5}
+                    className="gap-2"
+                  >
+                    {checking ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <RotateCcw className="h-4 w-4" />
+                    )}
+                    {checking ? "检测中..." : "检测有效期"}
+                  </Button>
+                  <Button
                     variant="destructive"
                     onClick={() => setBatchDeleteOpen(true)}
                     disabled={batchDeleting}
@@ -1339,7 +1479,7 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-start justify-between gap-2">
-                      <p className="truncate text-sm font-medium font-mono">{record.code}</p>
+                      <p className="truncate text-sm font-medium font-mono">{maskCode(record)}</p>
                       <Badge className={cn("shrink-0 text-xs", status.className)}>
                         {status.label}
                       </Badge>
@@ -1361,7 +1501,9 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
                     {(record.preApplication || record.issuedToUser || record.issuedToEmail) && (
                       <p className="mt-2 truncate text-xs text-muted-foreground">
                         {record.preApplication
-                          ? record.preApplication.user?.name || record.preApplication.user?.email || record.preApplication.registerEmail
+                          ? record.preApplication.user?.name ||
+                            record.preApplication.user?.email ||
+                            record.preApplication.registerEmail
                           : record.issuedToUser
                             ? record.issuedToUser?.name || record.issuedToUser?.email
                             : record.issuedToEmail}

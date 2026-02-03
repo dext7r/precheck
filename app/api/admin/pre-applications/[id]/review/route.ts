@@ -103,7 +103,9 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
 
     // 处理待复核和暂缓处理（无需邀请码，直接更新状态）
     if (isPendingReview || isOnHold) {
-      const newStatus = isPendingReview ? PreApplicationStatus.PENDING_REVIEW : PreApplicationStatus.ON_HOLD
+      const newStatus = isPendingReview
+        ? PreApplicationStatus.PENDING_REVIEW
+        : PreApplicationStatus.ON_HOLD
       const newVersion = record.version + 1
 
       await db.$transaction(async (tx) => {

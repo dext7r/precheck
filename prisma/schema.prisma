@@ -212,6 +212,10 @@ model InviteCode {
   issuedAt       DateTime?
   queryTokenId   String?
   deletedAt   DateTime?
+  // 有效性检测结果
+  checkValid     Boolean?
+  checkMessage   String?
+  checkedAt      DateTime?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
@@ -228,6 +232,7 @@ model InviteCode {
   @@index([issuedToEmail])
   @@index([queryTokenId])
   @@index([deletedAt])
+  @@index([checkValid])
 }
 
 model InviteCodeQueryToken {
@@ -335,6 +340,9 @@ model SiteSettings {
   smtpUser                String?
   smtpPass                String?
   smtpSecure              Boolean  @default(false)
+  // 邀请码有效期检测 API 配置
+  inviteCodeCheckApiUrl   String?
+  inviteCodeCheckApiKey   String?  // API Key 值
   createdAt               DateTime @default(now())
   updatedAt               DateTime @updatedAt
 

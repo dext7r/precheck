@@ -17,7 +17,11 @@ export const getQQGroups = cache(async (): Promise<QQGroupConfig[]> => {
       select: { qqGroups: true },
     })
 
-    if (!settings?.qqGroups || !Array.isArray(settings.qqGroups) || settings.qqGroups.length === 0) {
+    if (
+      !settings?.qqGroups ||
+      !Array.isArray(settings.qqGroups) ||
+      settings.qqGroups.length === 0
+    ) {
       return enabledDefaultGroups
     }
 

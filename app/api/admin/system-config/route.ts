@@ -41,6 +41,9 @@ const systemConfigSchema = z.object({
   smtpUser: z.string().optional().nullable(),
   smtpPass: z.string().optional().nullable(),
   smtpSecure: z.boolean().optional(),
+  // 邀请码有效期检测 API 配置
+  inviteCodeCheckApiUrl: z.string().url().optional().nullable().or(z.literal("")),
+  inviteCodeCheckApiKey: z.string().optional().nullable(),
 })
 
 export async function GET(request: NextRequest) {
@@ -75,6 +78,8 @@ export async function GET(request: NextRequest) {
         smtpUser: true,
         smtpPass: true,
         smtpSecure: true,
+        inviteCodeCheckApiUrl: true,
+        inviteCodeCheckApiKey: true,
       },
     })
 
@@ -96,6 +101,8 @@ export async function GET(request: NextRequest) {
         smtpUser: null,
         smtpPass: null,
         smtpSecure: false,
+        inviteCodeCheckApiUrl: null,
+        inviteCodeCheckApiKey: null,
       })
     }
 
@@ -126,6 +133,8 @@ export async function GET(request: NextRequest) {
       smtpUser: settings.smtpUser,
       smtpPass: settings.smtpPass,
       smtpSecure: settings.smtpSecure ?? false,
+      inviteCodeCheckApiUrl: settings.inviteCodeCheckApiUrl ?? null,
+      inviteCodeCheckApiKey: settings.inviteCodeCheckApiKey ?? null,
     })
   } catch (error) {
     console.error("System config fetch error:", error)
@@ -172,12 +181,16 @@ export async function PUT(request: NextRequest) {
         qqGroups: data.qqGroups ?? defaultQQGroups,
         inviteCodeUrlPrefix: data.inviteCodeUrlPrefix ?? "",
         emailProvider: data.emailProvider ?? "env",
-        selectedEmailApiConfigId: data.selectedEmailApiConfigId ?? null,
+        selectedEmailApiConfig: data.selectedEmailApiConfigId
+          ? { connect: { id: data.selectedEmailApiConfigId } }
+          : undefined,
         smtpHost: data.smtpHost ?? null,
         smtpPort: data.smtpPort ?? null,
         smtpUser: data.smtpUser ?? null,
         smtpPass: data.smtpPass ?? null,
         smtpSecure: data.smtpSecure ?? false,
+        inviteCodeCheckApiUrl: data.inviteCodeCheckApiUrl || null,
+        inviteCodeCheckApiKey: data.inviteCodeCheckApiKey ?? null,
       },
       update: {
         preApplicationEssayHint: data.preApplicationEssayHint,
@@ -208,6 +221,12 @@ export async function PUT(request: NextRequest) {
         ...(data.smtpUser !== undefined && { smtpUser: data.smtpUser }),
         ...(data.smtpPass !== undefined && { smtpPass: data.smtpPass }),
         ...(data.smtpSecure !== undefined && { smtpSecure: data.smtpSecure }),
+        ...(data.inviteCodeCheckApiUrl !== undefined && {
+          inviteCodeCheckApiUrl: data.inviteCodeCheckApiUrl || null,
+        }),
+        ...(data.inviteCodeCheckApiKey !== undefined && {
+          inviteCodeCheckApiKey: data.inviteCodeCheckApiKey,
+        }),
       },
     })
 
@@ -235,6 +254,8 @@ export async function PUT(request: NextRequest) {
           "smtpPort",
           "smtpUser",
           "smtpSecure",
+          "inviteCodeCheckApiUrl",
+          "inviteCodeCheckApiKey",
         ],
       },
       request,
@@ -257,6 +278,8 @@ export async function PUT(request: NextRequest) {
       smtpUser: updated.smtpUser,
       smtpPass: updated.smtpPass,
       smtpSecure: updated.smtpSecure,
+      inviteCodeCheckApiUrl: updated.inviteCodeCheckApiUrl,
+      inviteCodeCheckApiKey: updated.inviteCodeCheckApiKey,
     })
   } catch (error) {
     if (error instanceof z.ZodError) {

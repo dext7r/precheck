@@ -33,7 +33,9 @@ export function generateAccessToken(): string {
 /**
  * 检查 QQ 号请求频率限制（使用原子操作避免竞态条件）
  */
-export async function checkQQRateLimit(qqNumber: string): Promise<{ allowed: boolean; waitSeconds?: number }> {
+export async function checkQQRateLimit(
+  qqNumber: string,
+): Promise<{ allowed: boolean; waitSeconds?: number }> {
   const redis = getRedisClient()
   if (!redis) return { allowed: true }
 
@@ -60,7 +62,7 @@ export async function checkQQRateLimit(qqNumber: string): Promise<{ allowed: boo
  * 为 QQ 号生成并存储验证码（供 QQ 机器人调用）
  */
 export async function createQQVerifyCode(
-  qqNumber: string
+  qqNumber: string,
 ): Promise<{ success: boolean; code?: string; error?: string; waitSeconds?: number }> {
   const rateLimit = await checkQQRateLimit(qqNumber)
   if (!rateLimit.allowed) {
@@ -78,7 +80,7 @@ export async function createQQVerifyCode(
     await redis.setex(
       key,
       expirySeconds,
-      JSON.stringify({ code, attempts: 0, createdAt: Date.now() })
+      JSON.stringify({ code, attempts: 0, createdAt: Date.now() }),
     )
 
     return { success: true, code }
@@ -93,7 +95,7 @@ export async function createQQVerifyCode(
  */
 export async function verifyQQCode(
   qqNumber: string,
-  inputCode: string
+  inputCode: string,
 ): Promise<{ valid: boolean; accessToken?: string; error?: string }> {
   const redis = getRedisClient()
   if (!redis) return { valid: false, error: "Redis 未配置" }
@@ -117,7 +119,7 @@ export async function verifyQQCode(
       await redis.setex(
         key,
         ttl > 0 ? ttl : QQ_VERIFY_CONFIG.codeExpiryMinutes * 60,
-        JSON.stringify({ code, attempts: attempts + 1, createdAt })
+        JSON.stringify({ code, attempts: attempts + 1, createdAt }),
       )
       return { valid: false, error: "验证码错误" }
     }
@@ -128,7 +130,11 @@ export async function verifyQQCode(
     const accessKey = `${QQ_VERIFY_CONFIG.accessPrefix}${accessToken}`
     const accessExpirySeconds = QQ_VERIFY_CONFIG.accessExpiryHours * 60 * 60
 
-    await redis.setex(accessKey, accessExpirySeconds, JSON.stringify({ qqNumber, createdAt: Date.now() }))
+    await redis.setex(
+      accessKey,
+      accessExpirySeconds,
+      JSON.stringify({ qqNumber, createdAt: Date.now() }),
+    )
 
     return { valid: true, accessToken }
   } catch (error) {
@@ -140,7 +146,9 @@ export async function verifyQQCode(
 /**
  * 验证访问凭证是否有效
  */
-export async function validateAccessToken(token: string): Promise<{ valid: boolean; qqNumber?: string }> {
+export async function validateAccessToken(
+  token: string,
+): Promise<{ valid: boolean; qqNumber?: string }> {
   const redis = getRedisClient()
   if (!redis) return { valid: false }
 
@@ -162,7 +170,7 @@ export async function validateAccessToken(token: string): Promise<{ valid: boole
  * 从 Cookie 中获取并验证 QQ 访问凭证
  */
 export async function getQQVerifyStatus(
-  cookieValue: string | undefined
+  cookieValue: string | undefined,
 ): Promise<{ verified: boolean; qqNumber?: string }> {
   if (!cookieValue) return { verified: false }
 

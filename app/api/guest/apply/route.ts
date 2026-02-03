@@ -58,7 +58,10 @@ export async function POST(request: NextRequest) {
       data = guestApplicationSchema.parse(body)
     } catch (err) {
       if (err instanceof z.ZodError) {
-        return NextResponse.json({ error: "数据格式错误", detail: err.errors[0].message }, { status: 400 })
+        return NextResponse.json(
+          { error: "数据格式错误", detail: err.errors[0].message },
+          { status: 400 },
+        )
       }
       throw err
     }
@@ -150,7 +153,7 @@ export async function POST(request: NextRequest) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: "数据格式错误", detail: error.errors[0].message },
-        { status: 400 }
+        { status: 400 },
       )
     }
     console.error("Guest application submit error:", error)

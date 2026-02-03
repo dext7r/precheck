@@ -23,9 +23,12 @@ import {
   UserCheck,
   Sparkles,
   AlertTriangle,
+  ShieldCheck,
+  ShieldX,
+  ShieldQuestion,
 } from "lucide-react"
 import { resolveApiErrorMessage } from "@/lib/api/error-message"
-import { formatInviteCodeUrl } from "@/lib/invite-code/utils"
+import { formatInviteCodeUrl, extractPureCode } from "@/lib/invite-code/utils"
 import type { Dictionary } from "@/lib/i18n/get-dictionary"
 import type { Locale } from "@/lib/i18n/config"
 
@@ -33,6 +36,9 @@ interface InviteCodeResult {
   code: string
   expiresAt: string | null
   used?: boolean
+  checkValid?: boolean | null
+  checkMessage?: string | null
+  checkedAt?: string | null
 }
 
 interface InviteCodesQueryResult {
@@ -70,6 +76,17 @@ export function QueryInviteCodesForm({ locale, dict }: QueryInviteCodesFormProps
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null)
   const [error, setError] = useState("")
   const [urlPrefix, setUrlPrefix] = useState("")
+  const [checkingCodes, setCheckingCodes] = useState<Set<string>>(new Set())
+  const [localCheckResults, setLocalCheckResults] = useState<
+    Record<string, { valid: boolean | null; message: string }>
+  >({})
+  // 单独检测邀请码有效性
+  const [singleCodeInput, setSingleCodeInput] = useState("")
+  const [singleCodeChecking, setSingleCodeChecking] = useState(false)
+  const [singleCodeResult, setSingleCodeResult] = useState<{
+    valid: boolean | null
+    message: string
+  } | null>(null)
 
   const getFullUrl = (code: string) => {
     return formatInviteCodeUrl(code, urlPrefix)
@@ -151,6 +168,99 @@ export function QueryInviteCodesForm({ locale, dict }: QueryInviteCodesFormProps
       setTimeout(() => setCopiedIndex(null), 2000)
     } catch {
       toast.error(t.copyFailed)
+    }
+  }
+
+  // 检测邀请码有效性
+  const handleCheckValidity = async (codes: InviteCodeResult[]) => {
+    const codesToCheck = codes.filter((c) => !isExpired(c.expiresAt) && !c.used)
+    if (codesToCheck.length === 0) return
+
+    const pureCodesMap: Record<string, string> = {}
+    const pureCodes: string[] = []
+    for (const c of codesToCheck) {
+      const pure = extractPureCode(c.code)
+      if (pure) {
+        pureCodes.push(pure)
+        pureCodesMap[pure] = c.code
+      }
+    }
+    if (pureCodes.length === 0) return
+
+    setCheckingCodes(new Set(codesToCheck.map((c) => c.code)))
+
+    try {
+      const res = await fetch("/api/public/check-invite-codes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ codes: pureCodes, codeMapping: pureCodesMap }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        throw new Error(data.error || (t as Record<string, string>).checkFailed || "检测失败")
+      }
+
+      const newResults: Record<string, { valid: boolean | null; message: string }> = {}
+      for (const r of data.results || []) {
+        const originalCode = pureCodesMap[r.invite_code] || r.invite_code
+        newResults[originalCode] = { valid: r.valid, message: r.message }
+      }
+      setLocalCheckResults((prev) => ({ ...prev, ...newResults }))
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : (t as Record<string, string>).checkFailed || "检测失败"
+      toast.error(message)
+    } finally {
+      setCheckingCodes(new Set())
+    }
+  }
+
+  // 获取检测状态显示
+  const getCheckStatus = (item: InviteCodeResult) => {
+    // 优先使用数据库中的检测结果
+    if (item.checkValid !== undefined && item.checkValid !== null) {
+      return { valid: item.checkValid, message: item.checkMessage || "" }
+    }
+    // 然后使用本地检测结果
+    return localCheckResults[item.code]
+  }
+
+  // 单独检测单个邀请码
+  const handleSingleCodeCheck = async () => {
+    const trimmed = singleCodeInput.trim()
+    if (!trimmed) {
+      toast.error((t as Record<string, string>).codeRequired || "请输入邀请码")
+      return
+    }
+    const pureCode = extractPureCode(trimmed)
+    if (!pureCode) {
+      toast.error((t as Record<string, string>).invalidCodeFormat || "无效的邀请码格式")
+      return
+    }
+
+    setSingleCodeChecking(true)
+    setSingleCodeResult(null)
+
+    try {
+      const res = await fetch("/api/public/check-invite-codes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ codes: [pureCode] }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        throw new Error(data.error || (t as Record<string, string>).checkFailed || "检测失败")
+      }
+      const result = data.results?.[0]
+      if (result) {
+        setSingleCodeResult({ valid: result.valid, message: result.message })
+      }
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : (t as Record<string, string>).checkFailed || "检测失败"
+      toast.error(message)
+    } finally {
+      setSingleCodeChecking(false)
     }
   }
 
@@ -392,18 +502,47 @@ export function QueryInviteCodesForm({ locale, dict }: QueryInviteCodesFormProps
       )
     }
 
+    const hasUnChecked = data.inviteCodes.some(
+      (c) => !isExpired(c.expiresAt) && c.checkValid === undefined && c.checkValid === null,
+    )
+
     return (
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         className="space-y-3"
       >
-        <div className="flex items-center gap-2">
-          <Ticket className="h-4 w-4 text-primary" />
-          <h3 className="text-sm font-medium text-muted-foreground">{t.result}</h3>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Ticket className="h-4 w-4 text-primary" />
+            <h3 className="text-sm font-medium text-muted-foreground">{t.result}</h3>
+          </div>
+          {hasUnChecked && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleCheckValidity(data.inviteCodes)}
+              disabled={checkingCodes.size > 0}
+              className="h-7 text-xs"
+            >
+              {checkingCodes.size > 0 ? (
+                <>
+                  <Loader2 className="mr-1.5 h-3 w-3 animate-spin" />
+                  {(t as Record<string, string>).checking || "检测中..."}
+                </>
+              ) : (
+                <>
+                  <ShieldQuestion className="mr-1.5 h-3 w-3" />
+                  {(t as Record<string, string>).checkValidity || "检测有效性"}
+                </>
+              )}
+            </Button>
+          )}
         </div>
         {data.inviteCodes.map((item, index) => {
           const expired = isExpired(item.expiresAt)
+          const checkStatus = getCheckStatus(item)
+          const isChecking = checkingCodes.has(item.code)
           return (
             <motion.div
               key={index}
@@ -426,9 +565,35 @@ export function QueryInviteCodesForm({ locale, dict }: QueryInviteCodesFormProps
               >
                 <div className="min-w-0 flex-1 space-y-2">
                   <p className="truncate font-mono text-sm font-medium">{getFullUrl(item.code)}</p>
-                  <Badge variant={expired ? "destructive" : "secondary"} className="text-xs">
-                    {getExpiryText(item.expiresAt)}
-                  </Badge>
+                  <div className="flex flex-wrap gap-1.5">
+                    <Badge variant={expired ? "destructive" : "secondary"} className="text-xs">
+                      {getExpiryText(item.expiresAt)}
+                    </Badge>
+                    {isChecking && (
+                      <Badge variant="outline" className="text-xs">
+                        <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                        {(t as Record<string, string>).checking || "检测中"}
+                      </Badge>
+                    )}
+                    {!isChecking && checkStatus && (
+                      <Badge
+                        variant={checkStatus.valid ? "default" : "destructive"}
+                        className={`text-xs ${checkStatus.valid ? "bg-emerald-600" : ""}`}
+                      >
+                        {checkStatus.valid ? (
+                          <>
+                            <ShieldCheck className="mr-1 h-3 w-3" />
+                            {(t as Record<string, string>).valid || "有效"}
+                          </>
+                        ) : (
+                          <>
+                            <ShieldX className="mr-1 h-3 w-3" />
+                            {(t as Record<string, string>).invalid || "无效"}
+                          </>
+                        )}
+                      </Badge>
+                    )}
+                  </div>
                 </div>
                 <Button
                   variant="ghost"
@@ -541,6 +706,24 @@ export function QueryInviteCodesForm({ locale, dict }: QueryInviteCodesFormProps
                     {data.inviteCode.used && (
                       <Badge variant="outline" className="text-xs">
                         {t.used}
+                      </Badge>
+                    )}
+                    {data.inviteCode.checkValid !== undefined && data.inviteCode.checkValid !== null && (
+                      <Badge
+                        variant={data.inviteCode.checkValid ? "default" : "destructive"}
+                        className={`text-xs ${data.inviteCode.checkValid ? "bg-emerald-600" : ""}`}
+                      >
+                        {data.inviteCode.checkValid ? (
+                          <>
+                            <ShieldCheck className="mr-1 h-3 w-3" />
+                            {(t as Record<string, string>).valid || "有效"}
+                          </>
+                        ) : (
+                          <>
+                            <ShieldX className="mr-1 h-3 w-3" />
+                            {(t as Record<string, string>).invalid || "无效"}
+                          </>
+                        )}
                       </Badge>
                     )}
                   </div>
@@ -715,6 +898,100 @@ export function QueryInviteCodesForm({ locale, dict }: QueryInviteCodesFormProps
           {result?.type === "invite_codes" && renderInviteCodesResult(result)}
           {result?.type === "pre_application" && renderPreApplicationResult(result)}
         </AnimatePresence>
+
+        {/* 独立邀请码有效性检测 */}
+        <div className="pt-6 border-t border-border/40">
+          <div className="flex items-center gap-2 mb-4">
+            <ShieldQuestion className="h-4 w-4 text-primary" />
+            <h3 className="text-sm font-medium">
+              {(t as Record<string, string>).singleCodeCheckTitle || "单独检测邀请码"}
+            </h3>
+          </div>
+          <p className="text-xs text-muted-foreground mb-3">
+            {(t as Record<string, string>).singleCodeCheckDesc || "输入邀请码或链接检测有效性"}
+          </p>
+          <div className="space-y-3">
+            <Input
+              type="text"
+              placeholder={
+                (t as Record<string, string>).singleCodePlaceholder || "输入邀请码或完整链接"
+              }
+              value={singleCodeInput}
+              onChange={(e) => {
+                setSingleCodeInput(e.target.value)
+                setSingleCodeResult(null)
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleSingleCodeCheck()
+              }}
+              disabled={singleCodeChecking}
+              className="font-mono text-sm"
+            />
+            <Button
+              onClick={handleSingleCodeCheck}
+              disabled={singleCodeChecking || !singleCodeInput.trim()}
+              variant="outline"
+              className="w-full"
+            >
+              {singleCodeChecking ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  {(t as Record<string, string>).checking || "检测中..."}
+                </>
+              ) : (
+                <>
+                  <ShieldQuestion className="mr-2 h-4 w-4" />
+                  {(t as Record<string, string>).checkValidity || "检测有效性"}
+                </>
+              )}
+            </Button>
+
+            <AnimatePresence>
+              {singleCodeResult && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className={`rounded-lg p-4 ${
+                    singleCodeResult.valid
+                      ? "bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800"
+                      : "bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800"
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    {singleCodeResult.valid ? (
+                      <ShieldCheck className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                    ) : (
+                      <ShieldX className="h-5 w-5 text-rose-600 dark:text-rose-400" />
+                    )}
+                    <span
+                      className={`font-medium ${
+                        singleCodeResult.valid
+                          ? "text-emerald-700 dark:text-emerald-300"
+                          : "text-rose-700 dark:text-rose-300"
+                      }`}
+                    >
+                      {singleCodeResult.valid
+                        ? (t as Record<string, string>).valid || "有效"
+                        : (t as Record<string, string>).invalid || "无效"}
+                    </span>
+                  </div>
+                  {singleCodeResult.message && (
+                    <p
+                      className={`mt-2 text-sm ${
+                        singleCodeResult.valid
+                          ? "text-emerald-600 dark:text-emerald-400"
+                          : "text-rose-600 dark:text-rose-400"
+                      }`}
+                    >
+                      {singleCodeResult.message}
+                    </p>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
       </div>
     </motion.div>
   )
