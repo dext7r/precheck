@@ -1895,6 +1895,8 @@
     "totalReviewedCount": "总审核数量",
     "reviewerBreakdown": "审核人员明细",
     "reviewerRanking": "审核排行",
+    "reviewerChart": "审核分布",
+    "reviewer": "审核人",
     "approvalRate": "通过率",
     "totalReviews": "总审核",
     "inviteCodeUrlPrefix": "邀请码链接前缀",

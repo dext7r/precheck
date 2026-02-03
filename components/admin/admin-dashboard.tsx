@@ -451,48 +451,10 @@ export function AdminDashboard({ locale, dict }: AdminDashboardProps) {
       )}
 
       {data?.reviewerStats?.breakdown && data.reviewerStats.breakdown.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>{t.reviewerRanking || "审核排行"}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {data.reviewerStats.breakdown.map((reviewer, index) => {
-                const approvalRate = reviewer.total > 0
-                  ? Math.round((reviewer.approved / reviewer.total) * 100)
-                  : 0
-                return (
-                  <div
-                    key={reviewer.reviewerId}
-                    className="flex items-center gap-4 rounded-lg border p-3"
-                  >
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
-                      {index + 1}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium truncate">{reviewer.name}</p>
-                      <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                        <span className="text-emerald-600 dark:text-emerald-400">
-                          {t.approved || "通过"}: {reviewer.approved}
-                        </span>
-                        <span className="text-rose-600 dark:text-rose-400">
-                          {t.rejected || "驳回"}: {reviewer.rejected}
-                        </span>
-                        <span>
-                          {t.approvalRate || "通过率"}: {approvalRate}%
-                        </span>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-2xl font-bold tabular-nums">{reviewer.total}</p>
-                      <p className="text-xs text-muted-foreground">{t.totalReviews || "总审核"}</p>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          </CardContent>
-        </Card>
+        <ReviewerStatsSection
+          data={data.reviewerStats.breakdown}
+          dict={dict}
+        />
       )}
 
       <div className="grid gap-6 xl:grid-cols-3">
@@ -927,5 +889,160 @@ function InviteCodeDetailTable({
       perPageText={t.perPage}
       summaryFormatter={formatPageSummary}
     />
+  )
+}
+
+type ReviewerStatsData = {
+  reviewerId: string
+  name: string
+  approved: number
+  rejected: number
+  total: number
+}
+
+function ReviewerStatsSection({
+  data,
+  dict,
+}: {
+  data: ReviewerStatsData[]
+  dict: Dictionary
+}) {
+  const t = dict.admin
+  const [sortKey, setSortKey] = useState<string>("total")
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc")
+
+  const sortedData = useMemo(() => {
+    const enriched = data.map((item) => ({
+      ...item,
+      approvalRate: item.total > 0 ? Math.round((item.approved / item.total) * 100) : 0,
+    }))
+    return [...enriched].sort((a, b) => {
+      const aVal = a[sortKey as keyof typeof a] as number
+      const bVal = b[sortKey as keyof typeof b] as number
+      return sortOrder === "desc" ? bVal - aVal : aVal - bVal
+    })
+  }, [data, sortKey, sortOrder])
+
+  const handleSort = (key: string) => {
+    if (sortKey === key) {
+      setSortOrder(sortOrder === "desc" ? "asc" : "desc")
+    } else {
+      setSortKey(key)
+      setSortOrder("desc")
+    }
+  }
+
+  const columns: Column<(typeof sortedData)[0]>[] = [
+    {
+      key: "name",
+      label: t.reviewer || "审核人",
+      width: "30%",
+      sortable: true,
+      render: (item) => <span className="font-medium">{item.name}</span>,
+    },
+    {
+      key: "approved",
+      label: t.approved || "通过",
+      width: "15%",
+      sortable: true,
+      align: "right",
+      render: (item) => (
+        <span className="text-emerald-600 dark:text-emerald-400 tabular-nums">{item.approved}</span>
+      ),
+    },
+    {
+      key: "rejected",
+      label: t.rejected || "驳回",
+      width: "15%",
+      sortable: true,
+      align: "right",
+      render: (item) => (
+        <span className="text-rose-600 dark:text-rose-400 tabular-nums">{item.rejected}</span>
+      ),
+    },
+    {
+      key: "total",
+      label: t.totalReviews || "总审核",
+      width: "15%",
+      sortable: true,
+      align: "right",
+      render: (item) => <span className="font-bold tabular-nums">{item.total}</span>,
+    },
+    {
+      key: "approvalRate",
+      label: t.approvalRate || "通过率",
+      width: "25%",
+      sortable: true,
+      align: "right",
+      render: (item) => (
+        <div className="flex items-center justify-end gap-2">
+          <div className="h-2 w-16 overflow-hidden rounded-full bg-muted">
+            <div
+              className="h-full rounded-full bg-emerald-500"
+              style={{ width: `${item.approvalRate}%` }}
+            />
+          </div>
+          <span className="tabular-nums text-sm">{item.approvalRate}%</span>
+        </div>
+      ),
+    },
+  ]
+
+  return (
+    <div className="grid gap-6 lg:grid-cols-2">
+      <Card>
+        <CardHeader>
+          <CardTitle>{t.reviewerRanking || "审核排行"}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <DataTable
+            columns={columns}
+            data={sortedData}
+            total={sortedData.length}
+            page={1}
+            pageSize={sortedData.length}
+            onPageChange={() => {}}
+            onPageSizeChange={() => {}}
+            onSort={handleSort}
+            compact
+          />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>{t.reviewerChart || "审核分布"}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ChartContainer
+            config={{
+              approved: { label: t.approved || "通过", color: "hsl(var(--chart-2))" },
+              rejected: { label: t.rejected || "驳回", color: "hsl(var(--chart-3))" },
+            }}
+            className="min-h-[200px]"
+          >
+            <BarChart
+              data={sortedData}
+              layout="vertical"
+              margin={{ left: 0, right: 16 }}
+            >
+              <CartesianGrid horizontal={false} />
+              <XAxis type="number" allowDecimals={false} />
+              <YAxis
+                type="category"
+                dataKey="name"
+                width={80}
+                tickLine={false}
+                axisLine={false}
+                tick={{ fontSize: 12 }}
+              />
+              <ChartTooltip content={<ChartTooltipContent />} />
+              <Bar dataKey="approved" stackId="a" fill="var(--color-approved)" radius={[0, 0, 0, 0]} />
+              <Bar dataKey="rejected" stackId="a" fill="var(--color-rejected)" radius={[0, 4, 4, 0]} />
+            </BarChart>
+          </ChartContainer>
+        </CardContent>
+      </Card>
+    </div>
   )
 }

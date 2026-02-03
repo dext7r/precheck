@@ -1899,6 +1899,8 @@
     "totalReviewedCount": "Total Reviews",
     "reviewerBreakdown": "Reviewer Breakdown",
     "reviewerRanking": "Review Ranking",
+    "reviewerChart": "Review Distribution",
+    "reviewer": "Reviewer",
     "approvalRate": "Approval Rate",
     "totalReviews": "Total",
     "inviteCodeUrlPrefix": "Invite Code URL Prefix",
