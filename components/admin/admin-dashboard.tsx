@@ -2,7 +2,18 @@
 
 import { useEffect, useMemo, useState, useCallback } from "react"
 import { toast } from "sonner"
-import { Bar, BarChart, CartesianGrid, Line, LineChart, Pie, PieChart, Cell, XAxis, YAxis } from "recharts"
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Line,
+  LineChart,
+  Pie,
+  PieChart,
+  Cell,
+  XAxis,
+  YAxis,
+} from "recharts"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Select,
@@ -903,29 +914,31 @@ type ReviewerStatsData = {
   total: number
 }
 
-const REVIEWER_COLORS = [
-  "hsl(var(--chart-1))",
-  "hsl(var(--chart-2))",
-  "hsl(var(--chart-3))",
-  "hsl(var(--chart-4))",
-  "hsl(var(--chart-5))",
-  "hsl(210, 70%, 50%)",
-  "hsl(280, 70%, 50%)",
-  "hsl(30, 70%, 50%)",
-]
+function generateColors(count: number): string[] {
+  if (count <= 0) return []
+  const colors: string[] = []
+  for (let i = 0; i < count; i++) {
+    const hue = Math.round((i * 360) / count)
+    colors.push(`hsl(${hue}, 70%, 50%)`)
+  }
+  return colors
+}
 
 function ReviewerStatsSection({ data, dict }: { data: ReviewerStatsData[]; dict: Dictionary }) {
   const t = dict.admin
+  const colors = useMemo(() => generateColors(data.length), [data.length])
 
   const pieData = useMemo(() => {
     return data
       .map((item, index) => ({
         name: item.name,
         value: item.total,
-        fill: REVIEWER_COLORS[index % REVIEWER_COLORS.length],
+        approved: item.approved,
+        rejected: item.rejected,
+        fill: colors[index],
       }))
       .sort((a, b) => b.value - a.value)
-  }, [data])
+  }, [data, colors])
 
   const totalReviews = useMemo(() => data.reduce((sum, item) => sum + item.total, 0), [data])
 
@@ -938,7 +951,7 @@ function ReviewerStatsSection({ data, dict }: { data: ReviewerStatsData[]; dict:
         <div className="flex flex-col items-center gap-6 lg:flex-row">
           <ChartContainer
             config={Object.fromEntries(
-              pieData.map((item) => [item.name, { label: item.name, color: item.fill }])
+              pieData.map((item) => [item.name, { label: item.name, color: item.fill }]),
             )}
             className="aspect-square h-[250px] w-[250px]"
           >
@@ -961,12 +974,22 @@ function ReviewerStatsSection({ data, dict }: { data: ReviewerStatsData[]; dict:
                 content={({ active, payload }) => {
                   if (!active || !payload?.length) return null
                   const item = payload[0].payload
-                  const percentage = totalReviews > 0 ? ((item.value / totalReviews) * 100).toFixed(1) : 0
+                  const percentage =
+                    totalReviews > 0 ? ((item.value / totalReviews) * 100).toFixed(1) : 0
                   return (
                     <div className="rounded-lg border bg-background p-2 shadow-sm">
                       <p className="font-medium">{item.name}</p>
+                      <p className="text-sm">
+                        <span className="text-emerald-600 dark:text-emerald-400">
+                          {t.approved || "通过"}: {item.approved}
+                        </span>
+                        {" / "}
+                        <span className="text-rose-600 dark:text-rose-400">
+                          {t.rejected || "驳回"}: {item.rejected}
+                        </span>
+                      </p>
                       <p className="text-sm text-muted-foreground">
-                        {item.value} ({percentage}%)
+                        {t.totalReviews || "总计"}: {item.value} ({percentage}%)
                       </p>
                     </div>
                   )
@@ -977,16 +1000,24 @@ function ReviewerStatsSection({ data, dict }: { data: ReviewerStatsData[]; dict:
 
           <div className="flex-1 space-y-2">
             {pieData.map((item, index) => {
-              const percentage = totalReviews > 0 ? ((item.value / totalReviews) * 100).toFixed(1) : 0
+              const percentage =
+                totalReviews > 0 ? ((item.value / totalReviews) * 100).toFixed(1) : 0
               return (
-                <div key={index} className="flex items-center gap-3">
+                <div key={index} className="flex items-center gap-2">
                   <div
-                    className="h-3 w-3 rounded-full"
+                    className="h-3 w-3 shrink-0 rounded-full"
                     style={{ backgroundColor: item.fill }}
                   />
-                  <span className="flex-1 truncate text-sm">{item.name}</span>
-                  <span className="tabular-nums text-sm font-medium">{item.value}</span>
-                  <span className="w-14 text-right tabular-nums text-sm text-muted-foreground">
+                  <span className="min-w-16 truncate text-sm">{item.name}</span>
+                  <span className="tabular-nums text-sm text-emerald-600 dark:text-emerald-400">
+                    {item.approved}
+                  </span>
+                  <span className="text-muted-foreground">/</span>
+                  <span className="tabular-nums text-sm text-rose-600 dark:text-rose-400">
+                    {item.rejected}
+                  </span>
+                  <span className="ml-auto tabular-nums text-sm font-medium">{item.value}</span>
+                  <span className="w-12 text-right tabular-nums text-sm text-muted-foreground">
                     {percentage}%
                   </span>
                 </div>
