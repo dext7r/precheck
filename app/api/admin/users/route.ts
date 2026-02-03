@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
 
     const where = conditions.length > 0 ? { AND: conditions } : {}
 
-    const [users, total, stats] = await Promise.all([
+    const [usersRaw, total, stats] = await Promise.all([
       db.user.findMany({
         where,
         skip,
@@ -77,6 +77,12 @@ export async function GET(request: NextRequest) {
           role: true,
           status: true,
           createdAt: true,
+          _count: {
+            select: {
+              preApplications: true,
+              preApplicationsReviewed: true,
+            },
+          },
         },
       }),
       db.user.count({ where }),
@@ -93,6 +99,12 @@ export async function GET(request: NextRequest) {
         banned,
       })),
     ])
+
+    const users = usersRaw.map(({ _count, ...rest }) => ({
+      ...rest,
+      applicationCount: _count.preApplications,
+      reviewCount: _count.preApplicationsReviewed,
+    }))
 
     return NextResponse.json({ users, total, page, limit, stats })
   } catch (error) {

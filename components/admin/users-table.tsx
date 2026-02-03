@@ -99,6 +99,8 @@ interface AdminUser {
   role: string
   status: string
   createdAt: string
+  applicationCount: number
+  reviewCount: number
 }
 
 interface AdminUsersTableProps {
@@ -419,7 +421,7 @@ export function AdminUsersTable({ locale, dict }: AdminUsersTableProps) {
     {
       key: "email",
       label: t.user,
-      width: "35%",
+      width: "25%",
       sortable: true,
       render: (user) => (
         <div className="flex items-center gap-3">
@@ -436,21 +438,38 @@ export function AdminUsersTable({ locale, dict }: AdminUsersTableProps) {
     {
       key: "role",
       label: t.role,
-      width: "15%",
+      width: "10%",
       sortable: true,
       render: (user) => renderRoleBadge(user.role),
     },
     {
       key: "status",
       label: t.status,
-      width: "15%",
+      width: "10%",
       sortable: true,
       render: (user) => renderStatusBadge(user.status),
     },
     {
+      key: "applicationCount",
+      label: t.applicationCount || "申请",
+      width: "8%",
+      render: (user) => <span className="text-muted-foreground">{user.applicationCount}</span>,
+    },
+    {
+      key: "reviewCount",
+      label: t.reviewCount || "审核",
+      width: "8%",
+      render: (user) =>
+        user.role === "USER" ? (
+          <span className="text-muted-foreground">-</span>
+        ) : (
+          <span className="text-muted-foreground">{user.reviewCount}</span>
+        ),
+    },
+    {
       key: "createdAt",
       label: t.createdAt,
-      width: "20%",
+      width: "19%",
       sortable: true,
       render: (user) => (
         <span className="text-muted-foreground">
@@ -461,7 +480,7 @@ export function AdminUsersTable({ locale, dict }: AdminUsersTableProps) {
     {
       key: "actions",
       label: t.actions,
-      width: "15%",
+      width: "10%",
       render: renderActions,
     },
   ]
@@ -601,6 +620,14 @@ export function AdminUsersTable({ locale, dict }: AdminUsersTableProps) {
                 <div className="flex flex-wrap items-center gap-3 text-sm">
                   {renderRoleBadge(user.role)}
                   {renderStatusBadge(user.status)}
+                  <span className="text-muted-foreground">
+                    {t.applicationCount || "申请"}: {user.applicationCount}
+                  </span>
+                  {user.role !== "USER" && (
+                    <span className="text-muted-foreground">
+                      {t.reviewCount || "审核"}: {user.reviewCount}
+                    </span>
+                  )}
                   <span className="text-muted-foreground">
                     {new Date(user.createdAt).toLocaleString(locale)}
                   </span>

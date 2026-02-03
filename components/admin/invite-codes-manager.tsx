@@ -852,25 +852,30 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
                   {maskCode(record)}
                 </p>
                 {/* 优先显示数据库中的检测结果，其次显示本地检测结果 */}
-                {(record.checkedAt || checkResults[record.code]) && (() => {
-                  const valid = record.checkedAt ? record.checkValid : checkResults[record.code]?.valid
-                  const message = record.checkedAt ? record.checkMessage : checkResults[record.code]?.message
-                  return (
-                    <span
-                      title={message || ""}
-                      className={cn(
-                        "shrink-0 h-4 w-4 rounded-full flex items-center justify-center text-[10px]",
-                        valid === true
-                          ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30"
-                          : valid === false
-                            ? "bg-rose-100 text-rose-600 dark:bg-rose-900/30"
-                            : "bg-amber-100 text-amber-600 dark:bg-amber-900/30",
-                      )}
-                    >
-                      {valid === true ? "✓" : valid === false ? "✗" : "?"}
-                    </span>
-                  )
-                })()}
+                {(record.checkedAt || checkResults[record.code]) &&
+                  (() => {
+                    const valid = record.checkedAt
+                      ? record.checkValid
+                      : checkResults[record.code]?.valid
+                    const message = record.checkedAt
+                      ? record.checkMessage
+                      : checkResults[record.code]?.message
+                    return (
+                      <span
+                        title={message || ""}
+                        className={cn(
+                          "shrink-0 h-4 w-4 rounded-full flex items-center justify-center text-[10px]",
+                          valid === true
+                            ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30"
+                            : valid === false
+                              ? "bg-rose-100 text-rose-600 dark:bg-rose-900/30"
+                              : "bg-amber-100 text-amber-600 dark:bg-amber-900/30",
+                        )}
+                      >
+                        {valid === true ? "✓" : valid === false ? "✗" : "?"}
+                      </span>
+                    )
+                  })()}
               </div>
               <p className="text-xs text-muted-foreground">
                 {formatDateTime(record.createdAt, locale)}

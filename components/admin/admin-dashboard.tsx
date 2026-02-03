@@ -102,7 +102,7 @@ type DashboardData = {
     currentUser: number
     others: number
     total: number
-    breakdown: Array<{ reviewerId: string; name: string; count: number }>
+    breakdown: Array<{ reviewerId: string; name: string; approved: number; rejected: number; total: number }>
   }
 }
 
@@ -448,6 +448,51 @@ export function AdminDashboard({ locale, dict }: AdminDashboardProps) {
             </CardContent>
           </Card>
         </div>
+      )}
+
+      {data?.reviewerStats?.breakdown && data.reviewerStats.breakdown.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>{t.reviewerRanking || "审核排行"}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {data.reviewerStats.breakdown.map((reviewer, index) => {
+                const approvalRate = reviewer.total > 0
+                  ? Math.round((reviewer.approved / reviewer.total) * 100)
+                  : 0
+                return (
+                  <div
+                    key={reviewer.reviewerId}
+                    className="flex items-center gap-4 rounded-lg border p-3"
+                  >
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
+                      {index + 1}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium truncate">{reviewer.name}</p>
+                      <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                        <span className="text-emerald-600 dark:text-emerald-400">
+                          {t.approved || "通过"}: {reviewer.approved}
+                        </span>
+                        <span className="text-rose-600 dark:text-rose-400">
+                          {t.rejected || "驳回"}: {reviewer.rejected}
+                        </span>
+                        <span>
+                          {t.approvalRate || "通过率"}: {approvalRate}%
+                        </span>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-2xl font-bold tabular-nums">{reviewer.total}</p>
+                      <p className="text-xs text-muted-foreground">{t.totalReviews || "总审核"}</p>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       <div className="grid gap-6 xl:grid-cols-3">

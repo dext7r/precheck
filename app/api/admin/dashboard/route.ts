@@ -263,12 +263,13 @@ export async function GET(request: NextRequest) {
         },
       }),
       db.$queryRaw<
-        Array<{ reviewedById: string; name: string | null; email: string; count: number }>
+        Array<{ reviewedById: string; name: string | null; email: string; status: string; count: number }>
       >`
         SELECT
           p."reviewedById",
           u."name",
           u."email",
+          p."status",
           COUNT(*)::int AS count
         FROM "PreApplication" p
         INNER JOIN "User" u ON p."reviewedById" = u."id"
@@ -276,7 +277,7 @@ export async function GET(request: NextRequest) {
           AND p."status" IN ('APPROVED', 'REJECTED')
           AND p."reviewedAt" >= ${rangeStart}
           AND p."reviewedAt" <= ${rangeEnd}
-        GROUP BY p."reviewedById", u."name", u."email"
+        GROUP BY p."reviewedById", u."name", u."email", p."status"
         ORDER BY count DESC
       `,
     ])
@@ -335,16 +336,36 @@ export async function GET(request: NextRequest) {
       }))
       .sort((a, b) => b.count - a.count)
 
-    const reviewerStats = reviewerStatsRows.map((row) => ({
-      reviewerId: row.reviewedById,
-      name: row.name || row.email,
-      count: Number(row.count),
-    }))
+    const reviewerStatsMap = new Map<string, { name: string; approved: number; rejected: number }>()
+    for (const row of reviewerStatsRows) {
+      const existing = reviewerStatsMap.get(row.reviewedById)
+      if (existing) {
+        if (row.status === "APPROVED") existing.approved += Number(row.count)
+        if (row.status === "REJECTED") existing.rejected += Number(row.count)
+      } else {
+        reviewerStatsMap.set(row.reviewedById, {
+          name: row.name || row.email,
+          approved: row.status === "APPROVED" ? Number(row.count) : 0,
+          rejected: row.status === "REJECTED" ? Number(row.count) : 0,
+        })
+      }
+    }
 
-    const currentUserReviewed = reviewerStats.find((r) => r.reviewerId === user.id)?.count ?? 0
+    const reviewerStats = Array.from(reviewerStatsMap.entries())
+      .map(([reviewerId, data]) => ({
+        reviewerId,
+        name: data.name,
+        approved: data.approved,
+        rejected: data.rejected,
+        total: data.approved + data.rejected,
+      }))
+      .sort((a, b) => b.total - a.total)
+
+    const currentUserStats = reviewerStats.find((r) => r.reviewerId === user.id)
+    const currentUserReviewed = currentUserStats?.total ?? 0
     const othersReviewed = reviewerStats
       .filter((r) => r.reviewerId !== user.id)
-      .reduce((sum, r) => sum + r.count, 0)
+      .reduce((sum, r) => sum + r.total, 0)
 
     return NextResponse.json({
       range: rangeDays,

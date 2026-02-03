@@ -708,24 +708,25 @@ export function QueryInviteCodesForm({ locale, dict }: QueryInviteCodesFormProps
                         {t.used}
                       </Badge>
                     )}
-                    {data.inviteCode.checkValid !== undefined && data.inviteCode.checkValid !== null && (
-                      <Badge
-                        variant={data.inviteCode.checkValid ? "default" : "destructive"}
-                        className={`text-xs ${data.inviteCode.checkValid ? "bg-emerald-600" : ""}`}
-                      >
-                        {data.inviteCode.checkValid ? (
-                          <>
-                            <ShieldCheck className="mr-1 h-3 w-3" />
-                            {(t as Record<string, string>).valid || "有效"}
-                          </>
-                        ) : (
-                          <>
-                            <ShieldX className="mr-1 h-3 w-3" />
-                            {(t as Record<string, string>).invalid || "无效"}
-                          </>
-                        )}
-                      </Badge>
-                    )}
+                    {data.inviteCode.checkValid !== undefined &&
+                      data.inviteCode.checkValid !== null && (
+                        <Badge
+                          variant={data.inviteCode.checkValid ? "default" : "destructive"}
+                          className={`text-xs ${data.inviteCode.checkValid ? "bg-emerald-600" : ""}`}
+                        >
+                          {data.inviteCode.checkValid ? (
+                            <>
+                              <ShieldCheck className="mr-1 h-3 w-3" />
+                              {(t as Record<string, string>).valid || "有效"}
+                            </>
+                          ) : (
+                            <>
+                              <ShieldX className="mr-1 h-3 w-3" />
+                              {(t as Record<string, string>).invalid || "无效"}
+                            </>
+                          )}
+                        </Badge>
+                      )}
                   </div>
                 </div>
                 <Button
