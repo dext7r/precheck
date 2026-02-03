@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, useCallback } from "react"
 import { toast } from "sonner"
-import { Bar, BarChart, CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts"
+import { Bar, BarChart, CartesianGrid, Line, LineChart, Pie, PieChart, Cell, XAxis, YAxis } from "recharts"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Select,
@@ -903,149 +903,104 @@ type ReviewerStatsData = {
   total: number
 }
 
+const REVIEWER_COLORS = [
+  "hsl(var(--chart-1))",
+  "hsl(var(--chart-2))",
+  "hsl(var(--chart-3))",
+  "hsl(var(--chart-4))",
+  "hsl(var(--chart-5))",
+  "hsl(210, 70%, 50%)",
+  "hsl(280, 70%, 50%)",
+  "hsl(30, 70%, 50%)",
+]
+
 function ReviewerStatsSection({ data, dict }: { data: ReviewerStatsData[]; dict: Dictionary }) {
   const t = dict.admin
-  const [sortKey, setSortKey] = useState<string>("total")
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc")
 
-  const sortedData = useMemo(() => {
-    const enriched = data.map((item) => ({
-      ...item,
-      approvalRate: item.total > 0 ? Math.round((item.approved / item.total) * 100) : 0,
-    }))
-    return [...enriched].sort((a, b) => {
-      const aVal = a[sortKey as keyof typeof a] as number
-      const bVal = b[sortKey as keyof typeof b] as number
-      return sortOrder === "desc" ? bVal - aVal : aVal - bVal
-    })
-  }, [data, sortKey, sortOrder])
+  const pieData = useMemo(() => {
+    return data
+      .map((item, index) => ({
+        name: item.name,
+        value: item.total,
+        fill: REVIEWER_COLORS[index % REVIEWER_COLORS.length],
+      }))
+      .sort((a, b) => b.value - a.value)
+  }, [data])
 
-  const handleSort = (key: string) => {
-    if (sortKey === key) {
-      setSortOrder(sortOrder === "desc" ? "asc" : "desc")
-    } else {
-      setSortKey(key)
-      setSortOrder("desc")
-    }
-  }
-
-  const columns: Column<(typeof sortedData)[0]>[] = [
-    {
-      key: "name",
-      label: t.reviewer || "审核人",
-      width: "30%",
-      sortable: true,
-      render: (item) => <span className="font-medium">{item.name}</span>,
-    },
-    {
-      key: "approved",
-      label: t.approved || "通过",
-      width: "15%",
-      sortable: true,
-      align: "right",
-      render: (item) => (
-        <span className="text-emerald-600 dark:text-emerald-400 tabular-nums">{item.approved}</span>
-      ),
-    },
-    {
-      key: "rejected",
-      label: t.rejected || "驳回",
-      width: "15%",
-      sortable: true,
-      align: "right",
-      render: (item) => (
-        <span className="text-rose-600 dark:text-rose-400 tabular-nums">{item.rejected}</span>
-      ),
-    },
-    {
-      key: "total",
-      label: t.totalReviews || "总审核",
-      width: "15%",
-      sortable: true,
-      align: "right",
-      render: (item) => <span className="font-bold tabular-nums">{item.total}</span>,
-    },
-    {
-      key: "approvalRate",
-      label: t.approvalRate || "通过率",
-      width: "25%",
-      sortable: true,
-      align: "right",
-      render: (item) => (
-        <div className="flex items-center justify-end gap-2">
-          <div className="h-2 w-16 overflow-hidden rounded-full bg-muted">
-            <div
-              className="h-full rounded-full bg-emerald-500"
-              style={{ width: `${item.approvalRate}%` }}
-            />
-          </div>
-          <span className="tabular-nums text-sm">{item.approvalRate}%</span>
-        </div>
-      ),
-    },
-  ]
+  const totalReviews = useMemo(() => data.reduce((sum, item) => sum + item.total, 0), [data])
 
   return (
-    <div className="grid gap-6 lg:grid-cols-2">
-      <Card>
-        <CardHeader>
-          <CardTitle>{t.reviewerRanking || "审核排行"}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <DataTable
-            columns={columns}
-            data={sortedData}
-            total={sortedData.length}
-            page={1}
-            pageSize={sortedData.length}
-            onPageChange={() => {}}
-            onPageSizeChange={() => {}}
-            onSort={handleSort}
-            compact
-          />
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>{t.reviewerChart || "审核分布"}</CardTitle>
-        </CardHeader>
-        <CardContent>
+    <Card>
+      <CardHeader>
+        <CardTitle>{t.reviewerChart || "审核分布"}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="flex flex-col items-center gap-6 lg:flex-row">
           <ChartContainer
-            config={{
-              approved: { label: t.approved || "通过", color: "hsl(var(--chart-2))" },
-              rejected: { label: t.rejected || "驳回", color: "hsl(var(--chart-3))" },
-            }}
-            className="min-h-[200px]"
+            config={Object.fromEntries(
+              pieData.map((item) => [item.name, { label: item.name, color: item.fill }])
+            )}
+            className="aspect-square h-[250px] w-[250px]"
           >
-            <BarChart data={sortedData} layout="vertical" margin={{ left: 0, right: 16 }}>
-              <CartesianGrid horizontal={false} />
-              <XAxis type="number" allowDecimals={false} />
-              <YAxis
-                type="category"
-                dataKey="name"
-                width={80}
-                tickLine={false}
-                axisLine={false}
-                tick={{ fontSize: 12 }}
+            <PieChart>
+              <Pie
+                data={pieData}
+                dataKey="value"
+                nameKey="name"
+                cx="50%"
+                cy="50%"
+                innerRadius={60}
+                outerRadius={100}
+                strokeWidth={2}
+              >
+                {pieData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.fill} />
+                ))}
+              </Pie>
+              <ChartTooltip
+                content={({ active, payload }) => {
+                  if (!active || !payload?.length) return null
+                  const item = payload[0].payload
+                  const percentage = totalReviews > 0 ? ((item.value / totalReviews) * 100).toFixed(1) : 0
+                  return (
+                    <div className="rounded-lg border bg-background p-2 shadow-sm">
+                      <p className="font-medium">{item.name}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {item.value} ({percentage}%)
+                      </p>
+                    </div>
+                  )
+                }}
               />
-              <ChartTooltip content={<ChartTooltipContent />} />
-              <Bar
-                dataKey="approved"
-                stackId="a"
-                fill="var(--color-approved)"
-                radius={[0, 0, 0, 0]}
-              />
-              <Bar
-                dataKey="rejected"
-                stackId="a"
-                fill="var(--color-rejected)"
-                radius={[0, 4, 4, 0]}
-              />
-            </BarChart>
+            </PieChart>
           </ChartContainer>
-        </CardContent>
-      </Card>
-    </div>
+
+          <div className="flex-1 space-y-2">
+            {pieData.map((item, index) => {
+              const percentage = totalReviews > 0 ? ((item.value / totalReviews) * 100).toFixed(1) : 0
+              return (
+                <div key={index} className="flex items-center gap-3">
+                  <div
+                    className="h-3 w-3 rounded-full"
+                    style={{ backgroundColor: item.fill }}
+                  />
+                  <span className="flex-1 truncate text-sm">{item.name}</span>
+                  <span className="tabular-nums text-sm font-medium">{item.value}</span>
+                  <span className="w-14 text-right tabular-nums text-sm text-muted-foreground">
+                    {percentage}%
+                  </span>
+                </div>
+              )
+            })}
+            <div className="mt-4 border-t pt-3">
+              <div className="flex items-center justify-between font-medium">
+                <span>{t.totalReviews || "总审核"}</span>
+                <span className="tabular-nums">{totalReviews}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   )
 }
