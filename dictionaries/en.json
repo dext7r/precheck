@@ -902,7 +902,7 @@
     "accountDeleted": "Account deleted",
     "accountDeleteFailed": "Failed to delete account",
     "contribute": "Share Codes",
-    "contributeDesc": "Share your invite codes to help the community grow",
+    "contributeDesc": "Verify shared invite codes before manual distribution so you know they are still valid",
     "contributeLinuxdoRequired": "Linux.do Account Required",
     "contributeLinuxdoRequiredDesc": "Only Linux.do users can share invite codes. Please link your Linux.do account first.",
     "contributeLinuxdoLink": "Link Linux.do",
@@ -929,7 +929,7 @@
     "contributeCheckInvalid": "Invalid",
     "contributeCheckFailure": "Invite code check failed",
     "manualIssueTitle": "Manual issuance log",
-    "manualIssueDesc": "Record how you shared a code outside the system so the team can track donations.",
+    "manualIssueDesc": "Record how you issued codes manually so the team can track donations and keep audit trails.",
     "manualIssueNoteLabel": "Issuance note",
     "manualIssueNotePlaceholder": "Describe how/where you sent the code",
     "manualIssueTargetLabel": "Recipient or context",
@@ -939,6 +939,7 @@
     "manualIssueSuccess": "Manual issuance note recorded",
     "manualIssueFailure": "Failed to record manual issuance",
     "manualIssueNoteRequired": "Please describe the manual issuance before recording it",
+    "manualIssueReminder": "Invite storage is disabled; record every manual issuance on the dashboard manual log panel.",
     "contributeExpiresLabel": "Expires",
     "contributeNoExpiry": "No expiry",
     "contributeStatus": {
@@ -1117,7 +1118,9 @@
       "unused": "Unused"
     },
     "noCodeYetTitle": "No Invite Code Yet",
-    "noCodeYetDesc": "Your application is approved, but no invite codes are available. You can try to claim one; if none available, please try again later.",
+    "noCodeYetDesc": "Your application is approved, but invite codes are now issued manually. Contact an admin and log the issuance on the dashboard manual log panel.",
+    "noCodeAvailableDesc": "Currently there are no invite codes available. Please wait for manual issuance and record it via the dashboard manual log panel.",
+    "manualIssueHint": "Invite codes are distributed manually now; please log each issuance using the dashboard manual log panel.",
     "claimCode": "Claim Invite Code",
     "claiming": "Claiming...",
     "claimCodeSuccess": "Invite code claimed successfully",
@@ -1309,9 +1312,9 @@
     "preApplicationsDesc": "Review and manage pre-applications",
     "inviteCodes": "Invite Codes",
     "inviteCodesDesc": "Manage invite codes and expiry",
-    "manualIssueReminder": "Invite storage is disabled; please send codes manually and log the issuance on the dashboard.",
+    "manualIssueReminder": "Invite storage is disabled; send codes manually and then log the issuance on the dashboard manual log panel.",
     "inviteCodesDisabled": "Invite code storage has been disabled",
-    "inviteCodeDisabledMessage": "Invite codes are no longer stored; use manual channels to issue them.",
+    "inviteCodeDisabledMessage": "Invite codes are no longer stored; issue them manually and register every issuance via the dashboard manual log.",
     "settings": "Settings",
     "analytics": "Analytics",
     "totalUsers": "Total Users",
@@ -2134,7 +2137,7 @@
         },
         {
           "title": "Get Invite Code",
-          "description": "Receive your exclusive invite code immediately after approval"
+          "description": "After approval, admins will manually issue your invite code"
         }
       ]
     },
@@ -2152,7 +2155,7 @@
         },
         {
           "title": "Get Invite Code",
-          "description": "System automatically issues invite code upon approval"
+          "description": "Admins manually issue your invite code after approval"
         },
         {
           "title": "Join Community",

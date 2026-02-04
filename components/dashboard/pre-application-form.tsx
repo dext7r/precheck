@@ -50,6 +50,7 @@ import type { QQGroupConfig } from "@/lib/pre-application/constants"
 import { EmailWithDomainInput } from "@/components/ui/email-with-domain-input"
 import { useAllowedEmailDomains } from "@/lib/hooks/use-allowed-email-domains"
 import { cn } from "@/lib/utils"
+import { inviteCodeStorageEnabled } from "@/lib/invite-code/client"
 
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import {
@@ -905,7 +906,7 @@ export function PreApplicationForm({
                         </p>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
-                        {hasAvailableCode === false && (
+                        {inviteCodeStorageEnabled && hasAvailableCode === false && (
                           <Button
                             variant="outline"
                             size="sm"
@@ -917,27 +918,36 @@ export function PreApplicationForm({
                               <Loader2 className="h-4 w-4 animate-spin" />
                             ) : (
                               (((t as Record<string, unknown>).refreshStatus as string) ??
-                              "刷新状态")
+                                "刷新状态")
                             )}
                           </Button>
                         )}
-                        <Button
-                          onClick={handleClaimCode}
-                          disabled={claiming || checkingCode || hasAvailableCode === false}
-                          className="bg-amber-600 hover:bg-amber-700 text-white disabled:opacity-50"
-                        >
-                          {claiming ? (
-                            <>
-                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                              {((t as Record<string, unknown>).claiming as string) ?? "领取中..."}
-                            </>
-                          ) : (
-                            <>
-                              <Gift className="mr-2 h-4 w-4" />
-                              {((t as Record<string, unknown>).claimCode as string) ?? "领取邀请码"}
-                            </>
-                          )}
-                        </Button>
+                        {inviteCodeStorageEnabled ? (
+                          <Button
+                            onClick={handleClaimCode}
+                            disabled={claiming || checkingCode || hasAvailableCode === false}
+                            className="bg-amber-600 hover:bg-amber-700 text-white disabled:opacity-50"
+                          >
+                            {claiming ? (
+                              <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                {((t as Record<string, unknown>).claiming as string) ??
+                                  "领取中..."}
+                              </>
+                            ) : (
+                              <>
+                                <Gift className="mr-2 h-4 w-4" />
+                                {((t as Record<string, unknown>).claimCode as string) ??
+                                  "领取邀请码"}
+                              </>
+                            )}
+                          </Button>
+                        ) : (
+                          <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:text-amber-200">
+                            {((t as Record<string, unknown>).manualIssueHint as string) ||
+                              "邀请码改为人工发放，请联系管理员并在控制台记录人工发码。"}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>

@@ -896,7 +896,7 @@
     "accountDeleted": "账户已删除",
     "accountDeleteFailed": "删除账户失败",
     "contribute": "共享邀请码",
-    "contributeDesc": "共享您的邀请码帮助社区成长",
+    "contributeDesc": "检测共享的邀请码是否仍然有效，便于人工发码前快速确认",
     "contributeLinuxdoRequired": "需要绑定 Linux.do 账号",
     "contributeLinuxdoRequiredDesc": "仅 Linux.do 用户可以共享邀请码，请先绑定您的 Linux.do 账号。",
     "contributeLinuxdoLink": "绑定 Linux.do",
@@ -923,7 +923,7 @@
     "contributeCheckInvalid": "无效",
     "contributeCheckFailure": "邀请码检测失败",
     "manualIssueTitle": "人工发码记录",
-    "manualIssueDesc": "记录您离线发送邀请码的方式，便于后续核对和捐赠统计。",
+    "manualIssueDesc": "记录离线发码的经过，方便核对捐赠和人工发码记录。",
     "manualIssueNoteLabel": "记录说明",
     "manualIssueNotePlaceholder": "描述您如何/在哪发送了邀请码",
     "manualIssueTargetLabel": "接收者或场景（可选）",
@@ -933,6 +933,7 @@
     "manualIssueSuccess": "人工发码记录已保存",
     "manualIssueFailure": "记录人工发码失败",
     "manualIssueNoteRequired": "请先填写人工发码的说明",
+    "manualIssueReminder": "邀请码存储已关闭，请在仪表盘的人工发码记录面板登记发码情况。",
     "contributeExpiresLabel": "有效期",
     "contributeNoExpiry": "不过期",
     "contributeStatus": {
@@ -1111,8 +1112,9 @@
       "unused": "未使用"
     },
     "noCodeYetTitle": "暂无邀请码",
-    "noCodeYetDesc": "审核已通过，但暂无可用邀请码。您可以尝试领取，如无可用码请稍后再试。",
-    "noCodeAvailableDesc": "当前暂无可用邀请码，请稍后再来查看。",
+    "noCodeYetDesc": "审核已通过，但邀请码由管理员人工发放，请联系管理员并记录人工发码情况。",
+    "noCodeAvailableDesc": "当前暂无可用邀请码，请耐心等待管理员人工发放，并在仪表盘记录人工发码。",
+    "manualIssueHint": "邀请码系统已关闭，管理员会人工发放，请记录每次人工发码并同步给对方。",
     "refreshStatus": "刷新状态",
     "claimCode": "领取邀请码",
     "claiming": "领取中...",
@@ -1305,9 +1307,9 @@
     "preApplicationsDesc": "管理预申请并完成审核",
     "inviteCodes": "邀请码",
     "inviteCodesDesc": "维护邀请码库存与有效期",
-    "manualIssueReminder": "邀请码存储已关闭，请在共享页面记录人工发码情况。",
+    "manualIssueReminder": "邀请码存储已关闭，请在仪表盘的人工发码记录面板登记人工发码进度。",
     "inviteCodesDisabled": "邀请码存储已关闭",
-    "inviteCodeDisabledMessage": "平台不再保存邀请码，请使用人工方式审核并发放。",
+    "inviteCodeDisabledMessage": "平台不再保存邀请码，请使用人工方式审核并发放，并在仪表盘记录人工发码情况。",
     "settings": "设置",
     "analytics": "分析",
     "totalUsers": "总用户数",
@@ -2130,7 +2132,7 @@
         },
         {
           "title": "获取邀请码",
-          "description": "审核通过后立即获得专属邀请码加入社区"
+          "description": "审核通过后由管理员人工发放专属邀请码加入社区"
         }
       ]
     },
@@ -2148,7 +2150,7 @@
         },
         {
           "title": "获取邀请码",
-          "description": "审核通过后系统自动发放邀请码"
+          "description": "审核通过后由管理员手动发放邀请码"
         },
         {
           "title": "加入社区",
