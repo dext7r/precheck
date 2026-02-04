@@ -12,6 +12,7 @@ import { features } from "@/lib/features"
 import { getSiteSettings } from "@/lib/site-settings"
 import { createApiErrorResponse } from "@/lib/api/error-response"
 import { ApiErrorKeys } from "@/lib/api/error-keys"
+import { ensureInviteCodeStorageEnabled } from "@/lib/invite-code/guard"
 
 const assignSchema = z.object({
   recipientType: z.enum(["email", "user"]),
@@ -35,6 +36,11 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
 
     if (!db) {
       return createApiErrorResponse(request, ApiErrorKeys.databaseNotConfigured, { status: 503 })
+    }
+
+    const disabledResponse = await ensureInviteCodeStorageEnabled(request)
+    if (disabledResponse) {
+      return disabledResponse
     }
 
     const { id } = await context.params

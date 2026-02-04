@@ -5,6 +5,7 @@ import { getCurrentUser } from "@/lib/auth/session"
 import { writeAuditLog } from "@/lib/audit"
 import { createApiErrorResponse } from "@/lib/api/error-response"
 import { ApiErrorKeys } from "@/lib/api/error-keys"
+import { ensureInviteCodeStorageEnabled } from "@/lib/invite-code/guard"
 
 // 验证邀请码格式（完整 URL 或纯邀请码）
 const validateInviteCode = (code: string): boolean => {
@@ -33,6 +34,11 @@ export async function GET(request: NextRequest) {
 
     if (!db) {
       return createApiErrorResponse(request, ApiErrorKeys.databaseNotConfigured, { status: 503 })
+    }
+
+    const disabledResponse = await ensureInviteCodeStorageEnabled(request)
+    if (disabledResponse) {
+      return disabledResponse
     }
 
     const { searchParams } = new URL(request.url)

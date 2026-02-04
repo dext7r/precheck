@@ -79,6 +79,7 @@ import type { Locale } from "@/lib/i18n/config"
 import { cn } from "@/lib/utils"
 import { resolveApiErrorMessage } from "@/lib/api/error-message"
 import { formatInviteCodeUrl, parseBulkInviteCodes, extractPureCode } from "@/lib/invite-code/utils"
+import { inviteCodeStorageEnabled } from "@/lib/invite-code/client"
 
 // 获取默认有效期（当前时间 + 23小时），格式为 datetime-local 输入格式
 function getDefaultExpiresAt(): string {
@@ -301,6 +302,9 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
   }, [])
 
   const fetchRecords = async () => {
+    if (!inviteCodeStorageEnabled) {
+      return
+    }
     setLoading(true)
     try {
       const params = new URLSearchParams({

@@ -73,6 +73,7 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
 import { resolveApiErrorMessage } from "@/lib/api/error-message"
+import { inviteCodeStorageEnabled } from "@/lib/invite-code/client"
 
 // AI 审核结果类型
 type AIReviewResult = {
@@ -556,7 +557,7 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
   const getCurrentTemplates = () => {
     if (reviewAction === "APPROVE") {
       // 当审核通过但没有选择邀请码时，使用"通过无码"模板
-      if (!inviteCode.trim()) return reviewTemplates.approveNoCode
+      if (!inviteCodeStorageEnabled || !inviteCode.trim()) return reviewTemplates.approveNoCode
       return reviewTemplates.approve
     }
     if (reviewAction === "REJECT") return reviewTemplates.reject
@@ -691,7 +692,7 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
       return
     }
     // 审核通过时必须填写邀请码
-    if (reviewAction === "APPROVE" && !inviteCode.trim()) {
+    if (reviewAction === "APPROVE" && inviteCodeStorageEnabled && !inviteCode.trim()) {
       toast.error(t.inviteCodeRequiredForApproval || "通过审核需要填写邀请码")
       return
     }
@@ -703,7 +704,7 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
         locale,
       }
 
-      if (reviewAction === "APPROVE" && inviteCode.trim()) {
+      if (reviewAction === "APPROVE" && inviteCodeStorageEnabled && inviteCode.trim()) {
         payload.inviteCode = inviteCode
         if (inviteExpiresAt) {
           payload.inviteExpiresAt = new Date(inviteExpiresAt).toISOString()
@@ -1756,54 +1757,61 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
                         </SelectContent>
                       </Select>
                     </div>
-                    {(reviewAction === "APPROVE" || reviewAction === "DISPUTE") && (
+                    {(reviewAction === "APPROVE" || reviewAction === "DISPUTE") &&
+                      (inviteCodeStorageEnabled ? (
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">{t.inviteCode}</Label>
+                          <Select
+                            value={inviteCode}
+                            onValueChange={setInviteCode}
+                            disabled={inviteOptionsLoading || inviteOptions.length === 0}
+                          >
+                            <SelectTrigger className="h-9">
+                              <SelectValue
+                                placeholder={
+                                  inviteOptionsLoading
+                                    ? t.loading
+                                    : inviteOptions.length === 0
+                                      ? t.inviteCodeNoRecords
+                                      : t.inviteCodePlaceholder
+                                }
+                              />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {inviteOptions.map((option) => (
+                                <SelectItem key={option.id} value={option.code}>
+                                  <div className="flex flex-col">
+                                    <span className="text-sm">{option.code}</span>
+                                    <span className="text-xs text-muted-foreground">
+                                      {option.expiresAt
+                                        ? `${t.inviteExpiresAt} ${formatDateTime(option.expiresAt, locale)}`
+                                        : t.inviteCodeSelectNoExpiry}
+                                    </span>
+                                  </div>
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      ) : (
+                        <div className="rounded-xl border border-dashed border-border px-3 py-2 text-sm text-muted-foreground">
+                          {t.inviteCodeDisabledMessage ||
+                            "邀请码系统已关闭，请在审核完成后使用人工渠道发放。"}
+                        </div>
+                      ))}
+                  </div>
+                  {(reviewAction === "APPROVE" || reviewAction === "DISPUTE") &&
+                    inviteCodeStorageEnabled && (
                       <div className="space-y-1.5">
-                        <Label className="text-xs">{t.inviteCode}</Label>
-                        <Select
-                          value={inviteCode}
-                          onValueChange={setInviteCode}
-                          disabled={inviteOptionsLoading || inviteOptions.length === 0}
-                        >
-                          <SelectTrigger className="h-9">
-                            <SelectValue
-                              placeholder={
-                                inviteOptionsLoading
-                                  ? t.loading
-                                  : inviteOptions.length === 0
-                                    ? t.inviteCodeNoRecords
-                                    : t.inviteCodePlaceholder
-                              }
-                            />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {inviteOptions.map((option) => (
-                              <SelectItem key={option.id} value={option.code}>
-                                <div className="flex flex-col">
-                                  <span className="text-sm">{option.code}</span>
-                                  <span className="text-xs text-muted-foreground">
-                                    {option.expiresAt
-                                      ? `${t.inviteExpiresAt} ${formatDateTime(option.expiresAt, locale)}`
-                                      : t.inviteCodeSelectNoExpiry}
-                                  </span>
-                                </div>
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <Label className="text-xs">{t.inviteExpiresAt}</Label>
+                        <Input
+                          type="datetime-local"
+                          value={inviteExpiresAt}
+                          onChange={(event) => setInviteExpiresAt(event.target.value)}
+                          className="h-9"
+                        />
                       </div>
                     )}
-                  </div>
-                  {(reviewAction === "APPROVE" || reviewAction === "DISPUTE") && (
-                    <div className="space-y-1.5">
-                      <Label className="text-xs">{t.inviteExpiresAt}</Label>
-                      <Input
-                        type="datetime-local"
-                        value={inviteExpiresAt}
-                        onChange={(event) => setInviteExpiresAt(event.target.value)}
-                        className="h-9"
-                      />
-                    </div>
-                  )}
                   <div className="space-y-1.5">
                     <div className="flex items-center justify-between">
                       <Label className="text-xs">{t.guidance}</Label>

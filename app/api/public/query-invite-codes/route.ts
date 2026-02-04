@@ -1,11 +1,17 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { createApiErrorResponse } from "@/lib/api/error-response"
+import { ensureInviteCodeStorageEnabled } from "@/lib/invite-code/guard"
 
 export async function GET(request: NextRequest) {
   try {
     if (!db) {
       return createApiErrorResponse(request, "apiErrors.databaseNotConfigured", { status: 503 })
+    }
+
+    const disabledResponse = await ensureInviteCodeStorageEnabled(request)
+    if (disabledResponse) {
+      return disabledResponse
     }
 
     const { searchParams } = request.nextUrl

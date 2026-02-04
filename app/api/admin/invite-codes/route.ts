@@ -5,6 +5,7 @@ import { getCurrentUser } from "@/lib/auth/session"
 import { writeAuditLog } from "@/lib/audit"
 import { createApiErrorResponse } from "@/lib/api/error-response"
 import { ApiErrorKeys } from "@/lib/api/error-keys"
+import { ensureInviteCodeStorageEnabled } from "@/lib/invite-code/guard"
 
 const createInviteCodeSchema = z.object({
   code: z.string().min(4).max(128), // 增加长度限制以支持完整 URL 格式
@@ -195,6 +196,11 @@ export async function POST(request: NextRequest) {
 
     if (!db) {
       return createApiErrorResponse(request, ApiErrorKeys.databaseNotConfigured, { status: 503 })
+    }
+
+    const disabledResponse = await ensureInviteCodeStorageEnabled(request)
+    if (disabledResponse) {
+      return disabledResponse
     }
 
     const body = await request.json()

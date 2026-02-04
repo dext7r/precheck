@@ -57,6 +57,7 @@ export const ApiErrorKeys = {
       noValid: "apiErrors.admin.inviteCodes.noValid",
       failedToImport: "apiErrors.admin.inviteCodes.failedToImport",
       failedToCreate: "apiErrors.admin.inviteCodes.failedToCreate",
+      storageDisabled: "apiErrors.admin.inviteCodes.storageDisabled",
       queryTokenFailed: "apiErrors.admin.inviteCodes.queryTokenFailed",
       noValidFound: "apiErrors.admin.inviteCodes.noValidFound",
       notFound: "apiErrors.admin.inviteCodes.notFound",

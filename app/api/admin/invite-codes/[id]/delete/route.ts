@@ -5,6 +5,7 @@ import { isSuperAdmin } from "@/lib/auth/permissions"
 import { writeAuditLog } from "@/lib/audit"
 import { createApiErrorResponse } from "@/lib/api/error-response"
 import { ApiErrorKeys } from "@/lib/api/error-keys"
+import { ensureInviteCodeStorageEnabled } from "@/lib/invite-code/guard"
 
 export async function POST(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
@@ -21,6 +22,11 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
 
     if (!db) {
       return createApiErrorResponse(request, ApiErrorKeys.databaseNotConfigured, { status: 503 })
+    }
+
+    const disabledResponse = await ensureInviteCodeStorageEnabled(request)
+    if (disabledResponse) {
+      return disabledResponse
     }
 
     const { id } = await context.params

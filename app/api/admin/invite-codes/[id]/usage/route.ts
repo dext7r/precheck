@@ -5,6 +5,7 @@ import { getCurrentUser } from "@/lib/auth/session"
 import { writeAuditLog } from "@/lib/audit"
 import { createApiErrorResponse } from "@/lib/api/error-response"
 import { ApiErrorKeys } from "@/lib/api/error-keys"
+import { ensureInviteCodeStorageEnabled } from "@/lib/invite-code/guard"
 
 const usageSchema = z.object({
   used: z.boolean(),
@@ -24,6 +25,11 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
 
     if (!db) {
       return createApiErrorResponse(request, ApiErrorKeys.databaseNotConfigured, { status: 503 })
+    }
+
+    const disabledResponse = await ensureInviteCodeStorageEnabled(request)
+    if (disabledResponse) {
+      return disabledResponse
     }
 
     const { id } = await context.params

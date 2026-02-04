@@ -3,6 +3,7 @@ import { db } from "@/lib/db"
 import { getCurrentUser } from "@/lib/auth/session"
 import { createApiErrorResponse } from "@/lib/api/error-response"
 import { ApiErrorKeys } from "@/lib/api/error-keys"
+import { isInviteCodeStorageEnabled } from "@/lib/invite-code/guard"
 
 // 检查是否有可用的邀请码（不暴露具体数量）
 export async function GET(request: NextRequest) {
@@ -15,6 +16,10 @@ export async function GET(request: NextRequest) {
 
     if (!db) {
       return createApiErrorResponse(request, ApiErrorKeys.databaseNotConfigured, { status: 503 })
+    }
+
+    if (!isInviteCodeStorageEnabled()) {
+      return NextResponse.json({ hasAvailableCode: false })
     }
 
     const now = new Date()

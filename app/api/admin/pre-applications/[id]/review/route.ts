@@ -13,6 +13,7 @@ import { PreApplicationStatus } from "@prisma/client"
 import { writeAuditLog } from "@/lib/audit"
 import { createApiErrorResponse } from "@/lib/api/error-response"
 import { ApiErrorKeys } from "@/lib/api/error-keys"
+import { isInviteCodeStorageEnabled } from "@/lib/invite-code/guard"
 
 const reviewSchema = z.object({
   action: z.enum(["APPROVE", "REJECT", "DISPUTE", "PENDING_REVIEW", "ON_HOLD"]),
@@ -100,6 +101,13 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
     const isPendingReview = data.action === "PENDING_REVIEW"
     const isOnHold = data.action === "ON_HOLD"
     const code = data.inviteCode?.trim()
+    const storageEnabled = isInviteCodeStorageEnabled()
+
+    if ((isApproved || isDisputed) && code && !storageEnabled) {
+      return createApiErrorResponse(request, ApiErrorKeys.admin.inviteCodes.storageDisabled, {
+        status: 410,
+      })
+    }
 
     // 处理待复核和暂缓处理（无需邀请码，直接更新状态）
     if (isPendingReview || isOnHold) {
@@ -154,7 +162,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
 
     // 处理邀请码（通过和有争议都可以发码）
     let inviteCodeData: { id: string; code: string; expiresAt: Date | null } | null = null
-    if ((isApproved || isDisputed) && code) {
+    if (storageEnabled && (isApproved || isDisputed) && code) {
       const expiresAt = data.inviteExpiresAt ? new Date(data.inviteExpiresAt) : null
       if (expiresAt && Number.isNaN(expiresAt.getTime())) {
         return createApiErrorResponse(
@@ -479,7 +487,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
         let inviteBefore = null as { id: string } | null
         let inviteAfter = null as { id: string } | null
 
-        if (record.inviteCodeId) {
+        if (storageEnabled && record.inviteCodeId) {
           inviteBefore = await tx.inviteCode.findUnique({
             where: { id: record.inviteCodeId },
           })

@@ -5,6 +5,7 @@ import { getCurrentUser } from "@/lib/auth/session"
 import { isAdmin } from "@/lib/auth/permissions"
 import { createApiErrorResponse } from "@/lib/api/error-response"
 import { ApiErrorKeys } from "@/lib/api/error-keys"
+import { ensureInviteCodeStorageEnabled } from "@/lib/invite-code/guard"
 
 const batchCheckSchema = z.object({
   codes: z.array(z.string()).min(1).max(5),
@@ -32,6 +33,11 @@ export async function POST(request: NextRequest) {
 
     if (!db) {
       return createApiErrorResponse(request, ApiErrorKeys.databaseNotConfigured, { status: 503 })
+    }
+
+    const disabledResponse = await ensureInviteCodeStorageEnabled(request)
+    if (disabledResponse) {
+      return disabledResponse
     }
 
     const body = await request.json()

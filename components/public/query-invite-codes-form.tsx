@@ -31,6 +31,7 @@ import { resolveApiErrorMessage } from "@/lib/api/error-message"
 import { formatInviteCodeUrl, extractPureCode } from "@/lib/invite-code/utils"
 import type { Dictionary } from "@/lib/i18n/get-dictionary"
 import type { Locale } from "@/lib/i18n/config"
+import { inviteCodeStorageEnabled } from "@/lib/invite-code/client"
 
 interface InviteCodeResult {
   code: string
@@ -87,6 +88,15 @@ export function QueryInviteCodesForm({ locale, dict }: QueryInviteCodesFormProps
     valid: boolean | null
     message: string
   } | null>(null)
+  const disabledView = (
+    <div className="rounded-2xl border border-border/60 bg-muted/40 p-6 text-center">
+      <p className="text-lg font-semibold">{t.disabledTitle || "邀请码查询已下线"}</p>
+      <p className="mt-2 text-sm text-muted-foreground">
+        {t.disabledDescription ||
+          "平台已停止存储或分发邀请码，如需帮助请联系管理员进行人工审核与发放。"}
+      </p>
+    </div>
+  )
 
   const getFullUrl = (code: string) => {
     return formatInviteCodeUrl(code, urlPrefix)
@@ -777,6 +787,10 @@ export function QueryInviteCodesForm({ locale, dict }: QueryInviteCodesFormProps
         )}
       </motion.div>
     )
+  }
+
+  if (!inviteCodeStorageEnabled) {
+    return disabledView
   }
 
   return (
