@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { db } from "@/lib/db"
+import { isInviteCodeStorageEnabled } from "@/lib/invite-code/guard"
 
 const checkSchema = z.object({
   codes: z.array(z.string()).min(1).max(5),
@@ -58,18 +59,20 @@ export async function POST(request: NextRequest) {
       results: CheckResult[]
     }
 
-    // 更新数据库中的检测结果
-    const now = new Date()
-    for (const checkResult of result.results) {
-      const originalCode = data.codeMapping?.[checkResult.invite_code] || checkResult.invite_code
-      await db.inviteCode.updateMany({
-        where: { code: originalCode },
-        data: {
-          checkValid: checkResult.valid,
-          checkMessage: checkResult.message,
-          checkedAt: now,
-        },
-      })
+    if (isInviteCodeStorageEnabled()) {
+      // 更新数据库中的检测结果
+      const now = new Date()
+      for (const checkResult of result.results) {
+        const originalCode = data.codeMapping?.[checkResult.invite_code] || checkResult.invite_code
+        await db.inviteCode.updateMany({
+          where: { code: originalCode },
+          data: {
+            checkValid: checkResult.valid,
+            checkMessage: checkResult.message,
+            checkedAt: now,
+          },
+        })
+      }
     }
 
     return NextResponse.json({

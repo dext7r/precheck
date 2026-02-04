@@ -15,6 +15,14 @@
         {
           "type": "added",
           "content": "新增 invite code guard 与 client 版 flag，以及语言条目与错误码，保持前后端一致的关闭状态体验"
+        },
+        {
+          "type": "changed",
+          "content": "共享页改为仅保留有效性检测功能，后台发送/导入入口隐藏，检测结果最多支持 5 条"
+        },
+        {
+          "type": "added",
+          "content": "新增人工发码记录面板，可填写备注与接收对象，记录会写入审计日志便于对账"
         }
       ]
     },

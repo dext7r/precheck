@@ -18,7 +18,7 @@ export default async function ContributePage({ params }: ContributePageProps) {
         </h1>
         <p className="mt-1 text-muted-foreground">{dict.dashboard.contributeDesc}</p>
       </div>
-      <ContributeCodesManager locale={locale} dict={dict} />
+      <ContributeCodesManager dict={dict} />
     </div>
   )
 }
