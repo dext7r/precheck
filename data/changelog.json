@@ -1,6 +1,24 @@
 {
   "versions": [
     {
+      "version": "1.4.1",
+      "date": "2026-02-04",
+      "changes": [
+        {
+          "type": "changed",
+          "content": "关闭后端中对邀请码的持久化逻辑，新增 invite code storage guard，所有写入/分配 API 在开关关闭时立即返回 410"
+        },
+        {
+          "type": "changed",
+          "content": "对审核页、管理端和查询页加入标题文案、下发提示，storage 禁用时审核不再要求邀请码也不展示导入/选择框"
+        },
+        {
+          "type": "added",
+          "content": "新增 invite code guard 与 client 版 flag，以及语言条目与错误码，保持前后端一致的关闭状态体验"
+        }
+      ]
+    },
+    {
       "version": "1.4.0",
       "date": "2025-02-03",
       "changes": [
