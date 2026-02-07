@@ -13,7 +13,6 @@ import { PreApplicationStatus } from "@prisma/client"
 import { writeAuditLog } from "@/lib/audit"
 import { createApiErrorResponse } from "@/lib/api/error-response"
 import { ApiErrorKeys } from "@/lib/api/error-keys"
-import { isInviteCodeStorageEnabled } from "@/lib/invite-code/guard"
 
 const reviewSchema = z.object({
   action: z.enum(["APPROVE", "REJECT", "DISPUTE", "PENDING_REVIEW", "ON_HOLD"]),
@@ -89,25 +88,18 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
     const dict = await getDictionary(currentLocale)
     const reviewerName = user.name || user.email
 
-    let inviteCodeRecord = null as {
-      id: string
-      code: string
-      expiresAt: Date | null
-    } | null
-
     const guidance = data.guidance.trim()
     const isApproved = data.action === "APPROVE"
     const isDisputed = data.action === "DISPUTE"
     const isPendingReview = data.action === "PENDING_REVIEW"
     const isOnHold = data.action === "ON_HOLD"
     const code = data.inviteCode?.trim()
-    const storageEnabled = isInviteCodeStorageEnabled()
 
-    if ((isApproved || isDisputed) && code && !storageEnabled) {
-      return createApiErrorResponse(request, ApiErrorKeys.admin.inviteCodes.storageDisabled, {
-        status: 410,
-      })
-    }
+    // 通过/有争议且附带邀请码时，将邀请码拼接到指导意见末尾（持久化到 DB、站内信、邮件）
+    const guidanceWithCode =
+      (isApproved || isDisputed) && code
+        ? `${guidance}\n\n${dict.preApplication.notifications.inviteCodeLabel ?? "邀请码："}${code}`
+        : guidance
 
     // 处理待复核和暂缓处理（无需邀请码，直接更新状态）
     if (isPendingReview || isOnHold) {
@@ -160,59 +152,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
       return NextResponse.json({ success: true })
     }
 
-    // 处理邀请码（通过和有争议都可以发码）
-    let inviteCodeData: { id: string; code: string; expiresAt: Date | null } | null = null
-    if (storageEnabled && (isApproved || isDisputed) && code) {
-      const expiresAt = data.inviteExpiresAt ? new Date(data.inviteExpiresAt) : null
-      if (expiresAt && Number.isNaN(expiresAt.getTime())) {
-        return createApiErrorResponse(
-          request,
-          ApiErrorKeys.admin.preApplications.invalidInviteExpiry,
-          { status: 400 },
-        )
-      }
-      if (expiresAt && expiresAt.getTime() <= Date.now()) {
-        return createApiErrorResponse(
-          request,
-          ApiErrorKeys.admin.preApplications.expiryMustBeInFuture,
-          { status: 400 },
-        )
-      }
-
-      const existing = await db.inviteCode.findUnique({
-        where: { code },
-        include: { preApplication: { select: { id: true } } },
-      })
-
-      if (!existing || existing.deletedAt) {
-        return createApiErrorResponse(request, ApiErrorKeys.admin.inviteCodes.notFound, {
-          status: 400,
-        })
-      }
-      if (existing.usedAt) {
-        return createApiErrorResponse(request, ApiErrorKeys.admin.inviteCodes.alreadyUsed, {
-          status: 400,
-        })
-      }
-      if (existing.expiresAt && existing.expiresAt.getTime() <= Date.now()) {
-        return createApiErrorResponse(request, ApiErrorKeys.admin.inviteCodes.alreadyExpired, {
-          status: 400,
-        })
-      }
-      if (existing.preApplication && existing.preApplication.id !== record.id) {
-        return createApiErrorResponse(request, ApiErrorKeys.admin.inviteCodes.alreadyAssigned, {
-          status: 400,
-        })
-      }
-
-      inviteCodeData = {
-        id: existing.id,
-        code: existing.code,
-        expiresAt: expiresAt ?? existing.expiresAt,
-      }
-    }
-
-    // 通过时邀请码可选（缺码时允许无码通过，用户后续自行领取）
+    // 邀请码作为纯文本处理（管理员可通过外部检测 API 自行验证有效性）
 
     if (isDisputed) {
       // 标记为有争议，可选发码，发送通知给用户
@@ -220,27 +160,14 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
         dict,
         status: PreApplicationStatus.DISPUTED,
         reviewerName,
-        guidance,
+        guidance: guidanceWithCode,
         essay: record.essay,
-        inviteCode: inviteCodeData?.code,
-        inviteExpiresAt: inviteCodeData?.expiresAt,
         locale: currentLocale,
       })
 
       const newVersion = record.version + 1
 
       await db.$transaction(async (tx) => {
-        if (inviteCodeData) {
-          await tx.inviteCode.update({
-            where: { id: inviteCodeData.id },
-            data: {
-              expiresAt: inviteCodeData.expiresAt,
-              assignedAt: new Date(),
-              assignedById: user.id,
-            },
-          })
-        }
-
         // 创建新的版本记录来保存本次审核
         await tx.preApplicationVersion.create({
           data: {
@@ -252,7 +179,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
             registerEmail: record.registerEmail,
             group: record.group,
             status: PreApplicationStatus.DISPUTED,
-            guidance,
+            guidance: guidanceWithCode,
             reviewedAt: new Date(),
             reviewedById: user.id,
           },
@@ -262,11 +189,10 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
           where: { id: record.id },
           data: {
             status: PreApplicationStatus.DISPUTED,
-            guidance,
+            guidance: guidanceWithCode,
             version: newVersion,
             reviewedAt: new Date(),
             reviewedBy: { connect: { id: user.id } },
-            ...(inviteCodeData && { inviteCode: { connect: { id: inviteCodeData.id } } }),
           },
         })
 
@@ -290,20 +216,9 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
           actor: user,
           before: record,
           after: updated,
-          metadata: { guidance, inviteCode: inviteCodeData?.code },
+          metadata: { guidance, inviteCode: code },
           request,
         })
-
-        if (inviteCodeData) {
-          await writeAuditLog(tx, {
-            action: "INVITE_CODE_ASSIGN",
-            entityType: "INVITE_CODE",
-            entityId: inviteCodeData.id,
-            actor: user,
-            metadata: { preApplicationId: record.id },
-            request,
-          })
-        }
 
         if (message) {
           await writeAuditLog(tx, {
@@ -331,10 +246,8 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
           dictionary: dict,
           status: "DISPUTED",
           reviewerName,
-          guidance,
+          guidance: guidanceWithCode,
           essay: record.essay,
-          inviteCode: inviteCodeData?.code ?? undefined,
-          inviteExpiresAt: inviteCodeData?.expiresAt ?? undefined,
           locale: currentLocale,
         })
 
@@ -357,20 +270,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
 
     if (isApproved) {
       const newVersion = record.version + 1
-      inviteCodeRecord = await db.$transaction(async (tx) => {
-        let inviteCode = null as { id: string; code: string; expiresAt: Date | null } | null
-
-        if (inviteCodeData) {
-          inviteCode = await tx.inviteCode.update({
-            where: { id: inviteCodeData.id },
-            data: {
-              expiresAt: inviteCodeData.expiresAt,
-              assignedAt: new Date(),
-              assignedById: user.id,
-            },
-          })
-        }
-
+      await db.$transaction(async (tx) => {
         // 创建新的版本记录来保存本次审核
         await tx.preApplicationVersion.create({
           data: {
@@ -382,7 +282,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
             registerEmail: record.registerEmail,
             group: record.group,
             status: PreApplicationStatus.APPROVED,
-            guidance,
+            guidance: guidanceWithCode,
             reviewedAt: new Date(),
             reviewedById: user.id,
           },
@@ -392,17 +292,13 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
           where: { id: record.id },
           data: {
             status: PreApplicationStatus.APPROVED,
-            guidance,
+            guidance: guidanceWithCode,
             version: newVersion,
             reviewedAt: new Date(),
             reviewedBy: { connect: { id: user.id } },
-            ...(inviteCode && { inviteCode: { connect: { id: inviteCode.id } } }),
           },
           include: {
             reviewedBy: { select: { id: true, name: true, email: true } },
-            inviteCode: {
-              select: { id: true, code: true, expiresAt: true, usedAt: true, assignedAt: true },
-            },
           },
         })
 
@@ -410,10 +306,8 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
           dict,
           status: PreApplicationStatus.APPROVED,
           reviewerName,
-          guidance,
+          guidance: guidanceWithCode,
           essay: record.essay,
-          inviteCode: inviteCode?.code,
-          inviteExpiresAt: inviteCode?.expiresAt,
           locale: currentLocale,
         })
 
@@ -439,23 +333,10 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
           after: updated,
           metadata: {
             guidance,
-            inviteCode: inviteCode?.code ?? null,
-            inviteExpiresAt: inviteCode?.expiresAt?.toISOString() ?? null,
+            inviteCode: code ?? null,
           },
           request,
         })
-
-        if (inviteCode) {
-          await writeAuditLog(tx, {
-            action: "INVITE_CODE_ASSIGN",
-            entityType: "INVITE_CODE",
-            entityId: inviteCode.id,
-            actor: user,
-            after: inviteCode,
-            metadata: { preApplicationId: record.id },
-            request,
-          })
-        }
 
         if (message) {
           await writeAuditLog(tx, {
@@ -468,8 +349,6 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
             request,
           })
         }
-
-        return inviteCode
       })
     } else {
       const messageContent = buildPreApplicationMessage({
@@ -487,7 +366,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
         let inviteBefore = null as { id: string } | null
         let inviteAfter = null as { id: string } | null
 
-        if (storageEnabled && record.inviteCodeId) {
+        if (record.inviteCodeId) {
           inviteBefore = await tx.inviteCode.findUnique({
             where: { id: record.inviteCodeId },
           })
@@ -598,10 +477,8 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
         dictionary: dict,
         status: isApproved ? "APPROVED" : "REJECTED",
         reviewerName,
-        guidance,
+        guidance: isApproved ? guidanceWithCode : guidance,
         essay: record.essay,
-        inviteCode: inviteCodeRecord?.code ?? undefined,
-        inviteExpiresAt: inviteCodeRecord?.expiresAt ?? undefined,
         locale: currentLocale,
       })
 

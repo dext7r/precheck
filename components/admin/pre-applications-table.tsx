@@ -31,6 +31,7 @@ import {
   Check,
   ExternalLink,
   PauseCircle,
+  ChevronDown,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -74,6 +75,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { cn } from "@/lib/utils"
 import { resolveApiErrorMessage } from "@/lib/api/error-message"
 import { inviteCodeStorageEnabled } from "@/lib/invite-code/client"
+import { extractPureCode } from "@/lib/invite-code/utils"
 
 // AI 审核结果类型
 type AIReviewResult = {
@@ -298,6 +300,13 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
   )
   const [duplicateCheckError, setDuplicateCheckError] = useState<string | null>(null)
 
+  // 邀请码有效性检测
+  const [inviteCodeChecking, setInviteCodeChecking] = useState(false)
+  const [inviteCodeCheckResult, setInviteCodeCheckResult] = useState<{
+    valid: boolean | null
+    message: string
+  } | null>(null)
+
   useEffect(() => {
     if (
       reviewAction === "REJECT" ||
@@ -306,6 +315,7 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
     ) {
       setInviteCode("")
       setInviteExpiresAt("")
+      setInviteCodeCheckResult(null)
     }
   }, [reviewAction])
 
@@ -538,6 +548,46 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
     }
   }
 
+  const checkInviteCodeValidity = async () => {
+    const trimmed = inviteCode.trim()
+    if (!trimmed) return
+    const pureCode = extractPureCode(trimmed)
+    if (!pureCode) {
+      setInviteCodeCheckResult({
+        valid: null,
+        message: t.inviteCodeInvalidFormat || "无法识别的邀请码格式",
+      })
+      return
+    }
+    setInviteCodeChecking(true)
+    setInviteCodeCheckResult(null)
+    try {
+      const res = await fetch("/api/public/check-invite-codes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ codes: [pureCode] }),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data.error || "检测失败")
+      }
+      const data = await res.json()
+      const result = data.results?.[0]
+      if (result) {
+        setInviteCodeCheckResult({ valid: result.valid, message: result.message })
+      } else {
+        setInviteCodeCheckResult({ valid: null, message: "无检测结果" })
+      }
+    } catch (error) {
+      setInviteCodeCheckResult({
+        valid: null,
+        message: error instanceof Error ? error.message : "检测失败",
+      })
+    } finally {
+      setInviteCodeChecking(false)
+    }
+  }
+
   const loadReviewTemplates = async () => {
     try {
       const res = await fetch("/api/admin/system-config")
@@ -572,6 +622,7 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
     setAIReviewError(null)
     setDuplicateCheckResult(null)
     setDuplicateCheckError(null)
+    setInviteCodeCheckResult(null)
     if (
       record.status === "PENDING" ||
       record.status === "DISPUTED" ||
@@ -691,11 +742,7 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
       toast.error(t.reviewGuidanceRequired)
       return
     }
-    // 审核通过时必须填写邀请码
-    if (reviewAction === "APPROVE" && inviteCodeStorageEnabled && !inviteCode.trim()) {
-      toast.error(t.inviteCodeRequiredForApproval || "通过审核需要填写邀请码")
-      return
-    }
+    // 审核通过时邀请码可选（手动粘贴或从下拉选择）
     setSubmitting(true)
     try {
       const payload: Record<string, string> = {
@@ -704,7 +751,7 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
         locale,
       }
 
-      if (reviewAction === "APPROVE" && inviteCodeStorageEnabled && inviteCode.trim()) {
+      if ((reviewAction === "APPROVE" || reviewAction === "DISPUTE") && inviteCode.trim()) {
         payload.inviteCode = inviteCode
         if (inviteExpiresAt) {
           payload.inviteExpiresAt = new Date(inviteExpiresAt).toISOString()
@@ -1757,61 +1804,85 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
                         </SelectContent>
                       </Select>
                     </div>
-                    {(reviewAction === "APPROVE" || reviewAction === "DISPUTE") &&
-                      (inviteCodeStorageEnabled ? (
-                        <div className="space-y-1.5">
-                          <Label className="text-xs">{t.inviteCode}</Label>
-                          <Select
-                            value={inviteCode}
-                            onValueChange={setInviteCode}
-                            disabled={inviteOptionsLoading || inviteOptions.length === 0}
-                          >
-                            <SelectTrigger className="h-9">
-                              <SelectValue
-                                placeholder={
-                                  inviteOptionsLoading
-                                    ? t.loading
-                                    : inviteOptions.length === 0
-                                      ? t.inviteCodeNoRecords
-                                      : t.inviteCodePlaceholder
-                                }
-                              />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {inviteOptions.map((option) => (
-                                <SelectItem key={option.id} value={option.code}>
-                                  <div className="flex flex-col">
-                                    <span className="text-sm">{option.code}</span>
-                                    <span className="text-xs text-muted-foreground">
-                                      {option.expiresAt
-                                        ? `${t.inviteExpiresAt} ${formatDateTime(option.expiresAt, locale)}`
-                                        : t.inviteCodeSelectNoExpiry}
-                                    </span>
-                                  </div>
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      ) : (
-                        <div className="rounded-xl border border-dashed border-border px-3 py-2 text-sm text-muted-foreground">
-                          {t.inviteCodeDisabledMessage ||
-                            "邀请码系统已关闭，请在审核完成后使用人工渠道发放。"}
-                        </div>
-                      ))}
-                  </div>
-                  {(reviewAction === "APPROVE" || reviewAction === "DISPUTE") &&
-                    inviteCodeStorageEnabled && (
+                    {(reviewAction === "APPROVE" || reviewAction === "DISPUTE") && (
                       <div className="space-y-1.5">
-                        <Label className="text-xs">{t.inviteExpiresAt}</Label>
-                        <Input
-                          type="datetime-local"
-                          value={inviteExpiresAt}
-                          onChange={(event) => setInviteExpiresAt(event.target.value)}
-                          className="h-9"
-                        />
+                        <Label className="text-xs">{t.inviteCode}</Label>
+                        <div className="flex gap-2">
+                          <Input
+                            value={inviteCode}
+                            onChange={(e) => {
+                              setInviteCode(e.target.value.trim())
+                              setInviteCodeCheckResult(null)
+                            }}
+                            placeholder={t.inviteCodePlaceholder || "粘贴邀请码或链接"}
+                            className="h-9 flex-1 font-mono text-sm"
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-9 shrink-0"
+                            disabled={!inviteCode.trim() || inviteCodeChecking}
+                            onClick={checkInviteCodeValidity}
+                          >
+                            {inviteCodeChecking ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Search className="h-4 w-4" />
+                            )}
+                          </Button>
+                          {inviteCodeStorageEnabled && inviteOptions.length > 0 && (
+                            <Select
+                              value=""
+                              onValueChange={(v) => {
+                                setInviteCode(v)
+                                setInviteCodeCheckResult(null)
+                              }}
+                              disabled={inviteOptionsLoading}
+                            >
+                              <SelectTrigger className="h-9 w-9 shrink-0 px-0 [&>svg:last-child]:hidden">
+                                <ChevronDown className="h-4 w-4" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {inviteOptions.map((option) => (
+                                  <SelectItem key={option.id} value={option.code}>
+                                    <div className="flex flex-col">
+                                      <span className="text-sm font-mono">{option.code}</span>
+                                      <span className="text-xs text-muted-foreground">
+                                        {option.expiresAt
+                                          ? `${t.inviteExpiresAt} ${formatDateTime(option.expiresAt, locale)}`
+                                          : t.inviteCodeSelectNoExpiry}
+                                      </span>
+                                    </div>
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          )}
+                        </div>
+                        {inviteCodeCheckResult && (
+                          <div
+                            className={`flex items-center gap-1.5 text-xs ${
+                              inviteCodeCheckResult.valid === true
+                                ? "text-green-600"
+                                : inviteCodeCheckResult.valid === false
+                                  ? "text-red-600"
+                                  : "text-muted-foreground"
+                            }`}
+                          >
+                            {inviteCodeCheckResult.valid === true ? (
+                              <CheckCircle2 className="h-3.5 w-3.5" />
+                            ) : inviteCodeCheckResult.valid === false ? (
+                              <XCircle className="h-3.5 w-3.5" />
+                            ) : (
+                              <AlertTriangle className="h-3.5 w-3.5" />
+                            )}
+                            {inviteCodeCheckResult.message}
+                          </div>
+                        )}
                       </div>
                     )}
+                  </div>
                   <div className="space-y-1.5">
                     <div className="flex items-center justify-between">
                       <Label className="text-xs">{t.guidance}</Label>
