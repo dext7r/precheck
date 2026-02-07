@@ -6,6 +6,7 @@ export const openApiSpec = {
     description: "预申请系统 API 文档",
   },
   servers: [{ url: "/api", description: "API Server" }],
+  security: [{ bearerAuth: [] }, { cookieAuth: [] }],
   components: {
     securitySchemes: {
       bearerAuth: {
@@ -113,99 +114,6 @@ export const openApiSpec = {
     },
 
     // ── Admin ──
-    "/admin/users": {
-      get: {
-        tags: ["Admin"],
-        summary: "用户列表",
-        parameters: [
-          { name: "page", in: "query", schema: { type: "integer", default: 1 } },
-          { name: "pageSize", in: "query", schema: { type: "integer", default: 20 } },
-          { name: "search", in: "query", schema: { type: "string" } },
-          { name: "role", in: "query", schema: { type: "string" } },
-          { name: "status", in: "query", schema: { type: "string" } },
-        ],
-        responses: {
-          "200": { description: "用户列表" },
-          "401": { description: "未认证" },
-          "403": { description: "无权限" },
-        },
-      },
-    },
-    "/admin/users/{id}": {
-      put: {
-        tags: ["Admin"],
-        summary: "更新用户角色/状态",
-        parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
-        requestBody: {
-          content: {
-            "application/json": {
-              schema: {
-                type: "object",
-                properties: {
-                  role: { type: "string" },
-                  status: { type: "string" },
-                },
-              },
-            },
-          },
-        },
-        responses: {
-          "200": { description: "更新成功" },
-          "404": { description: "用户不存在" },
-        },
-      },
-      delete: {
-        tags: ["Admin"],
-        summary: "删除用户",
-        parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
-        responses: {
-          "200": { description: "删除成功" },
-          "404": { description: "用户不存在" },
-        },
-      },
-    },
-    "/admin/posts": {
-      get: {
-        tags: ["Admin"],
-        summary: "文章审核列表",
-        responses: {
-          "200": { description: "文章列表" },
-          "403": { description: "无权限" },
-        },
-      },
-    },
-    "/admin/posts/{id}": {
-      put: {
-        tags: ["Admin"],
-        summary: "更新文章状态",
-        parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
-        requestBody: {
-          content: {
-            "application/json": {
-              schema: {
-                type: "object",
-                properties: {
-                  status: { type: "string" },
-                },
-              },
-            },
-          },
-        },
-        responses: {
-          "200": { description: "更新成功" },
-          "404": { description: "文章不存在" },
-        },
-      },
-      delete: {
-        tags: ["Admin"],
-        summary: "删除文章",
-        parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
-        responses: {
-          "200": { description: "删除成功" },
-          "404": { description: "文章不存在" },
-        },
-      },
-    },
     "/admin/pre-applications": {
       get: {
         tags: ["Admin"],
@@ -475,72 +383,6 @@ export const openApiSpec = {
     },
 
     // ── Dashboard ──
-    "/dashboard/posts": {
-      get: {
-        tags: ["Dashboard"],
-        summary: "用户文章列表",
-        responses: {
-          "200": { description: "文章列表" },
-          "401": { description: "未认证" },
-        },
-      },
-      post: {
-        tags: ["Dashboard"],
-        summary: "创建文章",
-        requestBody: {
-          required: true,
-          content: {
-            "application/json": {
-              schema: {
-                type: "object",
-                required: ["title", "content"],
-                properties: {
-                  title: { type: "string" },
-                  content: { type: "string" },
-                },
-              },
-            },
-          },
-        },
-        responses: {
-          "201": { description: "创建成功" },
-          "400": { description: "参数错误" },
-        },
-      },
-    },
-    "/dashboard/posts/{id}": {
-      put: {
-        tags: ["Dashboard"],
-        summary: "更新文章",
-        parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
-        requestBody: {
-          content: {
-            "application/json": {
-              schema: {
-                type: "object",
-                properties: {
-                  title: { type: "string" },
-                  content: { type: "string" },
-                },
-              },
-            },
-          },
-        },
-        responses: {
-          "200": { description: "更新成功" },
-          "404": { description: "文章不存在" },
-        },
-      },
-      delete: {
-        tags: ["Dashboard"],
-        summary: "删除文章",
-        parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
-        responses: {
-          "200": { description: "删除成功" },
-          "404": { description: "文章不存在" },
-        },
-      },
-    },
     "/dashboard/profile": {
       put: {
         tags: ["Dashboard"],
@@ -625,9 +467,44 @@ export const openApiSpec = {
     "/pre-application": {
       get: {
         tags: ["PreApplication"],
-        summary: "获取预申请记录",
+        summary: "获取当前用户的预申请记录",
         responses: {
-          "200": { description: "预申请记录" },
+          "200": {
+            description: "预申请记录列表",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    records: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          id: { type: "string" },
+                          essay: { type: "string" },
+                          source: { type: "string", enum: ["TIEBA", "BILIBILI", "DOUYIN", "XIAOHONGSHU", "OTHER"], nullable: true },
+                          sourceDetail: { type: "string", nullable: true },
+                          registerEmail: { type: "string" },
+                          group: { type: "string" },
+                          status: { type: "string", enum: ["PENDING", "APPROVED", "REJECTED", "DISPUTED", "ARCHIVED", "PENDING_REVIEW", "ON_HOLD"] },
+                          guidance: { type: "string", nullable: true },
+                          resubmitCount: { type: "integer" },
+                          version: { type: "integer" },
+                          queryToken: { type: "string", nullable: true },
+                          createdAt: { type: "string", format: "date-time" },
+                          updatedAt: { type: "string", format: "date-time" },
+                        },
+                      },
+                    },
+                    latest: { type: "object", nullable: true },
+                    maxResubmitCount: { type: "integer" },
+                    queueInfo: { type: "object", nullable: true },
+                  },
+                },
+              },
+            },
+          },
           "401": { description: "未认证" },
         },
       },
@@ -640,31 +517,42 @@ export const openApiSpec = {
             "application/json": {
               schema: {
                 type: "object",
+                required: ["essay", "registerEmail", "group"],
                 properties: {
-                  reason: { type: "string" },
-                  inviteCode: { type: "string" },
+                  essay: { type: "string", minLength: 50, maxLength: 1000, description: "申请理由" },
+                  source: { type: "string", enum: ["TIEBA", "BILIBILI", "DOUYIN", "XIAOHONGSHU", "OTHER"], nullable: true, description: "来源渠道" },
+                  sourceDetail: { type: "string", maxLength: 100, nullable: true, description: "来源详情" },
+                  registerEmail: { type: "string", format: "email", description: "注册邮箱" },
+                  group: { type: "string", description: "目标 QQ 群 ID" },
                 },
               },
             },
           },
         },
         responses: {
-          "201": { description: "提交成功" },
-          "400": { description: "参数错误" },
+          "200": { description: "提交成功" },
+          "400": { description: "参数错误 / 已提交 / 邮箱域名不合法" },
+          "401": { description: "未认证" },
           "500": { description: "服务器错误" },
         },
       },
       put: {
         tags: ["PreApplication"],
-        summary: "更新/重新提交预申请",
+        summary: "更新/重新提交预申请（驳回后）",
         requestBody: {
+          required: true,
           content: {
             "application/json": {
               schema: {
                 type: "object",
+                required: ["essay", "registerEmail", "group", "version"],
                 properties: {
-                  reason: { type: "string" },
-                  inviteCode: { type: "string" },
+                  essay: { type: "string", minLength: 50, maxLength: 1000 },
+                  source: { type: "string", enum: ["TIEBA", "BILIBILI", "DOUYIN", "XIAOHONGSHU", "OTHER"], nullable: true },
+                  sourceDetail: { type: "string", maxLength: 100, nullable: true },
+                  registerEmail: { type: "string", format: "email" },
+                  group: { type: "string" },
+                  version: { type: "integer", description: "乐观锁版本号" },
                 },
               },
             },
@@ -672,7 +560,9 @@ export const openApiSpec = {
         },
         responses: {
           "200": { description: "更新成功" },
-          "400": { description: "参数错误" },
+          "400": { description: "参数错误 / 超过重新提交次数限制" },
+          "401": { description: "未认证" },
+          "409": { description: "版本冲突" },
         },
       },
     },
