@@ -99,7 +99,7 @@ interface AdminSettingsFormProps {
   dict: Dictionary
 }
 
-type TabId = "general" | "security" | "email" | "qqGroups" | "templates" | "danger"
+type TabId = "general" | "security" | "email" | "qqGroups" | "templates" | "apiTokens" | "danger"
 
 interface TabItem {
   id: TabId
@@ -145,6 +145,23 @@ export function AdminSettingsForm({ locale, dict }: AdminSettingsFormProps) {
   const [savingApiConfig, setSavingApiConfig] = useState(false)
   const [deletingApiConfigId, setDeletingApiConfigId] = useState<string | null>(null)
 
+  // API Token 状态
+  type ApiTokenItem = {
+    id: string
+    name: string
+    prefix: string
+    expiresAt: string | null
+    lastUsedAt: string | null
+    createdAt: string
+  }
+  const [apiTokens, setApiTokens] = useState<ApiTokenItem[]>([])
+  const [apiTokensLoading, setApiTokensLoading] = useState(false)
+  const [newTokenName, setNewTokenName] = useState("")
+  const [newTokenExpiry, setNewTokenExpiry] = useState("never")
+  const [creatingToken, setCreatingToken] = useState(false)
+  const [newlyCreatedToken, setNewlyCreatedToken] = useState<string | null>(null)
+  const [revokeTokenId, setRevokeTokenId] = useState<string | null>(null)
+
   const t = dict.admin
 
   const tabs: TabItem[] = [
@@ -153,6 +170,7 @@ export function AdminSettingsForm({ locale, dict }: AdminSettingsFormProps) {
     { id: "email", label: t.tabEmail || "邮件配置", icon: Mail },
     { id: "qqGroups", label: t.tabQQGroups || "QQ群管理", icon: Users },
     { id: "templates", label: t.tabTemplates || "审核模板", icon: MessageSquare },
+    { id: "apiTokens", label: t.tabApiTokens || "API Token", icon: Key },
     {
       id: "danger",
       label: t.tabDanger || "危险操作",
@@ -224,6 +242,74 @@ export function AdminSettingsForm({ locale, dict }: AdminSettingsFormProps) {
       active = false
     }
   }, [t.settingsLoadFailed])
+
+  // API Token CRUD
+  const fetchApiTokens = async () => {
+    setApiTokensLoading(true)
+    try {
+      const res = await fetch("/api/admin/api-tokens")
+      if (res.ok) {
+        const data = await res.json()
+        setApiTokens(data.tokens)
+      }
+    } catch {
+      // ignore
+    } finally {
+      setApiTokensLoading(false)
+    }
+  }
+
+  const handleCreateToken = async () => {
+    if (!newTokenName.trim()) return
+    setCreatingToken(true)
+    try {
+      let expiresAt: string | null = null
+      if (newTokenExpiry !== "never") {
+        const days = Number(newTokenExpiry)
+        expiresAt = new Date(Date.now() + days * 86400000).toISOString()
+      }
+      const res = await fetch("/api/admin/api-tokens", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: newTokenName.trim(), expiresAt }),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        toast.error(resolveApiErrorMessage(data, dict) ?? t.apiTokenMaxReached ?? "Failed")
+        return
+      }
+      const data = await res.json()
+      setNewlyCreatedToken(data.token)
+      setNewTokenName("")
+      setNewTokenExpiry("never")
+      toast.success(t.apiTokenCreated || "Token created")
+      fetchApiTokens()
+    } catch {
+      toast.error("Failed to create token")
+    } finally {
+      setCreatingToken(false)
+    }
+  }
+
+  const handleRevokeToken = async (id: string) => {
+    try {
+      const res = await fetch(`/api/admin/api-tokens/${id}`, { method: "DELETE" })
+      if (res.ok) {
+        toast.success(t.apiTokenRevoked || "Token revoked")
+        fetchApiTokens()
+      }
+    } catch {
+      toast.error("Failed to revoke token")
+    }
+    setRevokeTokenId(null)
+  }
+
+  // 切换到 API Token tab 时加载 tokens
+  useEffect(() => {
+    if (activeTab === "apiTokens") {
+      fetchApiTokens()
+    }
+  }, [activeTab])
 
   const handleSaveAll = async () => {
     if (!settings || !systemConfig) return
@@ -1759,6 +1845,182 @@ export function AdminSettingsForm({ locale, dict }: AdminSettingsFormProps) {
                   </Card>
                 </div>
               )}
+
+              {/* API Token 管理 */}
+              {activeTab === "apiTokens" && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Key className="h-5 w-5" />
+                      {t.apiTokensTitle || "API Token 管理"}
+                    </CardTitle>
+                    <CardDescription>{t.apiTokensDesc || "创建和管理 API Token"}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    {/* 创建 Token */}
+                    <div className="space-y-3 rounded-lg border p-4">
+                      <div className="grid gap-3 sm:grid-cols-[1fr_auto_auto]">
+                        <Input
+                          placeholder={t.apiTokenNamePlaceholder || "Token 名称"}
+                          value={newTokenName}
+                          onChange={(e) => setNewTokenName(e.target.value)}
+                          maxLength={50}
+                        />
+                        <select
+                          value={newTokenExpiry}
+                          onChange={(e) => setNewTokenExpiry(e.target.value)}
+                          className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                        >
+                          <option value="never">{t.apiTokenExpiryNever || "永不过期"}</option>
+                          <option value="7">{t.apiTokenExpiry7d || "7 天"}</option>
+                          <option value="30">{t.apiTokenExpiry30d || "30 天"}</option>
+                          <option value="90">{t.apiTokenExpiry90d || "90 天"}</option>
+                        </select>
+                        <Button
+                          onClick={handleCreateToken}
+                          disabled={creatingToken || !newTokenName.trim()}
+                        >
+                          {creatingToken ? (
+                            <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                          ) : (
+                            <Plus className="h-4 w-4 mr-1" />
+                          )}
+                          {creatingToken
+                            ? t.apiTokenCreating || "创建中..."
+                            : t.apiTokenCreate || "创建 Token"}
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* 新创建的 Token 展示 */}
+                    {newlyCreatedToken && (
+                      <Alert className="border-amber-300 bg-amber-50 dark:bg-amber-900/20">
+                        <AlertDescription className="space-y-2">
+                          <p className="font-medium text-amber-900 dark:text-amber-200">
+                            {t.apiTokenCopyWarning || "请立即复制此 Token，它不会再次显示"}
+                          </p>
+                          <div className="flex items-center gap-2">
+                            <code className="flex-1 rounded bg-amber-100 dark:bg-amber-900/40 px-3 py-2 text-sm font-mono break-all">
+                              {newlyCreatedToken}
+                            </code>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                navigator.clipboard.writeText(newlyCreatedToken)
+                                toast.success(t.apiTokenCopied || "已复制")
+                              }}
+                            >
+                              {t.apiTokenCopied ? "📋" : "📋"}
+                            </Button>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setNewlyCreatedToken(null)}
+                          >
+                            <X className="h-3 w-3 mr-1" />
+                            {"关闭"}
+                          </Button>
+                        </AlertDescription>
+                      </Alert>
+                    )}
+
+                    {/* Token 列表 */}
+                    {apiTokensLoading ? (
+                      <div className="flex items-center justify-center py-8">
+                        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                      </div>
+                    ) : apiTokens.length === 0 ? (
+                      <div className="text-center py-8 text-muted-foreground">
+                        {t.apiTokenEmpty || "暂无 API Token"}
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {apiTokens.map((token) => {
+                          const isExpired =
+                            token.expiresAt && new Date(token.expiresAt) < new Date()
+                          return (
+                            <div
+                              key={token.id}
+                              className="flex items-center justify-between rounded-lg border p-3"
+                            >
+                              <div className="min-w-0 flex-1 space-y-1">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-medium text-sm">{token.name}</span>
+                                  <Badge variant={isExpired ? "destructive" : "secondary"}>
+                                    {isExpired
+                                      ? t.apiTokenExpired || "已过期"
+                                      : t.apiTokenActive || "活跃"}
+                                  </Badge>
+                                </div>
+                                <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                                  <span>
+                                    {t.apiTokenPrefix || "前缀"}: <code>{token.prefix}...</code>
+                                  </span>
+                                  <span>
+                                    {t.apiTokenLastUsed || "最后使用"}:{" "}
+                                    {token.lastUsedAt
+                                      ? new Date(token.lastUsedAt).toLocaleString()
+                                      : t.apiTokenNeverUsed || "从未使用"}
+                                  </span>
+                                  <span>{new Date(token.createdAt).toLocaleDateString()}</span>
+                                </div>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-destructive hover:text-destructive shrink-0"
+                                onClick={() => setRevokeTokenId(token.id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
+
+                    {/* Swagger 链接 */}
+                    <div className="rounded-lg border p-4">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                          <FileText className="h-4 w-4" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-medium text-sm">
+                            {t.apiTokenSwaggerTitle || "API 文档"}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {t.apiTokenSwaggerDesc || "查看完整 API 文档"}
+                          </p>
+                        </div>
+                        <a href={`/${locale}/api-doc`} target="_blank" rel="noopener noreferrer">
+                          <Button variant="outline" size="sm">
+                            <LinkIcon className="h-4 w-4 mr-1" />
+                            Swagger UI
+                          </Button>
+                        </a>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* 撤销 Token 确认对话框 */}
+              <ConfirmDialog
+                open={!!revokeTokenId}
+                onOpenChange={(open) => !open && setRevokeTokenId(null)}
+                title={t.apiTokenRevokeConfirmTitle || "撤销 API Token"}
+                description={
+                  t.apiTokenRevokeConfirmDesc ||
+                  "撤销后使用此 Token 的所有请求将立即失效，此操作不可撤销。"
+                }
+                onConfirm={() => revokeTokenId && handleRevokeToken(revokeTokenId)}
+                confirmLabel={t.apiTokenRevoke || "撤销"}
+                cancelLabel={t.cancel || "取消"}
+                destructive
+              />
 
               {/* 危险区域 */}
               {activeTab === "danger" && (

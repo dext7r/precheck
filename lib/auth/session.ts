@@ -1,7 +1,8 @@
-import type { NextResponse } from "next/server"
+import type { NextRequest, NextResponse } from "next/server"
 import { cookies } from "next/headers"
 import { db } from "@/lib/db"
 import { authConfig } from "./config"
+import { hashToken, isApiToken } from "./api-token"
 
 const SESSION_COOKIE_NAME = "session_token"
 
@@ -118,4 +119,28 @@ export async function isSuperAdmin(): Promise<boolean> {
 export async function isAdminOrAbove(): Promise<boolean> {
   const user = await getCurrentUser()
   return user?.role === "ADMIN" || user?.role === "SUPER_ADMIN"
+}
+
+async function getUserByApiToken(tokenValue: string) {
+  if (!db) return null
+  const hashed = hashToken(tokenValue)
+  const record = await db.apiToken.findUnique({
+    where: { tokenHash: hashed },
+    include: { user: true },
+  })
+  if (!record || record.revokedAt) return null
+  if (record.expiresAt && record.expiresAt < new Date()) return null
+  db.apiToken.update({ where: { id: record.id }, data: { lastUsedAt: new Date() } }).catch(() => {})
+  return record.user
+}
+
+export async function getCurrentUserFromRequest(request: NextRequest) {
+  const authHeader = request.headers.get("authorization")
+  if (authHeader) {
+    const token = authHeader.replace(/^Bearer\s+/i, "")
+    if (isApiToken(token)) {
+      return getUserByApiToken(token)
+    }
+  }
+  return getCurrentUser()
 }

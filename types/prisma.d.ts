@@ -6,7 +6,14 @@ export type UserStatus = "ACTIVE" | "INACTIVE" | "BANNED"
 
 export type PostStatus = "DRAFT" | "PUBLISHED" | "PENDING" | "REJECTED"
 
-export type PreApplicationStatus = "PENDING" | "APPROVED" | "REJECTED" | "DISPUTED" | "ARCHIVED" | "PENDING_REVIEW" | "ON_HOLD"
+export type PreApplicationStatus =
+  | "PENDING"
+  | "APPROVED"
+  | "REJECTED"
+  | "DISPUTED"
+  | "ARCHIVED"
+  | "PENDING_REVIEW"
+  | "ON_HOLD"
 
 export type PreApplicationSource = "TIEBA" | "BILIBILI" | "DOUYIN" | "XIAOHONGSHU" | "OTHER"
 
@@ -47,6 +54,7 @@ export interface User {
   privateChatsAsUser: PrivateChat[]
   privateChatsAsAdmin: PrivateChat[]
   privateChatMessages: PrivateChatMessage[]
+  apiTokens: ApiToken[]
   resetToken: string | null
   resetTokenExpiry: Date | null
 }
@@ -333,4 +341,17 @@ export interface PrivateChatMessage {
   readAt: Date | null
   chat: PrivateChat
   sender: User
+}
+
+export interface ApiToken {
+  id: string
+  name: string
+  tokenHash: string
+  prefix: string
+  userId: string
+  expiresAt: Date | null
+  lastUsedAt: Date | null
+  createdAt: Date
+  revokedAt: Date | null
+  user: User
 }

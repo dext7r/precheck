@@ -122,6 +122,14 @@ export const ApiErrorKeys = {
     emailLogs: {
       failed: "apiErrors.admin.emailLogs.failed",
     },
+    apiTokens: {
+      failedToFetch: "apiErrors.admin.apiTokens.failedToFetch",
+      failedToCreate: "apiErrors.admin.apiTokens.failedToCreate",
+      failedToRevoke: "apiErrors.admin.apiTokens.failedToRevoke",
+      maxTokensReached: "apiErrors.admin.apiTokens.maxTokensReached",
+      tokenNotFound: "apiErrors.admin.apiTokens.tokenNotFound",
+      notOwner: "apiErrors.admin.apiTokens.notOwner",
+    },
   },
   dashboard: {
     password: {

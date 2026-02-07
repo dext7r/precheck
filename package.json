@@ -133,6 +133,7 @@
     "recharts": "2.15.4",
     "shiki": "^3.21.0",
     "sonner": "^1.7.4",
+    "swagger-ui-react": "^5.31.0",
     "tailwind-merge": "^3.3.1",
     "tailwindcss": "^4.1.9",
     "tailwindcss-animate": "^1.0.7",
@@ -147,6 +148,7 @@
   },
   "devDependencies": {
     "@next/bundle-analyzer": "16.0.10",
+    "@types/swagger-ui-react": "^5.18.0",
     "eslint": "^9.0.0",
     "eslint-config-next": "16.0.10",
     "prettier": "^3.3.3",

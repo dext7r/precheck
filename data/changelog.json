@@ -1,6 +1,24 @@
 {
   "versions": [
     {
+      "version": "1.5.0",
+      "date": "2026-02-07",
+      "changes": [
+        {
+          "type": "added",
+          "content": "管理员 API Token 管理功能（系统设置 → API Token），支持创建、撤销、过期时间设置"
+        },
+        {
+          "type": "added",
+          "content": "Swagger UI API 文档页面（/api-doc），支持 Bearer Token 认证"
+        },
+        {
+          "type": "added",
+          "content": "API Token 双重认证机制，支持 Authorization: Bearer pk_... 头部认证"
+        }
+      ]
+    },
+    {
       "version": "1.4.2",
       "date": "2026-02-07",
       "changes": [

@@ -51,6 +51,7 @@ model User {
   privateChatsAsUser     PrivateChat[] @relation("PrivateChatUser")
   privateChatsAsAdmin    PrivateChat[] @relation("PrivateChatAdmin")
   privateChatMessages    PrivateChatMessage[] @relation("PrivateChatMessageSender")
+  apiTokens              ApiToken[]
 
   // 密码重置
   resetToken       String?   @unique
@@ -479,4 +480,22 @@ model PrivateChatMessage {
 
   @@index([chatId, createdAt])
   @@index([senderId])
+}
+
+model ApiToken {
+  id         String    @id @default(cuid())
+  name       String
+  tokenHash  String    @unique
+  prefix     String
+  userId     String
+  expiresAt  DateTime?
+  lastUsedAt DateTime?
+  createdAt  DateTime  @default(now())
+  revokedAt  DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([tokenHash])
+  @@index([prefix])
 }
