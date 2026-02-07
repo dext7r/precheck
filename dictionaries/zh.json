@@ -45,7 +45,14 @@
         "invalidEmail": "无效的邮箱地址",
         "passwordRequired": "密码为必填项",
         "validationFailed": "登录信息不合法",
-        "loginFailed": "登录失败"
+        "loginFailed": "登录失败",
+        "accountDeleted": "账户已被删除，激活链接已发送至你的邮箱"
+      },
+      "reactivate": {
+        "invalidToken": "无效的激活令牌",
+        "tokenExpired": "激活令牌已过期，请重新申请",
+        "userNotFound": "未找到对应的用户账户",
+        "serviceUnavailable": "服务暂时不可用，请稍后重试"
       },
       "register": {
         "serviceUnavailable": "注册服务未配置",
@@ -689,6 +696,13 @@
       "submitting": "重置中...",
       "success": "密码重置成功，您现在可以登录了。",
       "invalidToken": "无效或已过期的重置链接",
+      "backToLogin": "返回登录"
+    },
+    "reactivate": {
+      "activating": "正在激活中...",
+      "success": "账户已成功激活",
+      "successDescription": "请使用你的原密码登录，或者点击下方按钮重新设置密码",
+      "failedMessage": "激活失败，链接已过期或无效",
       "backToLogin": "返回登录"
     },
     "verificationCodeEmail": {

@@ -189,7 +189,23 @@ export async function DELETE(request: NextRequest, context: { params: Promise<{ 
 
     const before = await db.user.findUnique({ where: { id } })
 
-    await db.user.delete({ where: { id } })
+    const deletedUser = await db.user.update({
+      where: { id },
+      data: {
+        status: "DELETED",
+        reactivationToken: null,
+        reactivationTokenExpiry: null,
+      },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        status: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    })
 
     await writeAuditLog(db, {
       action: "USER_ADMIN_DELETE",
@@ -197,7 +213,7 @@ export async function DELETE(request: NextRequest, context: { params: Promise<{ 
       entityId: id,
       actor: user,
       before,
-      after: null,
+      after: deletedUser,
       request,
     })
 

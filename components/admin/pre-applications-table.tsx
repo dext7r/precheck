@@ -1621,9 +1621,11 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
                                       </span>
                                       {statusBadge(record.status as AdminPreApplication["status"])}
                                     </div>
-                                    <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                                      {record.essay}
-                                    </p>
+                                    <div className="mt-1.5 max-h-24 space-y-1 overflow-y-auto rounded bg-muted/30 p-2">
+                                      <p className="whitespace-pre-wrap break-words text-xs text-muted-foreground">
+                                        {record.essay}
+                                      </p>
+                                    </div>
                                   </div>
                                   <div className="ml-3 flex items-center gap-2">
                                     <Badge
@@ -1647,8 +1649,31 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
                                           className="h-7 w-7 p-0"
                                           onClick={() => {
                                             // 查看原申请（打开新记录）
-                                            const original = records.find((r) => r.id === record.id)
-                                            if (original) openDialog(original)
+                                            // 直接从查重结果构建记录对象，无需在 records 中查找
+                                            const duplicateRecord: AdminPreApplication = {
+                                              id: record.id,
+                                              essay: record.essay,
+                                              registerEmail: record.registerEmail || "",
+                                              source: null,
+                                              sourceDetail: null,
+                                              group: "",
+                                              status:
+                                                record.status as AdminPreApplication["status"],
+                                              guidance: null,
+                                              createdAt: record.createdAt,
+                                              updatedAt: record.createdAt,
+                                              user: {
+                                                id: "",
+                                                name: null,
+                                                email: record.registerEmail || "",
+                                              },
+                                              reviewedBy: null,
+                                              queryToken: null,
+                                              reviewedAt: null,
+                                              inviteCode: null,
+                                              reviewRound: undefined,
+                                            }
+                                            openDialog(duplicateRecord)
                                           }}
                                         >
                                           <ExternalLink className="h-3.5 w-3.5" />

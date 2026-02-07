@@ -2,7 +2,7 @@ import type { Prisma } from "@prisma/client"
 
 export type Role = "USER" | "ADMIN" | "SUPER_ADMIN"
 
-export type UserStatus = "ACTIVE" | "INACTIVE" | "BANNED"
+export type UserStatus = "ACTIVE" | "INACTIVE" | "BANNED" | "DELETED"
 
 export type PostStatus = "DRAFT" | "PUBLISHED" | "PENDING" | "REJECTED"
 
@@ -57,6 +57,8 @@ export interface User {
   apiTokens: ApiToken[]
   resetToken: string | null
   resetTokenExpiry: Date | null
+  reactivationToken: string | null
+  reactivationTokenExpiry: Date | null
 }
 
 export interface Account {

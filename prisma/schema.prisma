@@ -56,6 +56,10 @@ model User {
   // 密码重置
   resetToken       String?   @unique
   resetTokenExpiry DateTime?
+
+  // 账户二次激活
+  reactivationToken       String?   @unique
+  reactivationTokenExpiry DateTime?
 }
 
 model Account {
@@ -284,6 +288,7 @@ enum UserStatus {
   ACTIVE
   INACTIVE
   BANNED
+  DELETED
 }
 
 enum PostStatus {

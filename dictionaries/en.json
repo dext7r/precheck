@@ -47,7 +47,14 @@
         "invalidEmail": "Invalid email address",
         "passwordRequired": "Password is required",
         "validationFailed": "Invalid login data",
-        "loginFailed": "Login failed"
+        "loginFailed": "Login failed",
+        "accountDeleted": "Account has been deleted, activation link has been sent to your email"
+      },
+      "reactivate": {
+        "invalidToken": "Invalid activation token",
+        "tokenExpired": "Activation token has expired, please request a new one",
+        "userNotFound": "User account not found",
+        "serviceUnavailable": "Service temporarily unavailable, please try again later"
       },
       "register": {
         "serviceUnavailable": "Registration service not configured",
@@ -691,6 +698,13 @@
       "submitting": "Resetting...",
       "success": "Password reset successfully. You can now login.",
       "invalidToken": "Invalid or expired reset token",
+      "backToLogin": "Back to login"
+    },
+    "reactivate": {
+      "activating": "Activating...",
+      "success": "Account successfully activated",
+      "successDescription": "Please login with your original password, or click the button below to reset your password",
+      "failedMessage": "Activation failed, link has expired or is invalid",
       "backToLogin": "Back to login"
     },
     "verificationCodeEmail": {

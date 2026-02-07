@@ -1,12 +1,14 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { verifyPassword } from "@/lib/auth/password"
+import { verifyPassword, generateResetToken } from "@/lib/auth/password"
 import { createSession, setSessionCookie } from "@/lib/auth/session"
 import { features } from "@/lib/features"
 import { writeAuditLog } from "@/lib/audit"
 import { verifyTurnstileToken } from "@/lib/turnstile"
 import { verifyCode } from "@/lib/verification-code"
 import { isRedisAvailable } from "@/lib/redis"
+import { sendEmail } from "@/lib/email/mailer"
+import { getAccountReactivationEmail } from "@/lib/email/templates/account-reactivation"
 import { z } from "zod"
 import { createApiErrorResponse } from "@/lib/api/error-response"
 
@@ -116,6 +118,31 @@ export async function POST(request: NextRequest) {
           status: 401,
         })
       }
+    }
+
+    // 检测已删除账户
+    if (user.status === "DELETED") {
+      const reactivationToken = generateResetToken()
+      const reactivationTokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000)
+
+      await db.user.update({
+        where: { id: user.id },
+        data: {
+          reactivationToken,
+          reactivationTokenExpiry,
+        },
+      })
+
+      // 异步发送激活邮件，不阻塞响应
+      sendEmail(
+        getAccountReactivationEmail(user.email, reactivationToken, process.env.NEXT_PUBLIC_APP_URL),
+      ).catch((error) => {
+        console.error("Failed to send reactivation email:", error)
+      })
+
+      return createApiErrorResponse(request, "apiErrors.auth.login.accountDeleted", {
+        status: 400,
+      })
     }
 
     // 创建 Session
