@@ -1253,13 +1253,6 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
                   >
                     <User className="h-5 w-5" />
                   </div>
-                  {!inviteCodeStorageEnabled &&
-                    (reviewAction === "APPROVE" || reviewAction === "DISPUTE") && (
-                      <div className="rounded-xl border border-amber-300/70 bg-amber-50/60 px-3 py-2 text-sm text-amber-900">
-                        {t.manualIssueReminder ||
-                          "邀请码存储已关闭，请在贡献页面记录人工发码情况。"}
-                      </div>
-                    )}
                   <div className="min-w-0 flex-1">
                     <div className="flex items-start justify-between gap-2">
                       <p className="truncate text-sm font-medium">

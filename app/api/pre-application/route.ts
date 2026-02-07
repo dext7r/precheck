@@ -10,9 +10,6 @@ import { createApiErrorResponse } from "@/lib/api/error-response"
 import { ApiErrorKeys } from "@/lib/api/error-keys"
 import { getQQGroups } from "@/lib/qq-groups"
 
-// 最大重新提交次数
-const MAX_RESUBMIT_COUNT = 3
-
 async function generateUniqueQueryToken(): Promise<string> {
   if (!db) throw new Error("Database not configured")
   for (let i = 0; i < 5; i++) {
@@ -21,6 +18,15 @@ async function generateUniqueQueryToken(): Promise<string> {
     if (!existing) return token
   }
   return randomBytes(6).toString("hex").toUpperCase()
+}
+
+async function getMaxResubmitCount(): Promise<number> {
+  if (!db) return 2
+  const settings = await db.siteSettings.findUnique({
+    where: { id: "global" },
+    select: { maxResubmitCount: true },
+  })
+  return settings?.maxResubmitCount ?? 2
 }
 
 const preApplicationSchema = z.object({
@@ -90,7 +96,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       records,
       latest: records[0] ?? null,
-      maxResubmitCount: MAX_RESUBMIT_COUNT,
+      maxResubmitCount: await getMaxResubmitCount(),
       queueInfo,
     })
   } catch (error) {
@@ -205,7 +211,7 @@ export async function POST(request: NextRequest) {
       request,
     })
 
-    return NextResponse.json({ record, maxResubmitCount: MAX_RESUBMIT_COUNT })
+    return NextResponse.json({ record, maxResubmitCount: await getMaxResubmitCount() })
   } catch (error) {
     if (error instanceof z.ZodError) {
       return createApiErrorResponse(request, ApiErrorKeys.general.invalid, {
@@ -289,12 +295,13 @@ export async function PUT(request: NextRequest) {
     }
 
     // 驳回后重新提交次数检查
+    const maxResubmitCount = await getMaxResubmitCount()
     const isResubmit = latest.status === "REJECTED"
-    if (isResubmit && latest.resubmitCount >= MAX_RESUBMIT_COUNT) {
+    if (maxResubmitCount > 0 && isResubmit && latest.resubmitCount >= maxResubmitCount) {
       return createApiErrorResponse(request, ApiErrorKeys.preApplication.resubmitLimitExceeded, {
         status: 400,
         meta: {
-          detail: `已达到最大重新提交次数限制 (${MAX_RESUBMIT_COUNT} 次)`,
+          detail: `已达到最大重新提交次数限制 (${maxResubmitCount} 次)`,
         },
       })
     }
@@ -377,8 +384,8 @@ export async function PUT(request: NextRequest) {
 
     return NextResponse.json({
       record,
-      maxResubmitCount: MAX_RESUBMIT_COUNT,
-      remainingResubmits: MAX_RESUBMIT_COUNT - newResubmitCount,
+      maxResubmitCount: maxResubmitCount,
+      remainingResubmits: maxResubmitCount === 0 ? -1 : maxResubmitCount - newResubmitCount,
     })
   } catch (error) {
     if (error instanceof z.ZodError) {

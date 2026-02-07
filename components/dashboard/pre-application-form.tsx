@@ -226,7 +226,8 @@ export function PreApplicationForm({
   const remainingResubmits = latest
     ? maxResubmitCount - (latest.resubmitCount || 0)
     : maxResubmitCount
-  const canResubmit = latest?.status === "REJECTED" && remainingResubmits > 0
+  const canResubmit =
+    latest?.status === "REJECTED" && (maxResubmitCount === 0 || remainingResubmits > 0)
   // DISPUTED 状态且没有邀请码时可以修改
   const canEditDisputed = latest?.status === "DISPUTED" && !latest?.inviteCode
   // 管理员可以删除自己的申请记录（用于测试）
@@ -918,7 +919,7 @@ export function PreApplicationForm({
                               <Loader2 className="h-4 w-4 animate-spin" />
                             ) : (
                               (((t as Record<string, unknown>).refreshStatus as string) ??
-                                "刷新状态")
+                              "刷新状态")
                             )}
                           </Button>
                         )}
@@ -931,8 +932,7 @@ export function PreApplicationForm({
                             {claiming ? (
                               <>
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                {((t as Record<string, unknown>).claiming as string) ??
-                                  "领取中..."}
+                                {((t as Record<string, unknown>).claiming as string) ?? "领取中..."}
                               </>
                             ) : (
                               <>

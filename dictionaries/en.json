@@ -1856,6 +1856,8 @@
     "systemConfigEssayHintPlaceholder": "About 100 words recommended...",
     "systemConfigAuditLog": "Enable Audit Log",
     "systemConfigAuditLogDesc": "Record all admin operations to audit log (disabled by default for performance)",
+    "maxResubmitCount": "Max Resubmissions After Rejection",
+    "maxResubmitCountDesc": "Set to 0 for unlimited resubmissions",
     "systemConfigEmailDomains": "Allowed Email Domains",
     "systemConfigEmailDomainsDesc": "Only emails with these domains can submit pre-applications",
     "systemConfigEmailDomainPlaceholder": "e.g. gmail.com",

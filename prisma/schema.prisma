@@ -340,6 +340,8 @@ model SiteSettings {
   smtpUser                String?
   smtpPass                String?
   smtpSecure              Boolean  @default(false)
+  // 驳回后最大重新提交次数（0 = 无限制）
+  maxResubmitCount        Int      @default(2)
   // 邀请码有效期检测 API 配置
   inviteCodeCheckApiUrl   String?
   inviteCodeCheckApiKey   String?  // API Key 值

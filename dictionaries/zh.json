@@ -1851,6 +1851,8 @@
     "systemConfigEssayHintPlaceholder": "建议 100 字左右...",
     "systemConfigAuditLog": "启用审计日志",
     "systemConfigAuditLogDesc": "记录所有管理操作到审计日志（默认关闭以提升性能）",
+    "maxResubmitCount": "驳回后最大重新提交次数",
+    "maxResubmitCountDesc": "设为 0 表示不限制重新提交次数",
     "systemConfigEmailDomains": "允许的邮箱域名",
     "systemConfigEmailDomainsDesc": "只有使用这些域名的邮箱才能提交预申请",
     "systemConfigEmailDomainPlaceholder": "例如: gmail.com",

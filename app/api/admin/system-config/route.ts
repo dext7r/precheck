@@ -41,6 +41,8 @@ const systemConfigSchema = z.object({
   smtpUser: z.string().optional().nullable(),
   smtpPass: z.string().optional().nullable(),
   smtpSecure: z.boolean().optional(),
+  // 驳回后最大重新提交次数（0 = 无限制）
+  maxResubmitCount: z.number().int().min(0).optional(),
   // 邀请码有效期检测 API 配置
   inviteCodeCheckApiUrl: z.string().url().optional().nullable().or(z.literal("")),
   inviteCodeCheckApiKey: z.string().optional().nullable(),
@@ -80,6 +82,7 @@ export async function GET(request: NextRequest) {
         smtpSecure: true,
         inviteCodeCheckApiUrl: true,
         inviteCodeCheckApiKey: true,
+        maxResubmitCount: true,
       },
     })
 
@@ -103,6 +106,7 @@ export async function GET(request: NextRequest) {
         smtpSecure: false,
         inviteCodeCheckApiUrl: null,
         inviteCodeCheckApiKey: null,
+        maxResubmitCount: 2,
       })
     }
 
@@ -135,6 +139,7 @@ export async function GET(request: NextRequest) {
       smtpSecure: settings.smtpSecure ?? false,
       inviteCodeCheckApiUrl: settings.inviteCodeCheckApiUrl ?? null,
       inviteCodeCheckApiKey: settings.inviteCodeCheckApiKey ?? null,
+      maxResubmitCount: settings.maxResubmitCount ?? 2,
     })
   } catch (error) {
     console.error("System config fetch error:", error)
@@ -191,6 +196,7 @@ export async function PUT(request: NextRequest) {
         smtpSecure: data.smtpSecure ?? false,
         inviteCodeCheckApiUrl: data.inviteCodeCheckApiUrl || null,
         inviteCodeCheckApiKey: data.inviteCodeCheckApiKey ?? null,
+        maxResubmitCount: data.maxResubmitCount ?? 2,
       },
       update: {
         preApplicationEssayHint: data.preApplicationEssayHint,
@@ -227,6 +233,7 @@ export async function PUT(request: NextRequest) {
         ...(data.inviteCodeCheckApiKey !== undefined && {
           inviteCodeCheckApiKey: data.inviteCodeCheckApiKey,
         }),
+        ...(data.maxResubmitCount !== undefined && { maxResubmitCount: data.maxResubmitCount }),
       },
     })
 
@@ -256,6 +263,7 @@ export async function PUT(request: NextRequest) {
           "smtpSecure",
           "inviteCodeCheckApiUrl",
           "inviteCodeCheckApiKey",
+          "maxResubmitCount",
         ],
       },
       request,
@@ -280,6 +288,7 @@ export async function PUT(request: NextRequest) {
       smtpSecure: updated.smtpSecure,
       inviteCodeCheckApiUrl: updated.inviteCodeCheckApiUrl,
       inviteCodeCheckApiKey: updated.inviteCodeCheckApiKey,
+      maxResubmitCount: updated.maxResubmitCount,
     })
   } catch (error) {
     if (error instanceof z.ZodError) {

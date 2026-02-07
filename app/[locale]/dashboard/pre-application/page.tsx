@@ -9,8 +9,6 @@ interface PreApplicationPageProps {
   params: Promise<{ locale: Locale }>
 }
 
-const MAX_RESUBMIT_COUNT = 3
-
 export default async function PreApplicationPage({ params }: PreApplicationPageProps) {
   const { locale } = await params
   const dict = await getDictionary(locale)
@@ -59,12 +57,21 @@ export default async function PreApplicationPage({ params }: PreApplicationPageP
     }))
   }
 
+  let maxResubmitCount = 2
+  if (db) {
+    const limitSettings = await db.siteSettings.findUnique({
+      where: { id: "global" },
+      select: { maxResubmitCount: true },
+    })
+    maxResubmitCount = limitSettings?.maxResubmitCount ?? 2
+  }
+
   return (
     <PreApplicationForm
       locale={locale}
       dict={dict}
       initialRecords={initialRecords}
-      maxResubmitCount={MAX_RESUBMIT_COUNT}
+      maxResubmitCount={maxResubmitCount}
       userEmail={user.email}
       userRole={user.role}
     />

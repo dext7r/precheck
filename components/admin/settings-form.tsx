@@ -81,6 +81,7 @@ type SystemConfig = {
   smtpSecure: boolean
   inviteCodeCheckApiUrl: string | null
   inviteCodeCheckApiKey: string | null
+  maxResubmitCount: number
 }
 
 type EmailApiConfig = {
@@ -944,6 +945,40 @@ export function AdminSettingsForm({ locale, dict }: AdminSettingsFormProps) {
                           setSystemConfig({ ...systemConfig, auditLogEnabled: v })
                         }
                       />
+                    )}
+                    {systemConfig && (
+                      <div className="flex items-center justify-between py-4">
+                        <div className="flex items-start gap-3">
+                          <div
+                            className={cn(
+                              "mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg",
+                              "bg-primary/10 text-primary",
+                            )}
+                          >
+                            <RefreshCw className="h-4 w-4" />
+                          </div>
+                          <div>
+                            <p className="font-medium">
+                              {t.maxResubmitCount || "驳回后最大重新提交次数"}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              {t.maxResubmitCountDesc || "设为 0 表示不限制重新提交次数"}
+                            </p>
+                          </div>
+                        </div>
+                        <Input
+                          type="number"
+                          min={0}
+                          value={systemConfig.maxResubmitCount}
+                          onChange={(e) =>
+                            setSystemConfig({
+                              ...systemConfig,
+                              maxResubmitCount: Math.max(0, Number(e.target.value) || 0),
+                            })
+                          }
+                          className="w-20 text-center"
+                        />
+                      </div>
                     )}
                   </CardContent>
                 </Card>

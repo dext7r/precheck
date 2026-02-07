@@ -23,7 +23,9 @@ export function ManualIssueLogPanel({ dict }: ManualIssueLogPanelProps) {
 
   const handleRecord = async () => {
     if (!note.trim()) {
-      toast.error(t.manualIssueNoteRequired || "Please describe the manual issuance before recording it")
+      toast.error(
+        t.manualIssueNoteRequired || "Please describe the manual issuance before recording it",
+      )
       return
     }
     setRecording(true)

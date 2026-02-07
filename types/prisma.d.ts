@@ -6,14 +6,7 @@ export type UserStatus = "ACTIVE" | "INACTIVE" | "BANNED"
 
 export type PostStatus = "DRAFT" | "PUBLISHED" | "PENDING" | "REJECTED"
 
-export type PreApplicationStatus =
-  | "PENDING"
-  | "APPROVED"
-  | "REJECTED"
-  | "DISPUTED"
-  | "ARCHIVED"
-  | "PENDING_REVIEW"
-  | "ON_HOLD"
+export type PreApplicationStatus = "PENDING" | "APPROVED" | "REJECTED" | "DISPUTED" | "ARCHIVED" | "PENDING_REVIEW" | "ON_HOLD"
 
 export type PreApplicationSource = "TIEBA" | "BILIBILI" | "DOUYIN" | "XIAOHONGSHU" | "OTHER"
 
@@ -253,6 +246,7 @@ export interface SiteSettings {
   smtpUser: string | null
   smtpPass: string | null
   smtpSecure: boolean
+  maxResubmitCount: number
   inviteCodeCheckApiUrl: string | null
   inviteCodeCheckApiKey: string | null
   createdAt: Date
