@@ -3,6 +3,7 @@ import { z } from "zod"
 import { getCurrentUser } from "@/lib/auth/session"
 import { isAdmin, isSuperAdmin } from "@/lib/auth/permissions"
 import { getSiteSettings, updateSiteSettings } from "@/lib/site-settings"
+import { batchPromoteLinuxDoAdmins } from "@/lib/auth/oauth"
 import { db } from "@/lib/db"
 import { writeAuditLog } from "@/lib/audit"
 import { createApiErrorResponse } from "@/lib/api/error-response"
@@ -72,6 +73,13 @@ export async function PUT(request: NextRequest) {
         request,
       })
     }
+
+    // 开关从 off→on 时，批量提升已存储的 LinuxDo TL>=3 用户
+    if (updates.linuxdoAutoAdmin && !before.linuxdoAutoAdmin) {
+      const promoted = await batchPromoteLinuxDoAdmins(user)
+      return NextResponse.json({ ...settings, _batchPromoted: promoted })
+    }
+
     return NextResponse.json(settings)
   } catch (error) {
     if (error instanceof z.ZodError) {

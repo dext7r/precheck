@@ -275,16 +275,11 @@ export function StatusClient({ dict }: StatusClientProps) {
   }
 
   const git = data.deployment.git
-  const repoUrl =
-    git.repo !== "unknown" ? `https://github.com/${git.repo}` : undefined
+  const repoUrl = git.repo !== "unknown" ? `https://github.com/${git.repo}` : undefined
   const commitUrl =
-    repoUrl && git.commitHash !== "unknown"
-      ? `${repoUrl}/commit/${git.commitHash}`
-      : undefined
+    repoUrl && git.commitHash !== "unknown" ? `${repoUrl}/commit/${git.commitHash}` : undefined
   const branchUrl =
-    repoUrl && git.branch !== "unknown"
-      ? `${repoUrl}/tree/${git.branch}`
-      : undefined
+    repoUrl && git.branch !== "unknown" ? `${repoUrl}/tree/${git.branch}` : undefined
   const platformUrl =
     data.deployment.platformUrl !== "unknown" ? data.deployment.platformUrl : undefined
 
@@ -295,11 +290,7 @@ export function StatusClient({ dict }: StatusClientProps) {
         <OverallStatusIndicator status={data.status} t={t} />
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <Switch
-              checked={autoRefresh}
-              onCheckedChange={setAutoRefresh}
-              className="scale-90"
-            />
+            <Switch checked={autoRefresh} onCheckedChange={setAutoRefresh} className="scale-90" />
             <span className="text-xs text-muted-foreground whitespace-nowrap">
               {autoRefresh
                 ? `${(t.statusAutoRefresh as string) || "Auto"} (${countdown}s)`

@@ -1027,9 +1027,7 @@ export function AdminSettingsForm({ locale, dict }: AdminSettingsFormProps) {
                       title={t.analyticsEnabled || "51.la 统计"}
                       description={t.analyticsEnabledDesc || "启用 51.la 网站流量统计与性能监控"}
                       checked={settings.analyticsEnabled}
-                      onCheckedChange={(v) =>
-                        setSettings({ ...settings, analyticsEnabled: v })
-                      }
+                      onCheckedChange={(v) => setSettings({ ...settings, analyticsEnabled: v })}
                     />
                     <ToggleItem
                       title={t.linuxdoAutoAdmin || "LinuxDo TL3 自动授权管理员"}
@@ -1038,9 +1036,7 @@ export function AdminSettingsForm({ locale, dict }: AdminSettingsFormProps) {
                         "LinuxDo 信任等级 ≥ 3 的用户登录后自动获得管理员权限"
                       }
                       checked={settings.linuxdoAutoAdmin}
-                      onCheckedChange={(v) =>
-                        setSettings({ ...settings, linuxdoAutoAdmin: v })
-                      }
+                      onCheckedChange={(v) => setSettings({ ...settings, linuxdoAutoAdmin: v })}
                     />
                     {systemConfig && (
                       <ToggleItem

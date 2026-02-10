@@ -6,7 +6,14 @@ export type UserStatus = "ACTIVE" | "INACTIVE" | "BANNED" | "DELETED"
 
 export type PostStatus = "DRAFT" | "PUBLISHED" | "PENDING" | "REJECTED"
 
-export type PreApplicationStatus = "PENDING" | "APPROVED" | "REJECTED" | "DISPUTED" | "ARCHIVED" | "PENDING_REVIEW" | "ON_HOLD"
+export type PreApplicationStatus =
+  | "PENDING"
+  | "APPROVED"
+  | "REJECTED"
+  | "DISPUTED"
+  | "ARCHIVED"
+  | "PENDING_REVIEW"
+  | "ON_HOLD"
 
 export type PreApplicationSource = "TIEBA" | "BILIBILI" | "DOUYIN" | "XIAOHONGSHU" | "OTHER"
 
@@ -67,6 +74,7 @@ export interface Account {
   scope: string | null
   id_token: string | null
   session_state: string | null
+  trustLevel: number | null
   user: User
 }
 

@@ -217,6 +217,12 @@ export async function handleOAuthSignIn(
 
   if (existingAccount) {
     const user = existingAccount.user
+    if (provider === "linuxdo" && typeof profile.trustLevel === "number") {
+      await db.account.update({
+        where: { id: existingAccount.id },
+        data: { trustLevel: profile.trustLevel },
+      })
+    }
     await maybePromoteLinuxDoAdmin(provider, profile, user, settings, request)
     return user
   }
@@ -234,6 +240,7 @@ export async function handleOAuthSignIn(
         type: "oauth",
         provider,
         providerAccountId: profile.id,
+        trustLevel: provider === "linuxdo" ? profile.trustLevel : undefined,
       },
     })
     await writeAuditLog(db, {
@@ -272,6 +279,7 @@ export async function handleOAuthSignIn(
           type: "oauth",
           provider,
           providerAccountId: profile.id,
+          trustLevel: provider === "linuxdo" ? profile.trustLevel : undefined,
         },
       },
     },
@@ -283,7 +291,10 @@ export async function handleOAuthSignIn(
     entityId: newUser.id,
     actor: newUser,
     after: newUser,
-    metadata: { provider, ...(shouldPromote && { autoAdmin: true, trustLevel: profile.trustLevel }) },
+    metadata: {
+      provider,
+      ...(shouldPromote && { autoAdmin: true, trustLevel: profile.trustLevel }),
+    },
     request,
   })
 
@@ -341,6 +352,7 @@ export async function handleOAuthBind(
       type: "oauth",
       provider,
       providerAccountId: profile.id,
+      trustLevel: provider === "linuxdo" ? profile.trustLevel : undefined,
     },
   })
 
@@ -393,4 +405,36 @@ async function maybePromoteLinuxDoAdmin(
     metadata: { provider: "linuxdo", trustLevel: profile.trustLevel },
     request,
   })
+}
+
+// 批量提升已存储的 LinuxDo TL>=3 用户为 ADMIN
+export async function batchPromoteLinuxDoAdmins(actor: { id: string; role: string }) {
+  if (!db) return 0
+
+  const accounts = await db.account.findMany({
+    where: {
+      provider: "linuxdo",
+      trustLevel: { gte: 3 },
+      user: { role: "USER" },
+    },
+    include: { user: true },
+  })
+
+  for (const account of accounts) {
+    await db.user.update({
+      where: { id: account.userId },
+      data: { role: "ADMIN" },
+    })
+    await writeAuditLog(db, {
+      action: "USER_AUTO_PROMOTE_ADMIN",
+      entityType: "USER",
+      entityId: account.userId,
+      actor,
+      before: { role: "USER" },
+      after: { role: "ADMIN" },
+      metadata: { provider: "linuxdo", trustLevel: account.trustLevel, source: "batch" },
+    })
+  }
+
+  return accounts.length
 }

@@ -75,6 +75,7 @@ model Account {
   scope             String?
   id_token          String? @db.Text
   session_state     String?
+  trustLevel        Int?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
