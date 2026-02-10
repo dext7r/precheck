@@ -10,7 +10,7 @@ import { isRedisAvailable } from "@/lib/redis"
 import { sendEmail } from "@/lib/email/mailer"
 import { getAccountReactivationEmail } from "@/lib/email/templates/account-reactivation"
 import { z } from "zod"
-import { createApiErrorResponse } from "@/lib/api/error-response"
+import { createApiErrorResponse, resolveLocaleForRequest } from "@/lib/api/error-response"
 
 // 密码登录 schema
 const passwordLoginSchema = z.object({
@@ -135,7 +135,7 @@ export async function POST(request: NextRequest) {
 
       // 异步发送激活邮件，不阻塞响应
       sendEmail(
-        getAccountReactivationEmail(user.email, reactivationToken, process.env.NEXT_PUBLIC_APP_URL),
+        getAccountReactivationEmail(user.email, reactivationToken, process.env.NEXT_PUBLIC_APP_URL, undefined, resolveLocaleForRequest(request)),
       ).catch((error) => {
         console.error("Failed to send reactivation email:", error)
       })

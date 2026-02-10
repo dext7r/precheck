@@ -182,11 +182,11 @@ export function getAccountReactivationEmail(
   token: string,
   appUrl?: string,
   dict?: Dictionary,
+  locale: string = "en",
 ): EmailPayload {
   const appBaseUrl = appUrl || process.env.NEXT_PUBLIC_APP_URL || "https://localhost:3000"
-  const reactivateUrl = `${appBaseUrl}/auth/reactivate?token=${encodeURIComponent(token)}`
+  const reactivateUrl = `${appBaseUrl}/${locale}/reactivate?token=${encodeURIComponent(token)}`
 
-  const locale = "en"
   const appName = "Application System"
 
   const { subject, html, text } = buildAccountReactivationEmail({
