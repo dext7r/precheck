@@ -1,9 +1,10 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Switch } from "@/components/ui/switch"
 import {
   Activity,
   RefreshCw,
@@ -20,6 +21,11 @@ import {
   Clock,
   GitBranch,
   GitCommit,
+  ExternalLink,
+  User,
+  Cpu,
+  FileText,
+  Globe,
 } from "lucide-react"
 import type { Dictionary } from "@/lib/i18n/get-dictionary"
 
@@ -53,6 +59,15 @@ interface HealthData {
       branch: string
     }
   }
+  runtime?: {
+    nodeVersion: string
+    memoryUsage: {
+      rss: number
+      heapUsed: number
+      heapTotal: number
+      external: number
+    }
+  }
 }
 
 const serviceConfig: Record<string, { icon: typeof Database; labelKey: string }> = {
@@ -62,9 +77,12 @@ const serviceConfig: Record<string, { icon: typeof Database; labelKey: string }>
   turnstile: { icon: Shield, labelKey: "statusServiceTurnstile" },
   oauthGithub: { icon: Shield, labelKey: "statusServiceOAuthGitHub" },
   oauthGoogle: { icon: Shield, labelKey: "statusServiceOAuthGoogle" },
+  oauthLinuxdo: { icon: Shield, labelKey: "statusServiceOAuthLinuxDo" },
   cloudflareAI: { icon: Cloud, labelKey: "statusServiceCloudflareAI" },
   fileUpload: { icon: Upload, labelKey: "statusServiceFileUpload" },
 }
+
+const AUTO_REFRESH_INTERVAL = 30
 
 function formatUptime(seconds: number): string {
   const days = Math.floor(seconds / 86400)
@@ -73,6 +91,13 @@ function formatUptime(seconds: number): string {
   if (days > 0) return `${days}d ${hours}h ${minutes}m`
   if (hours > 0) return `${hours}h ${minutes}m`
   return `${minutes}m`
+}
+
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+  return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`
 }
 
 function StatusBadge({ status, t }: { status: ServiceStatus; t: Record<string, unknown> }) {
@@ -150,10 +175,49 @@ function OverallStatusIndicator({
   )
 }
 
+function InfoCell({
+  icon: Icon,
+  label,
+  value,
+  mono = false,
+  href,
+}: {
+  icon: typeof Clock
+  label: string
+  value: string
+  mono?: boolean
+  href?: string
+}) {
+  return (
+    <div className="flex items-center gap-3 rounded-lg border p-4">
+      <Icon className="h-5 w-5 shrink-0 text-muted-foreground" />
+      <div className="min-w-0">
+        <div className="text-sm text-muted-foreground">{label}</div>
+        {href && value !== "N/A" ? (
+          <a
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`inline-flex items-center gap-1 text-sm font-medium hover:underline ${mono ? "font-mono" : ""}`}
+          >
+            {value}
+            <ExternalLink className="h-3 w-3" />
+          </a>
+        ) : (
+          <div className={`text-sm font-medium truncate ${mono ? "font-mono" : ""}`}>{value}</div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 export function StatusClient({ dict }: StatusClientProps) {
   const [data, setData] = useState<HealthData | null>(null)
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
+  const [autoRefresh, setAutoRefresh] = useState(true)
+  const [countdown, setCountdown] = useState(AUTO_REFRESH_INTERVAL)
+  const countdownRef = useRef(AUTO_REFRESH_INTERVAL)
 
   const t = dict.admin as Record<string, unknown>
 
@@ -170,12 +234,27 @@ export function StatusClient({ dict }: StatusClientProps) {
     } finally {
       setLoading(false)
       setRefreshing(false)
+      countdownRef.current = AUTO_REFRESH_INTERVAL
+      setCountdown(AUTO_REFRESH_INTERVAL)
     }
   }, [])
 
   useEffect(() => {
     fetchHealth()
   }, [fetchHealth])
+
+  // 自动刷新
+  useEffect(() => {
+    if (!autoRefresh) return
+    const timer = setInterval(() => {
+      countdownRef.current -= 1
+      setCountdown(countdownRef.current)
+      if (countdownRef.current <= 0) {
+        fetchHealth(true)
+      }
+    }, 1000)
+    return () => clearInterval(timer)
+  }, [autoRefresh, fetchHealth])
 
   if (loading) {
     return (
@@ -195,14 +274,39 @@ export function StatusClient({ dict }: StatusClientProps) {
     )
   }
 
+  const git = data.deployment.git
+  const repoUrl =
+    git.repo !== "unknown" ? `https://github.com/${git.repo}` : undefined
+  const commitUrl =
+    repoUrl && git.commitHash !== "unknown"
+      ? `${repoUrl}/commit/${git.commitHash}`
+      : undefined
+  const branchUrl =
+    repoUrl && git.branch !== "unknown"
+      ? `${repoUrl}/tree/${git.branch}`
+      : undefined
+  const platformUrl =
+    data.deployment.platformUrl !== "unknown" ? data.deployment.platformUrl : undefined
+
   return (
     <div className="space-y-6">
       {/* 头部：整体状态 + 刷新 */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <OverallStatusIndicator status={data.status} t={t} />
         <div className="flex items-center gap-4">
-          <span className="text-sm text-muted-foreground">
-            {(t.statusLastCheck as string) || "Last checked"}:{" "}
+          <div className="flex items-center gap-2">
+            <Switch
+              checked={autoRefresh}
+              onCheckedChange={setAutoRefresh}
+              className="scale-90"
+            />
+            <span className="text-xs text-muted-foreground whitespace-nowrap">
+              {autoRefresh
+                ? `${(t.statusAutoRefresh as string) || "Auto"} (${countdown}s)`
+                : (t.statusAutoRefreshOff as string) || "Auto off"}
+            </span>
+          </div>
+          <span className="hidden text-sm text-muted-foreground sm:inline">
             {new Date(data.timestamp).toLocaleString()}
           </span>
           <Button
@@ -229,7 +333,7 @@ export function StatusClient({ dict }: StatusClientProps) {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {Object.entries(data.services).map(([key, info]) => {
                 const config = serviceConfig[key]
                 if (!config) return null
@@ -267,75 +371,102 @@ export function StatusClient({ dict }: StatusClientProps) {
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <div className="flex items-center gap-3 rounded-lg border p-4">
-              <Clock className="h-5 w-5 text-muted-foreground" />
-              <div>
-                <div className="text-sm text-muted-foreground">
-                  {(t.statusUptime as string) || "Uptime"}
-                </div>
-                <div className="font-medium">{formatUptime(data.uptime)}</div>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 rounded-lg border p-4">
-              <Server className="h-5 w-5 text-muted-foreground" />
-              <div>
-                <div className="text-sm text-muted-foreground">
-                  {(t.statusEnvironment as string) || "Environment"}
-                </div>
-                <div className="font-medium">{data.environment}</div>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 rounded-lg border p-4">
-              <Clock className="h-5 w-5 text-muted-foreground" />
-              <div>
-                <div className="text-sm text-muted-foreground">
-                  {(t.statusBuildTime as string) || "Build Time"}
-                </div>
-                <div className="font-medium text-sm">
-                  {data.deployment.buildTime !== "unknown"
-                    ? new Date(data.deployment.buildTime).toLocaleString()
-                    : "N/A"}
-                </div>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 rounded-lg border p-4">
-              <Cloud className="h-5 w-5 text-muted-foreground" />
-              <div>
-                <div className="text-sm text-muted-foreground">
-                  {(t.statusPlatform as string) || "Platform"}
-                </div>
-                <div className="font-medium">
-                  {data.deployment.platform !== "unknown" ? data.deployment.platform : "N/A"}
-                </div>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 rounded-lg border p-4">
-              <GitBranch className="h-5 w-5 text-muted-foreground" />
-              <div>
-                <div className="text-sm text-muted-foreground">
-                  {(t.statusGitBranch as string) || "Git Branch"}
-                </div>
-                <div className="font-medium font-mono text-sm">
-                  {data.deployment.git.branch !== "unknown" ? data.deployment.git.branch : "N/A"}
-                </div>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 rounded-lg border p-4">
-              <GitCommit className="h-5 w-5 text-muted-foreground" />
-              <div>
-                <div className="text-sm text-muted-foreground">
-                  {(t.statusGitCommit as string) || "Git Commit"}
-                </div>
-                <div className="font-medium font-mono text-sm">
-                  {data.deployment.git.commitShort !== "unknown"
-                    ? data.deployment.git.commitShort
-                    : "N/A"}
-                </div>
-              </div>
-            </div>
+            <InfoCell
+              icon={Clock}
+              label={(t.statusUptime as string) || "Uptime"}
+              value={formatUptime(data.uptime)}
+            />
+            <InfoCell
+              icon={Server}
+              label={(t.statusEnvironment as string) || "Environment"}
+              value={data.environment}
+            />
+            <InfoCell
+              icon={Clock}
+              label={(t.statusBuildTime as string) || "Build Time"}
+              value={
+                data.deployment.buildTime !== "unknown"
+                  ? new Date(data.deployment.buildTime).toLocaleString()
+                  : "N/A"
+              }
+            />
+            <InfoCell
+              icon={Cloud}
+              label={(t.statusPlatform as string) || "Platform"}
+              value={data.deployment.platform !== "unknown" ? data.deployment.platform : "N/A"}
+              href={platformUrl}
+            />
+            <InfoCell
+              icon={Globe}
+              label={(t.statusRepo as string) || "Repository"}
+              value={git.repo !== "unknown" ? git.repo : "N/A"}
+              mono
+              href={repoUrl}
+            />
+            <InfoCell
+              icon={GitBranch}
+              label={(t.statusGitBranch as string) || "Branch"}
+              value={git.branch !== "unknown" ? git.branch : "N/A"}
+              mono
+              href={branchUrl}
+            />
+            <InfoCell
+              icon={GitCommit}
+              label={(t.statusGitCommit as string) || "Commit"}
+              value={git.commitShort !== "unknown" ? git.commitShort : "N/A"}
+              mono
+              href={commitUrl}
+            />
+            <InfoCell
+              icon={User}
+              label={(t.statusGitAuthor as string) || "Author"}
+              value={git.author !== "unknown" ? git.author : "N/A"}
+            />
+            <InfoCell
+              icon={FileText}
+              label={(t.statusGitMessage as string) || "Commit Message"}
+              value={git.commitMessage !== "unknown" ? git.commitMessage : "N/A"}
+            />
           </div>
         </CardContent>
       </Card>
+
+      {/* 系统运行时 */}
+      {data.runtime && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Cpu className="h-5 w-5" />
+              {(t.statusRuntime as string) || "Runtime"}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <InfoCell
+                icon={Cpu}
+                label={(t.statusNodeVersion as string) || "Node.js"}
+                value={data.runtime.nodeVersion}
+                mono
+              />
+              <InfoCell
+                icon={Server}
+                label={(t.statusMemRss as string) || "RSS"}
+                value={formatBytes(data.runtime.memoryUsage.rss)}
+              />
+              <InfoCell
+                icon={Server}
+                label={(t.statusMemHeap as string) || "Heap Used / Total"}
+                value={`${formatBytes(data.runtime.memoryUsage.heapUsed)} / ${formatBytes(data.runtime.memoryUsage.heapTotal)}`}
+              />
+              <InfoCell
+                icon={Server}
+                label={(t.statusMemExternal as string) || "External"}
+                value={formatBytes(data.runtime.memoryUsage.external)}
+              />
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }

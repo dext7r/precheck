@@ -96,6 +96,11 @@ function checkOAuthGoogle(): ServiceInfo {
   return { status: features.oauth.google ? "up" : "unconfigured" }
 }
 
+// 检测 OAuth LinuxDo
+function checkOAuthLinuxDo(): ServiceInfo {
+  return { status: features.oauth.linuxdo ? "up" : "unconfigured" }
+}
+
 // 检测 Cloudflare AI
 function checkCloudflareAI(): ServiceInfo {
   return { status: features.cloudflareAI ? "up" : "unconfigured" }
@@ -134,6 +139,7 @@ export async function GET() {
     turnstile: checkTurnstile(),
     oauthGithub: checkOAuthGitHub(),
     oauthGoogle: checkOAuthGoogle(),
+    oauthLinuxdo: checkOAuthLinuxDo(),
     cloudflareAI: checkCloudflareAI(),
     fileUpload: checkFileUpload(),
   }
@@ -171,9 +177,19 @@ export async function GET() {
 
   // 管理员可见完整服务详情
   if (isAdminUser) {
+    const mem = process.memoryUsage()
     return NextResponse.json({
       ...baseResponse,
       services,
+      runtime: {
+        nodeVersion: process.version,
+        memoryUsage: {
+          rss: mem.rss,
+          heapUsed: mem.heapUsed,
+          heapTotal: mem.heapTotal,
+          external: mem.external,
+        },
+      },
     })
   }
 

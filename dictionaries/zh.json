@@ -2008,9 +2008,20 @@
     "statusServiceTurnstile": "Turnstile 验证",
     "statusServiceOAuthGitHub": "GitHub OAuth",
     "statusServiceOAuthGoogle": "Google OAuth",
+    "statusServiceOAuthLinuxDo": "LinuxDo OAuth",
     "statusServiceCloudflareAI": "Cloudflare AI",
     "statusServiceFileUpload": "文件上传",
-    "statusLatency": "延迟"
+    "statusLatency": "延迟",
+    "statusAutoRefresh": "自动刷新",
+    "statusAutoRefreshOff": "自动刷新关闭",
+    "statusRepo": "代码仓库",
+    "statusGitAuthor": "提交作者",
+    "statusGitMessage": "提交信息",
+    "statusRuntime": "运行时",
+    "statusNodeVersion": "Node.js",
+    "statusMemRss": "RSS 内存",
+    "statusMemHeap": "堆内存 (已用/总量)",
+    "statusMemExternal": "外部内存"
   },
   "theme": {
     "toggle": "切换主题",

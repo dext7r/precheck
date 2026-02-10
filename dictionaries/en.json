@@ -2013,9 +2013,20 @@
     "statusServiceTurnstile": "Turnstile Verification",
     "statusServiceOAuthGitHub": "GitHub OAuth",
     "statusServiceOAuthGoogle": "Google OAuth",
+    "statusServiceOAuthLinuxDo": "LinuxDo OAuth",
     "statusServiceCloudflareAI": "Cloudflare AI",
     "statusServiceFileUpload": "File Upload",
-    "statusLatency": "Latency"
+    "statusLatency": "Latency",
+    "statusAutoRefresh": "Auto refresh",
+    "statusAutoRefreshOff": "Auto off",
+    "statusRepo": "Repository",
+    "statusGitAuthor": "Author",
+    "statusGitMessage": "Commit Message",
+    "statusRuntime": "Runtime",
+    "statusNodeVersion": "Node.js",
+    "statusMemRss": "RSS Memory",
+    "statusMemHeap": "Heap Used / Total",
+    "statusMemExternal": "External Memory"
   },
   "theme": {
     "toggle": "Toggle theme",
