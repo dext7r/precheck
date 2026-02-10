@@ -76,8 +76,13 @@ export async function PUT(request: NextRequest) {
 
     // 开关从 off→on 时，批量提升已存储的 LinuxDo TL>=3 用户
     if (updates.linuxdoAutoAdmin && !before.linuxdoAutoAdmin) {
-      const promoted = await batchPromoteLinuxDoAdmins(user)
-      return NextResponse.json({ ...settings, _batchPromoted: promoted })
+      try {
+        const promoted = await batchPromoteLinuxDoAdmins(user)
+        return NextResponse.json({ ...settings, _batchPromoted: promoted })
+      } catch (e) {
+        console.error("Batch promote failed:", e)
+        return NextResponse.json({ ...settings, _batchPromoted: -1 })
+      }
     }
 
     return NextResponse.json(settings)

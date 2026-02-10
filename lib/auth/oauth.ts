@@ -223,7 +223,7 @@ export async function handleOAuthSignIn(
         data: { trustLevel: profile.trustLevel },
       })
     }
-    await maybePromoteLinuxDoAdmin(provider, profile, user, settings, request)
+    await maybePromoteLinuxDoAdmin(provider, profile, user, settings, request, existingAccount.trustLevel ?? undefined)
     return user
   }
 
@@ -252,7 +252,7 @@ export async function handleOAuthSignIn(
       metadata: { provider },
       request,
     })
-    await maybePromoteLinuxDoAdmin(provider, profile, existingUser, settings, request)
+    await maybePromoteLinuxDoAdmin(provider, profile, existingUser, settings, request, undefined)
     return existingUser
   }
 
@@ -366,7 +366,7 @@ export async function handleOAuthBind(
     request,
   })
 
-  await maybePromoteLinuxDoAdmin(provider, profile, user, await getSiteSettings(), request)
+  await maybePromoteLinuxDoAdmin(provider, profile, user, await getSiteSettings(), request, undefined)
 
   return user
 }
@@ -378,12 +378,15 @@ async function maybePromoteLinuxDoAdmin(
   user: { id: string; role: string },
   settings: { linuxdoAutoAdmin: boolean },
   request?: Request,
+  accountTrustLevel?: number,
 ) {
+  const effectiveTrustLevel = typeof profile.trustLevel === "number" ? profile.trustLevel : accountTrustLevel
+
   if (
     provider !== "linuxdo" ||
     !settings.linuxdoAutoAdmin ||
-    typeof profile.trustLevel !== "number" ||
-    profile.trustLevel < 3 ||
+    typeof effectiveTrustLevel !== "number" ||
+    effectiveTrustLevel < 3 ||
     user.role !== "USER" ||
     !db
   ) {
@@ -402,7 +405,7 @@ async function maybePromoteLinuxDoAdmin(
     actor: user,
     before: { role: "USER" },
     after: { role: "ADMIN" },
-    metadata: { provider: "linuxdo", trustLevel: profile.trustLevel },
+    metadata: { provider: "linuxdo", trustLevel: effectiveTrustLevel },
     request,
   })
 }
@@ -415,26 +418,34 @@ export async function batchPromoteLinuxDoAdmins(actor: { id: string; role: strin
     where: {
       provider: "linuxdo",
       trustLevel: { gte: 3 },
-      user: { role: "USER" },
+      user: { role: "USER", status: "ACTIVE" },
     },
     include: { user: true },
   })
 
+  let promoted = 0
   for (const account of accounts) {
-    await db.user.update({
-      where: { id: account.userId },
-      data: { role: "ADMIN" },
-    })
-    await writeAuditLog(db, {
-      action: "USER_AUTO_PROMOTE_ADMIN",
-      entityType: "USER",
-      entityId: account.userId,
-      actor,
-      before: { role: "USER" },
-      after: { role: "ADMIN" },
-      metadata: { provider: "linuxdo", trustLevel: account.trustLevel, source: "batch" },
-    })
+    try {
+      const updated = await db.user.updateMany({
+        where: { id: account.userId, role: "USER" },
+        data: { role: "ADMIN" },
+      })
+      if (updated.count > 0) {
+        promoted++
+        await writeAuditLog(db, {
+          action: "USER_AUTO_PROMOTE_ADMIN",
+          entityType: "USER",
+          entityId: account.userId,
+          actor,
+          before: { role: "USER" },
+          after: { role: "ADMIN" },
+          metadata: { provider: "linuxdo", trustLevel: account.trustLevel, source: "batch" },
+        })
+      }
+    } catch {
+      // skip failed individual promotion
+    }
   }
 
-  return accounts.length
+  return promoted
 }
