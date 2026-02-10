@@ -51,6 +51,7 @@ type SiteSettings = {
   maintenanceMode: boolean
   adminApplicationEnabled: boolean
   inviteCodeUrlPrefix: string
+  analyticsEnabled: boolean
 }
 
 type QQGroupConfig = {
@@ -1019,6 +1020,14 @@ export function AdminSettingsForm({ locale, dict }: AdminSettingsFormProps) {
                       checked={settings.adminApplicationEnabled}
                       onCheckedChange={(v) =>
                         setSettings({ ...settings, adminApplicationEnabled: v })
+                      }
+                    />
+                    <ToggleItem
+                      title={t.analyticsEnabled || "51.la 统计"}
+                      description={t.analyticsEnabledDesc || "启用 51.la 网站流量统计与性能监控"}
+                      checked={settings.analyticsEnabled}
+                      onCheckedChange={(v) =>
+                        setSettings({ ...settings, analyticsEnabled: v })
                       }
                     />
                     {systemConfig && (

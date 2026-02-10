@@ -1693,6 +1693,8 @@
     "maintenanceModeDescription": "启用后将暂时禁用网站访问",
     "adminApplicationEnabled": "允许申请管理员",
     "adminApplicationEnabledDesc": "允许普通用户申请成为管理员",
+    "analyticsEnabled": "51.la 统计",
+    "analyticsEnabledDesc": "启用 51.la 网站流量统计与性能监控",
     "smtpHost": "SMTP 主机",
     "smtpHostPlaceholder": "smtp.example.com",
     "smtpPort": "SMTP 端口",

@@ -13,6 +13,7 @@ import {
   SoftwareApplicationJsonLd,
 } from "@/components/seo/json-ld"
 import { HtmlLang } from "@/components/seo/html-lang"
+import { getSiteSettings } from "@/lib/site-settings"
 
 export async function generateStaticParams() {
   return locales.map((locale) => ({ locale }))
@@ -120,22 +121,27 @@ export default async function LocaleLayout({
     notFound()
   }
   const currentLocale = locale as Locale
+  const { analyticsEnabled } = await getSiteSettings()
 
   return (
     <>
       <HtmlLang locale={currentLocale} />
-      <Script
-        id="LA_COLLECT"
-        strategy="afterInteractive"
-        src="//sdk.51.la/js-sdk-pro.min.js?id=L501OCykxVLJmw8n&ck=L501OCykxVLJmw8n&autoTrack=true&hashMode=true&screenRecord=true"
-      />
-      <Script
-        id="LA_PERF"
-        strategy="afterInteractive"
-        dangerouslySetInnerHTML={{
-          __html: `!(function(c,i,e,b){var h=i.createElement("script");var f=i.getElementsByTagName("script")[0];h.type="text/javascript";h.crossorigin=true;h.onload=function(){new c[b]["Monitor"]().init({id:"L52KT284INPvfCrf"});};f.parentNode.insertBefore(h,f);h.src=e;})(window,document,"https://sdk.51.la/perf/js-sdk-perf.min.js","LingQue");`,
-        }}
-      />
+      {analyticsEnabled && (
+        <>
+          <Script
+            id="LA_COLLECT"
+            strategy="afterInteractive"
+            src="//sdk.51.la/js-sdk-pro.min.js?id=L501OCykxVLJmw8n&ck=L501OCykxVLJmw8n&autoTrack=true&hashMode=true&screenRecord=true"
+          />
+          <Script
+            id="LA_PERF"
+            strategy="afterInteractive"
+            dangerouslySetInnerHTML={{
+              __html: `!(function(c,i,e,b){var h=i.createElement("script");var f=i.getElementsByTagName("script")[0];h.type="text/javascript";h.crossorigin=true;h.onload=function(){new c[b]["Monitor"]().init({id:"L52KT284INPvfCrf"});};f.parentNode.insertBefore(h,f);h.src=e;})(window,document,"https://sdk.51.la/perf/js-sdk-perf.min.js","LingQue");`,
+            }}
+          />
+        </>
+      )}
       <WebsiteJsonLd locale={currentLocale} />
       <OrganizationJsonLd />
       <SoftwareApplicationJsonLd locale={currentLocale} />

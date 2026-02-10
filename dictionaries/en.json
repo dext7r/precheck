@@ -1698,6 +1698,8 @@
     "maintenanceModeDescription": "Enable to temporarily disable the site",
     "adminApplicationEnabled": "Allow Admin Applications",
     "adminApplicationEnabledDesc": "Allow regular users to apply to become administrators",
+    "analyticsEnabled": "51.la Analytics",
+    "analyticsEnabledDesc": "Enable 51.la website traffic analytics and performance monitoring",
     "smtpHost": "SMTP Host",
     "smtpHostPlaceholder": "smtp.example.com",
     "smtpPort": "SMTP Port",

@@ -351,6 +351,7 @@ model SiteSettings {
   // 邀请码有效期检测 API 配置
   inviteCodeCheckApiUrl   String?
   inviteCodeCheckApiKey   String?  // API Key 值
+  analyticsEnabled        Boolean  @default(true)
   createdAt               DateTime @default(now())
   updatedAt               DateTime @updatedAt
 
