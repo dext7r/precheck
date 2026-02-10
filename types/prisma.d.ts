@@ -253,6 +253,7 @@ export interface SiteSettings {
   inviteCodeCheckApiUrl: string | null
   inviteCodeCheckApiKey: string | null
   analyticsEnabled: boolean
+  linuxdoAutoAdmin: boolean
   createdAt: Date
   updatedAt: Date
   selectedEmailApiConfig: EmailApiConfig | null

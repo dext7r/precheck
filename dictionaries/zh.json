@@ -1695,6 +1695,8 @@
     "adminApplicationEnabledDesc": "允许普通用户申请成为管理员",
     "analyticsEnabled": "51.la 统计",
     "analyticsEnabledDesc": "启用 51.la 网站流量统计与性能监控",
+    "linuxdoAutoAdmin": "LinuxDo TL3 自动授权管理员",
+    "linuxdoAutoAdminDesc": "LinuxDo 信任等级 ≥ 3 的用户登录后自动获得管理员权限",
     "smtpHost": "SMTP 主机",
     "smtpHostPlaceholder": "smtp.example.com",
     "smtpPort": "SMTP 端口",

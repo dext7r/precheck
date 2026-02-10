@@ -14,6 +14,7 @@ export type SiteSettings = {
   adminApplicationEnabled: boolean
   inviteCodeUrlPrefix: string
   analyticsEnabled: boolean
+  linuxdoAutoAdmin: boolean
 }
 
 const defaultSettings: SiteSettings = {
@@ -28,6 +29,7 @@ const defaultSettings: SiteSettings = {
   adminApplicationEnabled: true,
   inviteCodeUrlPrefix: "",
   analyticsEnabled: true,
+  linuxdoAutoAdmin: false,
 }
 
 export async function getSiteSettings(): Promise<SiteSettings> {
@@ -52,6 +54,7 @@ export async function getSiteSettings(): Promise<SiteSettings> {
       adminApplicationEnabled: existing.adminApplicationEnabled,
       inviteCodeUrlPrefix: existing.inviteCodeUrlPrefix ?? "",
       analyticsEnabled: existing.analyticsEnabled,
+      linuxdoAutoAdmin: existing.linuxdoAutoAdmin,
     }
   }
 
@@ -82,6 +85,7 @@ export async function getSiteSettings(): Promise<SiteSettings> {
     adminApplicationEnabled: created.adminApplicationEnabled,
     inviteCodeUrlPrefix: created.inviteCodeUrlPrefix ?? "",
     analyticsEnabled: created.analyticsEnabled,
+    linuxdoAutoAdmin: created.linuxdoAutoAdmin,
   }
 }
 
@@ -103,6 +107,7 @@ export async function updateSiteSettings(updates: Partial<SiteSettings>): Promis
     adminApplicationEnabled: updates.adminApplicationEnabled ?? current.adminApplicationEnabled,
     inviteCodeUrlPrefix: updates.inviteCodeUrlPrefix ?? current.inviteCodeUrlPrefix,
     analyticsEnabled: updates.analyticsEnabled ?? current.analyticsEnabled,
+    linuxdoAutoAdmin: updates.linuxdoAutoAdmin ?? current.linuxdoAutoAdmin,
   }
 
   const saved = await db.siteSettings.upsert({
@@ -126,5 +131,6 @@ export async function updateSiteSettings(updates: Partial<SiteSettings>): Promis
     adminApplicationEnabled: saved.adminApplicationEnabled,
     inviteCodeUrlPrefix: saved.inviteCodeUrlPrefix ?? "",
     analyticsEnabled: saved.analyticsEnabled,
+    linuxdoAutoAdmin: saved.linuxdoAutoAdmin,
   }
 }

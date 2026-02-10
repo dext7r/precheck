@@ -19,6 +19,7 @@ const settingsSchema = z
     postModeration: z.boolean(),
     maintenanceMode: z.boolean(),
     analyticsEnabled: z.boolean(),
+    linuxdoAutoAdmin: z.boolean(),
   })
   .partial()
 

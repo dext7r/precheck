@@ -10,6 +10,7 @@ interface OAuthProfile {
   email: string
   name?: string
   avatar?: string
+  trustLevel?: number
 }
 
 // GitHub OAuth
@@ -127,6 +128,7 @@ export async function getLinuxDoProfile(code: string): Promise<OAuthProfile | nu
       email: userData.email,
       name: userData.name || userData.username,
       avatar: userData.avatar_url,
+      trustLevel: typeof userData.trust_level === "number" ? userData.trust_level : undefined,
     }
   } catch {
     return null
@@ -214,7 +216,9 @@ export async function handleOAuthSignIn(
   })
 
   if (existingAccount) {
-    return existingAccount.user
+    const user = existingAccount.user
+    await maybePromoteLinuxDoAdmin(provider, profile, user, settings, request)
+    return user
   }
 
   // 查找已存在的用户（通过邮箱）
@@ -241,6 +245,7 @@ export async function handleOAuthSignIn(
       metadata: { provider },
       request,
     })
+    await maybePromoteLinuxDoAdmin(provider, profile, existingUser, settings, request)
     return existingUser
   }
 
@@ -249,12 +254,19 @@ export async function handleOAuthSignIn(
   }
 
   // 创建新用户和 OAuth 账号
+  const shouldPromote =
+    provider === "linuxdo" &&
+    settings.linuxdoAutoAdmin &&
+    typeof profile.trustLevel === "number" &&
+    profile.trustLevel >= 3
+
   const newUser = await db.user.create({
     data: {
       email: profile.email,
       name: profile.name,
       avatar: profile.avatar,
       emailVerified: new Date(),
+      role: shouldPromote ? "ADMIN" : undefined,
       accounts: {
         create: {
           type: "oauth",
@@ -271,7 +283,7 @@ export async function handleOAuthSignIn(
     entityId: newUser.id,
     actor: newUser,
     after: newUser,
-    metadata: { provider },
+    metadata: { provider, ...(shouldPromote && { autoAdmin: true, trustLevel: profile.trustLevel }) },
     request,
   })
 
@@ -342,5 +354,43 @@ export async function handleOAuthBind(
     request,
   })
 
+  await maybePromoteLinuxDoAdmin(provider, profile, user, await getSiteSettings(), request)
+
   return user
+}
+
+// LinuxDo TL >= 3 自动提升为 ADMIN（仅 USER 角色会被提升）
+async function maybePromoteLinuxDoAdmin(
+  provider: OAuthProvider,
+  profile: OAuthProfile,
+  user: { id: string; role: string },
+  settings: { linuxdoAutoAdmin: boolean },
+  request?: Request,
+) {
+  if (
+    provider !== "linuxdo" ||
+    !settings.linuxdoAutoAdmin ||
+    typeof profile.trustLevel !== "number" ||
+    profile.trustLevel < 3 ||
+    user.role !== "USER" ||
+    !db
+  ) {
+    return
+  }
+
+  await db.user.update({
+    where: { id: user.id },
+    data: { role: "ADMIN" },
+  })
+
+  await writeAuditLog(db, {
+    action: "USER_AUTO_PROMOTE_ADMIN",
+    entityType: "USER",
+    entityId: user.id,
+    actor: user,
+    before: { role: "USER" },
+    after: { role: "ADMIN" },
+    metadata: { provider: "linuxdo", trustLevel: profile.trustLevel },
+    request,
+  })
 }

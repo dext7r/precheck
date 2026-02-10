@@ -1700,6 +1700,8 @@
     "adminApplicationEnabledDesc": "Allow regular users to apply to become administrators",
     "analyticsEnabled": "51.la Analytics",
     "analyticsEnabledDesc": "Enable 51.la website traffic analytics and performance monitoring",
+    "linuxdoAutoAdmin": "LinuxDo TL3 Auto Admin",
+    "linuxdoAutoAdminDesc": "Automatically grant admin privileges to LinuxDo users with trust level ≥ 3",
     "smtpHost": "SMTP Host",
     "smtpHostPlaceholder": "smtp.example.com",
     "smtpPort": "SMTP Port",

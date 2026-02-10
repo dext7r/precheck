@@ -52,6 +52,7 @@ type SiteSettings = {
   adminApplicationEnabled: boolean
   inviteCodeUrlPrefix: string
   analyticsEnabled: boolean
+  linuxdoAutoAdmin: boolean
 }
 
 type QQGroupConfig = {
@@ -1028,6 +1029,17 @@ export function AdminSettingsForm({ locale, dict }: AdminSettingsFormProps) {
                       checked={settings.analyticsEnabled}
                       onCheckedChange={(v) =>
                         setSettings({ ...settings, analyticsEnabled: v })
+                      }
+                    />
+                    <ToggleItem
+                      title={t.linuxdoAutoAdmin || "LinuxDo TL3 自动授权管理员"}
+                      description={
+                        t.linuxdoAutoAdminDesc ||
+                        "LinuxDo 信任等级 ≥ 3 的用户登录后自动获得管理员权限"
+                      }
+                      checked={settings.linuxdoAutoAdmin}
+                      onCheckedChange={(v) =>
+                        setSettings({ ...settings, linuxdoAutoAdmin: v })
                       }
                     />
                     {systemConfig && (
