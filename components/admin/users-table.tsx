@@ -10,6 +10,7 @@ import {
   Ban,
   CheckCircle2,
   Trash2,
+  XCircle,
   X,
   Users,
   UserPlus,
@@ -245,6 +246,26 @@ export function AdminUsersTable({ locale, dict }: AdminUsersTableProps) {
     }
   }
 
+  const hardDeleteUser = async (id: string) => {
+    setBusyId(id)
+    setError("")
+    try {
+      const res = await fetch(`/api/admin/users/${id}?hard=true`, {
+        method: "DELETE",
+      })
+      if (!res.ok) {
+        throw new Error("Hard delete failed")
+      }
+      toast.success(t.hardDeleteSuccess || "用户已彻底删除")
+      await fetchUsers()
+    } catch (deleteError) {
+      console.error("Admin user hard delete error:", deleteError)
+      setError(t.actionFailed)
+    } finally {
+      setBusyId(null)
+    }
+  }
+
   const handleCreateUsers = async () => {
     const emails = emailsInput
       .split(/[\n,;]+/)
@@ -306,11 +327,16 @@ export function AdminUsersTable({ locale, dict }: AdminUsersTableProps) {
       ACTIVE: t.active,
       INACTIVE: t.inactive,
       BANNED: t.banned,
+      DELETED: t.deleted || "已删除",
+    }
+    const statusStyles: Record<string, string> = {
+      ACTIVE: "bg-primary/10 text-primary",
+      DELETED: "bg-muted text-muted-foreground line-through",
     }
     return (
       <span
         className={`rounded-full px-2 py-1 text-xs font-medium ${
-          status === "ACTIVE" ? "bg-primary/10 text-primary" : "bg-destructive/10 text-destructive"
+          statusStyles[status] || "bg-destructive/10 text-destructive"
         }`}
       >
         {statusMap[status] || status}
@@ -412,6 +438,28 @@ export function AdminUsersTable({ locale, dict }: AdminUsersTableProps) {
             <Trash2 className="mr-2 h-4 w-4" />
             {t.delete}
           </DropdownMenuItem>
+          {user.status === "DELETED" && (
+            <DropdownMenuItem
+              className="text-destructive"
+              disabled={isBusy}
+              onClick={() => {
+                setConfirmState({
+                  title: t.confirmTitle,
+                  description:
+                    t.confirmHardDeleteUser ||
+                    "此操作将彻底删除该用户及所有关联数据，不可恢复。确定继续？",
+                  confirmLabel: t.hardDelete || "彻底删除",
+                  destructive: true,
+                  onConfirm: async () => {
+                    await hardDeleteUser(user.id)
+                  },
+                })
+              }}
+            >
+              <XCircle className="mr-2 h-4 w-4" />
+              {t.hardDelete || "彻底删除"}
+            </DropdownMenuItem>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
     )

@@ -164,6 +164,7 @@ export async function DELETE(request: NextRequest, context: { params: Promise<{ 
     }
 
     const { id } = await context.params
+    const hard = request.nextUrl.searchParams.get("hard") === "true"
 
     if (id === user.id) {
       return createApiErrorResponse(request, ApiErrorKeys.admin.users.cannotDeleteSelf, {
@@ -187,7 +188,19 @@ export async function DELETE(request: NextRequest, context: { params: Promise<{ 
       )
     }
 
-    const before = await db.user.findUnique({ where: { id } })
+    if (hard) {
+      await writeAuditLog(db, {
+        action: "USER_ADMIN_HARD_DELETE",
+        entityType: "USER",
+        entityId: id,
+        actor: user,
+        before: targetUser,
+        metadata: { email: targetUser.email, name: targetUser.name },
+        request,
+      })
+      await db.user.delete({ where: { id } })
+      return NextResponse.json({ success: true, hard: true })
+    }
 
     const deletedUser = await db.user.update({
       where: { id },
@@ -212,7 +225,7 @@ export async function DELETE(request: NextRequest, context: { params: Promise<{ 
       entityType: "USER",
       entityId: id,
       actor: user,
-      before,
+      before: targetUser,
       after: deletedUser,
       request,
     })
