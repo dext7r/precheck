@@ -39,6 +39,7 @@ import {
   Sparkles,
   Trash2,
   Gift,
+  MessageCircle,
 } from "lucide-react"
 import type { Dictionary } from "@/lib/i18n/get-dictionary"
 import type { Locale } from "@/lib/i18n/config"
@@ -841,9 +842,31 @@ export function PreApplicationForm({
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-1">
                     <p className="text-xs text-muted-foreground">{t.review.reviewer}</p>
-                    <p className="font-medium">
-                      {latest.reviewedBy?.name || latest.reviewedBy?.email || "-"}
-                    </p>
+                    {latest.reviewedBy ? (
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          try {
+                            const res = await fetch("/api/private-chats", {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ adminId: latest.reviewedBy!.id }),
+                            })
+                            if (!res.ok) throw new Error()
+                            const { chatId } = await res.json()
+                            router.push(`/${locale}/dashboard/private-chats/${chatId}`)
+                          } catch {
+                            toast.error(t.review.chatFailed || "发起私信失败")
+                          }
+                        }}
+                        className="inline-flex items-center gap-1.5 font-medium text-primary hover:underline"
+                      >
+                        {latest.reviewedBy.name || latest.reviewedBy.email}
+                        <MessageCircle className="h-3.5 w-3.5" />
+                      </button>
+                    ) : (
+                      <p className="font-medium">-</p>
+                    )}
                   </div>
                   <div className="space-y-1">
                     <p className="text-xs text-muted-foreground">{t.review.reviewedAt}</p>
