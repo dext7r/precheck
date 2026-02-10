@@ -1,6 +1,60 @@
 {
   "versions": [
     {
+      "version": "1.6.0",
+      "date": "2026-02-10",
+      "changes": [
+        {
+          "type": "added",
+          "content": "51.la 统计分析开关，管理端可控制第三方统计脚本加载"
+        },
+        {
+          "type": "added",
+          "content": "系统状态页新增运行时信息展示与自动刷新"
+        },
+        {
+          "type": "added",
+          "content": "LinuxDo TL3 用户自动提升管理员功能（系统设置开关控制）"
+        },
+        {
+          "type": "added",
+          "content": "LinuxDo OAuth 登录持久化 trust_level，开启开关时自动批量提升已有 TL3 用户"
+        },
+        {
+          "type": "added",
+          "content": "用户管理页新增 L站用户总数 / L站TL3管理员统计卡片，点击可筛选"
+        },
+        {
+          "type": "added",
+          "content": "用户管理页支持多选批量提升/降级用户角色（SUPER_ADMIN 专属）"
+        },
+        {
+          "type": "added",
+          "content": "用户管理页新增彻底删除功能，仅对已软删除用户可用"
+        },
+        {
+          "type": "added",
+          "content": "预申请页审核员名称可点击快速发起私信对话"
+        },
+        {
+          "type": "added",
+          "content": "已删除账户支持重新激活，再次注册时自动恢复"
+        },
+        {
+          "type": "changed",
+          "content": "邀请码改为纯文本存储，支持外部 API 验证"
+        },
+        {
+          "type": "changed",
+          "content": "Swagger 文档强制全局认证，移除用户/文章端点"
+        },
+        {
+          "type": "fixed",
+          "content": "修复 LinuxDo 自动提升管理员的健壮性：trustLevel 回退、活跃状态过滤、错误隔离"
+        }
+      ]
+    },
+    {
       "version": "1.5.0",
       "date": "2026-02-07",
       "changes": [
