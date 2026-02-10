@@ -1123,7 +1123,8 @@
     "review": {
       "reviewer": "Reviewer",
       "reviewedAt": "Reviewed At",
-      "guidance": "Guidance"
+      "guidance": "Guidance",
+      "chatFailed": "Failed to start chat"
     },
     "invite": {
       "code": "Invite Code",
@@ -1335,6 +1336,14 @@
     "activeUsers": "Active Users",
     "adminUsers": "Admins",
     "bannedUsers": "Banned",
+    "linuxdoUsers": "LinuxDo Users",
+    "linuxdoTL3Admins": "LinuxDo TL3 Admins",
+    "batchSelected": "{count} selected",
+    "batchPromote": "Batch Promote to Admin",
+    "batchDemote": "Batch Demote to User",
+    "confirmBatchPromote": "Promote {count} selected users to admin?",
+    "confirmBatchDemote": "Demote {count} selected users to regular user?",
+    "batchRoleSuccess": "Updated {count} user roles",
     "applicationCount": "Applications",
     "reviewCount": "Reviews",
     "newUsers": "New Users (30d)",

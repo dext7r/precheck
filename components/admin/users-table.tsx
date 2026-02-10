@@ -15,10 +15,13 @@ import {
   Users,
   UserPlus,
   Loader2,
+  Globe,
+  Crown,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Textarea } from "@/components/ui/textarea"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Label } from "@/components/ui/label"
@@ -113,7 +116,14 @@ export function AdminUsersTable({ locale, dict }: AdminUsersTableProps) {
   const t = dict.admin
   const [users, setUsers] = useState<AdminUser[]>([])
   const [total, setTotal] = useState(0)
-  const [stats, setStats] = useState({ total: 0, admins: 0, active: 0, banned: 0 })
+  const [stats, setStats] = useState({
+    total: 0,
+    admins: 0,
+    active: 0,
+    banned: 0,
+    linuxdo: 0,
+    linuxdoTL3Admins: 0,
+  })
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(20)
   const [loading, setLoading] = useState(true)
@@ -123,6 +133,10 @@ export function AdminUsersTable({ locale, dict }: AdminUsersTableProps) {
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc")
   const [roleFilter, setRoleFilter] = useState("all")
   const [statusFilter, setStatusFilter] = useState("all")
+  const [providerFilter, setProviderFilter] = useState("all")
+  const [linuxdoTL3Filter, setLinuxdoTL3Filter] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [batchBusy, setBatchBusy] = useState(false)
   const [error, setError] = useState("")
   const [busyId, setBusyId] = useState<string | null>(null)
   const [confirming, setConfirming] = useState(false)
@@ -153,6 +167,7 @@ export function AdminUsersTable({ locale, dict }: AdminUsersTableProps) {
   const fetchUsers = async () => {
     setLoading(true)
     setError("")
+    setSelectedIds(new Set())
     try {
       const params = new URLSearchParams({
         page: page.toString(),
@@ -162,6 +177,8 @@ export function AdminUsersTable({ locale, dict }: AdminUsersTableProps) {
         ...(search && { search }),
         ...(roleFilter !== "all" && { role: roleFilter }),
         ...(statusFilter !== "all" && { status: statusFilter }),
+        ...(providerFilter !== "all" && { provider: providerFilter }),
+        ...(linuxdoTL3Filter && { linuxdoTL3: "true" }),
       })
       const res = await fetch(`/api/admin/users?${params}`)
       if (!res.ok) {
@@ -187,7 +204,17 @@ export function AdminUsersTable({ locale, dict }: AdminUsersTableProps) {
 
   useEffect(() => {
     fetchUsers()
-  }, [page, pageSize, search, sortBy, sortOrder, roleFilter, statusFilter])
+  }, [
+    page,
+    pageSize,
+    search,
+    sortBy,
+    sortOrder,
+    roleFilter,
+    statusFilter,
+    providerFilter,
+    linuxdoTL3Filter,
+  ])
 
   const handleSearch = () => {
     setSearch(searchInput)
@@ -263,6 +290,50 @@ export function AdminUsersTable({ locale, dict }: AdminUsersTableProps) {
       setError(t.actionFailed)
     } finally {
       setBusyId(null)
+    }
+  }
+
+  const batchUpdateRole = async (role: "ADMIN" | "USER") => {
+    if (selectedIds.size === 0) return
+    setBatchBusy(true)
+    setError("")
+    try {
+      const res = await fetch("/api/admin/users/batch-role", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userIds: Array.from(selectedIds), role }),
+      })
+      if (!res.ok) throw new Error("Batch update failed")
+      const data = await res.json()
+      toast.success(
+        (t.batchRoleSuccess || "已更新 {count} 个用户角色").replace(
+          "{count}",
+          String(data.updated),
+        ),
+      )
+      setSelectedIds(new Set())
+      await fetchUsers()
+    } catch {
+      setError(t.actionFailed)
+    } finally {
+      setBatchBusy(false)
+    }
+  }
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === users.length) {
+      setSelectedIds(new Set())
+    } else {
+      setSelectedIds(new Set(users.map((u) => u.id)))
     }
   }
 
@@ -466,10 +537,30 @@ export function AdminUsersTable({ locale, dict }: AdminUsersTableProps) {
   }
 
   const columns: Column<AdminUser>[] = [
+    ...(currentUserRole === "SUPER_ADMIN"
+      ? [
+          {
+            key: "select" as keyof AdminUser,
+            label: (
+              <Checkbox
+                checked={users.length > 0 && selectedIds.size === users.length}
+                onCheckedChange={toggleSelectAll}
+              />
+            ) as unknown as string,
+            width: "4%",
+            render: (user: AdminUser) => (
+              <Checkbox
+                checked={selectedIds.has(user.id)}
+                onCheckedChange={() => toggleSelect(user.id)}
+              />
+            ),
+          },
+        ]
+      : []),
     {
       key: "email",
       label: t.user,
-      width: "25%",
+      width: currentUserRole === "SUPER_ADMIN" ? "22%" : "25%",
       sortable: true,
       render: (user) => (
         <div className="flex items-center gap-3">
@@ -536,16 +627,23 @@ export function AdminUsersTable({ locale, dict }: AdminUsersTableProps) {
   return (
     <div className="space-y-6">
       {/* 统计卡片 */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         <StatCard
           icon={Users}
           label={t.totalUsers || "总用户"}
           value={stats.total}
           color="primary"
-          active={roleFilter === "all" && statusFilter === "all"}
+          active={
+            roleFilter === "all" &&
+            statusFilter === "all" &&
+            providerFilter === "all" &&
+            !linuxdoTL3Filter
+          }
           onClick={() => {
             setRoleFilter("all")
             setStatusFilter("all")
+            setProviderFilter("all")
+            setLinuxdoTL3Filter(false)
             setPage(1)
           }}
         />
@@ -554,10 +652,12 @@ export function AdminUsersTable({ locale, dict }: AdminUsersTableProps) {
           label={t.adminUsers || "管理员"}
           value={stats.admins}
           color="warning"
-          active={roleFilter === "ADMIN"}
+          active={roleFilter === "ADMIN" && providerFilter === "all" && !linuxdoTL3Filter}
           onClick={() => {
             setRoleFilter("ADMIN")
             setStatusFilter("all")
+            setProviderFilter("all")
+            setLinuxdoTL3Filter(false)
             setPage(1)
           }}
         />
@@ -566,10 +666,12 @@ export function AdminUsersTable({ locale, dict }: AdminUsersTableProps) {
           label={t.activeUsers || "活跃用户"}
           value={stats.active}
           color="success"
-          active={statusFilter === "ACTIVE"}
+          active={statusFilter === "ACTIVE" && providerFilter === "all" && !linuxdoTL3Filter}
           onClick={() => {
             setRoleFilter("all")
             setStatusFilter("ACTIVE")
+            setProviderFilter("all")
+            setLinuxdoTL3Filter(false)
             setPage(1)
           }}
         />
@@ -578,10 +680,40 @@ export function AdminUsersTable({ locale, dict }: AdminUsersTableProps) {
           label={t.bannedUsers || "已禁用"}
           value={stats.banned}
           color="danger"
-          active={statusFilter === "BANNED"}
+          active={statusFilter === "BANNED" && !linuxdoTL3Filter}
           onClick={() => {
             setRoleFilter("all")
             setStatusFilter("BANNED")
+            setProviderFilter("all")
+            setLinuxdoTL3Filter(false)
+            setPage(1)
+          }}
+        />
+        <StatCard
+          icon={Globe}
+          label={t.linuxdoUsers || "L站用户"}
+          value={stats.linuxdo}
+          color="primary"
+          active={providerFilter === "linuxdo" && !linuxdoTL3Filter}
+          onClick={() => {
+            setRoleFilter("all")
+            setStatusFilter("all")
+            setProviderFilter("linuxdo")
+            setLinuxdoTL3Filter(false)
+            setPage(1)
+          }}
+        />
+        <StatCard
+          icon={Crown}
+          label={t.linuxdoTL3Admins || "L站TL3管理员"}
+          value={stats.linuxdoTL3Admins}
+          color="warning"
+          active={linuxdoTL3Filter}
+          onClick={() => {
+            setRoleFilter("ADMIN")
+            setStatusFilter("all")
+            setProviderFilter("all")
+            setLinuxdoTL3Filter(true)
             setPage(1)
           }}
         />
@@ -622,6 +754,66 @@ export function AdminUsersTable({ locale, dict }: AdminUsersTableProps) {
           </Button>
         )}
       </div>
+
+      {/* 批量操作栏 */}
+      {selectedIds.size > 0 && currentUserRole === "SUPER_ADMIN" && (
+        <div className="flex items-center gap-3 rounded-lg border bg-muted/50 px-4 py-2">
+          <span className="text-sm font-medium">
+            {(t.batchSelected || "已选 {count} 项").replace("{count}", String(selectedIds.size))}
+          </span>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={batchBusy}
+            onClick={() => {
+              setConfirmState({
+                title: t.confirmTitle,
+                description: (
+                  t.confirmBatchPromote || "确定将选中的 {count} 个用户提升为管理员？"
+                ).replace("{count}", String(selectedIds.size)),
+                confirmLabel: t.batchPromote || "批量提升",
+                onConfirm: async () => {
+                  await batchUpdateRole("ADMIN")
+                },
+              })
+            }}
+            className="gap-1"
+          >
+            <Shield className="h-3.5 w-3.5" />
+            {t.batchPromote || "批量提升"}
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={batchBusy}
+            onClick={() => {
+              setConfirmState({
+                title: t.confirmTitle,
+                description: (
+                  t.confirmBatchDemote || "确定将选中的 {count} 个用户降级为普通用户？"
+                ).replace("{count}", String(selectedIds.size)),
+                confirmLabel: t.batchDemote || "批量降级",
+                destructive: true,
+                onConfirm: async () => {
+                  await batchUpdateRole("USER")
+                },
+              })
+            }}
+            className="gap-1"
+          >
+            <ShieldOff className="h-3.5 w-3.5" />
+            {t.batchDemote || "批量降级"}
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => setSelectedIds(new Set())}
+            className="ml-auto"
+          >
+            {t.cancel}
+          </Button>
+        </div>
+      )}
 
       {error && (
         <Alert variant="destructive">

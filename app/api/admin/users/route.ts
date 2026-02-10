@@ -37,6 +37,8 @@ export async function GET(request: NextRequest) {
     // 筛选参数
     const roleFilter = searchParams.get("role")
     const statusFilter = searchParams.get("status")
+    const providerFilter = searchParams.get("provider")
+    const linuxdoTL3 = searchParams.get("linuxdoTL3") === "true"
 
     // 构建查询条件
     const conditions: Prisma.UserWhereInput[] = []
@@ -60,6 +62,16 @@ export async function GET(request: NextRequest) {
       Object.values(UserStatus).includes(statusFilter as UserStatus)
     ) {
       conditions.push({ status: statusFilter as UserStatus })
+    }
+
+    if (providerFilter && providerFilter !== "all") {
+      conditions.push({ accounts: { some: { provider: providerFilter } } })
+    }
+
+    if (linuxdoTL3) {
+      conditions.push({
+        accounts: { some: { provider: "linuxdo", trustLevel: { gte: 3 } } },
+      })
     }
 
     const where = conditions.length > 0 ? { AND: conditions } : {}
@@ -92,11 +104,20 @@ export async function GET(request: NextRequest) {
         db.user.count({ where: { role: "ADMIN" } }),
         db.user.count({ where: { status: "ACTIVE" } }),
         db.user.count({ where: { status: "BANNED" } }),
-      ]).then(([totalUsers, admins, active, banned]) => ({
+        db.user.count({ where: { accounts: { some: { provider: "linuxdo" } } } }),
+        db.user.count({
+          where: {
+            accounts: { some: { provider: "linuxdo", trustLevel: { gte: 3 } } },
+            role: "ADMIN",
+          },
+        }),
+      ]).then(([totalUsers, admins, active, banned, linuxdo, linuxdoTL3Admins]) => ({
         total: totalUsers,
         admins,
         active,
         banned,
+        linuxdo,
+        linuxdoTL3Admins,
       })),
     ])
 

@@ -223,7 +223,14 @@ export async function handleOAuthSignIn(
         data: { trustLevel: profile.trustLevel },
       })
     }
-    await maybePromoteLinuxDoAdmin(provider, profile, user, settings, request, existingAccount.trustLevel ?? undefined)
+    await maybePromoteLinuxDoAdmin(
+      provider,
+      profile,
+      user,
+      settings,
+      request,
+      existingAccount.trustLevel ?? undefined,
+    )
     return user
   }
 
@@ -366,7 +373,14 @@ export async function handleOAuthBind(
     request,
   })
 
-  await maybePromoteLinuxDoAdmin(provider, profile, user, await getSiteSettings(), request, undefined)
+  await maybePromoteLinuxDoAdmin(
+    provider,
+    profile,
+    user,
+    await getSiteSettings(),
+    request,
+    undefined,
+  )
 
   return user
 }
@@ -380,7 +394,8 @@ async function maybePromoteLinuxDoAdmin(
   request?: Request,
   accountTrustLevel?: number,
 ) {
-  const effectiveTrustLevel = typeof profile.trustLevel === "number" ? profile.trustLevel : accountTrustLevel
+  const effectiveTrustLevel =
+    typeof profile.trustLevel === "number" ? profile.trustLevel : accountTrustLevel
 
   if (
     provider !== "linuxdo" ||

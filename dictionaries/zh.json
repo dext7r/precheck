@@ -1117,7 +1117,8 @@
     "review": {
       "reviewer": "审核管理员",
       "reviewedAt": "审核时间",
-      "guidance": "指导意见"
+      "guidance": "指导意见",
+      "chatFailed": "发起私信失败"
     },
     "invite": {
       "code": "邀请码",
@@ -1330,6 +1331,14 @@
     "activeUsers": "活跃用户",
     "adminUsers": "管理员",
     "bannedUsers": "已禁用",
+    "linuxdoUsers": "L站用户",
+    "linuxdoTL3Admins": "L站TL3管理员",
+    "batchSelected": "已选 {count} 项",
+    "batchPromote": "批量提升为管理员",
+    "batchDemote": "批量降级为用户",
+    "confirmBatchPromote": "确定将选中的 {count} 个用户提升为管理员？",
+    "confirmBatchDemote": "确定将选中的 {count} 个用户降级为普通用户？",
+    "batchRoleSuccess": "已更新 {count} 个用户角色",
     "applicationCount": "申请",
     "reviewCount": "审核",
     "newUsers": "新用户 (30天)",
