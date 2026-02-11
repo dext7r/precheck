@@ -33,24 +33,36 @@ export function DashboardSidebar({ locale, dict, user }: DashboardSidebarProps) 
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
+  const [unreadPrivateChatCount, setUnreadPrivateChatCount] = useState(0)
 
   useEffect(() => {
-    const fetchUnreadCount = async () => {
+    const fetchUnreadCounts = async () => {
       try {
-        const res = await fetch("/api/dashboard/messages?page=1&pageSize=100")
-        if (res.ok) {
-          const data = await res.json()
+        const [msgRes, chatRes] = await Promise.all([
+          fetch("/api/dashboard/messages?page=1&pageSize=100"),
+          fetch("/api/private-chats"),
+        ])
+        if (msgRes.ok) {
+          const data = await msgRes.json()
           const count = (data.messages || []).filter(
             (m: { readAt: string | null }) => !m.readAt,
           ).length
           setUnreadCount(count)
         }
+        if (chatRes.ok) {
+          const chats = await chatRes.json()
+          const total = (chats || []).reduce(
+            (sum: number, c: { unreadCount: number }) => sum + (c.unreadCount || 0),
+            0,
+          )
+          setUnreadPrivateChatCount(total)
+        }
       } catch (error) {
-        console.error("Failed to fetch unread count:", error)
+        console.error("Failed to fetch unread counts:", error)
       }
     }
-    fetchUnreadCount()
-    const interval = setInterval(fetchUnreadCount, 30000)
+    fetchUnreadCounts()
+    const interval = setInterval(fetchUnreadCounts, 30000)
     return () => clearInterval(interval)
   }, [])
 
@@ -148,7 +160,8 @@ export function DashboardSidebar({ locale, dict, user }: DashboardSidebarProps) 
               )}
               <item.icon className="relative h-5 w-5 shrink-0 transition-transform group-hover:scale-110" />
               {!collapsed && <span className="relative">{item.name}</span>}
-              {item.href === `/${locale}/dashboard/messages` && unreadCount > 0 && (
+              {(item.href === `/${locale}/dashboard/messages` && unreadCount > 0 ||
+                item.href === `/${locale}/dashboard/private-chats` && unreadPrivateChatCount > 0) && (
                 <motion.span
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
@@ -158,7 +171,10 @@ export function DashboardSidebar({ locale, dict, user }: DashboardSidebarProps) 
                   )}
                   style={collapsed ? { boxShadow: "0 0 0 2px hsl(var(--card))" } : {}}
                 >
-                  {unreadCount > 99 ? "99+" : unreadCount}
+                  {(() => {
+                    const count = item.href === `/${locale}/dashboard/private-chats` ? unreadPrivateChatCount : unreadCount
+                    return count > 99 ? "99+" : count
+                  })()}
                 </motion.span>
               )}
             </Link>
