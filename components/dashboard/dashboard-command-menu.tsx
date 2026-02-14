@@ -14,6 +14,7 @@ import {
   Ticket,
   MessageCircle,
   MessageSquare,
+  Activity,
 } from "lucide-react"
 import { motion } from "framer-motion"
 import {
@@ -148,18 +149,26 @@ export function DashboardCommandMenu({ locale }: DashboardCommandMenuProps) {
       shortcut: "⌘6",
     },
     {
+      id: "feed",
+      label:
+        ((dict.dashboard as unknown as Record<string, unknown>).feed as string) || "申请动态",
+      path: `/${locale}/dashboard/feed`,
+      icon: Activity,
+      shortcut: "⌘7",
+    },
+    {
       id: "contribute",
       label: dict.dashboard.contribute,
       path: `/${locale}/dashboard/contribute`,
       icon: Gift,
-      shortcut: "⌘7",
+      shortcut: "⌘8",
     },
     {
       id: "settings",
       label: dict.dashboard.settings,
       path: `/${locale}/dashboard/settings`,
       icon: Settings,
-      shortcut: "⌘8",
+      shortcut: "⌘9",
     },
   ]
 

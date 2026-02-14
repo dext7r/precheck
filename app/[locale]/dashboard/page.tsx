@@ -21,6 +21,7 @@ import {
   Ticket,
   MessageCircle,
   MessageSquare,
+  Activity,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { inviteCodeStorageEnabled } from "@/lib/invite-code/client"
@@ -132,6 +133,15 @@ export default function DashboardPage({ params }: DashboardPageProps) {
       gradient: "from-pink-500/10 via-pink-500/5 to-transparent",
       iconBg: "bg-pink-500/10",
       iconColor: "text-pink-600 dark:text-pink-400",
+    },
+    {
+      href: `/${locale}/dashboard/feed`,
+      icon: Activity,
+      title: (t.feed as string) || "申请动态",
+      description: (t.feedDesc as string) || "查看最近的预申请提交与审核状态",
+      gradient: "from-teal-500/10 via-teal-500/5 to-transparent",
+      iconBg: "bg-teal-500/10",
+      iconColor: "text-teal-600 dark:text-teal-400",
     },
     {
       href: `/${locale}/dashboard/contribute`,

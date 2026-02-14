@@ -1,6 +1,20 @@
 {
   "versions": [
     {
+      "version": "1.6.1",
+      "date": "2026-02-14",
+      "changes": [
+        {
+          "type": "added",
+          "content": "Dashboard 新增「申请动态」公开页面，所有登录用户可查看脱敏后的预申请提交与审核状态"
+        },
+        {
+          "type": "added",
+          "content": "Cmd+K 快捷导航与概览页快速导航卡片同步新增「申请动态」入口"
+        }
+      ]
+    },
+    {
       "version": "1.6.0",
       "date": "2026-02-10",
       "changes": [

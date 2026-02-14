@@ -16,6 +16,7 @@ import {
   Ticket,
   MessageCircle,
   MessageSquare,
+  Activity,
 } from "lucide-react"
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
@@ -89,6 +90,11 @@ export function DashboardSidebar({ locale, dict, user }: DashboardSidebarProps) 
         ((dict.dashboard as unknown as Record<string, unknown>).privateChats as string) || "私信",
       href: `/${locale}/dashboard/private-chats`,
       icon: MessageSquare,
+    },
+    {
+      name: ((dict.dashboard as unknown as Record<string, unknown>).feed as string) || "申请动态",
+      href: `/${locale}/dashboard/feed`,
+      icon: Activity,
     },
     {
       name: dict.dashboard.contribute,
