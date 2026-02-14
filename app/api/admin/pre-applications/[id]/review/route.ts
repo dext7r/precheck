@@ -19,6 +19,7 @@ const reviewSchema = z.object({
   guidance: z.string().min(1).max(2000),
   inviteCode: z.string().trim().optional(),
   inviteExpiresAt: z.string().optional(),
+  codeSent: z.boolean().optional(),
   locale: z.string().optional(),
 })
 
@@ -296,7 +297,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
             version: newVersion,
             reviewedAt: new Date(),
             reviewedBy: { connect: { id: user.id } },
-            ...(code ? { codeSent: true, codeSentAt: new Date() } : {}),
+            ...((code || data.codeSent) ? { codeSent: true, codeSentAt: new Date() } : {}),
           },
           include: {
             reviewedBy: { select: { id: true, name: true, email: true } },

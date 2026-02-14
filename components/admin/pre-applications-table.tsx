@@ -35,6 +35,7 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { DataTable, type Column } from "@/components/ui/data-table"
@@ -273,6 +274,7 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
   const [guidance, setGuidance] = useState("")
   const [inviteCode, setInviteCode] = useState("")
   const [inviteExpiresAt, setInviteExpiresAt] = useState("")
+  const [markCodeSent, setMarkCodeSent] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [historyRecords, setHistoryRecords] = useState<PreApplicationVersion[]>([])
   const [historyLoading, setHistoryLoading] = useState(false)
@@ -318,6 +320,7 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
       setInviteCode("")
       setInviteExpiresAt("")
       setInviteCodeCheckResult(null)
+      setMarkCodeSent(false)
     }
   }, [reviewAction])
 
@@ -654,6 +657,7 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
     setDuplicateCheckResult(null)
     setDuplicateCheckError(null)
     setInviteCodeCheckResult(null)
+    setMarkCodeSent(false)
     if (
       record.status === "PENDING" ||
       record.status === "DISPUTED" ||
@@ -776,7 +780,7 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
     // 审核通过时邀请码可选（手动粘贴或从下拉选择）
     setSubmitting(true)
     try {
-      const payload: Record<string, string> = {
+      const payload: Record<string, string | boolean> = {
         action: reviewAction,
         guidance,
         locale,
@@ -787,6 +791,10 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
         if (inviteExpiresAt) {
           payload.inviteExpiresAt = new Date(inviteExpiresAt).toISOString()
         }
+      }
+
+      if (reviewAction === "APPROVE" && markCodeSent) {
+        payload.codeSent = true
       }
 
       const res = await fetch(`/api/admin/pre-applications/${selected.id}/review`, {
@@ -1953,6 +1961,19 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
                             {inviteCodeCheckResult.message}
                           </div>
                         )}
+                      </div>
+                    )}
+                    {reviewAction === "APPROVE" && (
+                      <div className="flex items-center gap-2">
+                        <Checkbox
+                          id="markCodeSent"
+                          checked={markCodeSent || !!inviteCode.trim()}
+                          disabled={!!inviteCode.trim()}
+                          onCheckedChange={(v) => setMarkCodeSent(v === true)}
+                        />
+                        <Label htmlFor="markCodeSent" className="text-xs cursor-pointer">
+                          {t.markCodeSent}
+                        </Label>
                       </div>
                     )}
                   </div>
