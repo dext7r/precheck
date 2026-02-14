@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { ArrowRight, Search, Sparkles, UserPlus, ClipboardCheck } from "lucide-react"
+import { ArrowRight, Sparkles, UserPlus, ClipboardCheck, Activity } from "lucide-react"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -25,10 +25,10 @@ export function HeroSection({ dict, locale }: HeroSectionProps) {
       primary: true,
     },
     {
-      icon: Search,
-      title: heroActions?.query?.title,
-      description: heroActions?.query?.description,
-      href: `/${locale}/query-invite-codes`,
+      icon: Activity,
+      title: heroActions?.feed?.title,
+      description: heroActions?.feed?.description,
+      href: `/${locale}/dashboard/feed`,
       primary: false,
     },
   ]

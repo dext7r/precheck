@@ -23,11 +23,8 @@ import {
 import { Separator } from "@/components/ui/separator"
 import { PostContent } from "@/components/posts/post-content"
 import {
-  Copy,
-  Check,
   History,
   FileText,
-  ExternalLink,
   Clock,
   CheckCircle2,
   XCircle,
@@ -174,11 +171,10 @@ export function PreApplicationForm({
   const [submitting, setSubmitting] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [claiming, setClaiming] = useState(false)
-  const [hasAvailableCode, setHasAvailableCode] = useState<boolean | null>(null)
   const [checkingCode, setCheckingCode] = useState(false)
+  const [hasAvailableCode, setHasAvailableCode] = useState<boolean | null>(null)
   const [records, setRecords] = useState<PreApplicationRecord[]>(initialRecords || [])
   const [maxResubmitCount, setMaxResubmitCount] = useState(initialMaxResubmit)
-  const [tokenCopied, setTokenCopied] = useState(false)
   const [activeTab, setActiveTab] = useState<"form" | "history">("form")
   const [essayHint, setEssayHint] = useState(t.fields.essayHint)
   const [queueInfo, setQueueInfo] = useState<{
@@ -1053,52 +1049,6 @@ export function PreApplicationForm({
                   <div className="space-y-1 p-3 rounded-lg bg-muted/30">
                     <p className="text-xs text-muted-foreground">{t.fields.source}</p>
                     <p className="font-medium">{getSourceLabel(latest.source)}</p>
-                  </div>
-                  <div className="space-y-1 p-3 rounded-lg bg-muted/30">
-                    <p className="text-xs text-muted-foreground">{t.fields.queryToken}</p>
-                    {latest.queryToken ? (
-                      <div className="flex items-center gap-2">
-                        <code className="font-mono font-medium tracking-wider text-sm">
-                          {latest.queryToken}
-                        </code>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6 shrink-0"
-                          onClick={async () => {
-                            try {
-                              const queryUrl = `${window.location.origin}/${locale}/query-invite-codes?queryCode=${latest.queryToken}`
-                              await navigator.clipboard.writeText(queryUrl)
-                              setTokenCopied(true)
-                              toast.success(t.queryTokenCopied || "查询链接已复制")
-                              setTimeout(() => setTokenCopied(false), 2000)
-                            } catch {
-                              toast.error("复制失败")
-                            }
-                          }}
-                        >
-                          {tokenCopied ? (
-                            <Check className="h-3 w-3" />
-                          ) : (
-                            <Copy className="h-3 w-3" />
-                          )}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6 shrink-0"
-                          onClick={() => {
-                            router.push(
-                              `/${locale}/query-invite-codes?queryCode=${latest.queryToken}`,
-                            )
-                          }}
-                        >
-                          <ExternalLink className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    ) : (
-                      <p className="font-medium">-</p>
-                    )}
                   </div>
                   {latest.sourceDetail && (
                     <div className="space-y-1 p-3 rounded-lg bg-muted/30 sm:col-span-2">

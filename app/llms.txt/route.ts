@@ -28,13 +28,10 @@ This is the official pre-application system for community. Users can submit pre-
 ### 1. Pre-Application System
 Submit your application to join community. Write a brief essay explaining why you want to join and what you hope to contribute.
 
-### 2. Application Status Tracking
-Track your application progress using your query token. Check status: pending, approved, rejected, or needs revision.
-
-### 3. Invite Code Management
+### 2. Invite Code Management
 Receive and use invite codes after approval. Codes expire after 12 hours and can only be used once.
 
-### 4. Multi-language Support
+### 3. Multi-language Support
 Full internationalization support for English (en) and Chinese (zh).
 
 ## User Guide
@@ -82,10 +79,6 @@ Full internationalization support for English (en) and Chinese (zh).
 - URL: ${baseUrl}/${defaultLocale}/docs/examples
 - Description: Code examples and best practices
 
-### Query Status
-- URL: ${baseUrl}/${defaultLocale}/query-invite-codes
-- Description: Check application status using query token
-
 ### Authentication
 - Login: ${baseUrl}/${defaultLocale}/login
 - Register: ${baseUrl}/${defaultLocale}/register
@@ -113,9 +106,6 @@ Full internationalization support for English (en) and Chinese (zh).
 - POST /api/pre-application - Submit new pre-application
 - PUT /api/pre-application - Update pre-application
 - POST /api/pre-application/ai-preview - AI content check
-
-### Query
-- GET /api/query-invite-codes - Query by token
 
 ### Dashboard
 - GET /api/dashboard/messages - Get user messages
@@ -157,7 +147,7 @@ Full internationalization support for English (en) and Chinese (zh).
 This is a pre-application system for joining the community. Users submit applications, admins review them, and approved users receive invite codes.
 
 ### How can users check their application status?
-Users can log in to view their dashboard, or use their query token on the query page without logging in.
+Users can log in to view their dashboard to check the status of their application.
 
 ### What happens if an application is rejected?
 Users can resubmit up to 3 times after rejection. They should read the admin's feedback and revise their application accordingly.

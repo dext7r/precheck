@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
-import { ArrowRight, Search, Sparkles } from "lucide-react"
+import { ArrowRight, Sparkles, Book } from "lucide-react"
 import type { Dictionary } from "@/lib/i18n/get-dictionary"
 import type { Locale } from "@/lib/i18n/config"
 
@@ -13,7 +13,7 @@ interface CTASectionProps {
 }
 
 export function CTASection({ dict, locale }: CTASectionProps) {
-  const { badge, title, subtitle, applyButton, queryButton, trustIndicators } = dict.homepage.cta
+  const { badge, title, subtitle, applyButton, docsButton, trustIndicators } = dict.homepage.cta
 
   return (
     <section className="relative py-24 px-4 sm:px-6 lg:px-8 overflow-hidden">
@@ -76,14 +76,10 @@ export function CTASection({ dict, locale }: CTASectionProps) {
               </Link>
             </motion.div>
             <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-              <Link href={`/${locale}/query-invite-codes`}>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="min-w-[220px] h-12 text-base bg-background/50 backdrop-blur-sm"
-                >
-                  <Search className="mr-2 h-5 w-5" />
-                  {queryButton}
+              <Link href={`/${locale}/docs`}>
+                <Button size="lg" variant="outline" className="group min-w-[220px] h-12 text-base">
+                  <Book className="mr-2 h-5 w-5" />
+                  {docsButton}
                 </Button>
               </Link>
             </motion.div>

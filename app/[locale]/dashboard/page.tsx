@@ -25,7 +25,6 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { inviteCodeStorageEnabled } from "@/lib/invite-code/client"
-import { ManualIssueLogPanel } from "@/components/dashboard/manual-issue-log-panel"
 
 interface DashboardPageProps {
   params: Promise<{ locale: string }>
@@ -249,12 +248,6 @@ export default function DashboardPage({ params }: DashboardPageProps) {
           ))}
         </div>
       </motion.div>
-
-      {!inviteCodeStorageEnabled && (
-        <motion.div variants={item}>
-          <ManualIssueLogPanel dict={dict} />
-        </motion.div>
-      )}
 
       {/* 预申请指南 */}
       {dict.dashboard.preApplicationGuide && (

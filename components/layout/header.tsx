@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { ExternalLink, Menu, X, User, Search, MessageCircle, Play } from "lucide-react"
+import { ExternalLink, Menu, X, User, MessageCircle, Play } from "lucide-react"
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
@@ -55,16 +55,6 @@ export function Header({ locale, dict, user, authEnabled = true }: HeaderProps) 
           </div>
           <span className="text-lg font-semibold">{dict.metadata?.title || "预申请系统"}</span>
         </Link>
-
-        <div className="hidden items-center gap-1 md:flex">
-          <Link
-            href={`/${locale}/query-invite-codes`}
-            className="flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
-          >
-            <Search className="h-4 w-4" />
-            {dict.nav.queryStatus}
-          </Link>
-        </div>
 
         <div className="flex items-center gap-2">
           <LocaleSwitcher currentLocale={locale} />
@@ -125,14 +115,6 @@ export function Header({ locale, dict, user, authEnabled = true }: HeaderProps) 
             className="border-t border-border md:hidden"
           >
             <div className="space-y-1 px-4 py-3">
-              <Link
-                href={`/${locale}/query-invite-codes`}
-                className="flex items-center gap-2 rounded-md px-3 py-2 text-base font-medium text-muted-foreground hover:bg-primary/10 hover:text-primary"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <Search className="h-4 w-4" />
-                {dict.nav.queryStatus}
-              </Link>
               {authEnabled && (
                 <div className="flex gap-2 pt-2">
                   {user ? (

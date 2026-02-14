@@ -12,7 +12,6 @@ const staticRoutes = [
   { path: "/forgot-password", changeFrequency: "yearly", priority: 0.4 },
   { path: "/reset-password", changeFrequency: "yearly", priority: 0.3 },
   { path: "/pre-application", changeFrequency: "monthly", priority: 0.8 },
-  { path: "/query-invite-codes", changeFrequency: "monthly", priority: 0.7 },
   { path: "/posts", changeFrequency: "daily", priority: 0.8 },
   { path: "/docs", changeFrequency: "weekly", priority: 0.8 },
   { path: "/docs/api", changeFrequency: "monthly", priority: 0.6 },

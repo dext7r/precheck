@@ -12,8 +12,7 @@
     "login": "登录",
     "register": "注册",
     "dashboard": "控制台",
-    "logout": "退出登录",
-    "queryStatus": "查询进度"
+    "logout": "退出登录"
   },
   "header": {
     "videoAnnouncement": "预申请系统上线了！",
@@ -304,9 +303,9 @@
         "title": "提交预申请",
         "description": "填写表单申请加入 社区"
       },
-      "query": {
-        "title": "查询进度",
-        "description": "使用查询码查看申请状态和邀请码"
+      "feed": {
+        "title": "申请动态",
+        "description": "查看社区最新的申请与审核动态"
       }
     }
   },
@@ -1156,7 +1155,6 @@
     "claiming": "领取中...",
     "claimCodeSuccess": "邀请码领取成功",
     "claimCodeFailed": "领取失败",
-    "queryTokenCopied": "查询码已复制",
     "maxResubmitExceeded": "已达到最大重新提交次数限制",
     "versionConflict": "数据已被修改，请刷新后重试",
     "resubmitWarningTitle": "申请已被驳回",
@@ -2286,7 +2284,7 @@
       "title": "准备好加入社区 了吗？",
       "subtitle": "立即提交预申请，开启你的开源技术之旅",
       "applyButton": "立即申请",
-      "queryButton": "查询进度",
+      "docsButton": "查看文档",
       "trustIndicators": {
         "fastReview": "快速审核",
         "transparent": "透明流程",
@@ -2363,8 +2361,6 @@
       "expiresAt": "有效期",
       "used": "已使用",
       "unused": "未使用"
-    },
-    "queryToken": "查询凭证",
-    "queryTokenCopied": "查询链接已复制"
+    }
   }
 }

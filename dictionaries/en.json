@@ -12,8 +12,7 @@
     "login": "Login",
     "register": "Register",
     "dashboard": "Dashboard",
-    "logout": "Logout",
-    "queryStatus": "Check Status"
+    "logout": "Logout"
   },
   "header": {
     "videoAnnouncement": "Pre-application system is live!",
@@ -306,9 +305,9 @@
         "title": "Submit Application",
         "description": "Fill out the form to apply for the community community"
       },
-      "query": {
-        "title": "Check Status",
-        "description": "Use query code to check application status"
+      "feed": {
+        "title": "Application Feed",
+        "description": "View the latest application and review activity"
       }
     }
   },
@@ -1161,7 +1160,6 @@
     "claiming": "Claiming...",
     "claimCodeSuccess": "Invite code claimed successfully",
     "claimCodeFailed": "Failed to claim code",
-    "queryTokenCopied": "Query code copied",
     "maxResubmitExceeded": "Maximum resubmission limit reached",
     "versionConflict": "Data has been modified, please refresh and try again",
     "resubmitWarningTitle": "Application rejected",
@@ -2291,7 +2289,7 @@
       "title": "Ready to Join community?",
       "subtitle": "Submit your pre-application now and start your open-source journey",
       "applyButton": "Apply Now",
-      "queryButton": "Check Status",
+      "docsButton": "View Docs",
       "trustIndicators": {
         "fastReview": "Fast Review",
         "transparent": "Transparent Process",
@@ -2368,8 +2366,6 @@
       "expiresAt": "Expires at",
       "used": "Used",
       "unused": "Unused"
-    },
-    "queryToken": "Query Token",
-    "queryTokenCopied": "Query link copied"
+    }
   }
 }

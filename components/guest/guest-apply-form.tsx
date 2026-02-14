@@ -25,9 +25,6 @@ import {
   CheckCircle2,
   XCircle,
   HelpCircle,
-  Copy,
-  Check,
-  ExternalLink,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { preApplicationSources } from "@/lib/pre-application/constants"
@@ -83,8 +80,6 @@ interface GuestApplyFormProps {
       used: string
       unused: string
     }
-    queryToken: string
-    queryTokenCopied: string
   }
 }
 
@@ -115,7 +110,6 @@ export function GuestApplyForm({ locale, qqNumber, dict }: GuestApplyFormProps) 
   const [loadingGroups, setLoadingGroups] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [record, setRecord] = useState<GuestRecord | null>(null)
-  const [tokenCopied, setTokenCopied] = useState(false)
   const [qqGroups, setQqGroups] = useState<QQGroupConfig[]>([])
   const [essayHint, setEssayHint] = useState(dict.fields.essayHint)
   const allowedDomains = useAllowedEmailDomains()
@@ -349,44 +343,6 @@ export function GuestApplyForm({ locale, qqNumber, dict }: GuestApplyFormProps) 
             </div>
           </CardHeader>
           <CardContent className="p-6 space-y-6">
-            {record.queryToken && (
-              <div className="space-y-1 p-3 rounded-lg bg-muted/30">
-                <p className="text-xs text-muted-foreground">{dict.queryToken}</p>
-                <div className="flex items-center gap-2">
-                  <code className="font-mono font-medium tracking-wider text-sm">
-                    {record.queryToken}
-                  </code>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 shrink-0"
-                    onClick={async () => {
-                      try {
-                        const queryUrl = `${window.location.origin}/${locale}/query-invite-codes?queryCode=${record.queryToken}`
-                        await navigator.clipboard.writeText(queryUrl)
-                        setTokenCopied(true)
-                        toast.success(dict.queryTokenCopied)
-                        setTimeout(() => setTokenCopied(false), 2000)
-                      } catch {
-                        /* ignore */
-                      }
-                    }}
-                  >
-                    {tokenCopied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 shrink-0"
-                    onClick={() => {
-                      window.location.href = `/${locale}/query-invite-codes?queryCode=${record.queryToken}`
-                    }}
-                  >
-                    <ExternalLink className="h-3 w-3" />
-                  </Button>
-                </div>
-              </div>
-            )}
 
             {record.reviewedBy && (
               <div className="grid gap-4 sm:grid-cols-2">

@@ -142,20 +142,6 @@ ${categories.map((cat) => `  <category term="${cat.term}" label="${cat.label}"/>
   </entry>
 
   <entry>
-    <id>${baseUrl}/zh/query-invite-codes</id>
-    <title type="text">查询邀请码 - Query Invite Codes</title>
-    <link href="${baseUrl}/zh/query-invite-codes" rel="alternate" type="text/html"/>
-    <link href="${baseUrl}/en/query-invite-codes" rel="alternate" type="text/html" hreflang="en"/>
-    <published>${new Date("2025-01-25").toISOString()}</published>
-    <updated>${new Date("2025-01-25").toISOString()}</updated>
-    <author>
-      <name>community</name>
-    </author>
-    <category term="feature" label="Feature"/>
-    <summary type="text">使用查询码查看申请状态、审核意见和邀请码。</summary>
-  </entry>
-
-  <entry>
     <id>${baseUrl}/zh/privacy</id>
     <title type="text">隐私政策 - Privacy Policy</title>
     <link href="${baseUrl}/zh/privacy" rel="alternate" type="text/html"/>

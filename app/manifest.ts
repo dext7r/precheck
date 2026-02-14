@@ -42,12 +42,6 @@ export default function manifest(): MetadataRoute.Manifest {
         url: "/zh/pre-application",
       },
       {
-        name: "查询邀请码",
-        short_name: "查询",
-        description: "查询邀请码状态",
-        url: "/zh/query-invite-codes",
-      },
-      {
         name: "登录",
         short_name: "登录",
         description: "登录用户控制台",

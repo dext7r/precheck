@@ -6,7 +6,6 @@ import {
   Rocket,
   UserPlus,
   FileEdit,
-  Search,
   Ticket,
   RefreshCw,
   HelpCircle,
@@ -42,7 +41,6 @@ const userGuideIcons = {
   overview: Book,
   register: UserPlus,
   apply: FileEdit,
-  query: Search,
   inviteCode: Ticket,
   resubmit: RefreshCw,
   faq: HelpCircle,
@@ -225,66 +223,7 @@ NODE_ENV="development"`
                 </Card>
               </FadeInStaggerItem>
 
-              {/* 第三步：查询状态 */}
-              <FadeInStaggerItem>
-                <Card>
-                  <CardHeader>
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-md bg-purple-500/10">
-                        <Search className="h-4 w-4 text-purple-500" />
-                      </div>
-                      <CardTitle>{docs.userGuide.query.title}</CardTitle>
-                    </div>
-                    <CardDescription>{docs.userGuide.query.description}</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <ul className="space-y-2">
-                      {docs.userGuide.query.items.map((item, index) => (
-                        <li
-                          key={index}
-                          className="flex items-start gap-2 text-sm text-muted-foreground"
-                        >
-                          <span className="mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-purple-500/50" />
-                          <span>{item}</span>
-                        </li>
-                      ))}
-                    </ul>
-                    <div className="rounded-lg border p-4">
-                      <h4 className="mb-3 text-sm font-medium">
-                        {docs.userGuide.query.statuses.title}
-                      </h4>
-                      <div className="grid gap-2 sm:grid-cols-2">
-                        <div className="flex items-start gap-2 rounded-md bg-muted/50 p-2">
-                          <Clock className="mt-0.5 h-4 w-4 shrink-0 text-yellow-500" />
-                          <span className="text-xs text-muted-foreground">
-                            {docs.userGuide.query.statuses.pending}
-                          </span>
-                        </div>
-                        <div className="flex items-start gap-2 rounded-md bg-muted/50 p-2">
-                          <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-500" />
-                          <span className="text-xs text-muted-foreground">
-                            {docs.userGuide.query.statuses.approved}
-                          </span>
-                        </div>
-                        <div className="flex items-start gap-2 rounded-md bg-muted/50 p-2">
-                          <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />
-                          <span className="text-xs text-muted-foreground">
-                            {docs.userGuide.query.statuses.rejected}
-                          </span>
-                        </div>
-                        <div className="flex items-start gap-2 rounded-md bg-muted/50 p-2">
-                          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-orange-500" />
-                          <span className="text-xs text-muted-foreground">
-                            {docs.userGuide.query.statuses.disputed}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </FadeInStaggerItem>
-
-              {/* 第四步：获取并使用邀请码 */}
+              {/* 第三步：获取并使用邀请码 */}
               <FadeInStaggerItem>
                 <Card>
                   <CardHeader>
