@@ -1464,6 +1464,8 @@
     "inviteStatus": "发码状态",
     "inviteStatusIssued": "已发码",
     "inviteStatusNone": "未发码",
+    "markCodeSent": "标记已发码",
+    "markCodeNotSent": "标记未发码",
     "selectedCount": "已选择 {count} 条记录",
     "clearSelection": "取消选择",
     "batchArchive": "批量归档",

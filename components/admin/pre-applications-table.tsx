@@ -133,6 +133,8 @@ type AdminPreApplication = {
   user: { id: string; name: string | null; email: string }
   reviewedBy: { id: string; name: string | null; email: string } | null
   inviteCode: { id: string; code: string; expiresAt: string | null; usedAt: string | null } | null
+  codeSent: boolean
+  codeSentAt: string | null
   reviewRound?: number
 }
 
@@ -367,7 +369,7 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
     try {
       const sortByMap: Record<string, string> = {
         reviewRound: "resubmitCount",
-        inviteStatus: "inviteCodeId",
+        inviteStatus: "codeSent",
       }
       const params = new URLSearchParams({
         page: page.toString(),
@@ -426,6 +428,35 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
     setSortBy(key)
     setSortOrder(direction)
     setPage(1)
+  }
+
+  const toggleCodeSent = async (record: AdminPreApplication) => {
+    const newValue = !record.codeSent
+    try {
+      const res = await fetch(`/api/admin/pre-applications/${record.id}/code-sent`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ codeSent: newValue }),
+      })
+      if (!res.ok) throw new Error()
+      setRecords((prev) =>
+        prev.map((r) =>
+          r.id === record.id
+            ? { ...r, codeSent: newValue, codeSentAt: newValue ? new Date().toISOString() : null }
+            : r,
+        ),
+      )
+      if (selected?.id === record.id) {
+        setSelected((prev) =>
+          prev
+            ? { ...prev, codeSent: newValue, codeSentAt: newValue ? new Date().toISOString() : null }
+            : prev,
+        )
+      }
+      toast.success(newValue ? t.inviteStatusIssued : t.inviteStatusNone)
+    } catch {
+      toast.error(t.actionFailed)
+    }
   }
 
   const formatPageSummary = (summary: { total: number; page: number; totalPages: number }) =>
@@ -865,19 +896,26 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
         label: t.inviteStatus,
         width: "12%",
         sortable: true,
-        render: (record) => (
-          <Badge
-            className={cn(
-              "gap-1 text-xs",
-              record.inviteCode
-                ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400",
-            )}
-          >
-            {record.inviteCode ? <Key className="h-3 w-3" /> : null}
-            {record.inviteCode ? t.inviteStatusIssued : t.inviteStatusNone}
-          </Badge>
-        ),
+        render: (record) =>
+          record.status === "APPROVED" ? (
+            <Badge
+              className={cn(
+                "gap-1 text-xs cursor-pointer hover:opacity-80",
+                record.codeSent
+                  ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                  : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400",
+              )}
+              onClick={(e) => {
+                e.stopPropagation()
+                toggleCodeSent(record)
+              }}
+            >
+              {record.codeSent ? <Key className="h-3 w-3" /> : null}
+              {record.codeSent ? t.inviteStatusIssued : t.inviteStatusNone}
+            </Badge>
+          ) : (
+            <span className="text-xs text-muted-foreground">—</span>
+          ),
       },
       {
         key: "createdAt",
@@ -1316,16 +1354,24 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
                         {t.reviewRoundLabel?.replace("{n}", String(record.reviewRound ?? 1)) ??
                           `${record.reviewRound ?? 1}审`}
                       </Badge>
-                      <Badge
-                        className={cn(
-                          "gap-1 text-xs",
-                          record.inviteCode
-                            ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30"
-                            : "bg-slate-100 text-slate-600 dark:bg-slate-800",
-                        )}
-                      >
-                        {record.inviteCode ? t.inviteStatusIssued : t.inviteStatusNone}
-                      </Badge>
+                      {record.status === "APPROVED" ? (
+                        <Badge
+                          className={cn(
+                            "gap-1 text-xs cursor-pointer hover:opacity-80",
+                            record.codeSent
+                              ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30"
+                              : "bg-slate-100 text-slate-600 dark:bg-slate-800",
+                          )}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            toggleCodeSent(record)
+                          }}
+                        >
+                          {record.codeSent ? t.inviteStatusIssued : t.inviteStatusNone}
+                        </Badge>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      )}
                       <span className="flex items-center gap-1">
                         <Calendar className="h-3 w-3" />
                         {formatDateTime(record.createdAt, locale)}
@@ -1671,6 +1717,8 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
                                               queryToken: null,
                                               reviewedAt: null,
                                               inviteCode: null,
+                                              codeSent: false,
+                                              codeSentAt: null,
                                               reviewRound: undefined,
                                             }
                                             openDialog(duplicateRecord)
@@ -1949,6 +1997,34 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
                         <p className="font-medium">
                           {formatDateTime(selected.inviteCode.expiresAt, locale)}
                         </p>
+                      </div>
+                    )}
+                    {selected.status === "APPROVED" && (
+                      <div className="col-span-2 flex items-center justify-between">
+                        <div>
+                          <span className="text-xs text-muted-foreground">{t.inviteStatus}</span>
+                          <div className="mt-1">
+                            <Badge
+                              className={cn(
+                                "gap-1 text-xs",
+                                selected.codeSent
+                                  ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                                  : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400",
+                              )}
+                            >
+                              {selected.codeSent ? <Key className="h-3 w-3" /> : null}
+                              {selected.codeSent ? t.inviteStatusIssued : t.inviteStatusNone}
+                            </Badge>
+                          </div>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-8 gap-1.5 text-xs"
+                          onClick={() => toggleCodeSent(selected)}
+                        >
+                          {selected.codeSent ? t.markCodeNotSent : t.markCodeSent}
+                        </Button>
                       </div>
                     )}
                   </div>

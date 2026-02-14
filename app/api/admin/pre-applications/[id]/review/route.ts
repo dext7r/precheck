@@ -296,6 +296,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
             version: newVersion,
             reviewedAt: new Date(),
             reviewedBy: { connect: { id: user.id } },
+            ...(code ? { codeSent: true, codeSentAt: new Date() } : {}),
           },
           include: {
             reviewedBy: { select: { id: true, name: true, email: true } },

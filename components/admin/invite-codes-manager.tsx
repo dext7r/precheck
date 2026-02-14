@@ -303,6 +303,7 @@ export function AdminInviteCodesManager({ locale, dict }: AdminInviteCodesManage
 
   const fetchRecords = async () => {
     if (!inviteCodeStorageEnabled) {
+      setLoading(false)
       return
     }
     setLoading(true)

@@ -139,6 +139,8 @@ export interface PreApplication {
   resubmitCount: number
   version: number
   inviteCodeId: string | null
+  codeSent: boolean
+  codeSentAt: Date | null
   createdAt: Date
   updatedAt: Date
   holdUntil: Date | null

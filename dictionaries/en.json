@@ -1469,6 +1469,8 @@
     "inviteStatus": "Invite Status",
     "inviteStatusIssued": "Issued",
     "inviteStatusNone": "Not Issued",
+    "markCodeSent": "Mark as Sent",
+    "markCodeNotSent": "Mark as Not Sent",
     "selectedCount": "{count} records selected",
     "clearSelection": "Clear Selection",
     "batchArchive": "Batch Archive",

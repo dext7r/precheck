@@ -40,6 +40,7 @@ export async function GET(request: NextRequest) {
       "registerEmail",
       "resubmitCount",
       "inviteCodeId",
+      "codeSent",
     ])
     const sortBy = allowedSortBy.has(sortByParam) ? sortByParam : "createdAt"
     const sortOrder = sortOrderParam === "asc" ? "asc" : "desc"
@@ -49,7 +50,7 @@ export async function GET(request: NextRequest) {
       registerEmail?: { contains: string; mode: "insensitive" }
       queryToken?: { contains: string; mode: "insensitive" }
       resubmitCount?: number
-      inviteCodeId?: { not: null } | null
+      codeSent?: boolean
       OR?: Array<Record<string, unknown>>
     } = {}
 
@@ -82,9 +83,11 @@ export async function GET(request: NextRequest) {
     }
 
     if (inviteStatus === "issued") {
-      where.inviteCodeId = { not: null }
+      where.codeSent = true
+      where.status = "APPROVED" as PreApplicationStatus
     } else if (inviteStatus === "none") {
-      where.inviteCodeId = null
+      where.codeSent = false
+      where.status = "APPROVED" as PreApplicationStatus
     }
 
     if (search) {
@@ -123,6 +126,8 @@ export async function GET(request: NextRequest) {
           createdAt: true,
           updatedAt: true,
           resubmitCount: true,
+          codeSent: true,
+          codeSentAt: true,
           user: { select: { id: true, name: true, email: true } },
           reviewedBy: { select: { id: true, name: true, email: true } },
           inviteCode: {

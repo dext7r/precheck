@@ -165,6 +165,8 @@ model PreApplication {
   resubmitCount Int                    @default(0)  // 重新提交次数（驳回后）
   version       Int                    @default(1)  // 乐观锁版本号
   inviteCodeId  String?                @unique
+  codeSent      Boolean                @default(false)
+  codeSentAt    DateTime?
   createdAt     DateTime               @default(now())
   updatedAt     DateTime               @updatedAt
   holdUntil     DateTime?              // ON_HOLD 状态的截止时间
