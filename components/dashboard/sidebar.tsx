@@ -17,6 +17,7 @@ import {
   MessageCircle,
   MessageSquare,
   Activity,
+  Github,
 } from "lucide-react"
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
@@ -214,6 +215,18 @@ export function DashboardSidebar({ locale, dict, user }: DashboardSidebarProps) 
       </nav>
 
       <div className="border-t border-border p-4">
+        <a
+          href="https://github.com/dext7r/precheck"
+          target="_blank"
+          rel="noopener noreferrer"
+          className={cn(
+            "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary",
+            collapsed && "justify-center",
+          )}
+        >
+          <Github className="h-5 w-5 shrink-0" />
+          {!collapsed && <span>GitHub</span>}
+        </a>
         <form action="/api/auth/logout" method="POST">
           <Button
             type="submit"
