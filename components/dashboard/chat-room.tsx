@@ -1,10 +1,8 @@
 "use client"
 
-import { useState, useEffect, useRef, useCallback } from "react"
+import { useState, useEffect, useRef, useCallback, Fragment } from "react"
 import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
-import ReactMarkdown from "react-markdown"
-import remarkGfm from "remark-gfm"
 import {
   Send,
   Shield,
@@ -31,6 +29,92 @@ import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import type { Dictionary } from "@/lib/i18n/get-dictionary"
 import type { Locale } from "@/lib/i18n/config"
+
+const MD_PATTERN =
+  /!\[([^\]]*)\]\(([^)]+)\)|\[([^\]]*)\]\(([^)]+)\)|`([^`]+)`|\*\*([^*]+)\*\*|\*([^*]+)\*|_([^_]+)_/g
+
+function renderInline(text: string): React.ReactNode {
+  const nodes: React.ReactNode[] = []
+  let lastIndex = 0
+  let i = 0
+  for (const match of text.matchAll(new RegExp(MD_PATTERN.source, "g"))) {
+    if ((match.index ?? 0) > lastIndex) nodes.push(text.slice(lastIndex, match.index))
+    const [full, imgAlt, imgSrc, linkText, linkHref, code, bold, italicStar, italicUnd] = match
+    if (imgSrc) {
+      nodes.push(
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          key={i}
+          src={imgSrc}
+          alt={imgAlt}
+          className="max-w-full rounded-lg mt-1 block cursor-pointer"
+          style={{ maxHeight: 300 }}
+          onClick={() => window.open(imgSrc, "_blank")}
+        />,
+      )
+    } else if (linkHref) {
+      nodes.push(
+        <a
+          key={i}
+          href={linkHref}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline opacity-80 hover:opacity-100"
+        >
+          {linkText}
+        </a>,
+      )
+    } else if (code) {
+      nodes.push(
+        <code key={i} className="bg-black/10 dark:bg-white/10 rounded px-1 text-xs font-mono">
+          {code}
+        </code>,
+      )
+    } else if (bold) {
+      nodes.push(
+        <strong key={i} className="font-semibold">
+          {bold}
+        </strong>,
+      )
+    } else if (italicStar || italicUnd) {
+      nodes.push(
+        <em key={i} className="italic">
+          {italicStar || italicUnd}
+        </em>,
+      )
+    }
+    lastIndex = (match.index ?? 0) + full.length
+    i++
+  }
+  if (lastIndex < text.length) nodes.push(text.slice(lastIndex))
+  return nodes.length === 0 ? null : nodes.length === 1 ? nodes[0] : nodes
+}
+
+function renderMd(text: string): React.ReactNode {
+  const segments: Array<{ type: "code" | "text"; content: string }> = []
+  let lastIndex = 0
+  for (const match of text.matchAll(/```([\s\S]*?)```/g)) {
+    if ((match.index ?? 0) > lastIndex)
+      segments.push({ type: "text", content: text.slice(lastIndex, match.index) })
+    segments.push({ type: "code", content: match[1].replace(/^\n/, "") })
+    lastIndex = (match.index ?? 0) + match[0].length
+  }
+  if (lastIndex < text.length) segments.push({ type: "text", content: text.slice(lastIndex) })
+  return segments.map((seg, si) =>
+    seg.type === "code" ? (
+      <pre key={si} className="my-1 overflow-x-auto rounded bg-black/10 dark:bg-white/10 px-2 py-1">
+        <code className="text-xs font-mono whitespace-pre">{seg.content}</code>
+      </pre>
+    ) : (
+      seg.content.split("\n").map((line, li) => (
+        <Fragment key={`${si}-${li}`}>
+          {li > 0 && <br />}
+          {renderInline(line)}
+        </Fragment>
+      ))
+    ),
+  )
+}
 
 interface ChatRoomProps {
   locale: Locale
@@ -448,56 +532,7 @@ export function ChatRoom({ locale, dict, currentUser }: ChatRoomProps) {
                                   </p>
                                 </div>
                               )}
-                              {msg.content.includes("![](data:image/") ? (
-                                <ReactMarkdown
-                                  remarkPlugins={[remarkGfm]}
-                                  components={{
-                                    img: ({ node: _n, ...props }: React.ImgHTMLAttributes<HTMLImageElement> & { node?: unknown }) => (
-                                      // eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text
-                                      <img
-                                        {...props}
-                                        className="max-w-full rounded-lg mt-1 cursor-pointer"
-                                        style={{ maxHeight: 300 }}
-                                        onClick={() => typeof props.src === "string" && window.open(props.src, "_blank")}
-                                      />
-                                    ),
-                                    p: ({ children }) => <p className="mb-1 last:mb-0">{children}</p>,
-                                    a: ({ node: _n, children, ...props }) => (
-                                      <a {...props} target="_blank" rel="noopener noreferrer" className="underline opacity-80 hover:opacity-100">{children}</a>
-                                    ),
-                                    code: ({ node: _n, inline, children, ...props }: React.HTMLAttributes<HTMLElement> & { node?: unknown; inline?: boolean }) =>
-                                      inline ? (
-                                        <code {...props} className="bg-black/10 dark:bg-white/10 rounded px-1 text-xs font-mono">{children}</code>
-                                      ) : (
-                                        <code {...props} className="block bg-black/10 dark:bg-white/10 rounded px-2 py-1 text-xs font-mono overflow-x-auto">{children}</code>
-                                      ),
-                                    pre: ({ children }) => <pre className="my-1 overflow-x-auto">{children}</pre>,
-                                  }}
-                                >
-                                  {msg.content}
-                                </ReactMarkdown>
-                              ) : (
-                                <ReactMarkdown
-                                  remarkPlugins={[remarkGfm]}
-                                  components={{
-                                    p: ({ children }) => <p className="mb-1 last:mb-0">{children}</p>,
-                                    a: ({ node: _n, children, ...props }) => (
-                                      <a {...props} target="_blank" rel="noopener noreferrer" className="underline opacity-80 hover:opacity-100">{children}</a>
-                                    ),
-                                    code: ({ node: _n, inline, children, ...props }: React.HTMLAttributes<HTMLElement> & { node?: unknown; inline?: boolean }) =>
-                                      inline ? (
-                                        <code {...props} className="bg-black/10 dark:bg-white/10 rounded px-1 text-xs font-mono">{children}</code>
-                                      ) : (
-                                        <code {...props} className="block bg-black/10 dark:bg-white/10 rounded px-2 py-1 text-xs font-mono overflow-x-auto">{children}</code>
-                                      ),
-                                    pre: ({ children }) => <pre className="my-1 overflow-x-auto">{children}</pre>,
-                                    strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
-                                    em: ({ children }) => <em className="italic">{children}</em>,
-                                  }}
-                                >
-                                  {msg.content}
-                                </ReactMarkdown>
-                              )}
+                              {renderMd(msg.content)}
                             </div>
                           </div>
                         </motion.div>
