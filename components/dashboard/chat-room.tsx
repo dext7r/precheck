@@ -33,7 +33,7 @@ import type { Locale } from "@/lib/i18n/config"
 const MD_PATTERN =
   /!\[([^\]]*)\]\(([^)]+)\)|\[([^\]]*)\]\(([^)]+)\)|`([^`]+)`|\*\*([^*]+)\*\*|\*([^*]+)\*|_([^_]+)_/g
 
-function renderInline(text: string): React.ReactNode {
+function renderInline(text: string, onImageClick?: (src: string) => void): React.ReactNode {
   const nodes: React.ReactNode[] = []
   let lastIndex = 0
   let i = 0
@@ -47,9 +47,9 @@ function renderInline(text: string): React.ReactNode {
           key={i}
           src={imgSrc}
           alt={imgAlt}
-          className="max-w-full rounded-lg mt-1 block cursor-pointer"
+          className="max-w-full rounded-lg mt-1 block cursor-zoom-in"
           style={{ maxHeight: 300 }}
-          onClick={() => window.open(imgSrc, "_blank")}
+          onClick={() => onImageClick?.(imgSrc)}
         />,
       )
     } else if (linkHref) {
@@ -90,7 +90,7 @@ function renderInline(text: string): React.ReactNode {
   return nodes.length === 0 ? null : nodes.length === 1 ? nodes[0] : nodes
 }
 
-function renderMd(text: string): React.ReactNode {
+function renderMd(text: string, onImageClick?: (src: string) => void): React.ReactNode {
   const segments: Array<{ type: "code" | "text"; content: string }> = []
   let lastIndex = 0
   for (const match of text.matchAll(/```([\s\S]*?)```/g)) {
@@ -109,7 +109,7 @@ function renderMd(text: string): React.ReactNode {
       seg.content.split("\n").map((line, li) => (
         <Fragment key={`${si}-${li}`}>
           {li > 0 && <br />}
-          {renderInline(line)}
+          {renderInline(line, onImageClick)}
         </Fragment>
       ))
     ),
@@ -156,6 +156,7 @@ export function ChatRoom({ locale, dict, currentUser }: ChatRoomProps) {
   const [isNearBottom, setIsNearBottom] = useState(true)
   const [hasNewMessages, setHasNewMessages] = useState(false)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [lightbox, setLightbox] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -532,7 +533,7 @@ export function ChatRoom({ locale, dict, currentUser }: ChatRoomProps) {
                                   </p>
                                 </div>
                               )}
-                              {renderMd(msg.content)}
+                              {renderMd(msg.content, setLightbox)}
                             </div>
                           </div>
                         </motion.div>
@@ -681,6 +682,35 @@ export function ChatRoom({ locale, dict, currentUser }: ChatRoomProps) {
           </Button>
         </div>
       </div>
+      {/* Lightbox */}
+      <AnimatePresence>
+        {lightbox && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+            onClick={() => setLightbox(null)}
+            onKeyDown={(e) => e.key === "Escape" && setLightbox(null)}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={lightbox}
+              alt=""
+              className="max-h-full max-w-full rounded-lg object-contain shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            />
+            <Button
+              variant="secondary"
+              size="icon"
+              className="absolute right-4 top-4 rounded-full opacity-80 hover:opacity-100"
+              onClick={() => setLightbox(null)}
+            >
+              <X className="h-5 w-5" />
+            </Button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

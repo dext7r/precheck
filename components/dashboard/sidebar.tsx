@@ -51,7 +51,7 @@ export function DashboardSidebar({ locale, dict, user }: DashboardSidebarProps) 
           setUnreadCount(count)
         }
         if (chatRes.ok) {
-          const chats = await chatRes.json()
+          const { chats } = await chatRes.json()
           const total = (chats || []).reduce(
             (sum: number, c: { unreadCount: number }) => sum + (c.unreadCount || 0),
             0,
