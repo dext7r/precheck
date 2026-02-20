@@ -7,7 +7,7 @@ import { ApiErrorKeys } from "@/lib/api/error-keys"
 import { isAdmin } from "@/lib/auth/permissions"
 
 const sendMessageSchema = z.object({
-  content: z.string().min(1).max(2000),
+  content: z.string().min(1).max(500000),
   replyToId: z.string().optional(),
 })
 
@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
       let message = "消息格式不正确"
       if (issue?.path[0] === "content") {
         if (issue.code === "too_small") message = "消息不能为空"
-        else if (issue.code === "too_big") message = "消息内容过长（最多 2000 字符）"
+        else if (issue.code === "too_big") message = "消息内容过长"
       }
       return NextResponse.json({ error: { message } }, { status: 400 })
     }

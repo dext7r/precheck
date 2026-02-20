@@ -3,6 +3,8 @@
 import { useState, useEffect, useRef, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
+import ReactMarkdown from "react-markdown"
+import remarkGfm from "remark-gfm"
 import {
   Send,
   Shield,
@@ -13,6 +15,7 @@ import {
   Trash2,
   MessageSquare,
   ChevronDown,
+  ImageIcon,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -68,6 +71,7 @@ export function ChatRoom({ locale, dict, currentUser }: ChatRoomProps) {
   const [replyTo, setReplyTo] = useState<ChatMsg | null>(null)
   const [isNearBottom, setIsNearBottom] = useState(true)
   const [hasNewMessages, setHasNewMessages] = useState(false)
+  const [imagePreview, setImagePreview] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -75,6 +79,41 @@ export function ChatRoom({ locale, dict, currentUser }: ChatRoomProps) {
   const isInitialLoadRef = useRef(true)
 
   const t = (dict.dashboard as Record<string, unknown>) || {}
+
+  const compressImage = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        const img = new Image()
+        img.onload = () => {
+          const MAX = 800
+          let { width, height } = img
+          if (width > MAX || height > MAX) {
+            if (width > height) {
+              height = Math.round((height * MAX) / width)
+              width = MAX
+            } else {
+              width = Math.round((width * MAX) / height)
+              height = MAX
+            }
+          }
+          const canvas = document.createElement("canvas")
+          canvas.width = width
+          canvas.height = height
+          canvas.getContext("2d")!.drawImage(img, 0, 0, width, height)
+          resolve(canvas.toDataURL("image/jpeg", 0.7))
+        }
+        img.onerror = reject
+        img.src = e.target?.result as string
+      }
+      reader.onerror = reject
+      reader.readAsDataURL(file)
+    })
+
+  const getDisplayContent = (content: string) => {
+    const label = (t.chatImage as string) || "[图片]"
+    return content.replace(/!\[\]\(data:image\/[^)]+\)/g, label).trim()
+  }
 
   const scrollToBottom = useCallback((behavior: ScrollBehavior = "smooth") => {
     messagesEndRef.current?.scrollIntoView({ behavior })
@@ -130,10 +169,13 @@ export function ChatRoom({ locale, dict, currentUser }: ChatRoomProps) {
   }, [checkIfNearBottom])
 
   const sendMessage = async () => {
-    const content = input.trim()
-    if (!content || sending) return
+    const text = input.trim()
+    const img = imagePreview
+    if ((!text && !img) || sending) return
+    const content = img ? (text ? `${text}\n\n![](${img})` : `![](${img})`) : text
     setSending(true)
     setInput("")
+    setImagePreview(null)
     const currentReplyTo = replyTo
     setReplyTo(null)
     try {
@@ -154,7 +196,7 @@ export function ChatRoom({ locale, dict, currentUser }: ChatRoomProps) {
       const message =
         err instanceof Error ? err.message : (t.chatSendFailed as string) || "Failed to send"
       toast.error(message)
-      setInput(content)
+      setInput(text)
       setReplyTo(currentReplyTo)
     } finally {
       setSending(false)
@@ -168,7 +210,8 @@ export function ChatRoom({ locale, dict, currentUser }: ChatRoomProps) {
   }
 
   const handleCopy = (content: string) => {
-    navigator.clipboard.writeText(content)
+    const selected = window.getSelection()?.toString().trim()
+    navigator.clipboard.writeText(selected || content)
     toast.success((t.chatCopySuccess as string) || "Copied")
   }
 
@@ -401,11 +444,61 @@ export function ChatRoom({ locale, dict, currentUser }: ChatRoomProps) {
                                   <p className="line-clamp-2 opacity-60">
                                     {msg.replyTo.deletedAt
                                       ? (t.chatRecalled as string) || "Message recalled"
-                                      : msg.replyTo.content}
+                                      : getDisplayContent(msg.replyTo.content)}
                                   </p>
                                 </div>
                               )}
-                              {msg.content}
+                              {msg.content.includes("![](data:image/") ? (
+                                <ReactMarkdown
+                                  remarkPlugins={[remarkGfm]}
+                                  components={{
+                                    img: ({ src, alt }) => (
+                                      // eslint-disable-next-line @next/next/no-img-element
+                                      <img
+                                        src={src}
+                                        alt={alt || ""}
+                                        className="max-w-full rounded-lg mt-1 cursor-pointer"
+                                        style={{ maxHeight: 300 }}
+                                        onClick={() => typeof src === "string" && window.open(src, "_blank")}
+                                      />
+                                    ),
+                                    p: ({ children }) => <p className="mb-1 last:mb-0">{children}</p>,
+                                    a: ({ href, children }) => (
+                                      <a href={href} target="_blank" rel="noopener noreferrer" className="underline opacity-80 hover:opacity-100">{children}</a>
+                                    ),
+                                    code: ({ children, className }) =>
+                                      className ? (
+                                        <code className="block bg-black/10 dark:bg-white/10 rounded px-2 py-1 text-xs font-mono overflow-x-auto">{children}</code>
+                                      ) : (
+                                        <code className="bg-black/10 dark:bg-white/10 rounded px-1 text-xs font-mono">{children}</code>
+                                      ),
+                                    pre: ({ children }) => <pre className="my-1 overflow-x-auto">{children}</pre>,
+                                  }}
+                                >
+                                  {msg.content}
+                                </ReactMarkdown>
+                              ) : (
+                                <ReactMarkdown
+                                  remarkPlugins={[remarkGfm]}
+                                  components={{
+                                    p: ({ children }) => <p className="mb-1 last:mb-0">{children}</p>,
+                                    a: ({ href, children }) => (
+                                      <a href={href} target="_blank" rel="noopener noreferrer" className="underline opacity-80 hover:opacity-100">{children}</a>
+                                    ),
+                                    code: ({ children, className }) =>
+                                      className ? (
+                                        <code className="block bg-black/10 dark:bg-white/10 rounded px-2 py-1 text-xs font-mono overflow-x-auto">{children}</code>
+                                      ) : (
+                                        <code className="bg-black/10 dark:bg-white/10 rounded px-1 text-xs font-mono">{children}</code>
+                                      ),
+                                    pre: ({ children }) => <pre className="my-1 overflow-x-auto">{children}</pre>,
+                                    strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+                                    em: ({ children }) => <em className="italic">{children}</em>,
+                                  }}
+                                >
+                                  {msg.content}
+                                </ReactMarkdown>
+                              )}
                             </div>
                           </div>
                         </motion.div>
@@ -469,6 +562,25 @@ export function ChatRoom({ locale, dict, currentUser }: ChatRoomProps) {
         </AnimatePresence>
       </div>
 
+      {/* 图片预览条 */}
+      {imagePreview && (
+        <div className="flex items-center gap-2 border-t bg-muted/50 px-4 py-2">
+          <ImageIcon className="h-4 w-4 text-muted-foreground shrink-0" />
+          <div className="relative">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={imagePreview} alt="" className="h-16 rounded-md object-cover" />
+            <Button
+              variant="secondary"
+              size="icon"
+              className="absolute -right-2 -top-2 h-5 w-5 rounded-full"
+              onClick={() => setImagePreview(null)}
+            >
+              <X className="h-3 w-3" />
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* 引用预览 */}
       {replyTo && (
         <div className="flex items-center gap-2 border-t bg-muted/50 px-4 py-2">
@@ -477,7 +589,7 @@ export function ChatRoom({ locale, dict, currentUser }: ChatRoomProps) {
             <p className="text-xs font-medium text-muted-foreground">
               {(t.chatReply as string) || "Reply"} {getSenderName(replyTo.sender)}
             </p>
-            <p className="text-xs text-muted-foreground/70 truncate">{replyTo.content}</p>
+            <p className="text-xs text-muted-foreground/70 truncate">{getDisplayContent(replyTo.content)}</p>
           </div>
           <Button
             variant="ghost"
@@ -506,6 +618,19 @@ export function ChatRoom({ locale, dict, currentUser }: ChatRoomProps) {
                 sendMessage()
               }
             }}
+            onPaste={async (e) => {
+              const file = Array.from(e.clipboardData.files).find((f) =>
+                f.type.startsWith("image/"),
+              )
+              if (!file) return
+              e.preventDefault()
+              try {
+                const compressed = await compressImage(file)
+                setImagePreview(compressed)
+              } catch {
+                toast.error((t.chatImageFailed as string) || "图片处理失败")
+              }
+            }}
             onInput={(e) => {
               const target = e.target as HTMLTextAreaElement
               target.style.height = "auto"
@@ -514,7 +639,7 @@ export function ChatRoom({ locale, dict, currentUser }: ChatRoomProps) {
           />
           <Button
             onClick={sendMessage}
-            disabled={sending || !input.trim()}
+            disabled={sending || (!input.trim() && !imagePreview)}
             size="icon"
             className="h-10 w-10 shrink-0 rounded-lg"
           >
