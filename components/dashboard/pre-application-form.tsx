@@ -1056,6 +1056,12 @@ export function PreApplicationForm({
                       <p className="font-medium">{latest.sourceDetail}</p>
                     </div>
                   )}
+                  {latest.queryToken && (
+                    <div className="space-y-1 p-3 rounded-lg bg-muted/30 sm:col-span-2">
+                      <p className="text-xs text-muted-foreground">{t.fields.queryToken}</p>
+                      <p className="font-mono text-sm">{latest.queryToken}</p>
+                    </div>
+                  )}
                 </div>
 
                 <Separator />
