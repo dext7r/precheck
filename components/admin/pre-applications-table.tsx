@@ -252,6 +252,9 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
     disputed: 0,
     archived: 0,
   })
+  const [qqGroupsConfig, setQQGroupsConfig] = useState<
+    { id: string; name: string; nameEn?: string; number: string; url: string; adminOnly?: boolean }[]
+  >([])
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(20)
   const [loading, setLoading] = useState(true)
@@ -469,6 +472,8 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
       .replace("{totalPages}", summary.totalPages.toString())
 
   const getGroupLabel = (value: string) => {
+    const qqGroup = qqGroupsConfig.find((g) => g.id === value)
+    if (qqGroup) return locale === "en" && qqGroup.nameEn ? qqGroup.nameEn : qqGroup.name
     const item = preApplicationGroups.find((group) => group.value === value)
     if (!item) return value
     const key = item.labelKey.split(".").pop() || ""
@@ -633,6 +638,9 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
         reject: data.reviewTemplatesReject ?? [],
         dispute: data.reviewTemplatesDispute ?? [],
       })
+      if (Array.isArray(data.qqGroups)) {
+        setQQGroupsConfig(data.qqGroups)
+      }
     } catch (error) {
       console.error("Review templates fetch error:", error)
     }
@@ -1464,6 +1472,30 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
                   <div>
                     <span className="text-xs text-muted-foreground">{t.preApplicationGroup}</span>
                     <p className="font-medium">{getGroupLabel(selected.group)}</p>
+                    {(() => {
+                      const g = qqGroupsConfig.find((x) => x.id === selected.group)
+                      if (!g) return null
+                      return (
+                        <div className="mt-1 flex flex-wrap gap-2 text-xs text-muted-foreground">
+                          {g.number && <span className="font-mono">{g.number}</span>}
+                          {g.url && (
+                            <a
+                              href={g.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-primary underline-offset-2 hover:underline"
+                            >
+                              {t.qqGroupJoinLink || "加群链接"}
+                            </a>
+                          )}
+                          {g.adminOnly && (
+                            <Badge variant="outline" className="text-xs py-0">
+                              {t.qqGroupAdminOnly || "仅管理可见"}
+                            </Badge>
+                          )}
+                        </div>
+                      )
+                    })()}
                   </div>
                   <div>
                     <span className="text-xs text-muted-foreground">{t.preApplicationSource}</span>

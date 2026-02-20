@@ -44,6 +44,7 @@ export type QQGroupConfig = {
   number: string
   url: string
   enabled: boolean
+  adminOnly?: boolean // 仅管理员可见，不在用户申请表单中展示
 }
 
 export const defaultQQGroups: QQGroupConfig[] = [

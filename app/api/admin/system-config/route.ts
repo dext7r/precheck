@@ -19,6 +19,7 @@ const qqGroupSchema = z.object({
   number: z.string().min(5),
   url: z.string().url(),
   enabled: z.boolean(),
+  adminOnly: z.boolean().optional(),
 })
 
 const systemConfigSchema = z.object({

@@ -62,6 +62,7 @@ type QQGroupConfig = {
   number: string
   url: string
   enabled: boolean
+  adminOnly?: boolean
 }
 
 type SystemConfig = {
@@ -1574,6 +1575,19 @@ export function AdminSettingsForm({ locale, dict }: AdminSettingsFormProps) {
                               <Badge variant="secondary" className="text-xs">
                                 {group.number}
                               </Badge>
+                              {group.enabled && (
+                                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                                  <Switch
+                                    checked={group.adminOnly ?? false}
+                                    onCheckedChange={(v) => {
+                                      const newGroups = [...systemConfig.qqGroups]
+                                      newGroups[index] = { ...group, adminOnly: v }
+                                      setSystemConfig({ ...systemConfig, qqGroups: newGroups })
+                                    }}
+                                  />
+                                  <span>{t.qqGroupAdminOnly || "仅管理可见"}</span>
+                                </div>
+                              )}
                             </div>
                             <Button
                               variant="ghost"
@@ -1679,6 +1693,7 @@ export function AdminSettingsForm({ locale, dict }: AdminSettingsFormProps) {
                           number: "",
                           url: "",
                           enabled: true,
+                          adminOnly: false,
                         }
                         setSystemConfig({
                           ...systemConfig,

@@ -1686,6 +1686,8 @@
     "qqGroupNameEn": "Name (English)",
     "qqGroupNumber": "Group Number",
     "qqGroupUrl": "Join Link",
+    "qqGroupAdminOnly": "Admin Only",
+    "qqGroupJoinLink": "Join Link",
     "qqGroupsEmpty": "No QQ groups configured, click the button below to add",
     "qqGroupAdd": "Add QQ Group",
     "unsavedChanges": "Unsaved changes",
