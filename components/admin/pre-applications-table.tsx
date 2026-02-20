@@ -1065,6 +1065,41 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
         />
       </div>
 
+      {/* 仅管理可见的 QQ 群 */}
+      {qqGroupsConfig.filter((g) => g.adminOnly && g.enabled !== false).length > 0 && (
+        <div className="rounded-xl border border-blue-200 bg-blue-50/60 dark:border-blue-900/50 dark:bg-blue-950/20 p-4">
+          <div className="mb-3 flex items-center gap-2 text-sm font-medium text-blue-800 dark:text-blue-300">
+            <Users className="h-4 w-4" />
+            {t.qqGroupAdminOnly || "仅管理可见群组"}
+          </div>
+          <div className="flex flex-wrap gap-3">
+            {qqGroupsConfig
+              .filter((g) => g.adminOnly && g.enabled !== false)
+              .map((g) => (
+                <div
+                  key={g.id}
+                  className="flex items-center gap-3 rounded-lg border border-blue-200 bg-white px-3 py-2 dark:border-blue-800 dark:bg-blue-950/40"
+                >
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-blue-900 dark:text-blue-200">{g.name}</p>
+                    {g.number && (
+                      <p className="font-mono text-xs text-blue-600 dark:text-blue-400">{g.number}</p>
+                    )}
+                  </div>
+                  {g.url && (
+                    <a href={g.url} target="_blank" rel="noopener noreferrer">
+                      <Button size="sm" variant="outline" className="h-7 gap-1.5 text-xs border-blue-300 text-blue-700 hover:bg-blue-100 dark:border-blue-700 dark:text-blue-300 dark:hover:bg-blue-900/40">
+                        <ExternalLink className="h-3 w-3" />
+                        {t.qqGroupJoinLink || "加入"}
+                      </Button>
+                    </a>
+                  )}
+                </div>
+              ))}
+          </div>
+        </div>
+      )}
+
       {/* 搜索和筛选 */}
       <Card className="p-4">
         <div className="flex flex-col gap-4">
