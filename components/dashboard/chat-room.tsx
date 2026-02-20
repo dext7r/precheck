@@ -452,25 +452,24 @@ export function ChatRoom({ locale, dict, currentUser }: ChatRoomProps) {
                                 <ReactMarkdown
                                   remarkPlugins={[remarkGfm]}
                                   components={{
-                                    img: ({ src, alt }) => (
-                                      // eslint-disable-next-line @next/next/no-img-element
+                                    img: ({ node: _n, ...props }: React.ImgHTMLAttributes<HTMLImageElement> & { node?: unknown }) => (
+                                      // eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text
                                       <img
-                                        src={src}
-                                        alt={alt || ""}
+                                        {...props}
                                         className="max-w-full rounded-lg mt-1 cursor-pointer"
                                         style={{ maxHeight: 300 }}
-                                        onClick={() => typeof src === "string" && window.open(src, "_blank")}
+                                        onClick={() => typeof props.src === "string" && window.open(props.src, "_blank")}
                                       />
                                     ),
                                     p: ({ children }) => <p className="mb-1 last:mb-0">{children}</p>,
-                                    a: ({ href, children }) => (
-                                      <a href={href} target="_blank" rel="noopener noreferrer" className="underline opacity-80 hover:opacity-100">{children}</a>
+                                    a: ({ node: _n, children, ...props }) => (
+                                      <a {...props} target="_blank" rel="noopener noreferrer" className="underline opacity-80 hover:opacity-100">{children}</a>
                                     ),
-                                    code: ({ children, className }) =>
-                                      className ? (
-                                        <code className="block bg-black/10 dark:bg-white/10 rounded px-2 py-1 text-xs font-mono overflow-x-auto">{children}</code>
+                                    code: ({ node: _n, inline, children, ...props }: React.HTMLAttributes<HTMLElement> & { node?: unknown; inline?: boolean }) =>
+                                      inline ? (
+                                        <code {...props} className="bg-black/10 dark:bg-white/10 rounded px-1 text-xs font-mono">{children}</code>
                                       ) : (
-                                        <code className="bg-black/10 dark:bg-white/10 rounded px-1 text-xs font-mono">{children}</code>
+                                        <code {...props} className="block bg-black/10 dark:bg-white/10 rounded px-2 py-1 text-xs font-mono overflow-x-auto">{children}</code>
                                       ),
                                     pre: ({ children }) => <pre className="my-1 overflow-x-auto">{children}</pre>,
                                   }}
@@ -482,14 +481,14 @@ export function ChatRoom({ locale, dict, currentUser }: ChatRoomProps) {
                                   remarkPlugins={[remarkGfm]}
                                   components={{
                                     p: ({ children }) => <p className="mb-1 last:mb-0">{children}</p>,
-                                    a: ({ href, children }) => (
-                                      <a href={href} target="_blank" rel="noopener noreferrer" className="underline opacity-80 hover:opacity-100">{children}</a>
+                                    a: ({ node: _n, children, ...props }) => (
+                                      <a {...props} target="_blank" rel="noopener noreferrer" className="underline opacity-80 hover:opacity-100">{children}</a>
                                     ),
-                                    code: ({ children, className }) =>
-                                      className ? (
-                                        <code className="block bg-black/10 dark:bg-white/10 rounded px-2 py-1 text-xs font-mono overflow-x-auto">{children}</code>
+                                    code: ({ node: _n, inline, children, ...props }: React.HTMLAttributes<HTMLElement> & { node?: unknown; inline?: boolean }) =>
+                                      inline ? (
+                                        <code {...props} className="bg-black/10 dark:bg-white/10 rounded px-1 text-xs font-mono">{children}</code>
                                       ) : (
-                                        <code className="bg-black/10 dark:bg-white/10 rounded px-1 text-xs font-mono">{children}</code>
+                                        <code {...props} className="block bg-black/10 dark:bg-white/10 rounded px-2 py-1 text-xs font-mono overflow-x-auto">{children}</code>
                                       ),
                                     pre: ({ children }) => <pre className="my-1 overflow-x-auto">{children}</pre>,
                                     strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
