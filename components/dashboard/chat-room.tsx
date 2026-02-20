@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef, useCallback, Fragment } from "react"
+import { useState, useEffect, useRef, useCallback, Fragment, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import {
@@ -13,6 +13,8 @@ import {
   Trash2,
   MessageSquare,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   ImageIcon,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -157,6 +159,31 @@ export function ChatRoom({ locale, dict, currentUser }: ChatRoomProps) {
   const [hasNewMessages, setHasNewMessages] = useState(false)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [lightbox, setLightbox] = useState<string | null>(null)
+
+  const chatImages = useMemo(() => {
+    const imgs: string[] = []
+    for (const msg of messages) {
+      for (const match of msg.content.matchAll(/!\[[^\]]*\]\(([^)]+)\)/g)) {
+        imgs.push(match[1])
+      }
+    }
+    return imgs
+  }, [messages])
+
+  const lightboxIdx = lightbox !== null ? chatImages.indexOf(lightbox) : -1
+
+  useEffect(() => {
+    if (lightbox === null) return
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setLightbox(null)
+      if (e.key === "ArrowLeft" && lightboxIdx > 0) setLightbox(chatImages[lightboxIdx - 1])
+      if (e.key === "ArrowRight" && lightboxIdx < chatImages.length - 1)
+        setLightbox(chatImages[lightboxIdx + 1])
+    }
+    window.addEventListener("keydown", handler)
+    return () => window.removeEventListener("keydown", handler)
+  }, [lightbox, lightboxIdx, chatImages])
+
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -691,7 +718,6 @@ export function ChatRoom({ locale, dict, currentUser }: ChatRoomProps) {
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
             onClick={() => setLightbox(null)}
-            onKeyDown={(e) => e.key === "Escape" && setLightbox(null)}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
@@ -700,6 +726,7 @@ export function ChatRoom({ locale, dict, currentUser }: ChatRoomProps) {
               className="max-h-full max-w-full rounded-lg object-contain shadow-2xl"
               onClick={(e) => e.stopPropagation()}
             />
+            {/* 关闭 */}
             <Button
               variant="secondary"
               size="icon"
@@ -708,6 +735,40 @@ export function ChatRoom({ locale, dict, currentUser }: ChatRoomProps) {
             >
               <X className="h-5 w-5" />
             </Button>
+            {/* 计数器 */}
+            {chatImages.length > 1 && (
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-black/50 px-3 py-1 text-sm text-white select-none">
+                {lightboxIdx + 1} / {chatImages.length}
+              </div>
+            )}
+            {/* 上一张 */}
+            {lightboxIdx > 0 && (
+              <Button
+                variant="secondary"
+                size="icon"
+                className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full opacity-80 hover:opacity-100"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setLightbox(chatImages[lightboxIdx - 1])
+                }}
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </Button>
+            )}
+            {/* 下一张 */}
+            {lightboxIdx < chatImages.length - 1 && (
+              <Button
+                variant="secondary"
+                size="icon"
+                className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full opacity-80 hover:opacity-100"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setLightbox(chatImages[lightboxIdx + 1])
+                }}
+              >
+                <ChevronRight className="h-5 w-5" />
+              </Button>
+            )}
           </motion.div>
         )}
       </AnimatePresence>

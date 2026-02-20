@@ -1,6 +1,40 @@
 {
   "versions": [
     {
+      "version": "1.6.2",
+      "date": "2026-02-20",
+      "changes": [
+        {
+          "type": "added",
+          "content": "聊天室支持粘贴图片发送（Canvas 自动压缩至 800px / JPEG 70%）"
+        },
+        {
+          "type": "added",
+          "content": "聊天室消息支持 Markdown 渲染（粗体、斜体、行内代码、代码块、链接、图片）"
+        },
+        {
+          "type": "added",
+          "content": "聊天室复制支持选区感知：有选中文字时复制选区，否则复制整条消息"
+        },
+        {
+          "type": "added",
+          "content": "聊天室图片点击灯箱放大，支持上一张 / 下一张切换与键盘 ← → Esc 导航"
+        },
+        {
+          "type": "added",
+          "content": "侧边栏底部新增 GitHub 项目链接入口"
+        },
+        {
+          "type": "fixed",
+          "content": "修复聊天室页面底部多余留白（正确计算页面高度与父容器内边距）"
+        },
+        {
+          "type": "fixed",
+          "content": "修复侧边栏未读消息数统计报错（API 返回对象未正确解构）"
+        }
+      ]
+    },
+    {
       "version": "1.6.1",
       "date": "2026-02-14",
       "changes": [
