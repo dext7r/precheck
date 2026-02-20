@@ -397,7 +397,7 @@ export function ChatRoom({ locale, dict, currentUser }: ChatRoomProps) {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100dvh-120px)] sm:h-[calc(100vh-160px)] min-w-0 overflow-hidden">
+    <div className="flex flex-col h-[calc(100dvh-64px)] sm:h-[calc(100vh-64px)] min-w-0 overflow-hidden">
       {/* 头部 */}
       <div className="flex items-center justify-between border-b px-3 py-2 sm:px-4 sm:py-3">
         <div className="flex items-center gap-2">

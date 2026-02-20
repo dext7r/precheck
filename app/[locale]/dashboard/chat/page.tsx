@@ -18,10 +18,12 @@ export default async function ChatPage({ params }: ChatPageProps) {
   }
 
   return (
-    <ChatRoom
-      locale={locale}
-      dict={dict}
-      currentUser={{ id: user.id, name: user.name, role: user.role, avatar: user.avatar }}
-    />
+    <div className="-my-4 md:-my-6">
+      <ChatRoom
+        locale={locale}
+        dict={dict}
+        currentUser={{ id: user.id, name: user.name, role: user.role, avatar: user.avatar }}
+      />
+    </div>
   )
 }
