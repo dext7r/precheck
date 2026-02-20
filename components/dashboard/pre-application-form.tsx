@@ -37,6 +37,8 @@ import {
   Trash2,
   Gift,
   MessageCircle,
+  Copy,
+  Check,
 } from "lucide-react"
 import type { Dictionary } from "@/lib/i18n/get-dictionary"
 import type { Locale } from "@/lib/i18n/config"
@@ -171,6 +173,7 @@ export function PreApplicationForm({
   const [submitting, setSubmitting] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [claiming, setClaiming] = useState(false)
+  const [copiedToken, setCopiedToken] = useState(false)
   const [checkingCode, setCheckingCode] = useState(false)
   const [hasAvailableCode, setHasAvailableCode] = useState<boolean | null>(null)
   const [records, setRecords] = useState<PreApplicationRecord[]>(initialRecords || [])
@@ -1059,7 +1062,21 @@ export function PreApplicationForm({
                   {latest.queryToken && (
                     <div className="space-y-1 p-3 rounded-lg bg-muted/30 sm:col-span-2">
                       <p className="text-xs text-muted-foreground">{t.fields.queryToken}</p>
-                      <p className="font-mono text-sm">{latest.queryToken}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="font-mono text-sm flex-1">{latest.queryToken}</p>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 shrink-0"
+                          onClick={() => {
+                            navigator.clipboard.writeText(latest.queryToken!)
+                            setCopiedToken(true)
+                            setTimeout(() => setCopiedToken(false), 2000)
+                          }}
+                        >
+                          {copiedToken ? <Check className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5" />}
+                        </Button>
+                      </div>
                     </div>
                   )}
                 </div>
