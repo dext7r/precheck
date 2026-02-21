@@ -282,6 +282,7 @@
       "failedToUpdate": "更新预申请失败",
       "versionConflict": "数据已被修改，请刷新后重试",
       "resubmitLimitExceeded": "已达到最大重新提交次数限制",
+      "editTooFrequent": "修改过于频繁，请稍后再试",
       "notApproved": "申请未通过审核",
       "alreadyHasCode": "已有邀请码",
       "noAvailableCode": "暂无可用邀请码，请稍后再试",

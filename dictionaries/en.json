@@ -284,6 +284,7 @@
       "failedToUpdate": "Failed to update pre-application",
       "versionConflict": "Record has been modified; please refresh and try again",
       "resubmitLimitExceeded": "Maximum resubmit attempts reached",
+      "editTooFrequent": "You are editing too frequently, please try again later",
       "notApproved": "Application not approved yet",
       "alreadyHasCode": "Already has an invite code",
       "noAvailableCode": "No invite codes available, please try again later",

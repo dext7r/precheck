@@ -205,5 +205,6 @@ export const ApiErrorKeys = {
     failedToUpdate: "apiErrors.preApplication.failedToUpdate",
     aiPreviewNotConfigured: "apiErrors.preApplication.aiPreviewNotConfigured",
     aiPreviewFailed: "apiErrors.preApplication.aiPreviewFailed",
+    editTooFrequent: "apiErrors.preApplication.editTooFrequent",
   },
 } as const

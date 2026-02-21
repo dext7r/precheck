@@ -1548,7 +1548,22 @@ export function AdminPreApplicationsTable({ locale, dict }: AdminPreApplications
                     <span className="text-xs text-muted-foreground">
                       {t.preApplicationQueryToken}
                     </span>
-                    <p className="font-medium font-mono text-xs">{selected.queryToken || "-"}</p>
+                    <div className="flex items-center gap-1.5">
+                      <p className="font-medium font-mono text-xs">{selected.queryToken || "-"}</p>
+                      {selected.queryToken && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-5 w-5 text-muted-foreground hover:text-foreground"
+                          onClick={() => {
+                            navigator.clipboard.writeText(selected.queryToken!)
+                            toast.success(t.aiReviewCopied || "已复制")
+                          }}
+                        >
+                          <Copy className="h-3 w-3" />
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
