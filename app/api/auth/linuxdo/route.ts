@@ -5,6 +5,7 @@ import { getSiteSettings } from "@/lib/site-settings"
 import { createApiErrorResponse } from "@/lib/api/error-response"
 import { ApiErrorKeys } from "@/lib/api/error-keys"
 import { getCurrentUser } from "@/lib/auth/session"
+import { buildRedirectUrl } from "@/lib/url"
 
 export async function GET(request: NextRequest) {
   if (!features.oauth.linuxdo) {
@@ -27,7 +28,7 @@ export async function GET(request: NextRequest) {
     const user = await getCurrentUser()
     if (!user) {
       // 未登录用户不能绑定，重定向到登录页
-      return NextResponse.redirect(new URL("/login", request.url))
+      return NextResponse.redirect(buildRedirectUrl("/login", request.url))
     }
     // 在 state 中传递绑定信息
     state = Buffer.from(JSON.stringify({ mode: "bind", userId: user.id })).toString("base64")

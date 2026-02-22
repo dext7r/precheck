@@ -4,23 +4,24 @@ import { createSession, setSessionCookie } from "@/lib/auth/session"
 import { features } from "@/lib/features"
 import { writeAuditLog } from "@/lib/audit"
 import { db } from "@/lib/db"
+import { buildRedirectUrl } from "@/lib/url"
 
 export async function GET(request: NextRequest) {
   if (!features.oauth.google) {
-    return NextResponse.redirect(new URL("/login?error=oauth_not_configured", request.url))
+    return NextResponse.redirect(buildRedirectUrl("/login?error=oauth_not_configured", request.url))
   }
 
   const searchParams = request.nextUrl.searchParams
   const code = searchParams.get("code")
 
   if (!code) {
-    return NextResponse.redirect(new URL("/login?error=no_code", request.url))
+    return NextResponse.redirect(buildRedirectUrl("/login?error=no_code", request.url))
   }
 
   try {
     const profile = await getGoogleProfile(code)
     if (!profile) {
-      return NextResponse.redirect(new URL("/login?error=oauth_failed", request.url))
+      return NextResponse.redirect(buildRedirectUrl("/login?error=oauth_failed", request.url))
     }
 
     const user = await handleOAuthSignIn("google", profile, request)
@@ -28,7 +29,7 @@ export async function GET(request: NextRequest) {
     const sessionRecord = await db?.session.findUnique({
       where: { sessionToken: token },
     })
-    const response = NextResponse.redirect(new URL("/dashboard", request.url))
+    const response = NextResponse.redirect(buildRedirectUrl("/dashboard", request.url))
     setSessionCookie(response, token, expires)
     if (db) {
       await writeAuditLog(db, {
@@ -52,6 +53,6 @@ export async function GET(request: NextRequest) {
     }
     return response
   } catch {
-    return NextResponse.redirect(new URL("/login?error=oauth_failed", request.url))
+    return NextResponse.redirect(buildRedirectUrl("/login?error=oauth_failed", request.url))
   }
 }
