@@ -12,7 +12,18 @@ export function getRedisClient(): Redis | null {
     return null
   }
 
-  // 如果已创建客户端，直接返回
+  // 如果已创建客户端且连接正常，直接返回
+  if (redis && redis.status === "ready") {
+    return redis
+  }
+
+  // 如果客户端存在但连接异常，销毁后重建
+  if (redis && redis.status !== "ready" && redis.status !== "connecting" && redis.status !== "connect") {
+    try { redis.disconnect() } catch { /* ignore */ }
+    redis = null
+  }
+
+  // 已在连接中，直接返回
   if (redis) {
     return redis
   }
@@ -26,8 +37,9 @@ export function getRedisClient(): Redis | null {
 
       redis = new Redis(redisUrl, {
         maxRetriesPerRequest: 3,
-        enableReadyCheck: false,
-        lazyConnect: true,
+        retryStrategy(times) {
+          return Math.min(times * 200, 2000)
+        },
         tls: needsTLS ? {} : undefined,
         family: 0, // 自动选择 IPv4/IPv6
       })
@@ -41,8 +53,9 @@ export function getRedisClient(): Redis | null {
         password: process.env.KV_REST_API_TOKEN,
         tls: url.protocol === "https:" ? {} : undefined,
         maxRetriesPerRequest: 3,
-        enableReadyCheck: false,
-        lazyConnect: true,
+        retryStrategy(times) {
+          return Math.min(times * 200, 2000)
+        },
       })
     }
 
