@@ -63,7 +63,8 @@ export async function isRedisAvailable(): Promise<boolean> {
   try {
     await client.ping()
     return true
-  } catch {
+  } catch (error) {
+    console.error("[Redis] ping failed:", error)
     return false
   }
 }
