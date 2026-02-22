@@ -5,6 +5,7 @@ import { defaultLocale, locales } from "@/lib/i18n/config"
 import { writeAuditLog } from "@/lib/audit"
 import { createApiErrorResponse } from "@/lib/api/error-response"
 import { ApiErrorKeys } from "@/lib/api/error-keys"
+import { buildRedirectUrl } from "@/lib/url"
 
 export async function POST(request: NextRequest) {
   try {
@@ -23,9 +24,8 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 重定向到登录页（优先使用 NEXT_PUBLIC_APP_URL 避免容器内 0.0.0.0 问题）
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || request.url
-    const loginUrl = new URL(`/${locale}/login`, baseUrl)
+    // 重定向到登录页
+    const loginUrl = buildRedirectUrl(`/${locale}/login`, request.url)
     const response = NextResponse.redirect(loginUrl)
     clearSessionCookie(response)
 
