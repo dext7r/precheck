@@ -17,7 +17,7 @@ export const features = {
   // 文件上传
   fileUpload: !!process.env.BLOB_READ_WRITE_TOKEN,
   // Redis 缓存
-  redis: !!process.env.KV_REST_API_URL,
+  redis: !!(process.env.REDIS_URL || process.env.KV_REST_API_URL),
   // Cloudflare AI（用于 AI 审核）
   cloudflareAI: !!(process.env.CLOUDFLARE_ACCOUNT_ID && process.env.CLOUDFLARE_API_TOKEN),
 } as const

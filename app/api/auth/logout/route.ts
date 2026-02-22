@@ -23,8 +23,9 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 重定向到登录页
-    const loginUrl = new URL(`/${locale}/login`, request.url)
+    // 重定向到登录页（优先使用 NEXT_PUBLIC_APP_URL 避免容器内 0.0.0.0 问题）
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || request.url
+    const loginUrl = new URL(`/${locale}/login`, baseUrl)
     const response = NextResponse.redirect(loginUrl)
     clearSessionCookie(response)
 
