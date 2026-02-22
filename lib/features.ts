@@ -1,26 +1,27 @@
 // 功能检测配置
 // 根据环境变量是否配置来决定功能是否启用
+// 使用 getter 确保运行时读取环境变量（而非构建时固化）
 
 import { isEmailConfiguredSync } from "@/lib/email/mailer"
 
 export const features = {
   // OAuth 登录
   oauth: {
-    github: !!(process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET),
-    google: !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET),
-    linuxdo: !!(process.env.LINUXDO_CLIENT_ID && process.env.LINUXDO_CLIENT_SECRET),
+    get github() { return !!(process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) },
+    get google() { return !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) },
+    get linuxdo() { return !!(process.env.LINUXDO_CLIENT_ID && process.env.LINUXDO_CLIENT_SECRET) },
   },
   // 数据库
-  database: !!process.env.DATABASE_URL,
+  get database() { return !!process.env.DATABASE_URL },
   // 邮件服务（用于找回密码等）- 同步检查环境变量
-  email: isEmailConfiguredSync(),
+  get email() { return isEmailConfiguredSync() },
   // 文件上传
-  fileUpload: !!process.env.BLOB_READ_WRITE_TOKEN,
+  get fileUpload() { return !!process.env.BLOB_READ_WRITE_TOKEN },
   // Redis 缓存
-  redis: !!(process.env.REDIS_URL || process.env.KV_REST_API_URL),
+  get redis() { return !!(process.env.REDIS_URL || process.env.KV_REST_API_URL) },
   // Cloudflare AI（用于 AI 审核）
-  cloudflareAI: !!(process.env.CLOUDFLARE_ACCOUNT_ID && process.env.CLOUDFLARE_API_TOKEN),
-} as const
+  get cloudflareAI() { return !!(process.env.CLOUDFLARE_ACCOUNT_ID && process.env.CLOUDFLARE_API_TOKEN) },
+}
 
 // 获取启用的 OAuth 提供商列表
 export function getEnabledOAuthProviders() {
