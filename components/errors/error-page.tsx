@@ -8,10 +8,11 @@ import {
   Ban,
   FileQuestion,
   ServerCrash,
+  Wrench,
 } from "lucide-react"
 import type { Dictionary } from "@/lib/i18n/get-dictionary"
 
-type ErrorCode = "400" | "401" | "403" | "404" | "500"
+type ErrorCode = "400" | "401" | "403" | "404" | "500" | "503"
 
 interface ErrorPageProps {
   code: ErrorCode
@@ -25,6 +26,7 @@ const errorIcons: Record<ErrorCode, typeof AlertTriangle> = {
   "403": Ban,
   "404": FileQuestion,
   "500": ServerCrash,
+  "503": Wrench,
 }
 
 const errorColors: Record<ErrorCode, string> = {
@@ -33,6 +35,7 @@ const errorColors: Record<ErrorCode, string> = {
   "403": "from-red-500/20 to-pink-500/20",
   "404": "from-purple-500/20 to-violet-500/20",
   "500": "from-rose-500/20 to-red-500/20",
+  "503": "from-amber-500/20 to-yellow-500/20",
 }
 
 export function ErrorPage({ code, dictionary, locale }: ErrorPageProps) {

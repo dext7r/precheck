@@ -45,6 +45,7 @@
         "passwordRequired": "密码为必填项",
         "validationFailed": "登录信息不合法",
         "loginFailed": "登录失败",
+        "maintenanceMode": "网站正在维护中，暂时无法登录",
         "accountDeleted": "账户已被删除，激活链接已发送至你的邮箱"
       },
       "reactivate": {
@@ -58,10 +59,12 @@
         "registrationDisabled": "当前禁止注册",
         "verificationFailed": "验证失败",
         "invalidVerificationCode": "验证码无效",
+        "verificationCodeRequired": "请输入邮箱验证码",
         "weakPassword": "密码不符合要求",
         "emailExists": "邮箱已被注册",
         "validationFailed": "注册信息不合法",
         "registrationFailed": "注册失败",
+        "maintenanceMode": "网站正在维护中，暂时无法注册",
         "emailSuffixLabel": "快速选择允许的邮箱后缀",
         "emailSuffixPlaceholder": "请选择后缀"
       },
@@ -663,7 +666,8 @@
         "nameTooShort": "姓名至少需要 2 个字符",
         "registrationDisabled": "当前已关闭注册",
         "serviceUnavailable": "注册服务未配置",
-        "failed": "注册失败"
+        "failed": "注册失败",
+        "verificationCodeRequired": "请输入邮箱验证码"
       }
     },
     "forgotPassword": {
@@ -748,6 +752,11 @@
       "title": "服务器错误",
       "description": "我们这边出了点问题，正在努力修复中。",
       "hint": "请稍后重试。"
+    },
+    "503": {
+      "title": "维护中",
+      "description": "网站正在进行维护，请稍后再访问。",
+      "hint": "维护完成后将自动恢复访问。"
     }
   },
   "dashboard": {

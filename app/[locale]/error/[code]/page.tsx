@@ -3,7 +3,7 @@ import { getDictionary } from "@/lib/i18n/get-dictionary"
 import { i18n, type Locale } from "@/lib/i18n/config"
 import { ErrorPage } from "@/components/errors/error-page"
 
-const validCodes = ["400", "401", "403", "404", "500"] as const
+const validCodes = ["400", "401", "403", "404", "500", "503"] as const
 
 type ErrorCode = (typeof validCodes)[number]
 

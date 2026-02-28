@@ -47,6 +47,7 @@
         "passwordRequired": "Password is required",
         "validationFailed": "Invalid login data",
         "loginFailed": "Login failed",
+        "maintenanceMode": "The site is under maintenance. Login is temporarily unavailable.",
         "accountDeleted": "Account has been deleted, activation link has been sent to your email"
       },
       "reactivate": {
@@ -60,10 +61,12 @@
         "registrationDisabled": "Registration is disabled",
         "verificationFailed": "Verification failed",
         "invalidVerificationCode": "Invalid verification code",
+        "verificationCodeRequired": "Verification code is required",
         "weakPassword": "Password does not meet requirements",
         "emailExists": "Email already registered",
         "validationFailed": "Invalid registration data",
         "registrationFailed": "Registration failed",
+        "maintenanceMode": "The site is under maintenance. Registration is temporarily unavailable.",
         "emailSuffixLabel": "Quickly choose an allowed email suffix",
         "emailSuffixPlaceholder": "Select suffix"
       },
@@ -665,7 +668,8 @@
         "nameTooShort": "Name must be at least 2 characters",
         "registrationDisabled": "Registration is currently disabled",
         "serviceUnavailable": "Registration service not configured",
-        "failed": "Registration failed"
+        "failed": "Registration failed",
+        "verificationCodeRequired": "Please enter the verification code"
       }
     },
     "forgotPassword": {
@@ -750,6 +754,11 @@
       "title": "Server Error",
       "description": "Something went wrong on our end. We're working to fix it.",
       "hint": "Please try again later."
+    },
+    "503": {
+      "title": "Under Maintenance",
+      "description": "The site is currently undergoing maintenance. Please check back later.",
+      "hint": "Access will be restored once maintenance is complete."
     }
   },
   "dashboard": {

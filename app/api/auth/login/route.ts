@@ -3,6 +3,7 @@ import { db } from "@/lib/db"
 import { verifyPassword, generateResetToken } from "@/lib/auth/password"
 import { createSession, setSessionCookie } from "@/lib/auth/session"
 import { features } from "@/lib/features"
+import { getSiteSettings } from "@/lib/site-settings"
 import { writeAuditLog } from "@/lib/audit"
 import { verifyTurnstileToken } from "@/lib/turnstile"
 import { verifyCode } from "@/lib/verification-code"
@@ -84,6 +85,14 @@ export async function POST(request: NextRequest) {
     if (!user) {
       return createApiErrorResponse(request, "apiErrors.auth.login.invalidCredentials", {
         status: 401,
+      })
+    }
+
+    // 维护模式检查：管理员豁免
+    const settings = await getSiteSettings()
+    if (settings.maintenanceMode && user.role !== "ADMIN" && user.role !== "SUPER_ADMIN") {
+      return createApiErrorResponse(request, "apiErrors.auth.login.maintenanceMode", {
+        status: 503,
       })
     }
 

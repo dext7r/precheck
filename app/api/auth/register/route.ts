@@ -50,6 +50,13 @@ export async function POST(request: NextRequest) {
       })
     }
 
+    // 维护模式下禁止注册
+    if (settings.maintenanceMode) {
+      return createApiErrorResponse(request, "apiErrors.auth.register.maintenanceMode", {
+        status: 503,
+      })
+    }
+
     const body = await request.json()
     const { email, password, name, verificationCode, turnstileToken } = registerSchema.parse(body)
 
@@ -67,8 +74,14 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 如果 Redis 可用且提供了验证码，验证验证码
-    if (verificationCode && (await isRedisAvailable())) {
+    // 验证邮箱验证码
+    const redisAvailable = await isRedisAvailable()
+    if (redisAvailable) {
+      if (!verificationCode) {
+        return createApiErrorResponse(request, "apiErrors.auth.register.verificationCodeRequired", {
+          status: 400,
+        })
+      }
       const codeVerification = await verifyCode(email, verificationCode)
       if (!codeVerification.valid) {
         return createApiErrorResponse(request, "apiErrors.auth.register.invalidVerificationCode", {

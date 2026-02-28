@@ -234,6 +234,11 @@ export function RegisterForm({ locale, dict, oauthProviders }: RegisterFormProps
       return
     }
 
+    if (verificationAvailable && !formData.verificationCode.trim()) {
+      setError(t.errors?.verificationCodeRequired || "Please enter the verification code")
+      return
+    }
+
     setIsLoading(true)
 
     try {

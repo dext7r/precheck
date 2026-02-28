@@ -3,6 +3,7 @@ import { redirect } from "next/navigation"
 import { getCurrentUser } from "@/lib/auth/session"
 import { getDictionary } from "@/lib/i18n/get-dictionary"
 import { DashboardLayoutClient } from "@/components/dashboard/dashboard-layout-client"
+import { getSiteSettings } from "@/lib/site-settings"
 import { defaultLocale, locales, type Locale } from "@/lib/i18n/config"
 
 export const dynamic = "force-dynamic"
@@ -20,6 +21,15 @@ export default async function DashboardLayout({ children, params }: DashboardLay
 
   if (!user) {
     redirect(`/${currentLocale}/login`)
+  }
+
+  // 维护模式检查：管理员豁免
+  const settings = await getSiteSettings()
+  if (settings.maintenanceMode) {
+    const isAdmin = user.role === "ADMIN" || user.role === "SUPER_ADMIN"
+    if (!isAdmin) {
+      redirect(`/${currentLocale}/error/503`)
+    }
   }
 
   return (
